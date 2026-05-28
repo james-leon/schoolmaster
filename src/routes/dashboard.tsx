@@ -96,7 +96,7 @@ function DashboardPage() {
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={enrollData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} />
                 <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip cursor={{ fill: "rgba(0,0,0,0.04)" }} />
