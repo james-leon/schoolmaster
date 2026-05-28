@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ScolariteRouteImport } from './routes/scolarite'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PresencesRouteImport } from './routes/presences'
+import { Route as NotesRouteImport } from './routes/notes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ElevesRouteImport } from './routes/eleves'
@@ -26,6 +28,16 @@ const ScolariteRoute = ScolariteRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PresencesRoute = PresencesRouteImport.update({
+  id: '/presences',
+  path: '/presences',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotesRoute = NotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -66,6 +78,8 @@ export interface FileRoutesByFullPath {
   '/eleves': typeof ElevesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/notes': typeof NotesRoute
+  '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
 }
@@ -76,6 +90,8 @@ export interface FileRoutesByTo {
   '/eleves': typeof ElevesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/notes': typeof NotesRoute
+  '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
 }
@@ -87,6 +103,8 @@ export interface FileRoutesById {
   '/eleves': typeof ElevesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/notes': typeof NotesRoute
+  '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
 }
@@ -99,6 +117,8 @@ export interface FileRouteTypes {
     | '/eleves'
     | '/forgot-password'
     | '/login'
+    | '/notes'
+    | '/presences'
     | '/register'
     | '/scolarite'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +129,8 @@ export interface FileRouteTypes {
     | '/eleves'
     | '/forgot-password'
     | '/login'
+    | '/notes'
+    | '/presences'
     | '/register'
     | '/scolarite'
   id:
@@ -119,6 +141,8 @@ export interface FileRouteTypes {
     | '/eleves'
     | '/forgot-password'
     | '/login'
+    | '/notes'
+    | '/presences'
     | '/register'
     | '/scolarite'
   fileRoutesById: FileRoutesById
@@ -130,6 +154,8 @@ export interface RootRouteChildren {
   ElevesRoute: typeof ElevesRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  NotesRoute: typeof NotesRoute
+  PresencesRoute: typeof PresencesRoute
   RegisterRoute: typeof RegisterRoute
   ScolariteRoute: typeof ScolariteRoute
 }
@@ -148,6 +174,20 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/presences': {
+      id: '/presences'
+      path: '/presences'
+      fullPath: '/presences'
+      preLoaderRoute: typeof PresencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notes': {
+      id: '/notes'
+      path: '/notes'
+      fullPath: '/notes'
+      preLoaderRoute: typeof NotesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -202,6 +242,8 @@ const rootRouteChildren: RootRouteChildren = {
   ElevesRoute: ElevesRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  NotesRoute: NotesRoute,
+  PresencesRoute: PresencesRoute,
   RegisterRoute: RegisterRoute,
   ScolariteRoute: ScolariteRoute,
 }
