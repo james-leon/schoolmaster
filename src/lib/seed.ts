@@ -40,10 +40,10 @@ export function buildSeed(): DB {
 
   const classes = CLASSES.map((c, i) => ({ id: uid("class"), name: c.name, level: c.level, fees: c.fees, teacherId: teachers[i % teachers.length].id }));
 
-  const students = [];
-  const payments = [];
-  const grades = [];
-  const attendance = [];
+  const students: DB["students"] = [];
+  const payments: DB["payments"] = [];
+  const grades: DB["grades"] = [];
+  const attendance: DB["attendance"] = [];
 
   for (let i = 0; i < 45; i++) {
     const gender = Math.random() > 0.5 ? "M" : "F";
