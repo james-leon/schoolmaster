@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ScolariteRouteImport } from './routes/scolarite'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PresencesRouteImport } from './routes/presences'
+import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as EnseignantsRouteImport } from './routes/enseignants'
 import { Route as ElevesRouteImport } from './routes/eleves'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ClassesRouteImport } from './routes/classes'
@@ -35,6 +37,11 @@ const PresencesRoute = PresencesRouteImport.update({
   path: '/presences',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ParametresRoute = ParametresRouteImport.update({
+  id: '/parametres',
+  path: '/parametres',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotesRoute = NotesRouteImport.update({
   id: '/notes',
   path: '/notes',
@@ -48,6 +55,11 @@ const LoginRoute = LoginRouteImport.update({
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnseignantsRoute = EnseignantsRouteImport.update({
+  id: '/enseignants',
+  path: '/enseignants',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ElevesRoute = ElevesRouteImport.update({
@@ -76,9 +88,11 @@ export interface FileRoutesByFullPath {
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRoute
+  '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/parametres': typeof ParametresRoute
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
@@ -88,9 +102,11 @@ export interface FileRoutesByTo {
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRoute
+  '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/parametres': typeof ParametresRoute
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
@@ -101,9 +117,11 @@ export interface FileRoutesById {
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRoute
+  '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/parametres': typeof ParametresRoute
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
@@ -115,9 +133,11 @@ export interface FileRouteTypes {
     | '/classes'
     | '/dashboard'
     | '/eleves'
+    | '/enseignants'
     | '/forgot-password'
     | '/login'
     | '/notes'
+    | '/parametres'
     | '/presences'
     | '/register'
     | '/scolarite'
@@ -127,9 +147,11 @@ export interface FileRouteTypes {
     | '/classes'
     | '/dashboard'
     | '/eleves'
+    | '/enseignants'
     | '/forgot-password'
     | '/login'
     | '/notes'
+    | '/parametres'
     | '/presences'
     | '/register'
     | '/scolarite'
@@ -139,9 +161,11 @@ export interface FileRouteTypes {
     | '/classes'
     | '/dashboard'
     | '/eleves'
+    | '/enseignants'
     | '/forgot-password'
     | '/login'
     | '/notes'
+    | '/parametres'
     | '/presences'
     | '/register'
     | '/scolarite'
@@ -152,9 +176,11 @@ export interface RootRouteChildren {
   ClassesRoute: typeof ClassesRoute
   DashboardRoute: typeof DashboardRoute
   ElevesRoute: typeof ElevesRoute
+  EnseignantsRoute: typeof EnseignantsRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRoute
+  ParametresRoute: typeof ParametresRoute
   PresencesRoute: typeof PresencesRoute
   RegisterRoute: typeof RegisterRoute
   ScolariteRoute: typeof ScolariteRoute
@@ -183,6 +209,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PresencesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/parametres': {
+      id: '/parametres'
+      path: '/parametres'
+      fullPath: '/parametres'
+      preLoaderRoute: typeof ParametresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notes': {
       id: '/notes'
       path: '/notes'
@@ -202,6 +235,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enseignants': {
+      id: '/enseignants'
+      path: '/enseignants'
+      fullPath: '/enseignants'
+      preLoaderRoute: typeof EnseignantsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/eleves': {
@@ -240,9 +280,11 @@ const rootRouteChildren: RootRouteChildren = {
   ClassesRoute: ClassesRoute,
   DashboardRoute: DashboardRoute,
   ElevesRoute: ElevesRoute,
+  EnseignantsRoute: EnseignantsRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   NotesRoute: NotesRoute,
+  ParametresRoute: ParametresRoute,
   PresencesRoute: PresencesRoute,
   RegisterRoute: RegisterRoute,
   ScolariteRoute: ScolariteRoute,
