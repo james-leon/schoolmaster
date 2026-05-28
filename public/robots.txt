@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /eleves
+Disallow: /classes
+Disallow: /scolarite
+Disallow: /notes
+Disallow: /presences
+Disallow: /enseignants
+Disallow: /parametres
