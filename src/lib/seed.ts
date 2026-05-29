@@ -6,12 +6,24 @@ const firstNamesM = ["Jean", "Paul", "Emmanuel", "Brice", "Cédric", "Landry", "
 const firstNamesF = ["Marie", "Grace", "Larissa", "Nadège", "Sandrine", "Carine", "Vanessa", "Estelle", "Flore", "Chantal", "Mireille", "Audrey", "Reine", "Solange", "Linda"];
 const lastNames = ["Nguema", "Mbarga", "Etoa", "Fotso", "Kamga", "Tchoua", "Ndongo", "Biya", "Owona", "Manga", "Essomba", "Atangana", "Mballa", "Ngono", "Tabi", "Eyenga", "Bekolo", "Mvogo", "Onana", "Belinga"];
 
+// Deterministic PRNG (mulberry32) so seed is identical on SSR and client
+// — avoids hydration mismatches and duplicate React keys.
+let _rngState = 0x12345678;
+function rng() {
+  let t = (_rngState += 0x6d2b79f5);
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
 function rand<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
+  return arr[Math.floor(rng() * arr.length)];
 }
+let _uidCounter = 0;
 function uid(p: string) {
-  return p + "-" + Math.random().toString(36).slice(2, 9);
+  _uidCounter += 1;
+  return `${p}-${_uidCounter.toString(36).padStart(5, "0")}`;
 }
+
 
 const TEACHERS = [
   { firstName: "Pauline", lastName: "Essomba", subject: "Maternelle", subjects: ["Éveil"] },
