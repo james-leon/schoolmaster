@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef } from "react";
+
 import { AppLayout } from "@/components/AppLayout";
 import { EmptyState, TableSkeleton, useLoaded } from "@/components/shared";
 import { useDB, updateDB, getDB } from "@/lib/store";
