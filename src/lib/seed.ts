@@ -51,7 +51,7 @@ export function buildSeed(): DB {
   const teachers = TEACHERS.map((t) => ({
     id: uid("teacher"),
     email: `${t.firstName.toLowerCase()}.${t.lastName.toLowerCase()}@queenmary.cm`,
-    phone: "+2376" + Math.floor(10000000 + Math.random() * 89999999),
+    phone: "+2376" + Math.floor(10000000 + rng() * 89999999),
     ...t,
   }));
 
@@ -70,27 +70,27 @@ export function buildSeed(): DB {
   const attendance: DB["attendance"] = [];
 
   for (let i = 0; i < 45; i++) {
-    const gender = Math.random() > 0.5 ? "M" : "F";
+    const gender = rng() > 0.5 ? "M" : "F";
     const firstName = gender === "M" ? rand(firstNamesM) : rand(firstNamesF);
     const lastName = rand(lastNames);
     const cls = rand(classes);
     const sid = uid("student");
-    const year = 2013 + Math.floor(Math.random() * 6);
+    const year = 2013 + Math.floor(rng() * 6);
     students.push({
       id: sid,
       firstName,
       lastName,
       gender: gender as "M" | "F",
       classId: cls.id,
-      birthDate: `${year}-0${1 + Math.floor(Math.random() * 8)}-1${Math.floor(Math.random() * 9)}`,
+      birthDate: `${year}-0${1 + Math.floor(rng() * 8)}-1${Math.floor(rng() * 9)}`,
       parentName: rand(["M.", "Mme"]) + " " + lastName,
-      parentPhone: "+2376" + Math.floor(10000000 + Math.random() * 89999999),
+      parentPhone: "+2376" + Math.floor(10000000 + rng() * 89999999),
       enrolledAt: "2024-09-02",
     });
 
     // invoices over 3 trimesters
     for (let m = 0; m < 3; m++) {
-      const r = Math.random();
+      const r = rng();
       const total = Math.round(cls.fees / 3);
       const amountPaid = r > 0.8 ? 0 : r > 0.6 ? Math.round(total / 2) : total;
       const status = amountPaid >= total ? "paye" : amountPaid > 0 ? "partiel" : "impaye";
@@ -99,19 +99,19 @@ export function buildSeed(): DB {
         studentId: sid,
         amount: total,
         amountPaid,
-        date: `2025-0${3 + m}-1${Math.floor(Math.random() * 8)}`,
+        date: `2025-0${3 + m}-1${Math.floor(rng() * 8)}`,
         type: "Scolarité " + ["1er", "2e", "3e"][m] + " trimestre",
         status,
         mode: amountPaid > 0 ? (rand(["Espèces", "MTN MoMo", "Orange Money"]) as "Espèces" | "MTN MoMo" | "Orange Money") : undefined,
-        reference: amountPaid > 0 ? "REF-" + Math.floor(Math.random() * 100000) : undefined,
+        reference: amountPaid > 0 ? "REF-" + Math.floor(rng() * 100000) : undefined,
       });
     }
 
     // grades
     SUBJECTS.slice(0, 4).forEach((subject) => {
-      const d1 = Math.round((6 + Math.random() * 13) * 10) / 10;
-      const d2 = Math.round((6 + Math.random() * 13) * 10) / 10;
-      const comp = Math.round((6 + Math.random() * 13) * 10) / 10;
+      const d1 = Math.round((6 + rng() * 13) * 10) / 10;
+      const d2 = Math.round((6 + rng() * 13) * 10) / 10;
+      const comp = Math.round((6 + rng() * 13) * 10) / 10;
       const moy = Math.round(((d1 + d2 + comp * 2) / 4) * 100) / 100;
       grades.push({ id: uid("grade"), studentId: sid, subject, term: "1er trimestre", devoir1: d1, devoir2: d2, composition: comp, value: moy });
     });
@@ -121,7 +121,7 @@ export function buildSeed(): DB {
       const date = new Date();
       date.setDate(date.getDate() - d);
       if (date.getDay() === 0 || date.getDay() === 6) continue;
-      const r = Math.random();
+      const r = rng();
       const status = r > 0.92 ? "absent" : r > 0.88 ? "retard" : "present";
       attendance.push({ id: uid("att"), studentId: sid, date: date.toISOString().slice(0, 10), status: status as "present" | "absent" | "retard" });
     }
