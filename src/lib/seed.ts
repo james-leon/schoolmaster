@@ -81,6 +81,7 @@ export function buildSeed(): DB {
     const year = 2013 + Math.floor(rng() * 6);
     students.push({
       id: sid,
+      code: `EL-2026-${(i + 1).toString().padStart(3, "0")}`,
       firstName,
       lastName,
       gender: gender as "M" | "F",
@@ -88,8 +89,11 @@ export function buildSeed(): DB {
       birthDate: `${year}-0${1 + Math.floor(rng() * 8)}-1${Math.floor(rng() * 9)}`,
       parentName: rand(["M.", "Mme"]) + " " + lastName,
       parentPhone: "+2376" + Math.floor(10000000 + rng() * 89999999),
+      parentRelation: rand(["Père", "Mère", "Tuteur"]) as "Père" | "Mère" | "Tuteur",
+      status: "actif",
       enrolledAt: "2024-09-02",
     });
+
 
     // invoices over 3 trimesters
     for (let m = 0; m < 3; m++) {
