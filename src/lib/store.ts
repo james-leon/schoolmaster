@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import type { DB } from "./types";
 import { buildSeed } from "./seed";
 
-const KEY = "schoolmaster_db_v1";
+const KEY = "schoolmaster_db_v2";
 
 let cache: DB | null = null;
 const listeners = new Set<() => void>();
