@@ -48,6 +48,9 @@ const CLASSES: { name: string; level: Level; fees: number; capacity: number }[] 
 const SUBJECTS = ["Mathématiques", "Français", "Anglais", "Sciences", "Histoire-Géo", "Éveil"];
 
 export function buildSeed(): DB {
+  _rngState = 0x12345678;
+  _uidCounter = 0;
+
   const teachers = TEACHERS.map((t) => ({
     id: uid("teacher"),
     email: `${t.firstName.toLowerCase()}.${t.lastName.toLowerCase()}@queenmary.cm`,
