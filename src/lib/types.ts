@@ -30,8 +30,12 @@ export interface Classe {
   capacity: number;
 }
 
+export type StudentStatus = "actif" | "inactif" | "transfere";
+export type ParentRelation = "Père" | "Mère" | "Tuteur";
+
 export interface Student {
   id: string;
+  code?: string;
   firstName: string;
   lastName: string;
   gender: "M" | "F";
@@ -39,8 +43,21 @@ export interface Student {
   birthDate: string;
   parentName: string;
   parentPhone: string;
+  parentEmail?: string;
+  parentRelation?: ParentRelation;
+  parentWhatsapp?: string;
+  status?: StudentStatus;
+  photo?: string; // data URL
   enrolledAt: string;
 }
+
+export const STUDENT_STATUSES: { value: StudentStatus; label: string }[] = [
+  { value: "actif", label: "Actif" },
+  { value: "inactif", label: "Inactif" },
+  { value: "transfere", label: "Transféré" },
+];
+export const PARENT_RELATIONS: ParentRelation[] = ["Père", "Mère", "Tuteur"];
+
 
 export interface Teacher {
   id: string;

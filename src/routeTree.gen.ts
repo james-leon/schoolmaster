@@ -22,6 +22,7 @@ import { Route as ElevesRouteImport } from './routes/eleves'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ClassesRouteImport } from './routes/classes'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ElevesStudentIdRouteImport } from './routes/eleves.$studentId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -88,12 +89,17 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ElevesStudentIdRoute = ElevesStudentIdRouteImport.update({
+  id: '/$studentId',
+  path: '/$studentId',
+  getParentRoute: () => ElevesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
-  '/eleves': typeof ElevesRoute
+  '/eleves': typeof ElevesRouteWithChildren
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -103,12 +109,13 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/eleves/$studentId': typeof ElevesStudentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
-  '/eleves': typeof ElevesRoute
+  '/eleves': typeof ElevesRouteWithChildren
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -118,13 +125,14 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/eleves/$studentId': typeof ElevesStudentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
-  '/eleves': typeof ElevesRoute
+  '/eleves': typeof ElevesRouteWithChildren
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/eleves/$studentId': typeof ElevesStudentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/scolarite'
     | '/sitemap.xml'
+    | '/eleves/$studentId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/scolarite'
     | '/sitemap.xml'
+    | '/eleves/$studentId'
   id:
     | '__root__'
     | '/'
@@ -181,13 +192,14 @@ export interface FileRouteTypes {
     | '/register'
     | '/scolarite'
     | '/sitemap.xml'
+    | '/eleves/$studentId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClassesRoute: typeof ClassesRoute
   DashboardRoute: typeof DashboardRoute
-  ElevesRoute: typeof ElevesRoute
+  ElevesRoute: typeof ElevesRouteWithChildren
   EnseignantsRoute: typeof EnseignantsRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
@@ -292,14 +304,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/eleves/$studentId': {
+      id: '/eleves/$studentId'
+      path: '/$studentId'
+      fullPath: '/eleves/$studentId'
+      preLoaderRoute: typeof ElevesStudentIdRouteImport
+      parentRoute: typeof ElevesRoute
+    }
   }
 }
+
+interface ElevesRouteChildren {
+  ElevesStudentIdRoute: typeof ElevesStudentIdRoute
+}
+
+const ElevesRouteChildren: ElevesRouteChildren = {
+  ElevesStudentIdRoute: ElevesStudentIdRoute,
+}
+
+const ElevesRouteWithChildren =
+  ElevesRoute._addFileChildren(ElevesRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClassesRoute: ClassesRoute,
   DashboardRoute: DashboardRoute,
-  ElevesRoute: ElevesRoute,
+  ElevesRoute: ElevesRouteWithChildren,
   EnseignantsRoute: EnseignantsRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
