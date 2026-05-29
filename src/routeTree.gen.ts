@@ -19,6 +19,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as EnseignantsRouteImport } from './routes/enseignants'
 import { Route as ElevesRouteImport } from './routes/eleves'
+import { Route as ElevesStudentIdRouteImport } from './routes/eleves.$studentId'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ClassesRouteImport } from './routes/classes'
 import { Route as IndexRouteImport } from './routes/index'
@@ -73,6 +74,11 @@ const ElevesRoute = ElevesRouteImport.update({
   path: '/eleves',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ElevesStudentIdRoute = ElevesStudentIdRouteImport.update({
+  id: '/eleves/$studentId',
+  path: '/eleves/$studentId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRoute
+  '/eleves/$studentId': typeof ElevesStudentIdRoute
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRoute
+  '/eleves/$studentId': typeof ElevesStudentIdRoute
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRoute
+  '/eleves/$studentId': typeof ElevesStudentIdRoute
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/classes'
     | '/dashboard'
     | '/eleves'
+    | '/eleves/$studentId'
     | '/enseignants'
     | '/forgot-password'
     | '/login'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/classes'
     | '/dashboard'
     | '/eleves'
+    | '/eleves/$studentId'
     | '/enseignants'
     | '/forgot-password'
     | '/login'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/classes'
     | '/dashboard'
     | '/eleves'
+    | '/eleves/$studentId'
     | '/enseignants'
     | '/forgot-password'
     | '/login'
@@ -188,6 +200,7 @@ export interface RootRouteChildren {
   ClassesRoute: typeof ClassesRoute
   DashboardRoute: typeof DashboardRoute
   ElevesRoute: typeof ElevesRoute
+  ElevesStudentIdRoute: typeof ElevesStudentIdRoute
   EnseignantsRoute: typeof EnseignantsRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
@@ -264,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EnseignantsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/eleves/$studentId': {
+      id: '/eleves/$studentId'
+      path: '/eleves/$studentId'
+      fullPath: '/eleves/$studentId'
+      preLoaderRoute: typeof ElevesStudentIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/eleves': {
       id: '/eleves'
       path: '/eleves'
@@ -300,6 +320,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClassesRoute: ClassesRoute,
   DashboardRoute: DashboardRoute,
   ElevesRoute: ElevesRoute,
+  ElevesStudentIdRoute: ElevesStudentIdRoute,
   EnseignantsRoute: EnseignantsRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
