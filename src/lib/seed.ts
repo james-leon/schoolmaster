@@ -14,31 +14,43 @@ function uid(p: string) {
 }
 
 const TEACHERS = [
-  { firstName: "Pauline", lastName: "Essomba", subject: "Maternelle" },
-  { firstName: "Georges", lastName: "Mbarga", subject: "Mathématiques" },
-  { firstName: "Christine", lastName: "Fotso", subject: "Français" },
-  { firstName: "Daniel", lastName: "Atangana", subject: "Sciences" },
-  { firstName: "Rose", lastName: "Ngono", subject: "Anglais" },
-  { firstName: "Samuel", lastName: "Owona", subject: "Histoire-Géo" },
+  { firstName: "Pauline", lastName: "Essomba", subject: "Maternelle", subjects: ["Éveil"] },
+  { firstName: "Georges", lastName: "Mbarga", subject: "Mathématiques", subjects: ["Mathématiques", "Sciences"] },
+  { firstName: "Christine", lastName: "Fotso", subject: "Français", subjects: ["Français"] },
+  { firstName: "Daniel", lastName: "Atangana", subject: "Sciences", subjects: ["Sciences", "Mathématiques"] },
+  { firstName: "Rose", lastName: "Ngono", subject: "Anglais", subjects: ["Anglais"] },
+  { firstName: "Samuel", lastName: "Owona", subject: "Histoire-Géo", subjects: ["Histoire-Géo"] },
 ];
 
-const CLASSES: { name: string; level: Level; fees: number }[] = [
-  { name: "PS", level: "PS", fees: 120000 },
-  { name: "MS", level: "MS", fees: 130000 },
-  { name: "CP", level: "CP", fees: 150000 },
-  { name: "CE1", level: "CE1", fees: 160000 },
-  { name: "CE2", level: "CE2", fees: 160000 },
-  { name: "CM1", level: "CM1", fees: 170000 },
-  { name: "CM2", level: "CM2", fees: 180000 },
-  { name: "CM2-B", level: "CM2", fees: 180000 },
+const CLASSES: { name: string; level: Level; fees: number; capacity: number }[] = [
+  { name: "PS", level: "PS", fees: 120000, capacity: 25 },
+  { name: "MS", level: "MS", fees: 130000, capacity: 25 },
+  { name: "CP", level: "CP", fees: 150000, capacity: 30 },
+  { name: "CE1", level: "CE1", fees: 160000, capacity: 30 },
+  { name: "CE2", level: "CE2", fees: 160000, capacity: 30 },
+  { name: "CM1", level: "CM1", fees: 170000, capacity: 30 },
+  { name: "CM2", level: "CM2", fees: 180000, capacity: 30 },
+  { name: "CM2-B", level: "CM2", fees: 180000, capacity: 30 },
 ];
 
 const SUBJECTS = ["Mathématiques", "Français", "Anglais", "Sciences", "Histoire-Géo", "Éveil"];
 
 export function buildSeed(): DB {
-  const teachers = TEACHERS.map((t) => ({ id: uid("teacher"), email: `${t.firstName.toLowerCase()}.${t.lastName.toLowerCase()}@queenmary.cm`, phone: "+2376" + Math.floor(10000000 + Math.random() * 89999999), ...t }));
+  const teachers = TEACHERS.map((t) => ({
+    id: uid("teacher"),
+    email: `${t.firstName.toLowerCase()}.${t.lastName.toLowerCase()}@queenmary.cm`,
+    phone: "+2376" + Math.floor(10000000 + Math.random() * 89999999),
+    ...t,
+  }));
 
-  const classes = CLASSES.map((c, i) => ({ id: uid("class"), name: c.name, level: c.level, fees: c.fees, teacherId: teachers[i % teachers.length].id }));
+  const classes = CLASSES.map((c, i) => ({
+    id: uid("class"),
+    name: c.name,
+    level: c.level,
+    fees: c.fees,
+    capacity: c.capacity,
+    teacherId: teachers[i % teachers.length].id,
+  }));
 
   const students: DB["students"] = [];
   const payments: DB["payments"] = [];
@@ -64,22 +76,32 @@ export function buildSeed(): DB {
       enrolledAt: "2024-09-02",
     });
 
-    // payments over 3 months
+    // invoices over 3 trimesters
     for (let m = 0; m < 3; m++) {
-      const status = Math.random() > 0.2 ? "paye" : Math.random() > 0.5 ? "partiel" : "impaye";
+      const r = Math.random();
+      const total = Math.round(cls.fees / 3);
+      const amountPaid = r > 0.8 ? 0 : r > 0.6 ? Math.round(total / 2) : total;
+      const status = amountPaid >= total ? "paye" : amountPaid > 0 ? "partiel" : "impaye";
       payments.push({
         id: uid("pay"),
         studentId: sid,
-        amount: status === "impaye" ? 0 : status === "partiel" ? Math.round(cls.fees / 6) : Math.round(cls.fees / 3),
+        amount: total,
+        amountPaid,
         date: `2025-0${3 + m}-1${Math.floor(Math.random() * 8)}`,
         type: "Scolarité " + ["1er", "2e", "3e"][m] + " trimestre",
-        status: status as "paye" | "impaye" | "partiel",
+        status,
+        mode: amountPaid > 0 ? (rand(["Espèces", "MTN MoMo", "Orange Money"]) as "Espèces" | "MTN MoMo" | "Orange Money") : undefined,
+        reference: amountPaid > 0 ? "REF-" + Math.floor(Math.random() * 100000) : undefined,
       });
     }
 
     // grades
     SUBJECTS.slice(0, 4).forEach((subject) => {
-      grades.push({ id: uid("grade"), studentId: sid, subject, value: Math.round((8 + Math.random() * 11) * 10) / 10, term: "1er trimestre" });
+      const d1 = Math.round((6 + Math.random() * 13) * 10) / 10;
+      const d2 = Math.round((6 + Math.random() * 13) * 10) / 10;
+      const comp = Math.round((6 + Math.random() * 13) * 10) / 10;
+      const moy = Math.round(((d1 + d2 + comp * 2) / 4) * 100) / 100;
+      grades.push({ id: uid("grade"), studentId: sid, subject, term: "1er trimestre", devoir1: d1, devoir2: d2, composition: comp, value: moy });
     });
 
     // attendance last 30 days

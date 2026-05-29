@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { StatCard, useLoaded, TableSkeleton } from "@/components/shared";
 import { useDB, updateDB } from "@/lib/store";
 import { fcfa } from "@/lib/format";
+import { PAYMENT_MODES, deriveInvoiceStatus, type PaymentMode, type PaymentStatus } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,21 +17,27 @@ import { CreditCard, TrendingUp, AlertTriangle, Plus } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/scolarite")({
-  component: ScolaritePage,
-});
+export const Route = createFileRoute("/scolarite")({ component: ScolaritePage });
 
 const schema = z.object({
-  studentId: z.string().min(1, "Élève requis"),
+  invoiceId: z.string().min(1, "Facture requise"),
   amount: z.coerce.number().positive("Montant invalide"),
-  type: z.string().min(2, "Motif requis"),
+  mode: z.enum(PAYMENT_MODES as [PaymentMode, ...PaymentMode[]], { message: "Mode requis" }),
+  reference: z.string().trim().min(1, "Référence requise").max(60),
 });
+
+const STATUS_LABELS: Record<PaymentStatus, { label: string; cls: string }> = {
+  paye: { label: "Payée", cls: "bg-success text-success-foreground" },
+  impaye: { label: "En attente", cls: "bg-accent text-accent-foreground" },
+  partiel: { label: "Partiel", cls: "bg-secondary text-secondary-foreground" },
+  retard: { label: "En retard", cls: "bg-destructive text-destructive-foreground" },
+};
 
 function ScolaritePage() {
   const db = useDB();
   const loaded = useLoaded();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ studentId: "", amount: "", type: "Scolarité" });
+  const [form, setForm] = useState({ invoiceId: "", amount: "", mode: "Espèces" as PaymentMode, reference: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const studentName = (id: string) => {
@@ -38,9 +45,9 @@ function ScolaritePage() {
     return s ? `${s.firstName} ${s.lastName}` : "—";
   };
 
-  const total = db.payments.reduce((s, p) => s + p.amount, 0);
-  const unpaid = db.payments.filter((p) => p.status === "impaye").length;
-  const collected = db.payments.filter((p) => p.status === "paye").length;
+  const totalCollected = db.payments.reduce((s, p) => s + (p.amountPaid ?? 0), 0);
+  const unpaid = db.payments.filter((p) => (p.amountPaid ?? 0) < p.amount).length;
+  const paid = db.payments.filter((p) => p.status === "paye").length;
 
   const submit = () => {
     const parsed = schema.safeParse(form);
@@ -50,68 +57,67 @@ function ScolaritePage() {
       setErrors(errs);
       return;
     }
-    setErrors({});
+    const { invoiceId, amount, mode, reference } = parsed.data;
     updateDB((d) => {
-      d.payments.unshift({
-        id: "pay-" + Math.random().toString(36).slice(2, 9),
-        studentId: form.studentId,
-        amount: Number(form.amount),
-        date: new Date().toISOString().slice(0, 10),
-        type: form.type,
-        status: "paye",
-      });
-      d.activities.unshift({ id: "act-" + Math.random().toString(36).slice(2, 7), type: "payment", text: `Paiement de ${fcfa(Number(form.amount))} reçu`, date: new Date().toISOString() });
+      const inv = d.payments.find((p) => p.id === invoiceId);
+      if (!inv) return;
+      inv.amountPaid = (inv.amountPaid ?? 0) + amount;
+      inv.mode = mode;
+      inv.reference = reference;
+      inv.date = new Date().toISOString().slice(0, 10);
+      inv.status = deriveInvoiceStatus(inv.amount, inv.amountPaid, inv.dueDate);
+      d.activities.unshift({ id: "act-" + Math.random().toString(36).slice(2, 7), type: "payment", text: `Paiement de ${fcfa(amount)} (${mode}) — ${studentName(inv.studentId)}`, date: new Date().toISOString() });
     });
     toast.success("Paiement enregistré");
-    setForm({ studentId: "", amount: "", type: "Scolarité" });
+    setErrors({});
+    setForm({ invoiceId: "", amount: "", mode: "Espèces", reference: "" });
     setOpen(false);
   };
 
-  const statusBadge = (s: string) =>
-    s === "paye" ? <Badge className="bg-success text-success-foreground">Payé</Badge> : s === "partiel" ? <Badge className="bg-accent text-accent-foreground">Partiel</Badge> : <Badge variant="destructive">Impayé</Badge>;
+  const openInvoices = useMemo(() => db.payments.filter((p) => (p.amountPaid ?? 0) < p.amount), [db.payments]);
 
   return (
     <AppLayout title="Scolarité & Paiements">
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Total encaissé" value={fcfa(total)} icon={TrendingUp} tone="green" />
-        <StatCard label="Paiements validés" value={String(collected)} icon={CreditCard} tone="blue" />
-        <StatCard label="Factures impayées" value={String(unpaid)} icon={AlertTriangle} tone="red" />
+        <StatCard label="Total encaissé" value={fcfa(totalCollected)} icon={TrendingUp} tone="green" />
+        <StatCard label="Factures payées" value={String(paid)} icon={CreditCard} tone="blue" />
+        <StatCard label="Factures en attente" value={String(unpaid)} icon={AlertTriangle} tone="red" />
       </div>
 
       <div className="mb-4 flex justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-1.5 h-4 w-4" /> Enregistrer paiement
-            </Button>
+            <Button><Plus className="mr-1.5 h-4 w-4" /> Enregistrer un paiement</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Enregistrer un paiement</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Enregistrer un paiement</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label>Élève</Label>
-                <Select value={form.studentId} onValueChange={(v) => setForm((f) => ({ ...f, studentId: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Choisir un élève" /></SelectTrigger>
+              <Field label="Facture" error={errors.invoiceId}>
+                <Select value={form.invoiceId} onValueChange={(v) => setForm((f) => ({ ...f, invoiceId: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Choisir une facture" /></SelectTrigger>
                   <SelectContent>
-                    {db.students.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.firstName} {s.lastName}</SelectItem>
+                    {openInvoices.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {studentName(p.studentId)} — {p.type} — Reste {fcfa(p.amount - (p.amountPaid ?? 0))}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.studentId && <p className="text-xs text-destructive">{errors.studentId}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <Label>Montant (FCFA)</Label>
+              </Field>
+              <Field label="Montant (FCFA)" error={errors.amount}>
                 <Input type="number" value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} />
-                {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <Label>Motif</Label>
-                <Input value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))} />
-                {errors.type && <p className="text-xs text-destructive">{errors.type}</p>}
-              </div>
+              </Field>
+              <Field label="Mode de paiement" error={errors.mode}>
+                <Select value={form.mode} onValueChange={(v) => setForm((f) => ({ ...f, mode: v as PaymentMode }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_MODES.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Référence" error={errors.reference}>
+                <Input value={form.reference} onChange={(e) => setForm((f) => ({ ...f, reference: e.target.value }))} placeholder="N° transaction / reçu" />
+              </Field>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
@@ -132,25 +138,42 @@ function ScolaritePage() {
                   <TableHead>Élève</TableHead>
                   <TableHead>Motif</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Montant</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Payé</TableHead>
+                  <TableHead>Mode</TableHead>
                   <TableHead>Statut</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {db.payments.slice(0, 40).map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium">{studentName(p.studentId)}</TableCell>
-                    <TableCell>{p.type}</TableCell>
-                    <TableCell className="text-muted-foreground">{p.date}</TableCell>
-                    <TableCell className="font-semibold">{fcfa(p.amount)}</TableCell>
-                    <TableCell>{statusBadge(p.status)}</TableCell>
-                  </TableRow>
-                ))}
+                {db.payments.slice(0, 60).map((p) => {
+                  const st = STATUS_LABELS[p.status];
+                  return (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">{studentName(p.studentId)}</TableCell>
+                      <TableCell>{p.type}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.date}</TableCell>
+                      <TableCell className="font-semibold">{fcfa(p.amount)}</TableCell>
+                      <TableCell>{fcfa(p.amountPaid ?? 0)}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.mode ?? "—"}</TableCell>
+                      <TableCell><Badge className={st.cls}>{st.label}</Badge></TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
         </CardContent>
       </Card>
     </AppLayout>
+  );
+}
+
+function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label>{label}</Label>
+      {children}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
   );
 }
