@@ -86,9 +86,10 @@ function LoginPage() {
             </Link>
           </span>
         </div>
-        <p className="mt-6 rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
+        <p suppressHydrationWarning className="mt-6 rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
           Démo : admin@queenmary.cm · prof@queenmary.cm · parent@queenmary.cm — mot de passe : <b>password</b>
         </p>
+
       </Card>
     </div>
   );
