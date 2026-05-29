@@ -5,44 +5,44 @@ import { useLoaded, TableSkeleton, StatCard } from "@/components/shared";
 import { useDB, updateDB } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CalendarCheck, Check, X, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/presences")({
-  component: PresencesPage,
-});
+export const Route = createFileRoute("/presences")({ component: PresencesPage });
 
 type Status = "present" | "absent" | "retard";
 
 function PresencesPage() {
   const db = useDB();
   const loaded = useLoaded();
-  const today = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [classId, setClassId] = useState(db.classes[0]?.id ?? "");
 
   const students = useMemo(() => db.students.filter((s) => s.classId === classId), [db.students, classId]);
 
   const statusOf = (studentId: string): Status => {
-    const rec = db.attendance.find((a) => a.studentId === studentId && a.date === today);
+    const rec = db.attendance.find((a) => a.studentId === studentId && a.date === date);
     return (rec?.status as Status) ?? "present";
   };
 
   const setStatus = (studentId: string, status: Status) => {
     updateDB((d) => {
-      const existing = d.attendance.find((a) => a.studentId === studentId && a.date === today);
+      const existing = d.attendance.find((a) => a.studentId === studentId && a.date === date);
       if (existing) existing.status = status;
-      else d.attendance.push({ id: "att-" + Math.random().toString(36).slice(2, 9), studentId, date: today, status });
+      else d.attendance.push({ id: "att-" + Math.random().toString(36).slice(2, 9), studentId, date, status });
     });
   };
 
   const save = () => {
     updateDB((d) => {
-      d.activities.unshift({ id: "act-" + Math.random().toString(36).slice(2, 7), type: "attendance", text: `Présences enregistrées (${db.classes.find((c) => c.id === classId)?.name})`, date: new Date().toISOString() });
+      d.activities.unshift({ id: "act-" + Math.random().toString(36).slice(2, 7), type: "attendance", text: `Présences enregistrées (${db.classes.find((c) => c.id === classId)?.name}) - ${date}`, date: new Date().toISOString() });
     });
-    toast.success("Présences enregistrées");
+    toast.success("Présences enregistrées avec succès");
   };
 
   const presentCount = students.filter((s) => statusOf(s.id) === "present").length;
@@ -57,18 +57,23 @@ function PresencesPage() {
         <StatCard label="Retards" value={String(lateCount)} icon={Clock} tone="orange" />
       </div>
 
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="max-w-xs flex-1">
-          <Select value={classId} onValueChange={setClassId}>
-            <SelectTrigger><SelectValue placeholder="Classe" /></SelectTrigger>
-            <SelectContent>
-              {db.classes.map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:flex-1">
+          <div className="space-y-1.5">
+            <Label>Classe</Label>
+            <Select value={classId} onValueChange={setClassId}>
+              <SelectTrigger><SelectValue placeholder="Classe" /></SelectTrigger>
+              <SelectContent>
+                {db.classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Date</Label>
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
         </div>
-        <Button onClick={save}>Enregistrer les présences</Button>
+        <Button onClick={save}>Enregistrer</Button>
       </div>
 
       <Card>
@@ -80,7 +85,7 @@ function PresencesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Élève</TableHead>
-                  <TableHead className="text-right">Statut ({today})</TableHead>
+                  <TableHead className="text-right">Statut</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -92,15 +97,16 @@ function PresencesPage() {
                       <TableCell>
                         <div className="flex justify-end gap-1.5">
                           {([
-                            { v: "present", label: "Présent", cls: "bg-success text-success-foreground" },
-                            { v: "absent", label: "Absent", cls: "bg-destructive text-destructive-foreground" },
-                            { v: "retard", label: "Retard", cls: "bg-accent text-accent-foreground" },
+                            { v: "present", label: "P", title: "Présent", cls: "bg-success text-success-foreground" },
+                            { v: "absent", label: "A", title: "Absent", cls: "bg-destructive text-destructive-foreground" },
+                            { v: "retard", label: "R", title: "Retard", cls: "bg-accent text-accent-foreground" },
                           ] as const).map((opt) => (
                             <button
                               key={opt.v}
+                              title={opt.title}
                               onClick={() => setStatus(s.id, opt.v)}
                               className={cn(
-                                "rounded-md border px-3 py-1 text-xs font-medium transition-colors",
+                                "h-9 w-9 rounded-md border text-sm font-bold transition-colors",
                                 st === opt.v ? opt.cls + " border-transparent" : "border-border text-muted-foreground hover:bg-muted",
                               )}
                             >
