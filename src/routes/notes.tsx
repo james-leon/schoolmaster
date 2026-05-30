@@ -583,7 +583,7 @@ function BulletinsTab() {
           </div>
           <DialogFooter className="no-print flex-shrink-0 flex-col gap-2 border-t border-border bg-background p-4 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setPreviewId(null)} className="min-h-11 w-full sm:w-auto">Fermer</Button>
-            <Button onClick={() => window.print()} className="min-h-11 w-full sm:w-auto">
+            <Button onClick={handlePrintBulletin} className="min-h-11 w-full sm:w-auto">
               <Printer className="mr-1.5 h-4 w-4" /> Imprimer
             </Button>
           </DialogFooter>
