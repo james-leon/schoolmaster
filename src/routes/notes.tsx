@@ -498,11 +498,44 @@ function BulletinsTab() {
   };
 
   const handlePrintBulletin = () => {
-    document.body.classList.add("printing-bulletin");
-    setTimeout(() => {
-      window.print();
-      setTimeout(() => document.body.classList.remove("printing-bulletin"), 100);
-    }, 100);
+    const node = document.querySelector(".bulletin-print-content");
+    if (!node) return;
+    // Strip the editable textarea so the printed copy stays clean
+    const clone = node.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll("textarea").forEach((ta) => {
+      const p = document.createElement("div");
+      p.style.minHeight = "60px";
+      p.style.borderBottom = "1px solid #999";
+      p.textContent = (ta as HTMLTextAreaElement).value || "";
+      ta.replaceWith(p);
+    });
+    const content = clone.innerHTML;
+    const win = window.open("", "_blank", "width=900,height=700");
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Bulletin — SchoolMaster</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; font-size: 12px; color: #000; background: #fff; padding: 15mm; }
+  h1, h2, h3 { font-weight: bold; }
+  .bulletin-sheet { box-shadow: none !important; border: none !important; padding: 0 !important; max-width: 100% !important; background: #fff !important; color: #000 !important; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 11px; }
+  thead tr { background: #0D2C54 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  thead th { color: #fff !important; }
+  th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: center; }
+  td:first-child, th:first-child { text-align: left; }
+  tbody tr:nth-child(even) { background: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  img { max-width: 80px; max-height: 80px; }
+  @page { size: A4 portrait; margin: 0; }
+  @media print { body { padding: 15mm; } }
+</style></head><body>${content}</body></html>`);
+    win.document.close();
+    const doPrint = () => {
+      win.focus();
+      win.print();
+      setTimeout(() => win.close(), 300);
+    };
+    win.onload = doPrint;
+    setTimeout(() => { if (!win.closed) doPrint(); }, 800);
   };
 
   return (
