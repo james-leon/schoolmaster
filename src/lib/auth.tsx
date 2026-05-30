@@ -46,6 +46,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const login = async (email: string, password: string) => {
+    const demo = DEMO_ACCOUNTS.find(
+      (a) => a.email.toLowerCase() === email.toLowerCase() && a.password === password,
+    );
+    if (demo) {
+      persist(demo.user);
+      return demo.user;
+    }
     const u = getDB().users.find(
       (x) => x.email.toLowerCase() === email.toLowerCase() && x.password === password,
     );
