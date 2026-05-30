@@ -39,6 +39,7 @@ function ClassesPage() {
   const [form, setForm] = useState<FormState>(empty);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [toDelete, setToDelete] = useState<Classe | null>(null);
+  const [subjectsFor, setSubjectsFor] = useState<Classe | null>(null);
 
   const set = (k: keyof FormState, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
