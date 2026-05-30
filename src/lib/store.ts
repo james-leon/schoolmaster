@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import type { DB } from "./types";
 import { buildSeed } from "./seed";
 
-const KEY = "schoolmaster_db_v3";
+const KEY = "schoolmaster_db_v4";
 
 
 let cache: DB | null = null;
@@ -17,7 +17,9 @@ function load(): DB {
   const raw = localStorage.getItem(KEY);
   if (raw) {
     try {
-      cache = JSON.parse(raw) as DB;
+      const parsed = JSON.parse(raw) as DB;
+      if (!parsed.classSubjects) parsed.classSubjects = [];
+      cache = parsed;
       return cache;
     } catch {
       // fall through to seed
@@ -29,8 +31,12 @@ function load(): DB {
 }
 
 function persist() {
-  if (typeof window !== "undefined" && cache) {
-    localStorage.setItem(KEY, JSON.stringify(cache));
+  if (cache) {
+    // Reassign reference so useSyncExternalStore sees a new snapshot
+    cache = { ...cache };
+    if (typeof window !== "undefined") {
+      localStorage.setItem(KEY, JSON.stringify(cache));
+    }
   }
   listeners.forEach((l) => l());
 }

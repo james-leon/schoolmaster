@@ -1,4 +1,5 @@
-import type { DB, Level } from "./types";
+import type { DB, Level, ClassSubject } from "./types";
+import { DEFAULT_SUBJECTS_MATERNELLE, DEFAULT_SUBJECTS_PRIMAIRE } from "./types";
 
 const SCHOOL_ID = "school-1";
 
@@ -71,6 +72,23 @@ export function buildSeed(): DB {
   const payments: DB["payments"] = [];
   const grades: DB["grades"] = [];
   const attendance: DB["attendance"] = [];
+  const classSubjects: ClassSubject[] = [];
+
+  classes.forEach((cls) => {
+    const defaults = cls.level === "PS" || cls.level === "MS"
+      ? DEFAULT_SUBJECTS_MATERNELLE
+      : DEFAULT_SUBJECTS_PRIMAIRE;
+    defaults.forEach((d) => {
+      classSubjects.push({
+        id: uid("subj"),
+        classId: cls.id,
+        name: d.name,
+        coefficient: d.coefficient,
+        teacherId: teachers[Math.floor(rng() * teachers.length)].id,
+      });
+    });
+  });
+
 
   for (let i = 0; i < 45; i++) {
     const gender = rng() > 0.5 ? "M" : "F";
@@ -164,6 +182,7 @@ export function buildSeed(): DB {
     grades,
     attendance,
     activities,
+    classSubjects,
   };
 }
 
