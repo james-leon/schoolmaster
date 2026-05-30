@@ -612,23 +612,42 @@ function BulletinPrintStyles() {
       .bulletin-content table th:nth-child(5), .bulletin-content table td:nth-child(5) { width: 14%; }
       .bulletin-content table th:nth-child(6), .bulletin-content table td:nth-child(6) { width: 16%; }
       body:not(.print-all-bulletins) .print-all-only { display: none !important; }
+      body.printing-bulletin { margin: 0 !important; padding: 0 !important; }
+      body.printing-bulletin * { visibility: hidden !important; }
+      body.printing-bulletin .bulletin-print-content,
+      body.printing-bulletin .bulletin-print-content * { visibility: visible !important; }
+      body.printing-bulletin .bulletin-print-content {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100vw !important;
+        margin: 0 !important;
+        padding: 10mm !important;
+        background: white !important;
+        z-index: 99999 !important;
+      }
       @media print {
-        @page { size: A4 portrait; margin: 15mm; }
-        html, body { background: white !important; }
+        @page { size: A4 portrait; margin: 0; }
+        html, body { background: white !important; margin: 0 !important; padding: 0 !important; }
         body * { visibility: hidden !important; }
         .bulletin-print-content, .bulletin-print-content *,
         body.print-all-bulletins .print-all-only,
         body.print-all-bulletins .print-all-only * { visibility: visible !important; }
         .bulletin-print-content {
-          position: absolute;
-          top: 0; left: 0;
-          width: 100%;
-          padding: 0;
-          background: white;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 10mm !important;
+          background: white !important;
+          z-index: 99999 !important;
         }
-        body.print-all-bulletins .print-all-only { display: block !important; position: static; }
-        .no-print { display: none !important; }
-        .bulletin-sheet { box-shadow: none !important; border: 1px solid #ddd !important; page-break-after: always; }
+        body.print-all-bulletins .print-all-only { display: block !important; position: static !important; }
+        .no-print, [role="dialog"] > button[aria-label] { display: none !important; }
+        .bulletin-sheet { box-shadow: none !important; border: none !important; page-break-after: always; }
         .bulletin-sheet:last-child { page-break-after: auto; }
       }
     `}</style>
