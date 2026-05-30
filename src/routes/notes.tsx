@@ -47,8 +47,17 @@ function NotesPage() {
 
 /* ───────────────────────── helpers ───────────────────────── */
 
-function subjectAverage(grades: Grade[], studentId: string, subject: string, term: string): number | null {
-  const list = grades.filter((g) => g.studentId === studentId && g.subject === subject && g.term === term);
+function norm(s: string | undefined | null): string {
+  return (s ?? "").toString().trim().toLowerCase();
+}
+
+function matchSubject(g: Grade, subjectName: string, subjectId?: string): boolean {
+  if (subjectId && g.subjectId && g.subjectId === subjectId) return true;
+  return norm(g.subject) === norm(subjectName);
+}
+
+function subjectAverage(grades: Grade[], studentId: string, subject: string, term: string, subjectId?: string): number | null {
+  const list = grades.filter((g) => g.studentId === studentId && matchSubject(g, subject, subjectId) && norm(g.term) === norm(term));
   if (!list.length) return null;
   const vals = list.map(gradeValue);
   return Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 100) / 100;
