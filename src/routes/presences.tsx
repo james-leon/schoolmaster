@@ -72,7 +72,7 @@ function PresencesPage() {
             <Select value={classId} onValueChange={setClassId}>
               <SelectTrigger><SelectValue placeholder="Classe" /></SelectTrigger>
               <SelectContent>
-                {db.classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                {visibleClasses.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
