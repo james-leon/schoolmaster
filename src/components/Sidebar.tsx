@@ -7,7 +7,8 @@ import { LogOut } from "lucide-react";
 
 export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const items = NAV_ITEMS.filter((i) => !user || !i.roles || i.roles.includes(user.role));
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] flex-col bg-sidebar text-sidebar-foreground md:flex">
@@ -15,7 +16,7 @@ export function Sidebar() {
         <Logo />
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active = pathname === item.to;
           return (
             <Link
@@ -47,9 +48,11 @@ export function Sidebar() {
 
 export function MobileNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user } = useAuth();
+  const items = NAV_ITEMS.filter((i) => !user || !i.roles || i.roles.includes(user.role)).slice(0, 5);
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 flex justify-around border-t border-sidebar-border bg-sidebar px-1 py-1.5 md:hidden">
-      {NAV_ITEMS.slice(0, 5).map((item) => {
+      {items.map((item) => {
         const active = pathname === item.to;
         return (
           <Link
