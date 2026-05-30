@@ -38,6 +38,20 @@ function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
+  const doLogin = async (em: string, pw: string) => {
+    setErrors({});
+    setLoading(true);
+    try {
+      const u = await login(em, pw);
+      toast.success(`Bienvenue, ${u.name} !`);
+      navigate({ to: redirectFor(u.role) });
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = schema.safeParse({ email, password });
@@ -47,17 +61,7 @@ function LoginPage() {
       setErrors(errs);
       return;
     }
-    setErrors({});
-    setLoading(true);
-    try {
-      const u = await login(email, password);
-      toast.success(`Bienvenue, ${u.name} !`);
-      navigate({ to: redirectFor(u.role) });
-    } catch (err) {
-      toast.error((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
+    await doLogin(email, password);
   };
 
   return (
@@ -100,7 +104,7 @@ function LoginPage() {
                 onClick={() => {
                   setEmail(d.email);
                   setPassword(d.password);
-                  toast.info(`Identifiants ${d.label} pré-remplis`);
+                  doLogin(d.email, d.password);
                 }}
                 className={`flex flex-col items-center gap-1 rounded-md border border-border p-3 text-xs font-medium transition-colors hover:bg-muted ${''}`}
               >

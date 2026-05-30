@@ -4,6 +4,52 @@ import { getDB, updateDB } from "./store";
 
 const SESSION_KEY = "currentUser";
 
+export const DEMO_ACCOUNTS: { email: string; password: string; user: User }[] = [
+  {
+    email: "admin@queenmary.cm",
+    password: "admin123",
+    user: {
+      id: "demo-admin-001",
+      name: "Pauline Essomba",
+      email: "admin@queenmary.cm",
+      password: "admin123",
+      role: "school_admin",
+      avatar: "PE",
+      assignedClasses: [],
+      assignedSubjects: [],
+    },
+  },
+  {
+    email: "prof.martin@queenmary.cm",
+    password: "prof123",
+    user: {
+      id: "demo-teacher-001",
+      name: "Georges Mbarga",
+      email: "prof.martin@queenmary.cm",
+      password: "prof123",
+      role: "teacher",
+      avatar: "GM",
+      assignedClasses: ["CE1", "CE2"],
+      assignedSubjects: ["Mathématiques", "Sciences"],
+    },
+  },
+  {
+    email: "parent.ekane@gmail.com",
+    password: "parent123",
+    user: {
+      id: "demo-parent-001",
+      name: "Marcel Ekane",
+      email: "parent.ekane@gmail.com",
+      password: "parent123",
+      role: "parent",
+      avatar: "ME",
+      assignedClasses: [],
+      assignedSubjects: [],
+      studentId: "student-001",
+    },
+  },
+];
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -46,6 +92,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const login = async (email: string, password: string) => {
+    const demo = DEMO_ACCOUNTS.find(
+      (a) => a.email.toLowerCase() === email.toLowerCase() && a.password === password,
+    );
+    if (demo) {
+      persist(demo.user);
+      return demo.user;
+    }
     const u = getDB().users.find(
       (x) => x.email.toLowerCase() === email.toLowerCase() && x.password === password,
     );
