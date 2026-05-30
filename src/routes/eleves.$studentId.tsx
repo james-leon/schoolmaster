@@ -9,8 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, Mail, Phone, MessageCircle } from "lucide-react";
 import { fcfa } from "@/lib/format";
-import { computeMoyenne, TERMS, type StudentStatus } from "@/lib/types";
+import { TERMS, gradeValue, type StudentStatus, type Grade } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 export const Route = createFileRoute("/eleves/$studentId")({
   component: StudentDetailPage,
@@ -139,44 +140,7 @@ function StudentDetailPage() {
         </TabsContent>
 
         <TabsContent value="notes" className="mt-4 space-y-4">
-          {TERMS.map((term) => {
-            const list = grades.filter((g) => g.term === term);
-            if (!list.length) return null;
-            const avg = list.length ? Math.round((list.reduce((s, g) => s + (g.value || computeMoyenne(g)), 0) / list.length) * 100) / 100 : 0;
-            return (
-              <Card key={term}>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-base">{term}</CardTitle>
-                  <Badge variant="secondary">Moyenne : {avg}/20</Badge>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Matière</TableHead>
-                        <TableHead className="text-right">Devoir 1</TableHead>
-                        <TableHead className="text-right">Devoir 2</TableHead>
-                        <TableHead className="text-right">Composition</TableHead>
-                        <TableHead className="text-right">Moyenne</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {list.map((g) => (
-                        <TableRow key={g.id}>
-                          <TableCell className="font-medium">{g.subject}</TableCell>
-                          <TableCell className="text-right">{g.devoir1 ?? "—"}</TableCell>
-                          <TableCell className="text-right">{g.devoir2 ?? "—"}</TableCell>
-                          <TableCell className="text-right">{g.composition ?? "—"}</TableCell>
-                          <TableCell className="text-right font-semibold">{g.value || computeMoyenne(g)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            );
-          })}
-          {grades.length === 0 && <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">Aucune note enregistrée.</CardContent></Card>}
+          <NotesTab studentId={studentId} grades={grades} classId={student.classId} />
         </TabsContent>
 
         <TabsContent value="paiements" className="mt-4">
@@ -251,5 +215,122 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium text-right">{value}</span>
     </div>
+  );
+}
+
+function NotesTab({ studentId, grades, classId }: { studentId: string; grades: Grade[]; classId: string }) {
+  const db = useDB();
+  const subjects = db.classSubjects.filter((s) => s.classId === classId);
+
+  const termData = TERMS.map((term) => {
+    const subjAvgs = subjects.map((sub) => {
+      const list = grades.filter((g) => g.subject === sub.name && g.term === term);
+      if (!list.length) return { sub, avg: null as number | null, entries: list };
+      const vals = list.map(gradeValue);
+      const avg = Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 100) / 100;
+      return { sub, avg, entries: list };
+    });
+    let sumW = 0, sumC = 0;
+    subjAvgs.forEach(({ sub, avg }) => { if (avg != null) { sumW += avg * sub.coefficient; sumC += sub.coefficient; } });
+    const gen = sumC ? Math.round((sumW / sumC) * 100) / 100 : null;
+
+    // rank
+    const all = db.students.filter((s) => s.classId === classId).map((s) => {
+      const gs = db.grades.filter((g) => g.studentId === s.id && g.term === term);
+      let w = 0, c = 0;
+      subjects.forEach((sub) => {
+        const l = gs.filter((g) => g.subject === sub.name);
+        if (!l.length) return;
+        const v = l.map(gradeValue);
+        const a = v.reduce((x, y) => x + y, 0) / v.length;
+        w += a * sub.coefficient; c += sub.coefficient;
+      });
+      return { id: s.id, g: c ? w / c : null };
+    }).sort((a, b) => (b.g ?? -1) - (a.g ?? -1));
+    const rank = gen != null ? all.findIndex((x) => x.id === studentId) + 1 : 0;
+
+    return { term, subjAvgs, gen, rank };
+  });
+
+  const chartData = termData.map((t) => ({ name: t.term.replace("trimestre", "T."), moyenne: t.gen ?? 0 }));
+  const hasAny = termData.some((t) => t.gen != null);
+
+  return (
+    <>
+      <Tabs defaultValue={TERMS[0]}>
+        <TabsList>
+          {TERMS.map((t) => <TabsTrigger key={t} value={t}>{t}</TabsTrigger>)}
+        </TabsList>
+        {termData.map((td) => (
+          <TabsContent key={td.term} value={td.term} className="mt-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">{td.term}</CardTitle>
+                <div className="flex gap-2">
+                  {td.gen != null && <Badge variant="secondary">Moyenne : {td.gen.toFixed(2)}/20</Badge>}
+                  {td.rank > 0 && <Badge>Rang : {td.rank === 1 ? "1er" : `${td.rank}ème`}</Badge>}
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Matière</TableHead>
+                      <TableHead className="text-center">Coef</TableHead>
+                      <TableHead className="text-center">Dev 1</TableHead>
+                      <TableHead className="text-center">Dev 2</TableHead>
+                      <TableHead className="text-center">Comp</TableHead>
+                      <TableHead className="text-center">Oral</TableHead>
+                      <TableHead className="text-right">Moyenne</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {td.subjAvgs.map(({ sub, avg, entries }) => {
+                      const find = (et: string) => entries.find((e) => e.evaluationType === et)?.grade;
+                      const d1 = find("Devoir 1") ?? entries.find((e) => !e.evaluationType)?.devoir1;
+                      const d2 = find("Devoir 2") ?? entries.find((e) => !e.evaluationType)?.devoir2;
+                      const comp = find("Composition") ?? entries.find((e) => !e.evaluationType)?.composition;
+                      const oral = find("Oral");
+                      return (
+                        <TableRow key={sub.id}>
+                          <TableCell className="font-medium">{sub.name}</TableCell>
+                          <TableCell className="text-center">{sub.coefficient}</TableCell>
+                          <TableCell className="text-center">{d1 ?? "—"}</TableCell>
+                          <TableCell className="text-center">{d2 ?? "—"}</TableCell>
+                          <TableCell className="text-center">{comp ?? "—"}</TableCell>
+                          <TableCell className="text-center">{oral ?? "—"}</TableCell>
+                          <TableCell className="text-right font-semibold">{avg != null ? avg.toFixed(2) : "—"}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
+
+      {hasAny && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Évolution de la moyenne générale</CardTitle></CardHeader>
+          <CardContent>
+            <div style={{ width: "100%", height: 240 }}>
+              <ResponsiveContainer>
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="name" className="text-xs" />
+                  <YAxis domain={[0, 20]} className="text-xs" />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="moyenne" stroke="var(--primary)" strokeWidth={2} dot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!hasAny && <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">Aucune note enregistrée.</CardContent></Card>}
+    </>
   );
 }

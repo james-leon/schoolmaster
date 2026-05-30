@@ -108,15 +108,46 @@ export interface PaymentRecord {
   notes?: string;
 }
 
+export type EvaluationType = "Devoir 1" | "Devoir 2" | "Composition" | "Oral" | "Examen";
+
 export interface Grade {
   id: string;
   studentId: string;
+  classId?: string;
   subject: string;
+  subjectId?: string;
   term: string;
+  evaluationType?: EvaluationType;
+  grade?: number;
+  comment?: string;
+  createdAt?: string;
   devoir1?: number;
   devoir2?: number;
   composition?: number;
   value: number;
+}
+
+export const EVALUATION_TYPES: EvaluationType[] = ["Devoir 1", "Devoir 2", "Composition", "Oral", "Examen"];
+
+export function gradeValue(g: Grade): number {
+  if (g.evaluationType != null) return g.grade ?? 0;
+  return g.value || computeMoyenne(g);
+}
+
+export function appreciationFor(n: number): { label: string; cls: string } {
+  if (n >= 16) return { label: "Très bien", cls: "bg-success/15 text-success" };
+  if (n >= 14) return { label: "Bien", cls: "bg-secondary/15 text-secondary" };
+  if (n >= 12) return { label: "Assez bien", cls: "bg-teal-500/15 text-teal-600 dark:text-teal-400" };
+  if (n >= 10) return { label: "Passable", cls: "bg-accent/15 text-accent" };
+  return { label: "Insuffisant", cls: "bg-destructive/15 text-destructive" };
+}
+
+export function mentionFor(n: number): string {
+  if (n >= 16) return "Félicitations";
+  if (n >= 14) return "Très Bien";
+  if (n >= 12) return "Bien";
+  if (n >= 10) return "Passable";
+  return "À améliorer";
 }
 
 export interface Attendance {
