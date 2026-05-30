@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { Sidebar, MobileNav } from "./Sidebar";
 import { Header } from "./Header";
 import { useAuth } from "@/lib/auth";
-import { NAV_ITEMS } from "@/lib/nav";
+import { allowedRoutes, NAV_ITEMS } from "@/lib/nav";
 import { ChevronRight } from "lucide-react";
 
 export function AppLayout({ title, children }: { title: string; children: ReactNode }) {
@@ -13,11 +13,22 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
-    if (user === null) {
-      const stored = localStorage.getItem("schoolmaster_session");
-      if (!stored) navigate({ to: "/login" });
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem("currentUser");
+    if (!stored) {
+      navigate({ to: "/login" });
+      return;
     }
-  }, [user, navigate]);
+    if (!user) return;
+    if (user.role === "parent") {
+      navigate({ to: "/parent" });
+      return;
+    }
+    const allowed = allowedRoutes(user.role);
+    if (!allowed.includes(pathname)) {
+      navigate({ to: "/unauthorized" });
+    }
+  }, [user, navigate, pathname]);
 
   return (
     <div className="min-h-screen bg-background">
