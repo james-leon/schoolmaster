@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import type { DB } from "./types";
 import { buildSeed } from "./seed";
 
-const KEY = "schoolmaster_db_v4";
+const KEY = "schoolmaster_db_v5";
 
 
 let cache: DB | null = null;
@@ -19,6 +19,8 @@ function load(): DB {
     try {
       const parsed = JSON.parse(raw) as DB;
       if (!parsed.classSubjects) parsed.classSubjects = [];
+      if (!parsed.feeTypes) parsed.feeTypes = [];
+      if (!parsed.paymentRecords) parsed.paymentRecords = [];
       cache = parsed;
       return cache;
     } catch {
