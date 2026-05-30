@@ -551,14 +551,24 @@ function BulletinsTab() {
       </div>
 
       <Dialog open={!!previewId} onOpenChange={(o) => !o && setPreviewId(null)}>
-        <DialogContent className="max-w-4xl print:max-w-none">
-          <DialogHeader className="no-print">
+        <DialogContent
+          className="flex max-h-[90vh] w-[min(800px,95vw)] max-w-[min(800px,95vw)] flex-col gap-0 p-0 print:max-h-none print:w-full print:max-w-none print:border-0"
+        >
+          <DialogHeader className="no-print flex-shrink-0 border-b border-border p-4">
             <DialogTitle>Aperçu du bulletin</DialogTitle>
           </DialogHeader>
-          {previewId && <BulletinSheet studentId={previewId} classId={classId} term={term} />}
-          <DialogFooter className="no-print">
-            <Button variant="outline" onClick={() => setPreviewId(null)}>Fermer</Button>
-            <Button onClick={() => window.print()}><Printer className="mr-1.5 h-4 w-4" /> Imprimer</Button>
+          <div className="flex-1 overflow-y-auto p-4 print:overflow-visible print:p-0">
+            {previewId && (
+              <div className="bulletin-print-content bulletin-content">
+                <BulletinSheet studentId={previewId} classId={classId} term={term} />
+              </div>
+            )}
+          </div>
+          <DialogFooter className="no-print flex-shrink-0 flex-col gap-2 border-t border-border bg-background p-4 sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={() => setPreviewId(null)} className="min-h-11 w-full sm:w-auto">Fermer</Button>
+            <Button onClick={() => window.print()} className="min-h-11 w-full sm:w-auto">
+              <Printer className="mr-1.5 h-4 w-4" /> Imprimer
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -571,19 +581,38 @@ function BulletinsTab() {
 function BulletinPrintStyles() {
   return (
     <style>{`
-      @media print {
-        .no-print { display: none !important; }
-        body { background: white !important; }
-        .bulletin-sheet { page-break-after: always; box-shadow: none !important; border: 1px solid #ddd !important; }
-        .bulletin-sheet:last-child { page-break-after: auto; }
+      .bulletin-content {
+        width: 100%;
+        max-width: 750px;
+        margin: 0 auto;
+        font-size: clamp(11px, 2vw, 14px);
       }
+      .bulletin-content table { width: 100%; table-layout: fixed; word-wrap: break-word; }
+      .bulletin-content table th:nth-child(1), .bulletin-content table td:nth-child(1) { width: 36%; }
+      .bulletin-content table th:nth-child(2), .bulletin-content table td:nth-child(2) { width: 10%; }
+      .bulletin-content table th:nth-child(3), .bulletin-content table td:nth-child(3) { width: 12%; }
+      .bulletin-content table th:nth-child(4), .bulletin-content table td:nth-child(4) { width: 12%; }
+      .bulletin-content table th:nth-child(5), .bulletin-content table td:nth-child(5) { width: 14%; }
+      .bulletin-content table th:nth-child(6), .bulletin-content table td:nth-child(6) { width: 16%; }
       body:not(.print-all-bulletins) .print-all-only { display: none !important; }
       @media print {
-        body.print-all-bulletins [role="dialog"],
-        body.print-all-bulletins header,
-        body.print-all-bulletins aside,
-        body.print-all-bulletins nav { display: none !important; }
-        body.print-all-bulletins .print-all-only { display: block !important; }
+        @page { size: A4 portrait; margin: 15mm; }
+        html, body { background: white !important; }
+        body * { visibility: hidden !important; }
+        .bulletin-print-content, .bulletin-print-content *,
+        body.print-all-bulletins .print-all-only,
+        body.print-all-bulletins .print-all-only * { visibility: visible !important; }
+        .bulletin-print-content {
+          position: absolute;
+          top: 0; left: 0;
+          width: 100%;
+          padding: 0;
+          background: white;
+        }
+        body.print-all-bulletins .print-all-only { display: block !important; position: static; }
+        .no-print { display: none !important; }
+        .bulletin-sheet { box-shadow: none !important; border: 1px solid #ddd !important; page-break-after: always; }
+        .bulletin-sheet:last-child { page-break-after: auto; }
       }
     `}</style>
   );
