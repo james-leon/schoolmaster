@@ -322,7 +322,7 @@ function NotesTab({ studentId, grades, classId }: { studentId: string; grades: G
                   <XAxis dataKey="name" className="text-xs" />
                   <YAxis domain={[0, 20]} className="text-xs" />
                   <Tooltip />
-                  <Line type="monotone" dataKey="moyenne" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="moyenne" stroke="var(--primary)" strokeWidth={2} dot={{ r: 4 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
