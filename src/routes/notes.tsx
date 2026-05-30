@@ -47,8 +47,17 @@ function NotesPage() {
 
 /* ───────────────────────── helpers ───────────────────────── */
 
-function subjectAverage(grades: Grade[], studentId: string, subject: string, term: string): number | null {
-  const list = grades.filter((g) => g.studentId === studentId && g.subject === subject && g.term === term);
+function norm(s: string | undefined | null): string {
+  return (s ?? "").toString().trim().toLowerCase();
+}
+
+function matchSubject(g: Grade, subjectName: string, subjectId?: string): boolean {
+  if (subjectId && g.subjectId && g.subjectId === subjectId) return true;
+  return norm(g.subject) === norm(subjectName);
+}
+
+function subjectAverage(grades: Grade[], studentId: string, subject: string, term: string, subjectId?: string): number | null {
+  const list = grades.filter((g) => g.studentId === studentId && matchSubject(g, subject, subjectId) && norm(g.term) === norm(term));
   if (!list.length) return null;
   const vals = list.map(gradeValue);
   return Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 100) / 100;
@@ -488,6 +497,14 @@ function BulletinsTab() {
     }, 200);
   };
 
+  const handlePrintBulletin = () => {
+    document.body.classList.add("printing-bulletin");
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => document.body.classList.remove("printing-bulletin"), 100);
+    }, 100);
+  };
+
   return (
     <div className="space-y-4">
       <Card className="no-print">
@@ -566,7 +583,7 @@ function BulletinsTab() {
           </div>
           <DialogFooter className="no-print flex-shrink-0 flex-col gap-2 border-t border-border bg-background p-4 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setPreviewId(null)} className="min-h-11 w-full sm:w-auto">Fermer</Button>
-            <Button onClick={() => window.print()} className="min-h-11 w-full sm:w-auto">
+            <Button onClick={handlePrintBulletin} className="min-h-11 w-full sm:w-auto">
               <Printer className="mr-1.5 h-4 w-4" /> Imprimer
             </Button>
           </DialogFooter>
@@ -595,23 +612,42 @@ function BulletinPrintStyles() {
       .bulletin-content table th:nth-child(5), .bulletin-content table td:nth-child(5) { width: 14%; }
       .bulletin-content table th:nth-child(6), .bulletin-content table td:nth-child(6) { width: 16%; }
       body:not(.print-all-bulletins) .print-all-only { display: none !important; }
+      body.printing-bulletin { margin: 0 !important; padding: 0 !important; }
+      body.printing-bulletin * { visibility: hidden !important; }
+      body.printing-bulletin .bulletin-print-content,
+      body.printing-bulletin .bulletin-print-content * { visibility: visible !important; }
+      body.printing-bulletin .bulletin-print-content {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100vw !important;
+        margin: 0 !important;
+        padding: 10mm !important;
+        background: white !important;
+        z-index: 99999 !important;
+      }
       @media print {
-        @page { size: A4 portrait; margin: 15mm; }
-        html, body { background: white !important; }
+        @page { size: A4 portrait; margin: 0; }
+        html, body { background: white !important; margin: 0 !important; padding: 0 !important; }
         body * { visibility: hidden !important; }
         .bulletin-print-content, .bulletin-print-content *,
         body.print-all-bulletins .print-all-only,
         body.print-all-bulletins .print-all-only * { visibility: visible !important; }
         .bulletin-print-content {
-          position: absolute;
-          top: 0; left: 0;
-          width: 100%;
-          padding: 0;
-          background: white;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 10mm !important;
+          background: white !important;
+          z-index: 99999 !important;
         }
-        body.print-all-bulletins .print-all-only { display: block !important; position: static; }
-        .no-print { display: none !important; }
-        .bulletin-sheet { box-shadow: none !important; border: 1px solid #ddd !important; page-break-after: always; }
+        body.print-all-bulletins .print-all-only { display: block !important; position: static !important; }
+        .no-print, [role="dialog"] > button[aria-label] { display: none !important; }
+        .bulletin-sheet { box-shadow: none !important; border: none !important; page-break-after: always; }
         .bulletin-sheet:last-child { page-break-after: auto; }
       }
     `}</style>
@@ -630,13 +666,14 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
 
   const rowsData = subjects.map((sub) => {
     const list = db.grades.filter(
-      (g) => g.studentId === studentId && g.subject === sub.name && g.term === term
+      (g) => g.studentId === studentId && matchSubject(g, sub.name, sub.id) && norm(g.term) === norm(term)
     );
     const get = (et: string) => {
-      const f = list.find((g) => g.evaluationType === et);
-      return f?.grade;
+      const f = list.find((g) => norm(g.evaluationType) === norm(et));
+      const v = f?.grade ?? (f as Grade | undefined)?.value;
+      return v != null && !Number.isNaN(Number(v)) ? Number(v) : undefined;
     };
-    const moy = subjectAverage(db.grades, studentId, sub.name, term);
+    const moy = subjectAverage(db.grades, studentId, sub.name, term, sub.id);
     return { sub, d1: get("Devoir 1"), d2: get("Devoir 2"), comp: get("Composition"), moy };
   });
 
@@ -700,9 +737,9 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
             <tr key={sub.id}>
               <td className="border border-gray-400 p-1">{sub.name}</td>
               <td className="border border-gray-400 p-1 text-center">{sub.coefficient}</td>
-              <td className="border border-gray-400 p-1 text-center">{d1 ?? "—"}</td>
-              <td className="border border-gray-400 p-1 text-center">{d2 ?? "—"}</td>
-              <td className="border border-gray-400 p-1 text-center">{comp ?? "—"}</td>
+              <td className="border border-gray-400 p-1 text-center">{d1 != null ? d1.toFixed(2) : "—"}</td>
+              <td className="border border-gray-400 p-1 text-center">{d2 != null ? d2.toFixed(2) : "—"}</td>
+              <td className="border border-gray-400 p-1 text-center">{comp != null ? comp.toFixed(2) : "—"}</td>
               <td className="border border-gray-400 p-1 text-center font-bold">{moy != null ? moy.toFixed(2) : "—"}</td>
             </tr>
           ))}
