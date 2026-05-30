@@ -1,5 +1,5 @@
-import type { DB, Level, ClassSubject } from "./types";
-import { DEFAULT_SUBJECTS_MATERNELLE, DEFAULT_SUBJECTS_PRIMAIRE } from "./types";
+import type { DB, Level, ClassSubject, FeeType, PaymentRecord, PaymentMode } from "./types";
+import { DEFAULT_SUBJECTS_MATERNELLE, DEFAULT_SUBJECTS_PRIMAIRE, DEFAULT_FEE_TYPES } from "./types";
 
 const SCHOOL_ID = "school-1";
 
@@ -119,15 +119,18 @@ export function buildSeed(): DB {
       const total = Math.round(cls.fees / 3);
       const amountPaid = r > 0.8 ? 0 : r > 0.6 ? Math.round(total / 2) : total;
       const status = amountPaid >= total ? "paye" : amountPaid > 0 ? "partiel" : "impaye";
+      const invNum = `FAC-2026-${(payments.length + 1).toString().padStart(3, "0")}`;
       payments.push({
         id: uid("pay"),
+        invoiceNumber: invNum,
         studentId: sid,
         amount: total,
         amountPaid,
         date: `2025-0${3 + m}-1${Math.floor(rng() * 8)}`,
+        dueDate: `2025-${(3 + m).toString().padStart(2, "0")}-28`,
         type: "Scolarité " + ["1er", "2e", "3e"][m] + " trimestre",
         status,
-        mode: amountPaid > 0 ? (rand(["Espèces", "MTN MoMo", "Orange Money"]) as "Espèces" | "MTN MoMo" | "Orange Money") : undefined,
+        mode: amountPaid > 0 ? (rand(["Espèces", "MTN Mobile Money", "Orange Money"]) as PaymentMode) : undefined,
         reference: amountPaid > 0 ? "REF-" + Math.floor(rng() * 100000) : undefined,
       });
     }
@@ -183,6 +186,8 @@ export function buildSeed(): DB {
     attendance,
     activities,
     classSubjects,
+    feeTypes: DEFAULT_FEE_TYPES.map((f) => ({ id: uid("fee"), ...f })) as FeeType[],
+    paymentRecords: [] as PaymentRecord[],
   };
 }
 
