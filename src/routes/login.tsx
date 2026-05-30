@@ -104,7 +104,7 @@ function LoginPage() {
                 onClick={() => {
                   setEmail(d.email);
                   setPassword(d.password);
-                  toast.info(`Identifiants ${d.label} pré-remplis`);
+                  doLogin(d.email, d.password);
                 }}
                 className={`flex flex-col items-center gap-1 rounded-md border border-border p-3 text-xs font-medium transition-colors hover:bg-muted ${''}`}
               >
