@@ -110,6 +110,14 @@ export interface Activity {
   date: string;
 }
 
+export interface ClassSubject {
+  id: string;
+  classId: string;
+  name: string;
+  coefficient: number;
+  teacherId?: string;
+}
+
 export interface DB {
   users: User[];
   schools: School[];
@@ -120,7 +128,27 @@ export interface DB {
   grades: Grade[];
   attendance: Attendance[];
   activities: Activity[];
+  classSubjects: ClassSubject[];
 }
+
+export const DEFAULT_SUBJECTS_MATERNELLE: { name: string; coefficient: number }[] = [
+  { name: "Éveil", coefficient: 2 },
+  { name: "Langage", coefficient: 2 },
+  { name: "Activités Manuelles", coefficient: 1 },
+  { name: "Anglais", coefficient: 1 },
+  { name: "Motricité", coefficient: 1 },
+];
+
+export const DEFAULT_SUBJECTS_PRIMAIRE: { name: string; coefficient: number }[] = [
+  { name: "Français", coefficient: 3 },
+  { name: "Mathématiques", coefficient: 3 },
+  { name: "Sciences", coefficient: 2 },
+  { name: "Histoire-Géographie", coefficient: 2 },
+  { name: "Anglais", coefficient: 2 },
+  { name: "Education Civique", coefficient: 1 },
+  { name: "Dessin/Art", coefficient: 1 },
+  { name: "Education Physique", coefficient: 1 },
+];
 
 export const SUBJECTS = ["Mathématiques", "Français", "Anglais", "Sciences", "Histoire-Géo", "Éveil"] as const;
 export const TERMS = ["1er trimestre", "2e trimestre", "3e trimestre"] as const;
