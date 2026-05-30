@@ -69,7 +69,7 @@ const STATUS_LABELS: Record<PaymentStatus, { label: string; cls: string }> = {
   retard: { label: "En retard", cls: "bg-destructive text-destructive-foreground" },
 };
 
-const MATERNELLE_LEVELS = ["PS", "MS"];
+
 
 function nextInvoiceNumber(): string {
   const prefix = "FAC-2026-";
