@@ -7,6 +7,10 @@ export interface User {
   password: string;
   role: Role;
   schoolId?: string;
+  assignedClasses?: string[];
+  assignedSubjects?: string[];
+  studentId?: string;
+  avatar?: string;
 }
 
 export interface School {
