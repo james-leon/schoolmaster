@@ -346,14 +346,10 @@ function OverviewTab() {
   }, [db.grades, students, subjects, term]);
 
   const classBySubject = subjects.map((sub) => {
-    const vals = rows.map((r, i) => r.subjAvgs[i === 0 ? 0 : 0]); // placeholder
-    // recompute properly
-    const properVals = rows
-      .map((r) => r.subjAvgs[subjects.findIndex((s) => s.id === sub.id)])
-      .filter((v): v is number => v != null);
-    void vals;
-    if (!properVals.length) return null;
-    return Math.round((properVals.reduce((a, b) => a + b, 0) / properVals.length) * 100) / 100;
+    const idx = subjects.findIndex((s) => s.id === sub.id);
+    const vals = rows.map((r) => r.subjAvgs[idx]).filter((v): v is number => v != null);
+    if (!vals.length) return null;
+    return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 100) / 100;
   });
 
   const exportCSV = () => {
