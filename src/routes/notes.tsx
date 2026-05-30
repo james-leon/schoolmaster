@@ -96,7 +96,7 @@ function SaisieTab() {
 
   const visibleClasses = useMemo(() => {
     if (user?.role === "teacher" && user.assignedClasses?.length) {
-      return db.classes.filter((c) => user.assignedClasses!.some((a) => c.name === a || c.level === a));
+      return db.classes.filter((c) => user.assignedClasses!.some((a: string) => c.name === a || c.level === a));
     }
     return db.classes;
   }, [db.classes, user]);
