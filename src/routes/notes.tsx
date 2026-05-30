@@ -710,6 +710,9 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
             <tr key={sub.id}>
               <td className="border border-gray-400 p-1">{sub.name}</td>
               <td className="border border-gray-400 p-1 text-center">{sub.coefficient}</td>
+              <td className="border border-gray-400 p-1 text-center">{d1 != null ? d1.toFixed(2) : "—"}</td>
+              <td className="border border-gray-400 p-1 text-center">{d2 != null ? d2.toFixed(2) : "—"}</td>
+              <td className="border border-gray-400 p-1 text-center">{comp != null ? comp.toFixed(2) : "—"}</td>
               <td className="border border-gray-400 p-1 text-center">{d1 ?? "—"}</td>
               <td className="border border-gray-400 p-1 text-center">{d2 ?? "—"}</td>
               <td className="border border-gray-400 p-1 text-center">{comp ?? "—"}</td>
