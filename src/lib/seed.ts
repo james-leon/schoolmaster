@@ -1,4 +1,5 @@
-import type { DB, Level } from "./types";
+import type { DB, Level, ClassSubject } from "./types";
+import { DEFAULT_SUBJECTS_MATERNELLE, DEFAULT_SUBJECTS_PRIMAIRE } from "./types";
 
 const SCHOOL_ID = "school-1";
 
