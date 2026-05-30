@@ -639,13 +639,14 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
 
   const rowsData = subjects.map((sub) => {
     const list = db.grades.filter(
-      (g) => g.studentId === studentId && g.subject === sub.name && g.term === term
+      (g) => g.studentId === studentId && matchSubject(g, sub.name, sub.id) && norm(g.term) === norm(term)
     );
     const get = (et: string) => {
-      const f = list.find((g) => g.evaluationType === et);
-      return f?.grade;
+      const f = list.find((g) => norm(g.evaluationType) === norm(et));
+      const v = f?.grade ?? (f as Grade | undefined)?.value;
+      return v != null && !Number.isNaN(Number(v)) ? Number(v) : undefined;
     };
-    const moy = subjectAverage(db.grades, studentId, sub.name, term);
+    const moy = subjectAverage(db.grades, studentId, sub.name, term, sub.id);
     return { sub, d1: get("Devoir 1"), d2: get("Devoir 2"), comp: get("Composition"), moy };
   });
 
