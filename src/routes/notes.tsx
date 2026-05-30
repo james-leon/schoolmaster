@@ -218,7 +218,7 @@ function SaisieTab() {
         <CardContent className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-4">
           <Select value={classId} onValueChange={(v) => { setClassId(v); setSubject(""); }}>
             <SelectTrigger><SelectValue placeholder="Classe" /></SelectTrigger>
-            <SelectContent>{db.classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+            <SelectContent>{visibleClasses.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
           </Select>
           <Select value={subject} onValueChange={setSubject} disabled={!classId}>
             <SelectTrigger><SelectValue placeholder="Matière" /></SelectTrigger>
