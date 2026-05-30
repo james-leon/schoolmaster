@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { CalendarCheck, Check, X, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/presences")({ component: PresencesPage });
 
@@ -20,8 +21,15 @@ type Status = "present" | "absent" | "retard";
 function PresencesPage() {
   const db = useDB();
   const loaded = useLoaded();
+  const { user } = useAuth();
+  const visibleClasses = useMemo(() => {
+    if (user?.role === "teacher" && user.assignedClasses?.length) {
+      return db.classes.filter((c) => user.assignedClasses!.some((a: string) => c.name === a || c.level === a));
+    }
+    return db.classes;
+  }, [db.classes, user]);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [classId, setClassId] = useState(db.classes[0]?.id ?? "");
+  const [classId, setClassId] = useState(visibleClasses[0]?.id ?? "");
 
   const students = useMemo(() => db.students.filter((s) => s.classId === classId), [db.students, classId]);
 
