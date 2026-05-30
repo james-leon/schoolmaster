@@ -1,17 +1,20 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { useDB } from "@/lib/store";
+import { useDB, updateDB, getDB } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { fcfa, timeAgo } from "@/lib/format";
-import { gradeValue, appreciationFor, deriveInvoiceStatus, type Grade, type Payment } from "@/lib/types";
+import { fcfa } from "@/lib/format";
+import { gradeValue, appreciationFor, deriveInvoiceStatus, type Grade, type Payment, type Student, type Classe } from "@/lib/types";
 import { Logo } from "@/components/Logo";
-import { Bell, Calendar, GraduationCap, Receipt, UserCircle, LogOut, Wallet, MessageSquare } from "lucide-react";
+import {
+  Bell, Calendar, GraduationCap, UserCircle, LogOut, Wallet, MessageSquare,
+  CheckCircle2, Inbox, BookOpen, CalendarCheck,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/parent")({
@@ -28,6 +31,52 @@ const TABS: { key: TabKey; label: string; icon: typeof UserCircle }[] = [
   { key: "messages", label: "Messages", icon: MessageSquare },
 ];
 
+/** Ensures the parent has a linked student. Falls back to first student or
+ *  creates a deterministic demo student if the DB has none. */
+function ensureParentStudent(preferredId?: string): Student {
+  const db = getDB();
+  if (preferredId) {
+    const found = db.students.find((s) => s.id === preferredId);
+    if (found) return found;
+  }
+  if (db.students.length > 0) return db.students[0];
+
+  // Create a demo student + matching class if needed.
+  let classId = db.classes.find((c) => c.name === "CE1")?.id;
+  if (!classId) {
+    classId = "class-demo-ce1";
+    updateDB((d) => {
+      d.classes.push({
+        id: classId!,
+        name: "CE1",
+        level: "CE1",
+        teacherId: d.teachers[0]?.id ?? "teacher-demo",
+        fees: 160000,
+        capacity: 30,
+      });
+    });
+  }
+  const demo: Student = {
+    id: "student-001",
+    code: "EL-2026-001",
+    firstName: "Arielle",
+    lastName: "Ekane",
+    gender: "F",
+    classId: classId!,
+    birthDate: "2018-03-15",
+    parentName: "Marcel Ekane",
+    parentPhone: "+237 677 111 222",
+    parentEmail: "parent.ekane@gmail.com",
+    parentRelation: "Père",
+    status: "actif",
+    enrolledAt: new Date().toISOString(),
+  };
+  updateDB((d) => {
+    d.students.push(demo);
+  });
+  return demo;
+}
+
 function ParentPortal() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -41,25 +90,13 @@ function ParentPortal() {
     else if (user && user.role !== "parent") navigate({ to: "/dashboard" });
   }, [user, navigate]);
 
-  const student = useMemo(() => {
-    const sid = user?.studentId ?? db.students[0]?.id;
-    return db.students.find((s) => s.id === sid);
-  }, [user, db.students]);
-
-  if (!student) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <p className="text-muted-foreground">Aucun élève associé à votre compte.</p>
-      </div>
-    );
-  }
+  const student = useMemo(() => ensureParentStudent(user?.studentId), [user, db.students.length]);
 
   const klass = db.classes.find((c) => c.id === student.classId);
   const initials = (student.firstName[0] + student.lastName[0]).toUpperCase();
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
       <header className="sticky top-0 z-20 border-b border-border bg-card">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -87,7 +124,6 @@ function ParentPortal() {
         {tab === "messages" && <MessagesTab />}
       </main>
 
-      {/* Bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card">
         <div className="mx-auto grid max-w-3xl grid-cols-5">
           {TABS.map((t) => {
@@ -112,15 +148,29 @@ function ParentPortal() {
   );
 }
 
+function EmptyState({ icon: Icon, message, tone = "muted" }: { icon: any; message: string; tone?: "muted" | "success" }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
+      <div className={cn(
+        "flex h-12 w-12 items-center justify-center rounded-full",
+        tone === "success" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground",
+      )}>
+        <Icon className="h-6 w-6" />
+      </div>
+      <p className={cn("text-sm", tone === "success" ? "font-medium text-success" : "text-muted-foreground")}>{message}</p>
+    </div>
+  );
+}
+
 function EnfantTab({ student, klass, initials, grades, payments, attendance }: {
-  student: any; klass: any; initials: string; grades: Grade[]; payments: Payment[]; attendance: any[];
+  student: Student; klass: Classe | undefined; initials: string; grades: Grade[]; payments: Payment[]; attendance: any[];
 }) {
   const studentGrades = grades.filter((g) => g.studentId === student.id);
   const lastTerm = "1er trimestre";
   const termGrades = studentGrades.filter((g) => g.term === lastTerm);
   const moy = termGrades.length
     ? Math.round((termGrades.reduce((s, g) => s + gradeValue(g), 0) / termGrades.length) * 100) / 100
-    : 0;
+    : null;
 
   const month = new Date().toISOString().slice(0, 7);
   const absencesMois = attendance.filter((a) => a.studentId === student.id && a.date.startsWith(month) && a.status === "absent").length;
@@ -132,36 +182,50 @@ function EnfantTab({ student, klass, initials, grades, payments, attendance }: {
     <div className="space-y-4">
       <Card>
         <CardContent className="flex flex-col items-center gap-3 pt-6 text-center">
-          <Avatar className="h-20 w-20">
-            <AvatarFallback className="bg-primary text-primary-foreground text-xl font-bold">{initials}</AvatarFallback>
-          </Avatar>
+          {student.photo ? (
+            <img src={student.photo} alt="" className="h-20 w-20 rounded-full object-cover" />
+          ) : (
+            <Avatar className="h-20 w-20">
+              <AvatarFallback className="bg-primary text-primary-foreground text-xl font-bold">{initials}</AvatarFallback>
+            </Avatar>
+          )}
           <div>
             <h2 className="text-xl font-bold">{student.firstName} {student.lastName}</h2>
             <div className="mt-1 flex items-center justify-center gap-2">
               <Badge variant="outline">{klass?.name ?? "—"}</Badge>
-              <span className="text-xs text-muted-foreground">{student.code}</span>
+              <span className="text-xs text-muted-foreground">{student.code ?? "—"}</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-2 gap-3">
-        <SummaryCard label="Moyenne générale" value={moy ? `${moy}/20` : "—"} icon={GraduationCap} tone="bg-secondary/10 text-secondary" />
+        <SummaryCard label="Moyenne générale" value={moy != null ? `${moy}/20` : "—"} icon={GraduationCap} tone="bg-secondary/10 text-secondary" />
         <SummaryCard label="Absences ce mois" value={String(absencesMois)} icon={Calendar} tone="bg-accent/10 text-accent" />
-        <SummaryCard label="Frais impayés" value={fcfa(due)} icon={Wallet} tone="bg-destructive/10 text-destructive" />
-        <SummaryCard label="Prochain examen" value="Composition" icon={Bell} tone="bg-primary/10 text-primary" />
+        <SummaryCard
+          label="Frais impayés"
+          value={fcfa(due)}
+          icon={Wallet}
+          tone={due > 0 ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}
+        />
+        <SummaryCard label="Prochain cours" value="Lundi 08h00" icon={Bell} tone="bg-primary/10 text-primary" />
       </div>
 
       <Card>
         <CardHeader><CardTitle className="text-base">Activité récente</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          {studentGrades.slice(0, 3).map((g) => (
-            <div key={g.id} className="flex items-center justify-between text-sm">
-              <span>{g.subject} — {g.term}</span>
-              <Badge variant="secondary">{gradeValue(g)}/20</Badge>
+        <CardContent>
+          {studentGrades.length === 0 ? (
+            <EmptyState icon={Inbox} message="Aucune activité récente" />
+          ) : (
+            <div className="space-y-3">
+              {studentGrades.slice(0, 3).map((g) => (
+                <div key={g.id} className="flex items-center justify-between text-sm">
+                  <span>{g.subject} — {g.term}</span>
+                  <Badge variant="secondary">{gradeValue(g)}/20</Badge>
+                </div>
+              ))}
             </div>
-          ))}
-          {studentGrades.length === 0 && <p className="text-sm text-muted-foreground">Aucune note récente.</p>}
+          )}
         </CardContent>
       </Card>
     </div>
@@ -188,6 +252,23 @@ function NotesTab({ studentId, grades, classSubjects }: { studentId: string; gra
   const [term, setTerm] = useState("1er trimestre");
   const termGrades = grades.filter((g) => g.studentId === studentId && g.term === term);
 
+  if (termGrades.length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <Tabs value={term} onValueChange={setTerm}>
+            <TabsList>
+              <TabsTrigger value="1er trimestre">T1</TabsTrigger>
+              <TabsTrigger value="2e trimestre">T2</TabsTrigger>
+              <TabsTrigger value="3e trimestre">T3</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <EmptyState icon={BookOpen} message="Les notes ne sont pas encore disponibles pour ce trimestre" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   const bySubject = classSubjects.map((subj) => {
     const list = termGrades.filter((g) => g.subject === subj.name);
     const avg = list.length ? Math.round((list.reduce((s, g) => s + gradeValue(g), 0) / list.length) * 100) / 100 : null;
@@ -199,48 +280,46 @@ function NotesTab({ studentId, grades, classSubjects }: { studentId: string; gra
   const general = totalCoef ? Math.round((totalWeighted / totalCoef) * 100) / 100 : 0;
 
   return (
-    <div className="space-y-4">
-      <Tabs value={term} onValueChange={setTerm}>
-        <TabsList>
-          <TabsTrigger value="1er trimestre">T1</TabsTrigger>
-          <TabsTrigger value="2e trimestre">T2</TabsTrigger>
-          <TabsTrigger value="3e trimestre">T3</TabsTrigger>
-        </TabsList>
-        <TabsContent value={term} className="mt-3">
-          <Card>
-            <CardContent className="pt-6">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Matière</TableHead>
-                    <TableHead className="text-center">Coef.</TableHead>
-                    <TableHead className="text-right">Moyenne</TableHead>
-                    <TableHead>Appréciation</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {bySubject.map((r) => {
-                    const app = r.avg != null ? appreciationFor(r.avg) : null;
-                    return (
-                      <TableRow key={r.name}>
-                        <TableCell className="font-medium">{r.name}</TableCell>
-                        <TableCell className="text-center">{r.coefficient}</TableCell>
-                        <TableCell className="text-right">{r.avg != null ? `${r.avg}/20` : "—"}</TableCell>
-                        <TableCell>{app && <Badge className={app.cls}>{app.label}</Badge>}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-              <div className="mt-4 flex items-center justify-between rounded-lg bg-primary/10 px-4 py-3">
-                <span className="text-sm font-semibold text-primary">Moyenne générale</span>
-                <span className="text-lg font-bold text-primary">{general}/20</span>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+    <Tabs value={term} onValueChange={setTerm}>
+      <TabsList>
+        <TabsTrigger value="1er trimestre">T1</TabsTrigger>
+        <TabsTrigger value="2e trimestre">T2</TabsTrigger>
+        <TabsTrigger value="3e trimestre">T3</TabsTrigger>
+      </TabsList>
+      <TabsContent value={term} className="mt-3">
+        <Card>
+          <CardContent className="pt-6">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Matière</TableHead>
+                  <TableHead className="text-center">Coef.</TableHead>
+                  <TableHead className="text-right">Moyenne</TableHead>
+                  <TableHead>Appréciation</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {bySubject.map((r) => {
+                  const app = r.avg != null ? appreciationFor(r.avg) : null;
+                  return (
+                    <TableRow key={r.name}>
+                      <TableCell className="font-medium">{r.name}</TableCell>
+                      <TableCell className="text-center">{r.coefficient}</TableCell>
+                      <TableCell className="text-right">{r.avg != null ? `${r.avg}/20` : "—"}</TableCell>
+                      <TableCell>{app && <Badge className={app.cls}>{app.label}</Badge>}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+            <div className="mt-4 flex items-center justify-between rounded-lg bg-primary/10 px-4 py-3">
+              <span className="text-sm font-semibold text-primary">Moyenne générale</span>
+              <span className="text-lg font-bold text-primary">{general}/20</span>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -257,7 +336,7 @@ function PresencesTab({ studentId, attendance }: { studentId: string; attendance
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">
+        <CardTitle className="text-base capitalize">
           {now.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
         </CardTitle>
       </CardHeader>
@@ -281,10 +360,17 @@ function PresencesTab({ studentId, attendance }: { studentId: string; attendance
             );
           })}
         </div>
-        <div className="mt-4 flex items-center justify-between rounded-lg bg-destructive/5 px-4 py-3">
-          <span className="text-sm">Absences ce mois</span>
-          <Badge variant="destructive">{absences}</Badge>
-        </div>
+        {records.length === 0 ? (
+          <div className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-success/10 px-4 py-3 text-success">
+            <CheckCircle2 className="h-4 w-4" />
+            <span className="text-sm font-medium">Aucune absence enregistrée ce mois-ci</span>
+          </div>
+        ) : (
+          <div className="mt-4 flex items-center justify-between rounded-lg bg-destructive/5 px-4 py-3">
+            <span className="text-sm">Absences ce mois</span>
+            <Badge variant="destructive">{absences}</Badge>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -293,12 +379,23 @@ function PresencesTab({ studentId, attendance }: { studentId: string; attendance
 function PaiementsTab({ studentId, payments }: { studentId: string; payments: Payment[] }) {
   const list = payments.filter((p) => p.studentId === studentId);
   const due = list.reduce((s, p) => s + Math.max(0, p.amount - p.amountPaid), 0);
+
+  if (list.length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <EmptyState icon={CheckCircle2} message="Aucune facture en attente" tone="success" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <Card>
         <CardContent className="flex items-center justify-between pt-6">
           <span className="text-sm font-medium">Total impayé</span>
-          <span className="text-xl font-bold text-destructive">{fcfa(due)}</span>
+          <span className={cn("text-xl font-bold", due > 0 ? "text-destructive" : "text-success")}>{fcfa(due)}</span>
         </CardContent>
       </Card>
       <Card>
@@ -326,9 +423,6 @@ function PaiementsTab({ studentId, payments }: { studentId: string; payments: Pa
                   </TableRow>
                 );
               })}
-              {list.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="text-center text-sm text-muted-foreground">Aucune facture.</TableCell></TableRow>
-              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -338,35 +432,11 @@ function PaiementsTab({ studentId, payments }: { studentId: string; payments: Pa
 }
 
 function MessagesTab() {
-  const [read, setRead] = useState<Record<string, boolean>>({});
-  const messages = [
-    { id: "m1", title: "Réunion parents-professeurs", body: "Samedi 15 juin à 9h00 dans la cour de l'école.", date: new Date().toISOString() },
-    { id: "m2", title: "Vacances de Pâques", body: "L'école sera fermée du 10 au 24 avril.", date: new Date(Date.now() - 86400000 * 3).toISOString() },
-    { id: "m3", title: "Composition du 2e trimestre", body: "Les compositions auront lieu du 5 au 12 mars.", date: new Date(Date.now() - 86400000 * 7).toISOString() },
-  ];
   return (
-    <div className="space-y-3">
-      {messages.map((m) => (
-        <Card key={m.id} className={cn(!read[m.id] && "border-primary/40")}>
-          <CardContent className="pt-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold">{m.title}</h3>
-                  {!read[m.id] && <span className="h-2 w-2 rounded-full bg-primary" />}
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">{m.body}</p>
-                <p className="mt-2 text-xs text-muted-foreground">{timeAgo(m.date)}</p>
-              </div>
-              {!read[m.id] && (
-                <Button size="sm" variant="ghost" onClick={() => setRead({ ...read, [m.id]: true })}>
-                  Marquer lu
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    <Card>
+      <CardContent className="pt-6">
+        <EmptyState icon={MessageSquare} message="Aucun message de l'école pour le moment" />
+      </CardContent>
+    </Card>
   );
 }
