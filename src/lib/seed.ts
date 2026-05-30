@@ -182,6 +182,7 @@ export function buildSeed(): DB {
     grades,
     attendance,
     activities,
+    classSubjects,
   };
 }
 
