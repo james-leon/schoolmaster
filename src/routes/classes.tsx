@@ -182,7 +182,137 @@ function ClassesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <SubjectsModal classe={subjectsFor} onClose={() => setSubjectsFor(null)} />
     </AppLayout>
+  );
+}
+
+function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: () => void }) {
+  const db = useDB();
+  const [editing, setEditing] = useState<ClassSubject | null>(null);
+  const [draft, setDraft] = useState<{ name: string; coefficient: string; teacherId: string }>({ name: "", coefficient: "1", teacherId: "" });
+  const [adding, setAdding] = useState(false);
+  const [confirmDel, setConfirmDel] = useState<ClassSubject | null>(null);
+
+  const subjects = classe ? db.classSubjects.filter((s) => s.classId === classe.id) : [];
+
+  const reset = () => { setDraft({ name: "", coefficient: "1", teacherId: "" }); setEditing(null); setAdding(false); };
+
+  const startEdit = (s: ClassSubject) => {
+    setEditing(s);
+    setDraft({ name: s.name, coefficient: String(s.coefficient), teacherId: s.teacherId ?? "" });
+    setAdding(true);
+  };
+
+  const save = () => {
+    if (!classe) return;
+    const name = draft.name.trim();
+    const coef = parseInt(draft.coefficient, 10);
+    if (!name) { toast.error("Nom de matière requis"); return; }
+    if (!coef || coef < 1 || coef > 5) { toast.error("Coefficient entre 1 et 5"); return; }
+    updateDB((d) => {
+      if (editing) {
+        const s = d.classSubjects.find((x) => x.id === editing.id);
+        if (s) { s.name = name; s.coefficient = coef; s.teacherId = draft.teacherId || undefined; }
+      } else {
+        d.classSubjects.push({
+          id: "subj-" + Math.random().toString(36).slice(2, 9),
+          classId: classe.id,
+          name,
+          coefficient: coef,
+          teacherId: draft.teacherId || undefined,
+        });
+      }
+    });
+    toast.success(editing ? "Matière modifiée" : "Matière ajoutée");
+    reset();
+  };
+
+  const remove = () => {
+    if (!confirmDel) return;
+    const id = confirmDel.id;
+    updateDB((d) => { d.classSubjects = d.classSubjects.filter((s) => s.id !== id); });
+    toast.success("Matière supprimée");
+    setConfirmDel(null);
+  };
+
+  return (
+    <Dialog open={!!classe} onOpenChange={(o) => { if (!o) { reset(); onClose(); } }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Matières — {classe?.name}</DialogTitle>
+        </DialogHeader>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Matière</TableHead>
+              <TableHead>Coef.</TableHead>
+              <TableHead>Enseignant</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {subjects.map((s) => {
+              const t = db.teachers.find((x) => x.id === s.teacherId);
+              return (
+                <TableRow key={s.id}>
+                  <TableCell className="font-medium">{s.name}</TableCell>
+                  <TableCell><Badge variant="outline">{s.coefficient}</Badge></TableCell>
+                  <TableCell className="text-muted-foreground">{t ? `${t.firstName} ${t.lastName}` : "—"}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" onClick={() => startEdit(s)}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => setConfirmDel(s)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+            {subjects.length === 0 && (
+              <TableRow><TableCell colSpan={4} className="py-6 text-center text-muted-foreground">Aucune matière.</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table>
+
+        {adding ? (
+          <div className="rounded-md border border-border p-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <Field label="Matière">
+                <Input value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} placeholder="ex: Français" />
+              </Field>
+              <Field label="Coefficient">
+                <Input type="number" min={1} max={5} value={draft.coefficient} onChange={(e) => setDraft((d) => ({ ...d, coefficient: e.target.value }))} />
+              </Field>
+              <Field label="Enseignant">
+                <Select value={draft.teacherId} onValueChange={(v) => setDraft((d) => ({ ...d, teacherId: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
+                  <SelectContent>
+                    {db.teachers.map((t) => <SelectItem key={t.id} value={t.id}>{t.firstName} {t.lastName}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
+            <div className="mt-3 flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={reset}>Annuler</Button>
+              <Button size="sm" onClick={save}>{editing ? "Enregistrer" : "Ajouter"}</Button>
+            </div>
+          </div>
+        ) : (
+          <Button variant="outline" onClick={() => setAdding(true)}><Plus className="mr-1.5 h-4 w-4" /> Ajouter une matière</Button>
+        )}
+
+        <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer cette matière ?</AlertDialogTitle>
+              <AlertDialogDescription>« {confirmDel?.name} » sera supprimée de cette classe.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={remove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Supprimer</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </DialogContent>
+    </Dialog>
   );
 }
 
