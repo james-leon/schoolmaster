@@ -38,6 +38,20 @@ function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
+  const doLogin = async (em: string, pw: string) => {
+    setErrors({});
+    setLoading(true);
+    try {
+      const u = await login(em, pw);
+      toast.success(`Bienvenue, ${u.name} !`);
+      navigate({ to: redirectFor(u.role) });
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = schema.safeParse({ email, password });
@@ -47,17 +61,7 @@ function LoginPage() {
       setErrors(errs);
       return;
     }
-    setErrors({});
-    setLoading(true);
-    try {
-      const u = await login(email, password);
-      toast.success(`Bienvenue, ${u.name} !`);
-      navigate({ to: redirectFor(u.role) });
-    } catch (err) {
-      toast.error((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
+    await doLogin(email, password);
   };
 
   return (
