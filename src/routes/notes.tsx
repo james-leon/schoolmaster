@@ -497,6 +497,14 @@ function BulletinsTab() {
     }, 200);
   };
 
+  const handlePrintBulletin = () => {
+    document.body.classList.add("printing-bulletin");
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => document.body.classList.remove("printing-bulletin"), 100);
+    }, 100);
+  };
+
   return (
     <div className="space-y-4">
       <Card className="no-print">
