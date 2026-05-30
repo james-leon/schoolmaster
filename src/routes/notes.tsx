@@ -24,6 +24,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { GraduationCap, Save, Download, Printer, FileText, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/notes")({ component: NotesPage });
 
@@ -85,6 +86,7 @@ type Cell = { grade: string; comment: string };
 function SaisieTab() {
   const db = useDB();
   const loaded = useLoaded();
+  const { user } = useAuth();
   const [classId, setClassId] = useState("");
   const [subject, setSubject] = useState("");
   const [term, setTerm] = useState("");
@@ -92,10 +94,20 @@ function SaisieTab() {
   const [cells, setCells] = useState<Record<string, Cell>>({});
   const [confirmReplace, setConfirmReplace] = useState(false);
 
-  const subjects = useMemo(
-    () => db.classSubjects.filter((s) => s.classId === classId),
-    [db.classSubjects, classId]
-  );
+  const visibleClasses = useMemo(() => {
+    if (user?.role === "teacher" && user.assignedClasses?.length) {
+      return db.classes.filter((c) => user.assignedClasses!.some((a: string) => c.name === a || c.level === a));
+    }
+    return db.classes;
+  }, [db.classes, user]);
+
+  const subjects = useMemo(() => {
+    const list = db.classSubjects.filter((s) => s.classId === classId);
+    if (user?.role === "teacher" && user.assignedSubjects?.length) {
+      return list.filter((s) => user.assignedSubjects!.includes(s.name));
+    }
+    return list;
+  }, [db.classSubjects, classId, user]);
   const students = useMemo(
     () => db.students.filter((s) => s.classId === classId).sort((a, b) => a.lastName.localeCompare(b.lastName)),
     [db.students, classId]
@@ -206,7 +218,7 @@ function SaisieTab() {
         <CardContent className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-4">
           <Select value={classId} onValueChange={(v) => { setClassId(v); setSubject(""); }}>
             <SelectTrigger><SelectValue placeholder="Classe" /></SelectTrigger>
-            <SelectContent>{db.classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+            <SelectContent>{visibleClasses.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
           </Select>
           <Select value={subject} onValueChange={setSubject} disabled={!classId}>
             <SelectTrigger><SelectValue placeholder="Matière" /></SelectTrigger>

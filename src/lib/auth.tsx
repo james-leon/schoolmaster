@@ -2,10 +2,11 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { User } from "./types";
 import { getDB, updateDB } from "./store";
 
-const SESSION_KEY = "schoolmaster_session";
+const SESSION_KEY = "currentUser";
 
 interface AuthContextType {
   user: User | null;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<User>;
   logout: () => void;
   registerSchool: (data: {
@@ -27,24 +28,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const raw = localStorage.getItem(SESSION_KEY);
     if (raw) {
-      const id = JSON.parse(raw) as string;
-      const u = getDB().users.find((x) => x.id === id);
-      if (u) setUser(u);
+      try {
+        const parsed = JSON.parse(raw) as User;
+        // Re-sync from DB if possible
+        const fresh = getDB().users.find((x) => x.id === parsed.id);
+        setUser(fresh ?? parsed);
+      } catch {
+        // ignore
+      }
     }
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const u = getDB().users.find((x) => x.email.toLowerCase() === email.toLowerCase() && x.password === password);
-    if (!u) throw new Error("Email ou mot de passe incorrect");
-    localStorage.setItem(SESSION_KEY, JSON.stringify(u.id));
+  const persist = (u: User | null) => {
+    if (u) localStorage.setItem(SESSION_KEY, JSON.stringify(u));
+    else localStorage.removeItem(SESSION_KEY);
     setUser(u);
+  };
+
+  const login = async (email: string, password: string) => {
+    const u = getDB().users.find(
+      (x) => x.email.toLowerCase() === email.toLowerCase() && x.password === password,
+    );
+    if (!u) throw new Error("Email ou mot de passe incorrect");
+    persist(u);
     return u;
   };
 
-  const logout = () => {
-    localStorage.removeItem(SESSION_KEY);
-    setUser(null);
-  };
+  const logout = () => persist(null);
 
   const registerSchool: AuthContextType["registerSchool"] = async (data) => {
     const existing = getDB().users.find((x) => x.email.toLowerCase() === data.email.toLowerCase());
@@ -62,16 +72,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       db.schools.push({ id: schoolId, name: data.schoolName, director: data.director, email: data.email, phone: data.phone, city: data.city, country: data.country });
       db.users.push(newUser);
     });
-    localStorage.setItem(SESSION_KEY, JSON.stringify(newUser.id));
-    setUser(newUser);
+    persist(newUser);
     return newUser;
   };
 
-  return <AuthContext.Provider value={{ user, login, logout, registerSchool }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, registerSchool }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
+}
+
+/** Returns the list of class IDs visible to the current user (teacher = assigned only). */
+export function visibleClassIds(user: User | null): string[] | null {
+  if (!user) return [];
+  if (user.role === "teacher" && user.assignedClasses?.length) {
+    const db = getDB();
+    return db.classes
+      .filter((c) => user.assignedClasses!.some((a) => c.name === a || c.level === a))
+      .map((c) => c.id);
+  }
+  // null = unrestricted (admin/super)
+  return null;
 }

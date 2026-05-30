@@ -9,10 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ScolariteRouteImport } from './routes/scolarite'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PresencesRouteImport } from './routes/presences'
+import { Route as ParentRouteImport } from './routes/parent'
 import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as LoginRouteImport } from './routes/login'
@@ -24,6 +26,11 @@ import { Route as ClassesRouteImport } from './routes/classes'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ElevesStudentIdRouteImport } from './routes/eleves.$studentId'
 
+const UnauthorizedRoute = UnauthorizedRouteImport.update({
+  id: '/unauthorized',
+  path: '/unauthorized',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -42,6 +49,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const PresencesRoute = PresencesRouteImport.update({
   id: '/presences',
   path: '/presences',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentRoute = ParentRouteImport.update({
+  id: '/parent',
+  path: '/parent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ParametresRoute = ParametresRouteImport.update({
@@ -105,10 +117,12 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/parametres': typeof ParametresRoute
+  '/parent': typeof ParentRoute
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
 }
 export interface FileRoutesByTo {
@@ -121,10 +135,12 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/parametres': typeof ParametresRoute
+  '/parent': typeof ParentRoute
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
 }
 export interface FileRoutesById {
@@ -138,10 +154,12 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/parametres': typeof ParametresRoute
+  '/parent': typeof ParentRoute
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
 }
 export interface FileRouteTypes {
@@ -156,10 +174,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/notes'
     | '/parametres'
+    | '/parent'
     | '/presences'
     | '/register'
     | '/scolarite'
     | '/sitemap.xml'
+    | '/unauthorized'
     | '/eleves/$studentId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -172,10 +192,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/notes'
     | '/parametres'
+    | '/parent'
     | '/presences'
     | '/register'
     | '/scolarite'
     | '/sitemap.xml'
+    | '/unauthorized'
     | '/eleves/$studentId'
   id:
     | '__root__'
@@ -188,10 +210,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/notes'
     | '/parametres'
+    | '/parent'
     | '/presences'
     | '/register'
     | '/scolarite'
     | '/sitemap.xml'
+    | '/unauthorized'
     | '/eleves/$studentId'
   fileRoutesById: FileRoutesById
 }
@@ -205,14 +229,23 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRoute
   ParametresRoute: typeof ParametresRoute
+  ParentRoute: typeof ParentRoute
   PresencesRoute: typeof PresencesRoute
   RegisterRoute: typeof RegisterRoute
   ScolariteRoute: typeof ScolariteRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  UnauthorizedRoute: typeof UnauthorizedRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/unauthorized': {
+      id: '/unauthorized'
+      path: '/unauthorized'
+      fullPath: '/unauthorized'
+      preLoaderRoute: typeof UnauthorizedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -239,6 +272,13 @@ declare module '@tanstack/react-router' {
       path: '/presences'
       fullPath: '/presences'
       preLoaderRoute: typeof PresencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent': {
+      id: '/parent'
+      path: '/parent'
+      fullPath: '/parent'
+      preLoaderRoute: typeof ParentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/parametres': {
@@ -335,10 +375,12 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   NotesRoute: NotesRoute,
   ParametresRoute: ParametresRoute,
+  ParentRoute: ParentRoute,
   PresencesRoute: PresencesRoute,
   RegisterRoute: RegisterRoute,
   ScolariteRoute: ScolariteRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  UnauthorizedRoute: UnauthorizedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,4 +1,4 @@
-import { Bell, Moon, Sun, User as UserIcon } from "lucide-react";
+import { Bell, Moon, Sun, User as UserIcon, LogOut } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/format";
@@ -12,6 +12,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
+const ROLE_BADGE: Record<string, string> = {
+  school_admin: "bg-primary text-primary-foreground",
+  super_admin: "bg-primary text-primary-foreground",
+  teacher: "bg-secondary text-secondary-foreground",
+  parent: "bg-success text-success-foreground",
+};
 
 export function Header({ title }: { title: string }) {
   const { theme, toggle } = useTheme();
@@ -26,8 +34,20 @@ export function Header({ title }: { title: string }) {
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-card px-4 md:px-6">
-      <h1 className="text-lg font-semibold tracking-tight md:text-xl">{title}</h1>
+      <div className="flex items-center gap-3">
+        <h1 className="text-lg font-semibold tracking-tight md:text-xl">{title}</h1>
+        {user && (
+          <Badge className={`hidden sm:inline-flex ${ROLE_BADGE[user.role] ?? ""}`}>
+            {ROLE_LABELS[user.role]}
+          </Badge>
+        )}
+      </div>
       <div className="flex items-center gap-1.5">
+        {user && (
+          <span className="mr-2 hidden text-sm font-medium md:inline">
+            {user.role === "teacher" ? `Prof. ${user.name}` : user.name}
+          </span>
+        )}
         <Button variant="ghost" size="icon" onClick={toggle} aria-label="Basculer le thème">
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
@@ -52,7 +72,7 @@ export function Header({ title }: { title: string }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="text-destructive">
-              Déconnexion
+              <LogOut className="mr-2 h-4 w-4" /> Déconnexion
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
