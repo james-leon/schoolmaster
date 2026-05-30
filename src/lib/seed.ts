@@ -1,5 +1,5 @@
-import type { DB, Level, ClassSubject } from "./types";
-import { DEFAULT_SUBJECTS_MATERNELLE, DEFAULT_SUBJECTS_PRIMAIRE } from "./types";
+import type { DB, Level, ClassSubject, FeeType, PaymentRecord, PaymentMode } from "./types";
+import { DEFAULT_SUBJECTS_MATERNELLE, DEFAULT_SUBJECTS_PRIMAIRE, DEFAULT_FEE_TYPES } from "./types";
 
 const SCHOOL_ID = "school-1";
 
@@ -127,7 +127,7 @@ export function buildSeed(): DB {
         date: `2025-0${3 + m}-1${Math.floor(rng() * 8)}`,
         type: "Scolarité " + ["1er", "2e", "3e"][m] + " trimestre",
         status,
-        mode: amountPaid > 0 ? (rand(["Espèces", "MTN MoMo", "Orange Money"]) as "Espèces" | "MTN MoMo" | "Orange Money") : undefined,
+        mode: amountPaid > 0 ? (rand(["Espèces", "MTN Mobile Money", "Orange Money"]) as PaymentMode) : undefined,
         reference: amountPaid > 0 ? "REF-" + Math.floor(rng() * 100000) : undefined,
       });
     }
@@ -183,6 +183,8 @@ export function buildSeed(): DB {
     attendance,
     activities,
     classSubjects,
+    feeTypes: DEFAULT_FEE_TYPES.map((f) => ({ id: uid("fee"), ...f })) as FeeType[],
+    paymentRecords: [] as PaymentRecord[],
   };
 }
 
