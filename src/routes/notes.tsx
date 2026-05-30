@@ -713,9 +713,6 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
               <td className="border border-gray-400 p-1 text-center">{d1 != null ? d1.toFixed(2) : "—"}</td>
               <td className="border border-gray-400 p-1 text-center">{d2 != null ? d2.toFixed(2) : "—"}</td>
               <td className="border border-gray-400 p-1 text-center">{comp != null ? comp.toFixed(2) : "—"}</td>
-              <td className="border border-gray-400 p-1 text-center">{d1 ?? "—"}</td>
-              <td className="border border-gray-400 p-1 text-center">{d2 ?? "—"}</td>
-              <td className="border border-gray-400 p-1 text-center">{comp ?? "—"}</td>
               <td className="border border-gray-400 p-1 text-center font-bold">{moy != null ? moy.toFixed(2) : "—"}</td>
             </tr>
           ))}
