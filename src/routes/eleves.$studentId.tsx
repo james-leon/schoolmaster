@@ -140,44 +140,7 @@ function StudentDetailPage() {
         </TabsContent>
 
         <TabsContent value="notes" className="mt-4 space-y-4">
-          {TERMS.map((term) => {
-            const list = grades.filter((g) => g.term === term);
-            if (!list.length) return null;
-            const avg = list.length ? Math.round((list.reduce((s, g) => s + (g.value || computeMoyenne(g)), 0) / list.length) * 100) / 100 : 0;
-            return (
-              <Card key={term}>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-base">{term}</CardTitle>
-                  <Badge variant="secondary">Moyenne : {avg}/20</Badge>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Matière</TableHead>
-                        <TableHead className="text-right">Devoir 1</TableHead>
-                        <TableHead className="text-right">Devoir 2</TableHead>
-                        <TableHead className="text-right">Composition</TableHead>
-                        <TableHead className="text-right">Moyenne</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {list.map((g) => (
-                        <TableRow key={g.id}>
-                          <TableCell className="font-medium">{g.subject}</TableCell>
-                          <TableCell className="text-right">{g.devoir1 ?? "—"}</TableCell>
-                          <TableCell className="text-right">{g.devoir2 ?? "—"}</TableCell>
-                          <TableCell className="text-right">{g.composition ?? "—"}</TableCell>
-                          <TableCell className="text-right font-semibold">{g.value || computeMoyenne(g)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            );
-          })}
-          {grades.length === 0 && <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">Aucune note enregistrée.</CardContent></Card>}
+          <NotesTab studentId={studentId} grades={grades} classId={student.classId} />
         </TabsContent>
 
         <TabsContent value="paiements" className="mt-4">
