@@ -89,6 +89,10 @@ function ParentPortal() {
       navigate({ to: "/login", replace: true });
       return;
     }
+    if (user.mustChangePassword) {
+      navigate({ to: "/changer-mot-de-passe", replace: true });
+      return;
+    }
     if (user.role !== "parent") navigate({ to: "/dashboard", replace: true });
   }, [user, loading, isAuthenticated, navigate]);
 

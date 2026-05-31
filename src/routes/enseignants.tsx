@@ -16,6 +16,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { GraduationCap, Plus, Pencil, Trash2 } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { adminApi } from "@/lib/admin-api";
+import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
+import { hydrateAll } from "@/lib/supabase-sync";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/enseignants")({ component: EnseignantsPage });
 
@@ -25,33 +29,42 @@ const schema = z.object({
   email: z.string().trim().email("Email invalide"),
   phone: z.string().trim().min(6, "Téléphone invalide").max(30),
   subjects: z.array(z.string()).min(1, "Au moins une matière"),
+  assignedClasses: z.array(z.string()),
 });
 
-type FormState = { firstName: string; lastName: string; email: string; phone: string; subjects: string[] };
-const empty: FormState = { firstName: "", lastName: "", email: "", phone: "", subjects: [] };
+type FormState = { firstName: string; lastName: string; email: string; phone: string; subjects: string[]; assignedClasses: string[] };
+const empty: FormState = { firstName: "", lastName: "", email: "", phone: "", subjects: [], assignedClasses: [] };
 
 function EnseignantsPage() {
   const db = useDB();
+  const { user } = useAuth();
   const loaded = useLoaded();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Teacher | null>(null);
   const [form, setForm] = useState<FormState>(empty);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [toDelete, setToDelete] = useState<Teacher | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [credentials, setCredentials] = useState<CredentialsInfo | null>(null);
+  const school = db.schools.find((s) => s.id === user?.schoolId);
 
   const openNew = () => { setEditing(null); setForm(empty); setErrors({}); setOpen(true); };
   const openEdit = (t: Teacher) => {
     setEditing(t);
-    setForm({ firstName: t.firstName, lastName: t.lastName, email: t.email, phone: t.phone, subjects: t.subjects ?? [t.subject].filter(Boolean) });
+    setForm({
+      firstName: t.firstName, lastName: t.lastName, email: t.email, phone: t.phone,
+      subjects: t.subjects ?? [t.subject].filter(Boolean),
+      assignedClasses: [],
+    });
     setErrors({});
     setOpen(true);
   };
 
-  const toggleSubject = (s: string) => {
-    setForm((f) => ({ ...f, subjects: f.subjects.includes(s) ? f.subjects.filter((x) => x !== s) : [...f.subjects, s] }));
+  const toggle = (key: "subjects" | "assignedClasses", v: string) => {
+    setForm((f) => ({ ...f, [key]: f[key].includes(v) ? f[key].filter((x) => x !== v) : [...f[key], v] }));
   };
 
-  const submit = () => {
+  const submit = async () => {
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
       const errs: Record<string, string> = {};
@@ -60,16 +73,35 @@ function EnseignantsPage() {
       return;
     }
     const data = parsed.data;
-    updateDB((d) => {
+    setSubmitting(true);
+    try {
       if (editing) {
-        const t = d.teachers.find((x) => x.id === editing.id);
-        if (t) Object.assign(t, data, { subject: data.subjects[0] });
+        updateDB((d) => {
+          const t = d.teachers.find((x) => x.id === editing.id);
+          if (t) Object.assign(t, data, { subject: data.subjects[0] });
+        });
+        toast.success("Enseignant modifié");
+        setOpen(false);
       } else {
-        d.teachers.push({ id: crypto.randomUUID(), ...data, subject: data.subjects[0] });
+        const res = await adminApi.createTeacher({
+          firstName: data.firstName, lastName: data.lastName, email: data.email,
+          phone: data.phone, subjects: data.subjects, assignedClasses: data.assignedClasses,
+        });
+        if (user?.schoolId) await hydrateAll(user.schoolId).catch(() => {});
+        setOpen(false);
+        setCredentials({
+          name: `${data.firstName} ${data.lastName}`,
+          email: data.email,
+          tempPassword: res.tempPassword,
+          role: "teacher",
+          schoolName: school?.name,
+        });
       }
-    });
-    toast.success(editing ? "Enseignant modifié" : "Enseignant ajouté");
-    setOpen(false);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const confirmDelete = () => {
@@ -126,8 +158,8 @@ function EnseignantsPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+      <Dialog open={open} onOpenChange={(o) => !submitting && setOpen(o)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editing ? "Modifier l'enseignant" : "Nouvel enseignant"}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Prénom" error={errors.firstName}>
@@ -136,8 +168,8 @@ function EnseignantsPage() {
             <Field label="Nom" error={errors.lastName}>
               <Input value={form.lastName} onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))} />
             </Field>
-            <Field label="Email" error={errors.email}>
-              <Input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
+            <Field label="Email (login)" error={errors.email}>
+              <Input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} disabled={!!editing} />
             </Field>
             <Field label="Téléphone" error={errors.phone}>
               <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
@@ -147,17 +179,37 @@ function EnseignantsPage() {
                 <div className="grid grid-cols-2 gap-2 rounded-md border border-border p-3">
                   {SUBJECTS.map((s) => (
                     <label key={s} className="flex cursor-pointer items-center gap-2 text-sm">
-                      <Checkbox checked={form.subjects.includes(s)} onCheckedChange={() => toggleSubject(s)} />
+                      <Checkbox checked={form.subjects.includes(s)} onCheckedChange={() => toggle("subjects", s)} />
                       {s}
                     </label>
                   ))}
                 </div>
               </Field>
             </div>
+            {!editing && (
+              <div className="sm:col-span-2">
+                <Field label="Classes assignées">
+                  {db.classes.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Aucune classe. Créez une classe d'abord.</p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 rounded-md border border-border p-3 sm:grid-cols-3">
+                      {db.classes.map((c) => (
+                        <label key={c.id} className="flex cursor-pointer items-center gap-2 text-sm">
+                          <Checkbox checked={form.assignedClasses.includes(c.name)} onCheckedChange={() => toggle("assignedClasses", c.name)} />
+                          {c.name}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </Field>
+              </div>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button onClick={submit}>{editing ? "Enregistrer" : "Ajouter"}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>Annuler</Button>
+            <Button onClick={submit} disabled={submitting}>
+              {submitting ? "Création..." : editing ? "Enregistrer" : "Créer le compte"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -176,6 +228,8 @@ function EnseignantsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CredentialsModal info={credentials} onClose={() => setCredentials(null)} />
     </AppLayout>
   );
 }

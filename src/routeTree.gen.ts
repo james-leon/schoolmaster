@@ -23,11 +23,13 @@ import { Route as EnseignantsRouteImport } from './routes/enseignants'
 import { Route as ElevesRouteImport } from './routes/eleves'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ClassesRouteImport } from './routes/classes'
+import { Route as ChangerMotDePasseRouteImport } from './routes/changer-mot-de-passe'
 import { Route as AnnoncesRouteImport } from './routes/annonces'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ElevesStudentIdRouteImport } from './routes/eleves.$studentId'
 import { Route as ApiPublicSeedDemoRouteImport } from './routes/api/public/seed-demo'
 import { Route as ApiPublicRegisterSchoolRouteImport } from './routes/api/public/register-school'
+import { Route as ApiPublicAdminUsersRouteImport } from './routes/api/public/admin-users'
 
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
@@ -99,6 +101,11 @@ const ClassesRoute = ClassesRouteImport.update({
   path: '/classes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChangerMotDePasseRoute = ChangerMotDePasseRouteImport.update({
+  id: '/changer-mot-de-passe',
+  path: '/changer-mot-de-passe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnnoncesRoute = AnnoncesRouteImport.update({
   id: '/annonces',
   path: '/annonces',
@@ -124,10 +131,16 @@ const ApiPublicRegisterSchoolRoute = ApiPublicRegisterSchoolRouteImport.update({
   path: '/api/public/register-school',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAdminUsersRoute = ApiPublicAdminUsersRouteImport.update({
+  id: '/api/public/admin-users',
+  path: '/api/public/admin-users',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/annonces': typeof AnnoncesRoute
+  '/changer-mot-de-passe': typeof ChangerMotDePasseRoute
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRouteWithChildren
@@ -143,12 +156,14 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
+  '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/annonces': typeof AnnoncesRoute
+  '/changer-mot-de-passe': typeof ChangerMotDePasseRoute
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRouteWithChildren
@@ -164,6 +179,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
+  '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
 }
@@ -171,6 +187,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/annonces': typeof AnnoncesRoute
+  '/changer-mot-de-passe': typeof ChangerMotDePasseRoute
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRouteWithChildren
@@ -186,6 +203,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
+  '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
 }
@@ -194,6 +212,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/annonces'
+    | '/changer-mot-de-passe'
     | '/classes'
     | '/dashboard'
     | '/eleves'
@@ -209,12 +228,14 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/unauthorized'
     | '/eleves/$studentId'
+    | '/api/public/admin-users'
     | '/api/public/register-school'
     | '/api/public/seed-demo'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/annonces'
+    | '/changer-mot-de-passe'
     | '/classes'
     | '/dashboard'
     | '/eleves'
@@ -230,12 +251,14 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/unauthorized'
     | '/eleves/$studentId'
+    | '/api/public/admin-users'
     | '/api/public/register-school'
     | '/api/public/seed-demo'
   id:
     | '__root__'
     | '/'
     | '/annonces'
+    | '/changer-mot-de-passe'
     | '/classes'
     | '/dashboard'
     | '/eleves'
@@ -251,6 +274,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/unauthorized'
     | '/eleves/$studentId'
+    | '/api/public/admin-users'
     | '/api/public/register-school'
     | '/api/public/seed-demo'
   fileRoutesById: FileRoutesById
@@ -258,6 +282,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnnoncesRoute: typeof AnnoncesRoute
+  ChangerMotDePasseRoute: typeof ChangerMotDePasseRoute
   ClassesRoute: typeof ClassesRoute
   DashboardRoute: typeof DashboardRoute
   ElevesRoute: typeof ElevesRouteWithChildren
@@ -272,6 +297,7 @@ export interface RootRouteChildren {
   ScolariteRoute: typeof ScolariteRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
+  ApiPublicAdminUsersRoute: typeof ApiPublicAdminUsersRoute
   ApiPublicRegisterSchoolRoute: typeof ApiPublicRegisterSchoolRoute
   ApiPublicSeedDemoRoute: typeof ApiPublicSeedDemoRoute
 }
@@ -376,6 +402,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClassesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/changer-mot-de-passe': {
+      id: '/changer-mot-de-passe'
+      path: '/changer-mot-de-passe'
+      fullPath: '/changer-mot-de-passe'
+      preLoaderRoute: typeof ChangerMotDePasseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/annonces': {
       id: '/annonces'
       path: '/annonces'
@@ -411,6 +444,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRegisterSchoolRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/admin-users': {
+      id: '/api/public/admin-users'
+      path: '/api/public/admin-users'
+      fullPath: '/api/public/admin-users'
+      preLoaderRoute: typeof ApiPublicAdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -428,6 +468,7 @@ const ElevesRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnnoncesRoute: AnnoncesRoute,
+  ChangerMotDePasseRoute: ChangerMotDePasseRoute,
   ClassesRoute: ClassesRoute,
   DashboardRoute: DashboardRoute,
   ElevesRoute: ElevesRouteWithChildren,
@@ -442,6 +483,7 @@ const rootRouteChildren: RootRouteChildren = {
   ScolariteRoute: ScolariteRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   UnauthorizedRoute: UnauthorizedRoute,
+  ApiPublicAdminUsersRoute: ApiPublicAdminUsersRoute,
   ApiPublicRegisterSchoolRoute: ApiPublicRegisterSchoolRoute,
   ApiPublicSeedDemoRoute: ApiPublicSeedDemoRoute,
 }

@@ -11,6 +11,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   registerSchool: (data: {
     schoolName: string;
     director: string;
@@ -37,6 +38,9 @@ type ProfileRow = {
   assigned_classes: string[] | null;
   assigned_subjects: string[] | null;
   student_id: string | null;
+  student_ids: string[] | null;
+  must_change_password: boolean | null;
+  is_active: boolean | null;
 };
 
 function profileToUser(p: ProfileRow): User {
@@ -50,6 +54,9 @@ function profileToUser(p: ProfileRow): User {
     assignedClasses: p.assigned_classes ?? [],
     assignedSubjects: p.assigned_subjects ?? [],
     studentId: p.student_id ?? undefined,
+    studentIds: p.student_ids ?? [],
+    mustChangePassword: !!p.must_change_password,
+    isActive: p.is_active !== false,
     avatar: name
       .split(" ")
       .map((w) => w[0])
@@ -62,12 +69,13 @@ function profileToUser(p: ProfileRow): User {
 async function loadProfile(userId: string): Promise<User | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, school_id, full_name, email, role, avatar_url, assigned_classes, assigned_subjects, student_id")
+    .select("id, school_id, full_name, email, role, avatar_url, assigned_classes, assigned_subjects, student_id, student_ids, must_change_password, is_active")
     .eq("id", userId)
     .maybeSingle();
   if (error || !data) return null;
   return profileToUser(data as ProfileRow);
 }
+
 
 /** Trigger the idempotent demo seeder. Safe to call on every boot. */
 let seedPromise: Promise<void> | null = null;
@@ -212,8 +220,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return u;
   };
 
+  const refreshUser = async () => {
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.user) {
+      const u = await loadProfile(data.session.user.id);
+      if (u) setUser(u);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, login, logout, registerSchool }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, login, logout, refreshUser, registerSchool }}>
       {children}
     </AuthContext.Provider>
   );

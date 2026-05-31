@@ -19,6 +19,10 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
       navigate({ to: "/login", replace: true });
       return;
     }
+    if (user.mustChangePassword && pathname !== "/changer-mot-de-passe") {
+      navigate({ to: "/changer-mot-de-passe", replace: true });
+      return;
+    }
     if (user.role === "parent") {
       navigate({ to: "/parent", replace: true });
       return;
