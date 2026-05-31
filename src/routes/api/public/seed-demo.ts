@@ -6,16 +6,12 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const Route = createFileRoute("/api/public/seed-demo")({
   server: {
     handlers: {
-      POST: async () => {
-        try {
-          const result = await runSeed();
-          return Response.json(result);
-        } catch (e) {
-          console.error("[seed-demo] failed:", e);
-          return Response.json({ error: (e as Error).message }, { status: 500 });
+      POST: async ({ request }) => {
+        const secret = process.env.SEED_SECRET;
+        const provided = request.headers.get("x-seed-secret");
+        if (!secret || provided !== secret) {
+          return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
-      },
-      GET: async () => {
         try {
           const result = await runSeed();
           return Response.json(result);
