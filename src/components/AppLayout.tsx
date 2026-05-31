@@ -8,27 +8,35 @@ import { allowedRoutes, NAV_ITEMS } from "@/lib/nav";
 import { ChevronRight } from "lucide-react";
 
 export function AppLayout({ title, children }: { title: string; children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = localStorage.getItem("currentUser");
-    if (!stored) {
-      navigate({ to: "/login" });
+    // Wait for auth to finish hydrating before deciding anything.
+    if (loading) return;
+    if (!isAuthenticated || !user) {
+      navigate({ to: "/login", replace: true });
       return;
     }
-    if (!user) return;
     if (user.role === "parent") {
-      navigate({ to: "/parent" });
+      navigate({ to: "/parent", replace: true });
       return;
     }
     const allowed = allowedRoutes(user.role);
     if (!allowed.includes(pathname)) {
-      navigate({ to: "/unauthorized" });
+      navigate({ to: "/unauthorized", replace: true });
     }
-  }, [user, navigate, pathname]);
+  }, [user, loading, isAuthenticated, navigate, pathname]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+      </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen bg-background">
