@@ -13,11 +13,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Search, Plus, Trash2, Pencil, Upload } from "lucide-react";
+import { Users, Search, Plus, Trash2, Pencil, Upload, UserPlus } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { STUDENT_STATUSES, PARENT_RELATIONS, type Student, type StudentStatus, type ParentRelation, type DB } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { adminApi } from "@/lib/admin-api";
+import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
+import { useAuth } from "@/lib/auth";
 
 type ParentForm = {
   parentName: string; parentPhone: string; parentEmail: string;
@@ -124,6 +127,7 @@ function statusBadge(s?: StudentStatus) {
 
 function ElevesPage() {
   const db = useDB();
+  const { user } = useAuth();
   const loaded = useLoaded();
   const [search, setSearch] = useState("");
   const [classFilter, setClassFilter] = useState<string>("all");
@@ -134,7 +138,10 @@ function ElevesPage() {
   const [form, setForm] = useState<FormState>(emptyForm());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [confirmDelete, setConfirmDelete] = useState<Student | null>(null);
+  const [parentAccountFor, setParentAccountFor] = useState<Student | null>(null);
+  const [credentials, setCredentials] = useState<CredentialsInfo | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const school = db.schools.find((s) => s.id === user?.schoolId);
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }));
   const className = (id: string) => db.classes.find((c) => c.id === id)?.name ?? "—";
