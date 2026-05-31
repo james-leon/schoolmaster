@@ -192,6 +192,9 @@ export function buildSeed(): DB {
     classSubjects,
     feeTypes: DEFAULT_FEE_TYPES.map((f) => ({ id: uid("fee"), ...f })) as FeeType[],
     paymentRecords: [] as PaymentRecord[],
+    parents: [],
+    announcements: [],
+    academicYears: [],
   };
 }
 
