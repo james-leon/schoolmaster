@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      academic_years: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          id: string
+          is_current: boolean
+          name: string
+          school_id: string
+          start_date: string | null
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_current?: boolean
+          name: string
+          school_id: string
+          start_date?: string | null
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_current?: boolean
+          name?: string
+          school_id?: string
+          start_date?: string | null
+        }
+        Relationships: []
+      }
+      announcements: {
+        Row: {
+          audience: string
+          author_id: string | null
+          content: string
+          created_at: string
+          id: string
+          school_id: string
+          title: string
+        }
+        Insert: {
+          audience?: string
+          author_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          school_id: string
+          title: string
+        }
+        Update: {
+          audience?: string
+          author_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          school_id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       attendance: {
         Row: {
           created_at: string
@@ -273,6 +333,51 @@ export type Database = {
           status?: string
           student_id?: string
           type?: string | null
+        }
+        Relationships: []
+      }
+      parents: {
+        Row: {
+          created_at: string
+          email: string | null
+          first_name: string
+          id: string
+          is_emergency_contact: boolean
+          last_name: string
+          phone: string | null
+          profession: string | null
+          relationship: string | null
+          school_id: string
+          student_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          first_name: string
+          id?: string
+          is_emergency_contact?: boolean
+          last_name: string
+          phone?: string | null
+          profession?: string | null
+          relationship?: string | null
+          school_id: string
+          student_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          first_name?: string
+          id?: string
+          is_emergency_contact?: boolean
+          last_name?: string
+          phone?: string | null
+          profession?: string | null
+          relationship?: string | null
+          school_id?: string
+          student_id?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }
