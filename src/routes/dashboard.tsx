@@ -288,20 +288,24 @@ function AdminDashboard() {
         <Card>
           <CardHeader><CardTitle className="text-base">Activité récente</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            {db.activities.slice(0, 8).map((a) => {
-              const Icon = activityIcons[a.type];
-              return (
-                <div key={a.id} className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-secondary">
-                    <Icon className="h-4 w-4" />
+            {db.activities.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">Aucune activité récente</p>
+            ) : (
+              db.activities.slice(0, 8).map((a) => {
+                const Icon = activityIcons[a.type];
+                return (
+                  <div key={a.id} className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-secondary">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm leading-snug">{a.text}</p>
+                      <p className="text-xs text-muted-foreground">{timeAgo(a.date)}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm leading-snug">{a.text}</p>
-                    <p className="text-xs text-muted-foreground">{timeAgo(a.date)}</p>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </CardContent>
         </Card>
 
