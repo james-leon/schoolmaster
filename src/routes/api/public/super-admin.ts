@@ -155,14 +155,14 @@ export const Route = createFileRoute("/api/public/super-admin")({
             if (!schoolId || !plan || !["active", "trial", "suspended", "expired"].includes(status)) {
               return Response.json({ error: "Paramètres invalides" }, { status: 400 });
             }
-            const patch: Record<string, unknown> = {
+            const patch = {
               subscription_plan: plan,
               status,
               subscription_start: subscriptionStart || null,
               subscription_end: subscriptionEnd || null,
               trial_ends_at: trialEnd || null,
             };
-            const { error } = await supabaseAdmin.from("schools").update(patch).eq("id", schoolId);
+            const { error } = await (supabaseAdmin.from("schools") as any).update(patch).eq("id", schoolId);
             if (error) return Response.json({ error: error.message }, { status: 500 });
             console.log("[super-admin] subscription updated", { schoolId, plan, status, by: ctx.userId });
             return Response.json({ ok: true });
