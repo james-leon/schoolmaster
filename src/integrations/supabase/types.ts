@@ -498,7 +498,9 @@ export type Database = {
           logo_url: string | null
           name: string
           phone: string | null
+          status: string
           subscription_plan: string | null
+          trial_ends_at: string | null
         }
         Insert: {
           address?: string | null
@@ -512,7 +514,9 @@ export type Database = {
           logo_url?: string | null
           name: string
           phone?: string | null
+          status?: string
           subscription_plan?: string | null
+          trial_ends_at?: string | null
         }
         Update: {
           address?: string | null
@@ -526,7 +530,9 @@ export type Database = {
           logo_url?: string | null
           name?: string
           phone?: string | null
+          status?: string
           subscription_plan?: string | null
+          trial_ends_at?: string | null
         }
         Relationships: []
       }
@@ -672,6 +678,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "school_admin" | "teacher" | "parent" | "super_admin"
