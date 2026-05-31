@@ -15,9 +15,11 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Megaphone, Upload, Image as ImageIcon } from "lucide-react";
+import { Trash2, Megaphone, Upload, Image as ImageIcon, KeyRound, UserX, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { Announcement } from "@/lib/types";
+import { adminApi } from "@/lib/admin-api";
+import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
 
 export const Route = createFileRoute("/parametres")({
   component: ParametresPage,
@@ -93,6 +95,7 @@ function ParametresPage() {
           <TabsTrigger value="ecole">École</TabsTrigger>
           <TabsTrigger value="objectifs">Objectifs</TabsTrigger>
           <TabsTrigger value="annonces">Annonces</TabsTrigger>
+          <TabsTrigger value="utilisateurs">Utilisateurs</TabsTrigger>
           <TabsTrigger value="compte">Compte</TabsTrigger>
         </TabsList>
 
@@ -173,6 +176,11 @@ function ParametresPage() {
         <TabsContent value="annonces" className="mt-4">
           <AnnouncementsPanel authorId={user?.id} />
         </TabsContent>
+
+        <TabsContent value="utilisateurs" className="mt-4">
+          <UsersPanel schoolId={school?.id} schoolName={school?.name} currentUserId={user?.id} />
+        </TabsContent>
+
 
 
         <TabsContent value="compte" className="mt-4">
