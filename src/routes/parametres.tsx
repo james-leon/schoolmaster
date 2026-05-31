@@ -68,20 +68,44 @@ function ParametresPage() {
   };
 
   const uploadLogo = async (file: File) => {
-    if (!school) return;
+    const schoolId = user?.schoolId ?? school?.id;
+    if (!schoolId) {
+      toast.error("École introuvable");
+      return;
+    }
+    const allowed = ["image/png", "image/jpeg", "image/jpg", "image/svg+xml", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      toast.error("Format non supporté (PNG, JPG, SVG, WEBP uniquement)");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Fichier trop volumineux (max 2 Mo)");
+      return;
+    }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() ?? "png";
-      const path = `${school.id}/logo-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("school-logos").upload(path, file, { upsert: true });
+      const ext = (file.name.split(".").pop() ?? "png").toLowerCase();
+      // Folder = schoolId so the storage RLS policy (folder must equal the
+      // signed-in admin's school_id) accepts the upload.
+      const path = `${schoolId}/logo-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("school-logos")
+        .upload(path, file, { upsert: true, cacheControl: "3600", contentType: file.type });
       if (error) throw error;
       const { data } = supabase.storage.from("school-logos").getPublicUrl(path);
-      set("logo", data.publicUrl);
+      const publicUrl = data.publicUrl;
+      // Persist to schools.logo_url so every device/user sees the new logo.
+      const { error: dbErr } = await supabase
+        .from("schools")
+        .update({ logo_url: publicUrl })
+        .eq("id", schoolId);
+      if (dbErr) throw dbErr;
+      set("logo", publicUrl);
       updateDB((d) => {
-        const idx = d.schools.findIndex((s) => s.id === school.id);
-        if (idx >= 0) d.schools[idx] = { ...d.schools[idx], logo: data.publicUrl };
+        const idx = d.schools.findIndex((s) => s.id === schoolId);
+        if (idx >= 0) d.schools[idx] = { ...d.schools[idx], logo: publicUrl };
       });
-      toast.success("Logo téléchargé");
+      toast.success("Logo mis à jour");
     } catch (err) {
       toast.error("Erreur lors du téléchargement: " + (err as Error).message);
     } finally {
