@@ -20,6 +20,8 @@ import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
 import { hydrateAll } from "@/lib/supabase-sync";
 import { useAuth } from "@/lib/auth";
+import { usePlan } from "@/lib/usePlan";
+import { UpgradeModal } from "@/components/UpgradePrompt";
 
 export const Route = createFileRoute("/enseignants")({ component: EnseignantsPage });
 
