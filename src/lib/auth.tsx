@@ -146,7 +146,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const registerSchool: AuthContextType["registerSchool"] = async (data) => {
-    // Sign up the user
     const { data: sign, error: signErr } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
@@ -155,48 +154,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (signErr) throw new Error(signErr.message);
     if (!sign.user) throw new Error("Échec de l'inscription");
 
-    // Wait for the auth trigger to create the bare profile, then create school
-    // and patch the profile. Because RLS allows admin updates, we need to be
-    // signed in (which we are after signUp on a project with auto-confirm).
-    const userId = sign.user.id;
+    // Get the access token from the new session and let the server route
+    // create the school + role + profile via the admin client.
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) throw new Error("Session manquante");
 
-    // Insert the school (requires has_role(school_admin) — but the user has
-    // no role yet, so we use a server-side fallback: create the user_role row
-    // first via direct insert; this is allowed by the SELECT policy on read,
-    // but insert isn't covered. We rely on the trigger-created profile and
-    // grant the role inline via RPC — fallback path: create school directly
-    // works because we add a role atomically below.
-    // Simpler: use the seed-like server route... For now, attempt direct insert.
-
-    // 1) Insert role
-    await supabase.from("user_roles").insert({ user_id: userId, role: "school_admin" });
-
-    // 2) Insert school
-    const { data: school, error: schoolErr } = await supabase
-      .from("schools")
-      .insert({
-        name: data.schoolName,
-        director_name: data.director,
+    const res = await fetch("/api/public/register-school", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        schoolName: data.schoolName,
+        director: data.director,
         email: data.email,
         phone: data.phone,
         city: data.city,
         country: data.country,
-      })
-      .select()
-      .single();
-    if (schoolErr) throw new Error(schoolErr.message);
+      }),
+    });
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      throw new Error(j.error || "Échec de l'inscription");
+    }
+    const { schoolId } = (await res.json()) as { schoolId: string };
 
-    // 3) Update profile
-    const { error: pErr } = await supabase
-      .from("profiles")
-      .update({ school_id: school.id, role: "school_admin", full_name: data.director })
-      .eq("id", userId);
-    if (pErr) throw new Error(pErr.message);
-
-    const u = await loadProfile(userId);
+    const u = await loadProfile(sign.user.id);
     if (!u) throw new Error("Profil introuvable");
     setUser(u);
-    await hydrateAll(school.id);
+    await hydrateAll(schoolId);
     return u;
   };
 
