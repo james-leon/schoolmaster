@@ -486,7 +486,7 @@ function ElevesPage() {
         title={`Limite du plan ${plan.label} atteinte`}
         message={`Vous avez atteint la limite de ${limits.maxStudents} élèves (${studentCount} inscrits) de votre plan ${plan.label}. Passez à un plan supérieur pour ajouter plus d'élèves.`}
       />
-    </AppLayout>);
+    </AppLayout>
   );
 }
 
