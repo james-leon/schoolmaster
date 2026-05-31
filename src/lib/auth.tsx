@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User } from "./types";
-import { getDB } from "./store";
+import { getDB, clearLocalDB } from "./store";
 import { supabase } from "@/integrations/supabase/client";
 import { hydrateAll, clearHydration, triggerSync, getCurrentSchoolId } from "./supabase-sync";
 import { registerPersistHook } from "./store";
