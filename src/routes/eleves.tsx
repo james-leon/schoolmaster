@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils";
 import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
 import { useAuth } from "@/lib/auth";
+import { usePlan } from "@/lib/usePlan";
+import { UpgradeModal } from "@/components/UpgradePrompt";
 
 type ParentForm = {
   parentName: string; parentPhone: string; parentEmail: string;
