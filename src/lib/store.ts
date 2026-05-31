@@ -7,6 +7,12 @@ const KEY = "schoolmaster_db_v5";
 
 let cache: DB | null = null;
 const listeners = new Set<() => void>();
+let syncHook: (() => void) | null = null;
+
+/** Register a callback to run after every persist. Used by supabase-sync. */
+export function registerPersistHook(fn: () => void) {
+  syncHook = fn;
+}
 
 function load(): DB {
   if (cache) return cache;
@@ -41,6 +47,7 @@ function persist() {
     }
   }
   listeners.forEach((l) => l());
+  if (syncHook) syncHook();
 }
 
 export function getDB(): DB {
