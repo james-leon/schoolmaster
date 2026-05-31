@@ -21,7 +21,26 @@ import type {
   PaymentMode,
   EvaluationType,
   FeeLevelScope,
+  Parent,
+  Announcement,
+  AcademicYear,
 } from "./types";
+
+type Snapshot = {
+  schools: School[];
+  classes: Classe[];
+  students: Student[];
+  teachers: Teacher[];
+  classSubjects: ClassSubject[];
+  grades: Grade[];
+  attendance: Attendance[];
+  feeTypes: FeeType[];
+  payments: Payment[];
+  paymentRecords: PaymentRecord[];
+  parents: Parent[];
+  announcements: Announcement[];
+  academicYears: AcademicYear[];
+};
 
 type Snapshot = {
   schools: School[];
