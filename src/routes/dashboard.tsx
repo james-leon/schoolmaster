@@ -33,7 +33,7 @@ function DashboardPage() {
   return <AdminDashboard />;
 }
 
-function AnnoncesWidget({ role }: { role: "teacher" | "admin" }) {
+function AnnoncesWidget() {
   const db = useDB();
   const { user } = useAuth();
   const items = visibleAnnouncements(db.announcements, user?.role).slice(0, 2);
