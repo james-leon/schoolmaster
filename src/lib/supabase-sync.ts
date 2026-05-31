@@ -219,12 +219,58 @@ function rowToPaymentRecord(r: {
   };
 }
 
+function rowToParent(r: {
+  id: string; student_id: string; first_name: string; last_name: string;
+  phone: string | null; whatsapp: string | null; email: string | null;
+  relationship: string | null; profession: string | null; is_emergency_contact: boolean | null;
+}): Parent {
+  return {
+    id: r.id,
+    studentId: r.student_id,
+    firstName: r.first_name,
+    lastName: r.last_name,
+    phone: r.phone ?? undefined,
+    whatsapp: r.whatsapp ?? undefined,
+    email: r.email ?? undefined,
+    relationship: r.relationship ?? undefined,
+    profession: r.profession ?? undefined,
+    isEmergencyContact: r.is_emergency_contact ?? false,
+  };
+}
+
+function rowToAnnouncement(r: {
+  id: string; title: string; content: string; audience: string;
+  author_id: string | null; created_at: string;
+}): Announcement {
+  return {
+    id: r.id,
+    title: r.title,
+    content: r.content,
+    audience: (r.audience as Announcement["audience"]) ?? "Tous",
+    authorId: r.author_id ?? undefined,
+    createdAt: r.created_at,
+  };
+}
+
+function rowToAcademicYear(r: {
+  id: string; name: string; start_date: string | null; end_date: string | null; is_current: boolean;
+}): AcademicYear {
+  return {
+    id: r.id,
+    name: r.name,
+    startDate: r.start_date ?? undefined,
+    endDate: r.end_date ?? undefined,
+    isCurrent: r.is_current,
+  };
+}
+
 // ---- Hydration ----
 export async function hydrateAll(schoolId: string): Promise<void> {
   currentSchoolId = schoolId;
   const [
     schoolsRes, classesRes, studentsRes, teachersRes, subjectsRes,
     gradesRes, attendanceRes, feeTypesRes, invoicesRes, paymentRecordsRes,
+    parentsRes, announcementsRes, academicYearsRes,
   ] = await Promise.all([
     supabase.from("schools").select("*").eq("id", schoolId),
     supabase.from("classes").select("*").eq("school_id", schoolId),
@@ -236,6 +282,9 @@ export async function hydrateAll(schoolId: string): Promise<void> {
     supabase.from("fee_types").select("*").eq("school_id", schoolId),
     supabase.from("invoices").select("*").eq("school_id", schoolId),
     supabase.from("payment_records").select("*").eq("school_id", schoolId),
+    supabase.from("parents").select("*").eq("school_id", schoolId),
+    supabase.from("announcements").select("*").eq("school_id", schoolId).order("created_at", { ascending: false }),
+    supabase.from("academic_years").select("*").eq("school_id", schoolId),
   ]);
 
   const schools = (schoolsRes.data ?? []).map(rowToSchool);
@@ -248,6 +297,27 @@ export async function hydrateAll(schoolId: string): Promise<void> {
   const feeTypes = (feeTypesRes.data ?? []).map(rowToFeeType);
   const payments = (invoicesRes.data ?? []).map(rowToInvoice);
   const paymentRecords = (paymentRecordsRes.data ?? []).map(rowToPaymentRecord);
+  const parents = (parentsRes.data ?? []).map(rowToParent);
+  const announcements = (announcementsRes.data ?? []).map(rowToAnnouncement);
+  const academicYears = (academicYearsRes.data ?? []).map(rowToAcademicYear);
+
+  // Backfill student.parentName/Phone/etc from the parents table for legacy UI.
+  const parentByStudent = new Map<string, Parent>();
+  for (const p of parents) {
+    if (!parentByStudent.has(p.studentId)) parentByStudent.set(p.studentId, p);
+  }
+  for (const s of students) {
+    const p = parentByStudent.get(s.id);
+    if (p) {
+      s.parentName = `${p.firstName} ${p.lastName}`.trim();
+      s.parentPhone = p.phone ?? "";
+      s.parentEmail = p.email;
+      s.parentWhatsapp = p.whatsapp;
+      if (p.relationship === "Père" || p.relationship === "Mère" || p.relationship === "Tuteur") {
+        s.parentRelation = p.relationship;
+      }
+    }
+  }
 
   syncing = true;
   try {
@@ -262,6 +332,9 @@ export async function hydrateAll(schoolId: string): Promise<void> {
       db.feeTypes = feeTypes;
       db.payments = payments;
       db.paymentRecords = paymentRecords;
+      db.parents = parents;
+      db.announcements = announcements;
+      db.academicYears = academicYears;
     });
   } finally {
     syncing = false;
