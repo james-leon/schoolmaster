@@ -380,3 +380,101 @@ function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
   );
 }
 
+
+function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string; schoolName?: string; currentUserId?: string }) {
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [credentials, setCredentials] = useState<CredentialsInfo | null>(null);
+  const [confirmDel, setConfirmDel] = useState<any | null>(null);
+
+  const load = async () => {
+    if (!schoolId) return;
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, role, is_active, last_sign_in_at, must_change_password")
+      .eq("school_id", schoolId)
+      .order("created_at", { ascending: false });
+    if (error) toast.error(error.message);
+    setRows(data ?? []);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, [schoolId]);
+
+  const reset = async (u: any) => {
+    setBusy(u.id);
+    try {
+      const res = await adminApi.resetPassword(u.id);
+      setCredentials({ name: u.full_name ?? u.email, email: u.email, tempPassword: res.tempPassword, role: u.role === "parent" ? "parent" : "teacher", schoolName });
+      await load();
+    } catch (e) { toast.error((e as Error).message); } finally { setBusy(null); }
+  };
+  const toggleActive = async (u: any) => {
+    setBusy(u.id);
+    try {
+      await adminApi.setActive(u.id, !u.is_active);
+      toast.success(u.is_active ? "Compte désactivé" : "Compte réactivé");
+      await load();
+    } catch (e) { toast.error((e as Error).message); } finally { setBusy(null); }
+  };
+  const del = async () => {
+    if (!confirmDel) return;
+    setBusy(confirmDel.id);
+    try {
+      await adminApi.delete(confirmDel.id);
+      toast.success("Compte supprimé");
+      setConfirmDel(null);
+      await load();
+    } catch (e) { toast.error((e as Error).message); } finally { setBusy(null); }
+  };
+
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-base">Gestion des utilisateurs</CardTitle></CardHeader>
+      <CardContent>
+        {loading ? <p className="py-6 text-center text-sm text-muted-foreground">Chargement...</p> : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs text-muted-foreground">
+                <tr><th className="py-2">Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Dernière connexion</th><th className="text-right">Actions</th></tr>
+              </thead>
+              <tbody>
+                {rows.map((u) => (
+                  <tr key={u.id} className="border-t border-border">
+                    <td className="py-2 font-medium">{u.full_name ?? "—"}</td>
+                    <td className="text-muted-foreground">{u.email}</td>
+                    <td><Badge variant="secondary">{u.role}</Badge></td>
+                    <td>{u.is_active === false ? <Badge variant="outline" className="text-destructive">Inactif</Badge> : <Badge variant="outline" className="text-success">Actif</Badge>}</td>
+                    <td className="text-xs text-muted-foreground">{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString("fr-FR") : "—"}</td>
+                    <td className="text-right">
+                      <Button variant="ghost" size="icon" disabled={busy === u.id} onClick={() => reset(u)} title="Réinitialiser mot de passe"><KeyRound className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" disabled={busy === u.id || u.id === currentUserId} onClick={() => toggleActive(u)} title={u.is_active === false ? "Réactiver" : "Désactiver"}>
+                        {u.is_active === false ? <UserCheck className="h-4 w-4 text-success" /> : <UserX className="h-4 w-4" />}
+                      </Button>
+                      <Button variant="ghost" size="icon" disabled={busy === u.id || u.id === currentUserId} onClick={() => setConfirmDel(u)} title="Supprimer"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <CredentialsModal info={credentials} onClose={() => setCredentials(null)} />
+        {confirmDel && (
+          <Dialog open onOpenChange={(o) => !o && setConfirmDel(null)}>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Supprimer ce compte ?</DialogTitle></DialogHeader>
+              <p className="text-sm text-muted-foreground">{confirmDel.full_name} ({confirmDel.email}) — cette action est irréversible.</p>
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" onClick={() => setConfirmDel(null)}>Annuler</Button>
+                <Button onClick={del} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Supprimer</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
