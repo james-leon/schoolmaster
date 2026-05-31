@@ -179,7 +179,7 @@ async function runSeed() {
 
   let firstStudentId: string | null = existingStudents?.[0]?.id ?? null;
   if (!firstStudentId) {
-    const studentRows: Array<Record<string, unknown>> = [];
+    const studentRows: Array<{ school_id: string; class_id: string; first_name: string; last_name: string; gender: string; birth_date: string; enrollment_date: string; student_code: string; status: string }> = [];
     for (let i = 0; i < 24; i++) {
       const gender = i % 2 === 0 ? "M" : "F";
       const firstName = gender === "M" ? firstNamesM[i % firstNamesM.length] : firstNamesF[i % firstNamesF.length];
