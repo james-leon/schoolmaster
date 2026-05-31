@@ -4,7 +4,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  password: string;
+  /** @deprecated Authentication is handled server-side by Supabase Auth. Never store passwords client-side. */
+  password?: never;
   role: Role;
   schoolId?: string;
   assignedClasses?: string[];
