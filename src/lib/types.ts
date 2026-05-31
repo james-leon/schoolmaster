@@ -221,6 +221,9 @@ export interface DB {
   classSubjects: ClassSubject[];
   feeTypes: FeeType[];
   paymentRecords: PaymentRecord[];
+  parents: Parent[];
+  announcements: Announcement[];
+  academicYears: AcademicYear[];
 }
 
 export const DEFAULT_SUBJECTS_MATERNELLE: { name: string; coefficient: number }[] = [
