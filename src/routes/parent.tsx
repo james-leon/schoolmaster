@@ -124,7 +124,7 @@ function ParentPortal() {
         {tab === "notes" && <NotesTab studentId={student.id} grades={db.grades} classSubjects={db.classSubjects.filter((s) => s.classId === student.classId)} />}
         {tab === "presences" && <PresencesTab studentId={student.id} attendance={db.attendance} />}
         {tab === "paiements" && <PaiementsTab studentId={student.id} payments={db.payments} />}
-        {tab === "messages" && <MessagesTab />}
+        {tab === "messages" && <MessagesTab announcements={db.announcements} />}
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card">
