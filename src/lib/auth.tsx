@@ -172,7 +172,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const u = await withTimeout(loadProfile(data.user.id), 8000, "profil");
     if (!u) throw new Error("Profil introuvable");
     setUser(u);
-    // Hydrate in background — never block navigation.
+    // Always wipe the previous tenant's local cache before hydrating.
+    if (u.schoolId !== getCurrentSchoolId()) clearLocalDB();
     if (u.schoolId) hydrateAll(u.schoolId).catch((e) => console.error("[hydrate]", e));
     return u;
   };
@@ -181,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     clearHydration();
+    clearLocalDB();
   };
 
   const registerSchool: AuthContextType["registerSchool"] = async (data) => {
