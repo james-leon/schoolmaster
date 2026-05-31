@@ -166,9 +166,14 @@ function ParametresPage() {
           </div>
         </TabsContent>
 
+        <TabsContent value="objectifs" className="mt-4">
+          <EnrollmentTargetsPanel schoolId={school?.id} />
+        </TabsContent>
+
         <TabsContent value="annonces" className="mt-4">
           <AnnouncementsPanel authorId={user?.id} />
         </TabsContent>
+
 
         <TabsContent value="compte" className="mt-4">
           <Card>
