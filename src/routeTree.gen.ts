@@ -23,6 +23,7 @@ import { Route as EnseignantsRouteImport } from './routes/enseignants'
 import { Route as ElevesRouteImport } from './routes/eleves'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ClassesRouteImport } from './routes/classes'
+import { Route as ChangerMotDePasseRouteImport } from './routes/changer-mot-de-passe'
 import { Route as AnnoncesRouteImport } from './routes/annonces'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ElevesStudentIdRouteImport } from './routes/eleves.$studentId'
@@ -100,6 +101,11 @@ const ClassesRoute = ClassesRouteImport.update({
   path: '/classes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChangerMotDePasseRoute = ChangerMotDePasseRouteImport.update({
+  id: '/changer-mot-de-passe',
+  path: '/changer-mot-de-passe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnnoncesRoute = AnnoncesRouteImport.update({
   id: '/annonces',
   path: '/annonces',
@@ -134,6 +140,7 @@ const ApiPublicAdminUsersRoute = ApiPublicAdminUsersRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/annonces': typeof AnnoncesRoute
+  '/changer-mot-de-passe': typeof ChangerMotDePasseRoute
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRouteWithChildren
@@ -156,6 +163,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/annonces': typeof AnnoncesRoute
+  '/changer-mot-de-passe': typeof ChangerMotDePasseRoute
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRouteWithChildren
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/annonces': typeof AnnoncesRoute
+  '/changer-mot-de-passe': typeof ChangerMotDePasseRoute
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRouteWithChildren
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/annonces'
+    | '/changer-mot-de-passe'
     | '/classes'
     | '/dashboard'
     | '/eleves'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/annonces'
+    | '/changer-mot-de-passe'
     | '/classes'
     | '/dashboard'
     | '/eleves'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/annonces'
+    | '/changer-mot-de-passe'
     | '/classes'
     | '/dashboard'
     | '/eleves'
@@ -270,6 +282,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnnoncesRoute: typeof AnnoncesRoute
+  ChangerMotDePasseRoute: typeof ChangerMotDePasseRoute
   ClassesRoute: typeof ClassesRoute
   DashboardRoute: typeof DashboardRoute
   ElevesRoute: typeof ElevesRouteWithChildren
@@ -389,6 +402,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClassesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/changer-mot-de-passe': {
+      id: '/changer-mot-de-passe'
+      path: '/changer-mot-de-passe'
+      fullPath: '/changer-mot-de-passe'
+      preLoaderRoute: typeof ChangerMotDePasseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/annonces': {
       id: '/annonces'
       path: '/annonces'
@@ -448,6 +468,7 @@ const ElevesRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnnoncesRoute: AnnoncesRoute,
+  ChangerMotDePasseRoute: ChangerMotDePasseRoute,
   ClassesRoute: ClassesRoute,
   DashboardRoute: DashboardRoute,
   ElevesRoute: ElevesRouteWithChildren,
@@ -469,3 +490,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
