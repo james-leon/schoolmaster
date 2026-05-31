@@ -92,50 +92,78 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Kick off seed on app boot
     ensureSeed();
+    let cancelled = false;
 
-    // Hydrate session
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (data.session?.user) {
-        const u = await loadProfile(data.session.user.id);
-        if (u) {
+    // CRITICAL: never await another supabase call directly inside
+    // onAuthStateChange — it deadlocks against the auth client's internal
+    // lock. Defer with setTimeout(0).
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user) {
+        setUser(null);
+        clearHydration();
+        return;
+      }
+      const uid = session.user.id;
+      setTimeout(async () => {
+        if (cancelled) return;
+        try {
+          const u = await loadProfile(uid);
+          if (!u || cancelled) return;
           setUser(u);
-          if (u.schoolId) await hydrateAll(u.schoolId).catch((e) => console.error(e));
+          if (u.schoolId && u.schoolId !== getCurrentSchoolId()) {
+            hydrateAll(u.schoolId).catch((e) => console.error("[hydrate]", e));
+          }
+        } catch (e) {
+          console.error("[auth] profile load failed", e);
+        }
+      }, 0);
+    });
+
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (cancelled) return;
+      if (data.session?.user) {
+        try {
+          const u = await loadProfile(data.session.user.id);
+          if (u && !cancelled) {
+            setUser(u);
+            if (u.schoolId) hydrateAll(u.schoolId).catch((e) => console.error(e));
+          }
+        } catch (e) {
+          console.error(e);
         }
       }
       setLoading(false);
     });
 
-    // Subscribe to auth state changes
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        const u = await loadProfile(session.user.id);
-        if (u) {
-          setUser(u);
-          if (u.schoolId && u.schoolId !== getCurrentSchoolId()) {
-            await hydrateAll(u.schoolId).catch((e) => console.error(e));
-          }
-        }
-      } else {
-        setUser(null);
-        clearHydration();
-      }
-    });
-
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<User> => {
-    // Make sure demo accounts exist before the first login attempt.
-    await ensureSeed();
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    await ensureSeed().catch(() => {});
+
+    const withTimeout = <T,>(p: PromiseLike<T>, ms: number, label: string) =>
+      Promise.race<T>([
+        Promise.resolve(p),
+        new Promise<T>((_, rej) => setTimeout(() => rej(new Error(`Délai dépassé (${label})`)), ms)),
+      ]);
+
+    const { data, error } = await withTimeout(
+      supabase.auth.signInWithPassword({ email, password }),
+      10000,
+      "connexion",
+    );
     if (error) throw new Error(error.message === "Invalid login credentials" ? "Email ou mot de passe incorrect" : error.message);
     if (!data.user) throw new Error("Connexion échouée");
-    const u = await loadProfile(data.user.id);
+
+    const u = await withTimeout(loadProfile(data.user.id), 8000, "profil");
     if (!u) throw new Error("Profil introuvable");
     setUser(u);
-    if (u.schoolId) await hydrateAll(u.schoolId);
+    // Hydrate in background — never block navigation.
+    if (u.schoolId) hydrateAll(u.schoolId).catch((e) => console.error("[hydrate]", e));
     return u;
   };
 
