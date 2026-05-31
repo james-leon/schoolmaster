@@ -142,11 +142,29 @@ export const Route = createFileRoute("/api/public/super-admin")({
 
           if (action === "update-status") {
             const { schoolId, status } = body;
-            if (!schoolId || !["active", "trial", "suspended"].includes(status)) {
+            if (!schoolId || !["active", "trial", "suspended", "expired"].includes(status)) {
               return Response.json({ error: "Paramètres invalides" }, { status: 400 });
             }
             const { error } = await supabaseAdmin.from("schools").update({ status }).eq("id", schoolId);
             if (error) return Response.json({ error: error.message }, { status: 500 });
+            return Response.json({ ok: true });
+          }
+
+          if (action === "update-subscription") {
+            const { schoolId, plan, status, subscriptionStart, subscriptionEnd, trialEnd } = body;
+            if (!schoolId || !plan || !["active", "trial", "suspended", "expired"].includes(status)) {
+              return Response.json({ error: "Paramètres invalides" }, { status: 400 });
+            }
+            const patch: Record<string, unknown> = {
+              subscription_plan: plan,
+              status,
+              subscription_start: subscriptionStart || null,
+              subscription_end: subscriptionEnd || null,
+              trial_ends_at: trialEnd || null,
+            };
+            const { error } = await supabaseAdmin.from("schools").update(patch).eq("id", schoolId);
+            if (error) return Response.json({ error: error.message }, { status: 500 });
+            console.log("[super-admin] subscription updated", { schoolId, plan, status, by: ctx.userId });
             return Response.json({ ok: true });
           }
 
