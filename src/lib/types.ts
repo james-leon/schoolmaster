@@ -21,6 +21,38 @@ export interface School {
   phone: string;
   city: string;
   country: string;
+  address?: string;
+  logo?: string;
+}
+
+export interface Parent {
+  id: string;
+  studentId: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
+  relationship?: string;
+  profession?: string;
+  isEmergencyContact?: boolean;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  audience: "Tous" | "Parents" | "Enseignants";
+  authorId?: string;
+  createdAt: string;
+}
+
+export interface AcademicYear {
+  id: string;
+  name: string;
+  startDate?: string;
+  endDate?: string;
+  isCurrent: boolean;
 }
 
 export type Level = "PS" | "MS" | "CP" | "CE1" | "CE2" | "CM1" | "CM2";
@@ -189,6 +221,9 @@ export interface DB {
   classSubjects: ClassSubject[];
   feeTypes: FeeType[];
   paymentRecords: PaymentRecord[];
+  parents: Parent[];
+  announcements: Announcement[];
+  academicYears: AcademicYear[];
 }
 
 export const DEFAULT_SUBJECTS_MATERNELLE: { name: string; coefficient: number }[] = [

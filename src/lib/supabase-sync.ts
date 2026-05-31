@@ -21,6 +21,9 @@ import type {
   PaymentMode,
   EvaluationType,
   FeeLevelScope,
+  Parent,
+  Announcement,
+  AcademicYear,
 } from "./types";
 
 type Snapshot = {
@@ -34,16 +37,10 @@ type Snapshot = {
   feeTypes: FeeType[];
   payments: Payment[];
   paymentRecords: PaymentRecord[];
+  parents: Parent[];
+  announcements: Announcement[];
+  academicYears: AcademicYear[];
 };
-
-let lastSnapshot: Snapshot | null = null;
-let currentSchoolId: string | null = null;
-let syncing = false;
-let pendingSync = false;
-
-export function getCurrentSchoolId(): string | null {
-  return currentSchoolId;
-}
 
 function snapshot(): Snapshot {
   const db = getDB();
@@ -58,11 +55,24 @@ function snapshot(): Snapshot {
     feeTypes: [...db.feeTypes],
     payments: [...db.payments],
     paymentRecords: [...db.paymentRecords],
+    parents: [...db.parents],
+    announcements: [...db.announcements],
+    academicYears: [...db.academicYears],
   };
 }
 
+let lastSnapshot: Snapshot | null = null;
+let currentSchoolId: string | null = null;
+let syncing = false;
+let pendingSync = false;
+
+export function getCurrentSchoolId(): string | null {
+  return currentSchoolId;
+}
+
+
 // ---- Row <-> domain mapping ----
-function rowToSchool(r: { id: string; name: string; director_name: string | null; email: string | null; phone: string | null; city: string | null; country: string | null }): School {
+function rowToSchool(r: { id: string; name: string; director_name: string | null; email: string | null; phone: string | null; city: string | null; country: string | null; address: string | null; logo_url: string | null }): School {
   return {
     id: r.id,
     name: r.name,
@@ -71,6 +81,8 @@ function rowToSchool(r: { id: string; name: string; director_name: string | null
     phone: r.phone ?? "",
     city: r.city ?? "",
     country: r.country ?? "",
+    address: r.address ?? "",
+    logo: r.logo_url ?? undefined,
   };
 }
 
@@ -207,12 +219,58 @@ function rowToPaymentRecord(r: {
   };
 }
 
+function rowToParent(r: {
+  id: string; student_id: string; first_name: string; last_name: string;
+  phone: string | null; whatsapp: string | null; email: string | null;
+  relationship: string | null; profession: string | null; is_emergency_contact: boolean | null;
+}): Parent {
+  return {
+    id: r.id,
+    studentId: r.student_id,
+    firstName: r.first_name,
+    lastName: r.last_name,
+    phone: r.phone ?? undefined,
+    whatsapp: r.whatsapp ?? undefined,
+    email: r.email ?? undefined,
+    relationship: r.relationship ?? undefined,
+    profession: r.profession ?? undefined,
+    isEmergencyContact: r.is_emergency_contact ?? false,
+  };
+}
+
+function rowToAnnouncement(r: {
+  id: string; title: string; content: string; audience: string;
+  author_id: string | null; created_at: string;
+}): Announcement {
+  return {
+    id: r.id,
+    title: r.title,
+    content: r.content,
+    audience: (r.audience as Announcement["audience"]) ?? "Tous",
+    authorId: r.author_id ?? undefined,
+    createdAt: r.created_at,
+  };
+}
+
+function rowToAcademicYear(r: {
+  id: string; name: string; start_date: string | null; end_date: string | null; is_current: boolean;
+}): AcademicYear {
+  return {
+    id: r.id,
+    name: r.name,
+    startDate: r.start_date ?? undefined,
+    endDate: r.end_date ?? undefined,
+    isCurrent: r.is_current,
+  };
+}
+
 // ---- Hydration ----
 export async function hydrateAll(schoolId: string): Promise<void> {
   currentSchoolId = schoolId;
   const [
     schoolsRes, classesRes, studentsRes, teachersRes, subjectsRes,
     gradesRes, attendanceRes, feeTypesRes, invoicesRes, paymentRecordsRes,
+    parentsRes, announcementsRes, academicYearsRes,
   ] = await Promise.all([
     supabase.from("schools").select("*").eq("id", schoolId),
     supabase.from("classes").select("*").eq("school_id", schoolId),
@@ -224,6 +282,9 @@ export async function hydrateAll(schoolId: string): Promise<void> {
     supabase.from("fee_types").select("*").eq("school_id", schoolId),
     supabase.from("invoices").select("*").eq("school_id", schoolId),
     supabase.from("payment_records").select("*").eq("school_id", schoolId),
+    supabase.from("parents").select("*").eq("school_id", schoolId),
+    supabase.from("announcements").select("*").eq("school_id", schoolId).order("created_at", { ascending: false }),
+    supabase.from("academic_years").select("*").eq("school_id", schoolId),
   ]);
 
   const schools = (schoolsRes.data ?? []).map(rowToSchool);
@@ -236,6 +297,27 @@ export async function hydrateAll(schoolId: string): Promise<void> {
   const feeTypes = (feeTypesRes.data ?? []).map(rowToFeeType);
   const payments = (invoicesRes.data ?? []).map(rowToInvoice);
   const paymentRecords = (paymentRecordsRes.data ?? []).map(rowToPaymentRecord);
+  const parents = (parentsRes.data ?? []).map(rowToParent);
+  const announcements = (announcementsRes.data ?? []).map(rowToAnnouncement);
+  const academicYears = (academicYearsRes.data ?? []).map(rowToAcademicYear);
+
+  // Backfill student.parentName/Phone/etc from the parents table for legacy UI.
+  const parentByStudent = new Map<string, Parent>();
+  for (const p of parents) {
+    if (!parentByStudent.has(p.studentId)) parentByStudent.set(p.studentId, p);
+  }
+  for (const s of students) {
+    const p = parentByStudent.get(s.id);
+    if (p) {
+      s.parentName = `${p.firstName} ${p.lastName}`.trim();
+      s.parentPhone = p.phone ?? "";
+      s.parentEmail = p.email;
+      s.parentWhatsapp = p.whatsapp;
+      if (p.relationship === "Père" || p.relationship === "Mère" || p.relationship === "Tuteur") {
+        s.parentRelation = p.relationship;
+      }
+    }
+  }
 
   syncing = true;
   try {
@@ -250,6 +332,9 @@ export async function hydrateAll(schoolId: string): Promise<void> {
       db.feeTypes = feeTypes;
       db.payments = payments;
       db.paymentRecords = paymentRecords;
+      db.parents = parents;
+      db.announcements = announcements;
+      db.academicYears = academicYears;
     });
   } finally {
     syncing = false;
@@ -288,7 +373,8 @@ async function pushDiffs(): Promise<void> {
   // Schools
   for (const s of diff(lastSnapshot.schools, current.schools).updated) {
     const { error } = await supabase.from("schools").update({
-      name: s.name, director_name: s.director, email: s.email, phone: s.phone, city: s.city, country: s.country,
+      name: s.name, director_name: s.director, email: s.email, phone: s.phone,
+      city: s.city, country: s.country, address: s.address ?? null, logo_url: s.logo ?? null,
     }).eq("id", s.id);
     if (error) throw error;
   }
@@ -490,6 +576,73 @@ async function pushDiffs(): Promise<void> {
   }
   for (const id of prDiff.deletedIds) {
     const { error } = await supabase.from("payment_records").delete().eq("id", id);
+    if (error) throw error;
+  }
+
+
+  // Parents
+  const parentDiff = diff(lastSnapshot.parents, current.parents);
+  for (const p of parentDiff.inserted) {
+    const { error } = await supabase.from("parents").insert({
+      id: p.id, school_id: schoolId, student_id: p.studentId,
+      first_name: p.firstName, last_name: p.lastName,
+      phone: p.phone ?? null, whatsapp: p.whatsapp ?? null, email: p.email ?? null,
+      relationship: p.relationship ?? null, profession: p.profession ?? null,
+      is_emergency_contact: p.isEmergencyContact ?? false,
+    });
+    if (error) throw error;
+  }
+  for (const p of parentDiff.updated) {
+    const { error } = await supabase.from("parents").update({
+      student_id: p.studentId, first_name: p.firstName, last_name: p.lastName,
+      phone: p.phone ?? null, whatsapp: p.whatsapp ?? null, email: p.email ?? null,
+      relationship: p.relationship ?? null, profession: p.profession ?? null,
+      is_emergency_contact: p.isEmergencyContact ?? false,
+    }).eq("id", p.id);
+    if (error) throw error;
+  }
+  for (const id of parentDiff.deletedIds) {
+    const { error } = await supabase.from("parents").delete().eq("id", id);
+    if (error) throw error;
+  }
+
+  // Announcements
+  const annDiff = diff(lastSnapshot.announcements, current.announcements);
+  for (const a of annDiff.inserted) {
+    const { error } = await supabase.from("announcements").insert({
+      id: a.id, school_id: schoolId, title: a.title, content: a.content,
+      audience: a.audience, author_id: a.authorId ?? null,
+    });
+    if (error) throw error;
+  }
+  for (const a of annDiff.updated) {
+    const { error } = await supabase.from("announcements").update({
+      title: a.title, content: a.content, audience: a.audience,
+    }).eq("id", a.id);
+    if (error) throw error;
+  }
+  for (const id of annDiff.deletedIds) {
+    const { error } = await supabase.from("announcements").delete().eq("id", id);
+    if (error) throw error;
+  }
+
+  // Academic years
+  const ayDiff = diff(lastSnapshot.academicYears, current.academicYears);
+  for (const y of ayDiff.inserted) {
+    const { error } = await supabase.from("academic_years").insert({
+      id: y.id, school_id: schoolId, name: y.name,
+      start_date: y.startDate ?? null, end_date: y.endDate ?? null, is_current: y.isCurrent,
+    });
+    if (error) throw error;
+  }
+  for (const y of ayDiff.updated) {
+    const { error } = await supabase.from("academic_years").update({
+      name: y.name, start_date: y.startDate ?? null, end_date: y.endDate ?? null, is_current: y.isCurrent,
+    }).eq("id", y.id);
+    if (error) throw error;
+  }
+  for (const id of ayDiff.deletedIds) {
+    const { error } = await supabase.from("academic_years").delete().eq("id", id);
     if (error) throw error;
   }
 

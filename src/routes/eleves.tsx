@@ -16,8 +16,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Users, Search, Plus, Trash2, Pencil, Upload } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { STUDENT_STATUSES, PARENT_RELATIONS, type Student, type StudentStatus, type ParentRelation } from "@/lib/types";
+import { STUDENT_STATUSES, PARENT_RELATIONS, type Student, type StudentStatus, type ParentRelation, type DB } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+type ParentForm = {
+  parentName: string; parentPhone: string; parentEmail: string;
+  parentRelation: ParentRelation; parentWhatsapp: string;
+};
+
+function upsertParentForStudent(d: DB, studentId: string, f: ParentForm) {
+  const [firstName, ...rest] = f.parentName.trim().split(/\s+/);
+  const lastName = rest.join(" ");
+  const existing = d.parents.find((p) => p.studentId === studentId);
+  const payload = {
+    studentId,
+    firstName: firstName || f.parentName.trim() || "—",
+    lastName: lastName || "",
+    phone: f.parentPhone || undefined,
+    whatsapp: f.parentWhatsapp || undefined,
+    email: f.parentEmail || undefined,
+    relationship: f.parentRelation,
+    isEmergencyContact: true,
+  };
+  if (existing) {
+    Object.assign(existing, payload);
+  } else {
+    d.parents.push({ id: crypto.randomUUID(), ...payload });
+  }
+}
 
 export const Route = createFileRoute("/eleves")({
   component: ElevesPage,
@@ -180,6 +206,7 @@ function ElevesPage() {
             photo: form.photo,
           };
         }
+        upsertParentForStudent(d, editingId, form);
       });
       toast.success("Élève modifié avec succès");
     } else {
@@ -192,6 +219,7 @@ function ElevesPage() {
           parentWhatsapp: form.parentWhatsapp || undefined,
           enrolledAt: new Date().toISOString().slice(0, 10),
         });
+        upsertParentForStudent(d, id, form);
         d.activities.unshift({
           id: crypto.randomUUID(),
           type: "student",

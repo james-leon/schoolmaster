@@ -1,15 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
-import { useDB, resetDB } from "@/lib/store";
+import { useDB, updateDB } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
 import { ROLE_LABELS } from "@/lib/format";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trash2, Megaphone, Upload, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
+import type { Announcement } from "@/lib/types";
 
 export const Route = createFileRoute("/parametres")({
   component: ParametresPage,
@@ -21,32 +29,146 @@ function ParametresPage() {
   const { theme, toggle } = useTheme();
   const school = db.schools.find((s) => s.id === user?.schoolId) ?? db.schools[0];
 
+  const [form, setForm] = useState({
+    name: "", director: "", email: "", phone: "",
+    city: "", country: "", address: "", logo: "",
+  });
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    if (school) {
+      setForm({
+        name: school.name ?? "",
+        director: school.director ?? "",
+        email: school.email ?? "",
+        phone: school.phone ?? "",
+        city: school.city ?? "",
+        country: school.country ?? "",
+        address: school.address ?? "",
+        logo: school.logo ?? "",
+      });
+    }
+  }, [school?.id]);
+
+  const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
+    setForm((f) => ({ ...f, [k]: v }));
+
+  const saveSchool = () => {
+    if (!school) return;
+    updateDB((d) => {
+      const idx = d.schools.findIndex((s) => s.id === school.id);
+      if (idx >= 0) {
+        d.schools[idx] = { ...d.schools[idx], ...form };
+      }
+    });
+    toast.success("Informations enregistrées");
+  };
+
+  const uploadLogo = async (file: File) => {
+    if (!school) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() ?? "png";
+      const path = `${school.id}/logo-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("school-logos").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("school-logos").getPublicUrl(path);
+      set("logo", data.publicUrl);
+      updateDB((d) => {
+        const idx = d.schools.findIndex((s) => s.id === school.id);
+        if (idx >= 0) d.schools[idx] = { ...d.schools[idx], logo: data.publicUrl };
+      });
+      toast.success("Logo téléchargé");
+    } catch (err) {
+      toast.error("Erreur lors du téléchargement: " + (err as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <AppLayout title="Paramètres">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Informations de l'école</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {[
-              { label: "Nom de l'école", value: school?.name },
-              { label: "Directeur", value: school?.director },
-              { label: "Email", value: school?.email },
-              { label: "Téléphone", value: school?.phone },
-              { label: "Ville", value: school?.city },
-              { label: "Pays", value: school?.country },
-            ].map((f) => (
-              <div key={f.label} className="space-y-1.5">
-                <Label>{f.label}</Label>
-                <Input defaultValue={f.value} />
-              </div>
-            ))}
-            <Button onClick={() => toast.success("Informations enregistrées")}>Enregistrer</Button>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="ecole">
+        <TabsList>
+          <TabsTrigger value="ecole">École</TabsTrigger>
+          <TabsTrigger value="annonces">Annonces</TabsTrigger>
+          <TabsTrigger value="compte">Compte</TabsTrigger>
+        </TabsList>
 
-        <div className="space-y-4">
+        <TabsContent value="ecole" className="mt-4">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Informations de l'école</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label>Logo</Label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+                      {form.logo ? (
+                        <img src={form.logo} alt="logo" className="h-full w-full object-cover" />
+                      ) : (
+                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                      )}
+                    </div>
+                    <label className="inline-flex">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])}
+                      />
+                      <Button asChild variant="outline" disabled={uploading}>
+                        <span className="cursor-pointer">
+                          <Upload className="mr-2 h-4 w-4" />
+                          {uploading ? "Téléchargement..." : "Changer le logo"}
+                        </span>
+                      </Button>
+                    </label>
+                  </div>
+                </div>
+                {[
+                  { k: "name", label: "Nom de l'école" },
+                  { k: "director", label: "Directeur" },
+                  { k: "email", label: "Email" },
+                  { k: "phone", label: "Téléphone" },
+                  { k: "address", label: "Adresse" },
+                  { k: "city", label: "Ville" },
+                  { k: "country", label: "Pays" },
+                ].map((f) => (
+                  <div key={f.k} className="space-y-1.5">
+                    <Label>{f.label}</Label>
+                    <Input
+                      value={form[f.k as keyof typeof form] as string}
+                      onChange={(e) => set(f.k as keyof typeof form, e.target.value)}
+                    />
+                  </div>
+                ))}
+                <Button onClick={saveSchool}>Enregistrer</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Apparence</CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Mode sombre</p>
+                  <p className="text-xs text-muted-foreground">Basculer entre clair et sombre</p>
+                </div>
+                <Switch checked={theme === "dark"} onCheckedChange={toggle} />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="annonces" className="mt-4">
+          <AnnouncementsPanel authorId={user?.id} />
+        </TabsContent>
+
+        <TabsContent value="compte" className="mt-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Compte</CardTitle>
@@ -57,39 +179,110 @@ function ParametresPage() {
               <div className="flex justify-between"><span className="text-muted-foreground">Rôle</span><span className="font-medium">{user ? ROLE_LABELS[user.role] : ""}</span></div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Apparence</CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Mode sombre</p>
-                <p className="text-xs text-muted-foreground">Basculer entre clair et sombre</p>
-              </div>
-              <Switch checked={theme === "dark"} onCheckedChange={toggle} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Données de démonstration</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-3 text-sm text-muted-foreground">Réinitialiser toutes les données vers l'échantillon initial.</p>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  resetDB();
-                  toast.success("Données réinitialisées");
-                }}
-              >
-                Réinitialiser les données
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </AppLayout>
+  );
+}
+
+function AnnouncementsPanel({ authorId }: { authorId?: string }) {
+  const db = useDB();
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [audience, setAudience] = useState<Announcement["audience"]>("Tous");
+
+  const sorted = [...db.announcements].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  const submit = () => {
+    if (!title.trim() || !content.trim()) {
+      toast.error("Titre et contenu requis");
+      return;
+    }
+    updateDB((d) => {
+      d.announcements.unshift({
+        id: crypto.randomUUID(),
+        title: title.trim(),
+        content: content.trim(),
+        audience,
+        authorId,
+        createdAt: new Date().toISOString(),
+      });
+    });
+    setTitle("");
+    setContent("");
+    setAudience("Tous");
+    toast.success("Annonce publiée");
+  };
+
+  const remove = (id: string) => {
+    updateDB((d) => {
+      d.announcements = d.announcements.filter((a) => a.id !== id);
+    });
+    toast.success("Annonce supprimée");
+  };
+
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Megaphone className="h-4 w-4" /> Nouvelle annonce
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Titre</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Réunion parents-professeurs" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Audience</Label>
+            <Select value={audience} onValueChange={(v) => setAudience(v as Announcement["audience"])}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Tous">Tous</SelectItem>
+                <SelectItem value="Parents">Parents</SelectItem>
+                <SelectItem value="Enseignants">Enseignants</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Contenu</Label>
+            <Textarea rows={5} value={content} onChange={(e) => setContent(e.target.value)} placeholder="Détails de l'annonce..." />
+          </div>
+          <Button onClick={submit}>Publier l'annonce</Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Annonces récentes ({sorted.length})</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {sorted.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">Aucune annonce</p>
+          ) : (
+            sorted.map((a) => (
+              <div key={a.id} className="rounded-lg border border-border p-3">
+                <div className="mb-1 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{a.title}</p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <Badge variant="outline" className="text-[10px]">{a.audience}</Badge>
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(a.createdAt).toLocaleDateString("fr-FR")}
+                      </span>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => remove(a.id)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-3">{a.content}</p>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
