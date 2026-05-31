@@ -8,15 +8,17 @@ export const Route = createFileRoute("/api/public/seed-demo")({
     handlers: {
       POST: async () => {
         try {
-          const result = await runSeed();
-          return Response.json(result);
-        } catch (e) {
-          console.error("[seed-demo] failed:", e);
-          return Response.json({ error: (e as Error).message }, { status: 500 });
-        }
-      },
-      GET: async () => {
-        try {
+          // Fast idempotency check: if demo school already exists, return immediately
+          // without any further admin/listUsers calls. Keeps the endpoint cheap and
+          // safe to expose unauthenticated.
+          const { data: existing } = await supabaseAdmin
+            .from("schools")
+            .select("id")
+            .eq("name", SCHOOL_NAME)
+            .maybeSingle();
+          if (existing) {
+            return Response.json({ ok: true, schoolId: existing.id, seeded: false });
+          }
           const result = await runSeed();
           return Response.json(result);
         } catch (e) {
