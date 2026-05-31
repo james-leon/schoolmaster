@@ -182,9 +182,9 @@ export const Route = createFileRoute("/api/public/super-admin")({
               "grades","attendance","payment_records","invoices","fee_types",
               "class_subjects","students","teachers","classes","parents",
               "announcements","academic_years",
-            ];
+            ] as const;
             for (const t of tables) {
-              await supabaseAdmin.from(t).delete().eq("school_id", schoolId);
+              await (supabaseAdmin.from(t) as any).delete().eq("school_id", schoolId);
             }
             // Delete profiles + roles + auth users
             for (const uid of memberIds) {
