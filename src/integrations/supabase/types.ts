@@ -423,6 +423,48 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_subscriptions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          payment_date: string
+          payment_method: string | null
+          period_end: string | null
+          period_start: string | null
+          plan: string
+          reference: string | null
+          school_id: string
+          status: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          payment_date?: string
+          payment_method?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan: string
+          reference?: string | null
+          school_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          payment_date?: string
+          payment_method?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan?: string
+          reference?: string | null
+          school_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           assigned_classes: string[] | null
@@ -499,7 +541,9 @@ export type Database = {
           name: string
           phone: string | null
           status: string
+          subscription_end: string | null
           subscription_plan: string | null
+          subscription_start: string | null
           trial_ends_at: string | null
         }
         Insert: {
@@ -515,7 +559,9 @@ export type Database = {
           name: string
           phone?: string | null
           status?: string
+          subscription_end?: string | null
           subscription_plan?: string | null
+          subscription_start?: string | null
           trial_ends_at?: string | null
         }
         Update: {
@@ -531,7 +577,9 @@ export type Database = {
           name?: string
           phone?: string | null
           status?: string
+          subscription_end?: string | null
           subscription_plan?: string | null
+          subscription_start?: string | null
           trial_ends_at?: string | null
         }
         Relationships: []

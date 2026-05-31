@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils";
 import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
 import { useAuth } from "@/lib/auth";
+import { usePlan } from "@/lib/usePlan";
+import { UpgradeModal } from "@/components/UpgradePrompt";
 
 type ParentForm = {
   parentName: string; parentPhone: string; parentEmail: string;
@@ -140,8 +142,10 @@ function ElevesPage() {
   const [confirmDelete, setConfirmDelete] = useState<Student | null>(null);
   const [parentAccountFor, setParentAccountFor] = useState<Student | null>(null);
   const [credentials, setCredentials] = useState<CredentialsInfo | null>(null);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const school = db.schools.find((s) => s.id === user?.schoolId);
+  const { plan, canAddStudent, limits, studentCount } = usePlan();
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }));
   const className = (id: string) => db.classes.find((c) => c.id === id)?.name ?? "—";
@@ -157,6 +161,10 @@ function ElevesPage() {
   }, [db.students, db.classes, search, classFilter, statusFilter]);
 
   const openCreate = () => {
+    if (!editingId && !canAddStudent()) {
+      setUpgradeOpen(true);
+      return;
+    }
     setEditingId(null);
     setErrors({});
     setForm({ ...emptyForm(), code: nextCode() });
@@ -472,6 +480,12 @@ function ElevesPage() {
         schoolName={school?.name}
       />
       <CredentialsModal info={credentials} onClose={() => setCredentials(null)} />
+      <UpgradeModal
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        title={`Limite du plan ${plan.label} atteinte`}
+        message={`Vous avez atteint la limite de ${limits.maxStudents} élèves (${studentCount} inscrits) de votre plan ${plan.label}. Passez à un plan supérieur pour ajouter plus d'élèves.`}
+      />
     </AppLayout>
   );
 }

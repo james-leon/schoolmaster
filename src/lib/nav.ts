@@ -22,5 +22,7 @@ export const NAV_ITEMS: NavItem[] = [
 
 /** Routes a given role is allowed to visit (besides /login, /unauthorized, /parent, public). */
 export function allowedRoutes(role: Role): string[] {
-  return NAV_ITEMS.filter((n) => !n.roles || n.roles.includes(role)).map((n) => n.to);
+  const base = NAV_ITEMS.filter((n) => !n.roles || n.roles.includes(role)).map((n) => n.to);
+  if (role === "school_admin" || role === "super_admin") base.push("/mon-abonnement");
+  return base;
 }

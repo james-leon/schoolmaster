@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { NAV_ITEMS } from "@/lib/nav";
 import { Logo } from "./Logo";
+import { PlanBadge } from "./PlanBadge";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { LogOut } from "lucide-react";
@@ -33,7 +34,15 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="border-t border-sidebar-border p-3">
+      <div className="space-y-2 border-t border-sidebar-border p-3">
+        {user?.role === "school_admin" && (
+          <Link
+            to="/mon-abonnement"
+            className="flex items-center justify-center rounded-md bg-sidebar-accent/40 px-3 py-2 hover:bg-sidebar-accent"
+          >
+            <PlanBadge />
+          </Link>
+        )}
         <button
           onClick={logout}
           className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"

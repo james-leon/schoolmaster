@@ -20,6 +20,8 @@ import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
 import { hydrateAll } from "@/lib/supabase-sync";
 import { useAuth } from "@/lib/auth";
+import { usePlan } from "@/lib/usePlan";
+import { UpgradeModal } from "@/components/UpgradePrompt";
 
 export const Route = createFileRoute("/enseignants")({ component: EnseignantsPage });
 
@@ -46,9 +48,14 @@ function EnseignantsPage() {
   const [toDelete, setToDelete] = useState<Teacher | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [credentials, setCredentials] = useState<CredentialsInfo | null>(null);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const school = db.schools.find((s) => s.id === user?.schoolId);
+  const { plan, canAddTeacher, limits, teacherCount } = usePlan();
 
-  const openNew = () => { setEditing(null); setForm(empty); setErrors({}); setOpen(true); };
+  const openNew = () => {
+    if (!canAddTeacher()) { setUpgradeOpen(true); return; }
+    setEditing(null); setForm(empty); setErrors({}); setOpen(true);
+  };
   const openEdit = (t: Teacher) => {
     setEditing(t);
     setForm({
@@ -230,6 +237,12 @@ function EnseignantsPage() {
       </AlertDialog>
 
       <CredentialsModal info={credentials} onClose={() => setCredentials(null)} />
+      <UpgradeModal
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        title={`Limite du plan ${plan.label} atteinte`}
+        message={`Vous avez atteint la limite de ${limits.maxTeachers} enseignants (${teacherCount} inscrits) de votre plan ${plan.label}. Passez à un plan supérieur pour en ajouter plus.`}
+      />
     </AppLayout>
   );
 }

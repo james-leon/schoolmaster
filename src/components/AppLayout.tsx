@@ -5,13 +5,16 @@ import { Sidebar, MobileNav } from "./Sidebar";
 import { Header } from "./Header";
 import { useAuth } from "@/lib/auth";
 import { allowedRoutes, NAV_ITEMS } from "@/lib/nav";
-import { ChevronRight, ShieldAlert } from "lucide-react";
+import { usePlan } from "@/lib/usePlan";
+import { ChevronRight, ShieldAlert, AlertOctagon, Clock } from "lucide-react";
 import { Button } from "./ui/button";
+import { WINTEK_CONTACT } from "@/lib/plans";
 
 export function AppLayout({ title, children }: { title: string; children: ReactNode }) {
-  const { user, originalUser, isImpersonating, stopImpersonating, loading, isAuthenticated } = useAuth();
+  const { user, originalUser, isImpersonating, stopImpersonating, logout, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { isBlocked, isTrial, daysLeftInTrial, effectiveStatus, plan } = usePlan();
 
   useEffect(() => {
     if (loading) return;
@@ -19,7 +22,6 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
       navigate({ to: "/login", replace: true });
       return;
     }
-    // Real super_admin without impersonation → platform console
     if (originalUser?.role === "super_admin" && !isImpersonating) {
       navigate({ to: "/super-admin", replace: true });
       return;
@@ -46,6 +48,32 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
     );
   }
 
+  // Subscription block — only applies to school members, not super admin viewing their console
+  if (isBlocked && user.role !== "super_admin") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <div className="max-w-md rounded-lg border border-destructive/30 bg-card p-8 text-center shadow-lg">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+            <AlertOctagon className="h-7 w-7" />
+          </div>
+          <h1 className="text-xl font-semibold">
+            {effectiveStatus === "suspended" ? "Compte suspendu" : "Abonnement expiré"}
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {effectiveStatus === "suspended"
+              ? "Votre abonnement a été suspendu. Contactez Wintek pour réactiver votre école."
+              : "Votre abonnement a expiré. Contactez Wintek pour réactiver l'accès à votre école."}
+          </p>
+          <div className="mt-4 rounded-md bg-muted p-3 text-sm">
+            <div>{WINTEK_CONTACT.phone}</div>
+            <div>{WINTEK_CONTACT.email}</div>
+          </div>
+          <Button variant="outline" className="mt-6" onClick={logout}>Déconnexion</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {isImpersonating && originalUser && (
@@ -64,6 +92,12 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
           >
             Retour Super Admin
           </Button>
+        </div>
+      )}
+      {isTrial && daysLeftInTrial != null && user.role !== "super_admin" && (
+        <div className="flex items-center justify-center gap-2 bg-accent/15 px-4 py-1.5 text-xs text-accent">
+          <Clock className="h-3.5 w-3.5" />
+          Période d'essai (plan {plan.label}) — {daysLeftInTrial} jour{daysLeftInTrial > 1 ? "s" : ""} restant{daysLeftInTrial > 1 ? "s" : ""}
         </div>
       )}
       <Sidebar />
