@@ -265,8 +265,8 @@ async function runSeed() {
       full_name: u.full_name,
       email: u.email,
       role: u.role,
-      assigned_classes: "assigned_classes" in u ? u.assigned_classes : [],
-      assigned_subjects: "assigned_subjects" in u ? u.assigned_subjects : [],
+      assigned_classes: ("assigned_classes" in u ? u.assigned_classes : []) ?? [],
+      assigned_subjects: ("assigned_subjects" in u ? u.assigned_subjects : []) ?? [],
     };
     if (u.role === "parent" && firstStudentId) {
       profilePatch.student_id = firstStudentId;
