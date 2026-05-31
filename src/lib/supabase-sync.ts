@@ -42,28 +42,6 @@ type Snapshot = {
   academicYears: AcademicYear[];
 };
 
-type Snapshot = {
-  schools: School[];
-  classes: Classe[];
-  students: Student[];
-  teachers: Teacher[];
-  classSubjects: ClassSubject[];
-  grades: Grade[];
-  attendance: Attendance[];
-  feeTypes: FeeType[];
-  payments: Payment[];
-  paymentRecords: PaymentRecord[];
-};
-
-let lastSnapshot: Snapshot | null = null;
-let currentSchoolId: string | null = null;
-let syncing = false;
-let pendingSync = false;
-
-export function getCurrentSchoolId(): string | null {
-  return currentSchoolId;
-}
-
 function snapshot(): Snapshot {
   const db = getDB();
   return {
@@ -73,6 +51,15 @@ function snapshot(): Snapshot {
     teachers: [...db.teachers],
     classSubjects: [...db.classSubjects],
     grades: [...db.grades],
+    attendance: [...db.attendance],
+    feeTypes: [...db.feeTypes],
+    payments: [...db.payments],
+    paymentRecords: [...db.paymentRecords],
+    parents: [...db.parents],
+    announcements: [...db.announcements],
+    academicYears: [...db.academicYears],
+  };
+}
     attendance: [...db.attendance],
     feeTypes: [...db.feeTypes],
     payments: [...db.payments],
