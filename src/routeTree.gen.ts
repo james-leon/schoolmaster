@@ -18,6 +18,7 @@ import { Route as PresencesRouteImport } from './routes/presences'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as NotesRouteImport } from './routes/notes'
+import { Route as MonAbonnementRouteImport } from './routes/mon-abonnement'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as EnseignantsRouteImport } from './routes/enseignants'
@@ -76,6 +77,11 @@ const ParametresRoute = ParametresRouteImport.update({
 const NotesRoute = NotesRouteImport.update({
   id: '/notes',
   path: '/notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonAbonnementRoute = MonAbonnementRouteImport.update({
+  id: '/mon-abonnement',
+  path: '/mon-abonnement',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -159,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/mon-abonnement': typeof MonAbonnementRoute
   '/notes': typeof NotesRoute
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
@@ -184,6 +191,7 @@ export interface FileRoutesByTo {
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/mon-abonnement': typeof MonAbonnementRoute
   '/notes': typeof NotesRoute
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
@@ -210,6 +218,7 @@ export interface FileRoutesById {
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/mon-abonnement': typeof MonAbonnementRoute
   '/notes': typeof NotesRoute
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/enseignants'
     | '/forgot-password'
     | '/login'
+    | '/mon-abonnement'
     | '/notes'
     | '/parametres'
     | '/parent'
@@ -262,6 +272,7 @@ export interface FileRouteTypes {
     | '/enseignants'
     | '/forgot-password'
     | '/login'
+    | '/mon-abonnement'
     | '/notes'
     | '/parametres'
     | '/parent'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/enseignants'
     | '/forgot-password'
     | '/login'
+    | '/mon-abonnement'
     | '/notes'
     | '/parametres'
     | '/parent'
@@ -313,6 +325,7 @@ export interface RootRouteChildren {
   EnseignantsRoute: typeof EnseignantsRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  MonAbonnementRoute: typeof MonAbonnementRoute
   NotesRoute: typeof NotesRoute
   ParametresRoute: typeof ParametresRoute
   ParentRoute: typeof ParentRoute
@@ -391,6 +404,13 @@ declare module '@tanstack/react-router' {
       path: '/notes'
       fullPath: '/notes'
       preLoaderRoute: typeof NotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mon-abonnement': {
+      id: '/mon-abonnement'
+      path: '/mon-abonnement'
+      fullPath: '/mon-abonnement'
+      preLoaderRoute: typeof MonAbonnementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -515,6 +535,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnseignantsRoute: EnseignantsRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  MonAbonnementRoute: MonAbonnementRoute,
   NotesRoute: NotesRoute,
   ParametresRoute: ParametresRoute,
   ParentRoute: ParentRoute,
@@ -532,3 +553,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
