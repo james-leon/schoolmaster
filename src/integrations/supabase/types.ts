@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          school_id: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          school_id: string
+          status: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          school_id?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: []
+      }
       class_subjects: {
         Row: {
           class_id: string
@@ -110,6 +137,186 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fee_types: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string | null
+          id: string
+          name: string
+          school_id: string
+          scope: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          name: string
+          school_id: string
+          scope?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          name?: string
+          school_id?: string
+          scope?: string
+        }
+        Relationships: []
+      }
+      grades: {
+        Row: {
+          class_id: string | null
+          comment: string | null
+          composition: number | null
+          created_at: string
+          devoir1: number | null
+          devoir2: number | null
+          evaluation_type: string | null
+          grade: number | null
+          id: string
+          school_id: string
+          student_id: string
+          subject: string
+          subject_id: string | null
+          term: string
+          value: number
+        }
+        Insert: {
+          class_id?: string | null
+          comment?: string | null
+          composition?: number | null
+          created_at?: string
+          devoir1?: number | null
+          devoir2?: number | null
+          evaluation_type?: string | null
+          grade?: number | null
+          id?: string
+          school_id: string
+          student_id: string
+          subject: string
+          subject_id?: string | null
+          term: string
+          value?: number
+        }
+        Update: {
+          class_id?: string | null
+          comment?: string | null
+          composition?: number | null
+          created_at?: string
+          devoir1?: number | null
+          devoir2?: number | null
+          evaluation_type?: string | null
+          grade?: number | null
+          id?: string
+          school_id?: string
+          student_id?: string
+          subject?: string
+          subject_id?: string | null
+          term?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          amount: number
+          amount_paid: number
+          created_at: string
+          date: string
+          due_date: string | null
+          fee_type_id: string | null
+          id: string
+          invoice_number: string | null
+          mode: string | null
+          notes: string | null
+          reference: string | null
+          school_id: string
+          status: string
+          student_id: string
+          type: string | null
+        }
+        Insert: {
+          amount?: number
+          amount_paid?: number
+          created_at?: string
+          date?: string
+          due_date?: string | null
+          fee_type_id?: string | null
+          id?: string
+          invoice_number?: string | null
+          mode?: string | null
+          notes?: string | null
+          reference?: string | null
+          school_id: string
+          status?: string
+          student_id: string
+          type?: string | null
+        }
+        Update: {
+          amount?: number
+          amount_paid?: number
+          created_at?: string
+          date?: string
+          due_date?: string | null
+          fee_type_id?: string | null
+          id?: string
+          invoice_number?: string | null
+          mode?: string | null
+          notes?: string | null
+          reference?: string | null
+          school_id?: string
+          status?: string
+          student_id?: string
+          type?: string | null
+        }
+        Relationships: []
+      }
+      payment_records: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          id: string
+          invoice_id: string
+          mode: string
+          notes: string | null
+          receipt_number: string
+          reference: string | null
+          school_id: string
+          student_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          invoice_id: string
+          mode: string
+          notes?: string | null
+          receipt_number: string
+          reference?: string | null
+          school_id: string
+          student_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          invoice_id?: string
+          mode?: string
+          notes?: string | null
+          receipt_number?: string
+          reference?: string | null
+          school_id?: string
+          student_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
