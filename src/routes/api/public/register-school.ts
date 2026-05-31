@@ -30,6 +30,16 @@ export const Route = createFileRoute("/api/public/register-school")({
           }
           const userId = userRes.user.id;
 
+          // Guard: reject if user already has any role or is already linked to a school.
+          // Prevents role escalation by re-registering.
+          const [{ data: existingRoles }, { data: existingProfile }] = await Promise.all([
+            supabaseAdmin.from("user_roles").select("role").eq("user_id", userId).limit(1),
+            supabaseAdmin.from("profiles").select("school_id, role").eq("id", userId).maybeSingle(),
+          ]);
+          if ((existingRoles && existingRoles.length > 0) || existingProfile?.school_id || existingProfile?.role) {
+            return Response.json({ error: "Compte déjà associé à une école" }, { status: 409 });
+          }
+
           const body = await request.json();
           const { schoolName, director, email, phone, city, country } = body ?? {};
           if (!schoolName || !director || !email) {
