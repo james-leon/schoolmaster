@@ -180,6 +180,7 @@ function ElevesPage() {
             photo: form.photo,
           };
         }
+        upsertParentForStudent(d, editingId, form);
       });
       toast.success("Élève modifié avec succès");
     } else {
@@ -192,6 +193,7 @@ function ElevesPage() {
           parentWhatsapp: form.parentWhatsapp || undefined,
           enrolledAt: new Date().toISOString().slice(0, 10),
         });
+        upsertParentForStudent(d, id, form);
         d.activities.unshift({
           id: crypto.randomUUID(),
           type: "student",
