@@ -20,9 +20,13 @@ function rand<T>(arr: T[]): T {
   return arr[Math.floor(rng() * arr.length)];
 }
 let _uidCounter = 0;
-function uid(p: string) {
+function uid(_p: string) {
+  // Real UUIDs so seeded IDs are compatible with Supabase UUID columns.
   _uidCounter += 1;
-  return `${p}-${_uidCounter.toString(36).padStart(5, "0")}`;
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  // Deterministic fallback (SSR without crypto): build a v4-shaped string.
+  const hex = (_uidCounter * 0x9e3779b1).toString(16).padStart(8, "0");
+  return `${hex.slice(0, 8)}-0000-4000-8000-${hex.padStart(12, "0").slice(0, 12)}`;
 }
 
 

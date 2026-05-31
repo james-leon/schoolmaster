@@ -364,7 +364,7 @@ function CreateInvoiceModal({ open, onClose }: { open: boolean; onClose: () => v
     const num = nextInvoiceNumber();
     updateDB((d) => {
       d.payments.push({
-        id: "pay-" + Math.random().toString(36).slice(2, 9),
+        id: crypto.randomUUID(),
         invoiceNumber: num,
         studentId: data.studentId,
         feeTypeId: data.feeTypeId,
@@ -377,7 +377,7 @@ function CreateInvoiceModal({ open, onClose }: { open: boolean; onClose: () => v
         notes: data.notes,
       });
       d.activities.unshift({
-        id: "act-" + Math.random().toString(36).slice(2, 7),
+        id: crypto.randomUUID(),
         type: "payment",
         text: `Facture ${num} créée`,
         date: new Date().toISOString(),
@@ -503,7 +503,7 @@ function PaymentModal({
     }
     const data = parsed.data;
     const receiptNumber = nextReceiptNumber();
-    const recordId = "rec-" + Math.random().toString(36).slice(2, 9);
+    const recordId = crypto.randomUUID();
     const newRecord: PaymentRecord = {
       id: recordId,
       receiptNumber,
@@ -525,7 +525,7 @@ function PaymentModal({
       inv.status = deriveInvoiceStatus(inv.amount, inv.amountPaid, inv.dueDate);
       d.paymentRecords.unshift(newRecord);
       d.activities.unshift({
-        id: "act-" + Math.random().toString(36).slice(2, 7),
+        id: crypto.randomUUID(),
         type: "payment",
         text: `Paiement de ${fcfa(data.amount)} (${data.mode}) — ${student ? student.firstName + " " + student.lastName : ""}`,
         date: new Date().toISOString(),
@@ -893,7 +893,7 @@ function FeeTypesTab() {
         const f = d.feeTypes.find((x) => x.id === editing.id);
         if (f) Object.assign(f, data);
       } else {
-        d.feeTypes.push({ id: "fee-" + Math.random().toString(36).slice(2, 9), ...data });
+        d.feeTypes.push({ id: crypto.randomUUID(), ...data });
       }
     });
     toast.success(editing ? "Type de frais modifié" : "Type de frais créé");

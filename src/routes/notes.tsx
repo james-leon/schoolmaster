@@ -197,7 +197,7 @@ function SaisieTab() {
         const n = parsed(c?.grade ?? "");
         if (n == null) return;
         d.grades.push({
-          id: "grade-" + Math.random().toString(36).slice(2, 9),
+          id: crypto.randomUUID(),
           studentId: s.id,
           classId,
           subject,
@@ -211,7 +211,7 @@ function SaisieTab() {
         });
       });
       d.activities.unshift({
-        id: "act-" + Math.random().toString(36).slice(2, 7),
+        id: crypto.randomUUID(),
         type: "grade",
         text: `Notes ${subject} (${evalType}) enregistrées — ${term}`,
         date: new Date().toISOString(),

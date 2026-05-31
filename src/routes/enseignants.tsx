@@ -65,7 +65,7 @@ function EnseignantsPage() {
         const t = d.teachers.find((x) => x.id === editing.id);
         if (t) Object.assign(t, data, { subject: data.subjects[0] });
       } else {
-        d.teachers.push({ id: "teacher-" + Math.random().toString(36).slice(2, 9), ...data, subject: data.subjects[0] });
+        d.teachers.push({ id: crypto.randomUUID(), ...data, subject: data.subjects[0] });
       }
     });
     toast.success(editing ? "Enseignant modifié" : "Enseignant ajouté");
