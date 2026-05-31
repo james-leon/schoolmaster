@@ -293,3 +293,82 @@ function AnnouncementsPanel({ authorId }: { authorId?: string }) {
     </div>
   );
 }
+
+const MONTHS_FR = [
+  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+];
+
+function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
+  const [values, setValues] = useState<number[]>(() => new Array(12).fill(30));
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!schoolId) return;
+    let cancelled = false;
+    setLoading(true);
+    supabase.from("schools").select("enrollment_targets").eq("id", schoolId).maybeSingle().then(({ data, error }) => {
+      if (cancelled) return;
+      if (error) toast.error("Erreur lors du chargement: " + error.message);
+      const raw = (data?.enrollment_targets ?? {}) as Record<string, number>;
+      const next = new Array(12).fill(30).map((d, i) => Number(raw[String(i + 1)] ?? d));
+      setValues(next);
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [schoolId]);
+
+  const setMonth = (idx: number, v: string) => {
+    const n = Math.max(0, Math.floor(Number(v) || 0));
+    setValues((arr) => arr.map((x, i) => (i === idx ? n : x)));
+  };
+
+  const save = async () => {
+    if (!schoolId) return;
+    setSaving(true);
+    const payload: Record<string, number> = {};
+    values.forEach((v, i) => { payload[String(i + 1)] = v; });
+    const { error } = await supabase.from("schools").update({ enrollment_targets: payload }).eq("id", schoolId);
+    setSaving(false);
+    if (error) {
+      toast.error("Erreur: " + error.message);
+      return;
+    }
+    toast.success("Objectifs enregistrés");
+  };
+
+  return (
+    <Card className="max-w-3xl">
+      <CardHeader>
+        <CardTitle className="text-base">Objectifs d'inscription mensuels</CardTitle>
+        <p className="text-xs text-muted-foreground">Définissez vos objectifs d'élèves inscrits par mois.</p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {loading ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Chargement...</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {MONTHS_FR.map((m, i) => (
+                <div key={m} className="flex items-center gap-3">
+                  <Label className="w-24 shrink-0">{m}</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={values[i]}
+                    onChange={(e) => setMonth(i, e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+            <Button onClick={save} disabled={saving}>
+              {saving ? "Enregistrement..." : "Enregistrer les objectifs"}
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
