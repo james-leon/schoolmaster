@@ -72,7 +72,7 @@ export function getCurrentSchoolId(): string | null {
 
 
 // ---- Row <-> domain mapping ----
-function rowToSchool(r: { id: string; name: string; director_name: string | null; email: string | null; phone: string | null; city: string | null; country: string | null }): School {
+function rowToSchool(r: { id: string; name: string; director_name: string | null; email: string | null; phone: string | null; city: string | null; country: string | null; address: string | null; logo_url: string | null }): School {
   return {
     id: r.id,
     name: r.name,
@@ -81,6 +81,8 @@ function rowToSchool(r: { id: string; name: string; director_name: string | null
     phone: r.phone ?? "",
     city: r.city ?? "",
     country: r.country ?? "",
+    address: r.address ?? "",
+    logo: r.logo_url ?? undefined,
   };
 }
 
