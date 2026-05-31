@@ -237,6 +237,12 @@ function EnseignantsPage() {
       </AlertDialog>
 
       <CredentialsModal info={credentials} onClose={() => setCredentials(null)} />
+      <UpgradeModal
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        title={`Limite du plan ${plan.label} atteinte`}
+        message={`Vous avez atteint la limite de ${limits.maxTeachers} enseignants (${teacherCount} inscrits) de votre plan ${plan.label}. Passez à un plan supérieur pour en ajouter plus.`}
+      />
     </AppLayout>
   );
 }
