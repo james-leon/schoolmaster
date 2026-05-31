@@ -68,6 +68,18 @@ export function resetDB() {
   persist();
 }
 
+/**
+ * Wipe the local cache AND its localStorage backing. Use on sign-out and
+ * before hydrating a different school to prevent cross-tenant data bleed.
+ */
+export function clearLocalDB() {
+  cache = buildSeed();
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(KEY);
+  }
+  listeners.forEach((l) => l());
+}
+
 function subscribe(cb: () => void) {
   listeners.add(cb);
   return () => listeners.delete(cb);

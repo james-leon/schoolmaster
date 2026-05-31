@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User } from "./types";
-import { getDB } from "./store";
+import { getDB, clearLocalDB } from "./store";
 import { supabase } from "@/integrations/supabase/client";
 import { hydrateAll, clearHydration, triggerSync, getCurrentSchoolId } from "./supabase-sync";
 import { registerPersistHook } from "./store";
@@ -109,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!session?.user) {
         setUser(null);
         clearHydration();
+        clearLocalDB();
         return;
       }
       const uid = session.user.id;
@@ -119,6 +120,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!u || cancelled) return;
           setUser(u);
           if (u.schoolId && u.schoolId !== getCurrentSchoolId()) {
+            // Switching tenants — wipe the previous school's local cache first.
+            clearLocalDB();
             hydrateAll(u.schoolId).catch((e) => console.error("[hydrate]", e));
           }
         } catch (e) {
@@ -169,7 +172,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const u = await withTimeout(loadProfile(data.user.id), 8000, "profil");
     if (!u) throw new Error("Profil introuvable");
     setUser(u);
-    // Hydrate in background — never block navigation.
+    // Always wipe the previous tenant's local cache before hydrating.
+    if (u.schoolId !== getCurrentSchoolId()) clearLocalDB();
     if (u.schoolId) hydrateAll(u.schoolId).catch((e) => console.error("[hydrate]", e));
     return u;
   };
@@ -178,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     clearHydration();
+    clearLocalDB();
   };
 
   const registerSchool: AuthContextType["registerSchool"] = async (data) => {
