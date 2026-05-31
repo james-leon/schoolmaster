@@ -434,12 +434,35 @@ function PaiementsTab({ studentId, payments }: { studentId: string; payments: Pa
   );
 }
 
-function MessagesTab() {
+function MessagesTab({ announcements }: { announcements: import("@/lib/types").Announcement[] }) {
+  const visible = announcements
+    .filter((a) => a.audience === "Tous" || a.audience === "Parents")
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  if (visible.length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <EmptyState icon={MessageSquare} message="Aucun message de l'école pour le moment" />
+        </CardContent>
+      </Card>
+    );
+  }
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <EmptyState icon={MessageSquare} message="Aucun message de l'école pour le moment" />
-      </CardContent>
-    </Card>
+    <div className="space-y-3">
+      {visible.map((a) => (
+        <Card key={a.id}>
+          <CardContent className="pt-5">
+            <div className="mb-1 flex items-start justify-between gap-2">
+              <p className="text-sm font-semibold">{a.title}</p>
+              <Badge variant="outline" className="text-[10px]">{a.audience}</Badge>
+            </div>
+            <p className="mb-2 text-[11px] text-muted-foreground">
+              {new Date(a.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+            </p>
+            <p className="whitespace-pre-wrap text-sm">{a.content}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }
