@@ -60,12 +60,16 @@ function snapshot(): Snapshot {
     academicYears: [...db.academicYears],
   };
 }
-    attendance: [...db.attendance],
-    feeTypes: [...db.feeTypes],
-    payments: [...db.payments],
-    paymentRecords: [...db.paymentRecords],
-  };
+
+let lastSnapshot: Snapshot | null = null;
+let currentSchoolId: string | null = null;
+let syncing = false;
+let pendingSync = false;
+
+export function getCurrentSchoolId(): string | null {
+  return currentSchoolId;
 }
+
 
 // ---- Row <-> domain mapping ----
 function rowToSchool(r: { id: string; name: string; director_name: string | null; email: string | null; phone: string | null; city: string | null; country: string | null }): School {
