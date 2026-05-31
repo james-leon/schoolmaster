@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { NAV_ITEMS } from "@/lib/nav";
 import { Logo } from "./Logo";
+import { PlanBadge } from "./PlanBadge";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { LogOut } from "lucide-react";
