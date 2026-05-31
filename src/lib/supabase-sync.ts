@@ -1,14 +1,27 @@
-// Hydration + diff-sync between the in-memory store and Supabase for Phase 1
-// tables: schools, classes, students, teachers, class_subjects.
-//
-// Hydration: pull from Supabase, replace those collections in the cache.
-// Sync: after every updateDB, diff snapshots and push INSERT/UPDATE/DELETE to
-// Supabase. Errors are reported via toast and trigger a re-hydration.
+// Hydration + diff-sync between the in-memory store and Supabase.
+// Phase 1 tables: schools, classes, students, teachers, class_subjects.
+// Phase 2 tables: grades, attendance, fee_types, invoices(payments), payment_records.
 
 import { supabase } from "@/integrations/supabase/client";
 import { getDB, updateDB } from "./store";
 import { toast } from "sonner";
-import type { Classe, Student, Teacher, School, ClassSubject, Level } from "./types";
+import type {
+  Classe,
+  Student,
+  Teacher,
+  School,
+  ClassSubject,
+  Level,
+  Grade,
+  Attendance,
+  FeeType,
+  Payment,
+  PaymentRecord,
+  PaymentStatus,
+  PaymentMode,
+  EvaluationType,
+  FeeLevelScope,
+} from "./types";
 
 type Snapshot = {
   schools: School[];
@@ -16,6 +29,11 @@ type Snapshot = {
   students: Student[];
   teachers: Teacher[];
   classSubjects: ClassSubject[];
+  grades: Grade[];
+  attendance: Attendance[];
+  feeTypes: FeeType[];
+  payments: Payment[];
+  paymentRecords: PaymentRecord[];
 };
 
 let lastSnapshot: Snapshot | null = null;
@@ -35,6 +53,11 @@ function snapshot(): Snapshot {
     students: [...db.students],
     teachers: [...db.teachers],
     classSubjects: [...db.classSubjects],
+    grades: [...db.grades],
+    attendance: [...db.attendance],
+    feeTypes: [...db.feeTypes],
+    payments: [...db.payments],
+    paymentRecords: [...db.paymentRecords],
   };
 }
 
@@ -102,15 +125,105 @@ function rowToClassSubject(r: { id: string; class_id: string; name: string; coef
   };
 }
 
+function rowToGrade(r: {
+  id: string; student_id: string; class_id: string | null; subject_id: string | null;
+  subject: string; term: string; evaluation_type: string | null;
+  grade: number | null; devoir1: number | null; devoir2: number | null;
+  composition: number | null; value: number; comment: string | null; created_at: string;
+}): Grade {
+  return {
+    id: r.id,
+    studentId: r.student_id,
+    classId: r.class_id ?? undefined,
+    subjectId: r.subject_id ?? undefined,
+    subject: r.subject,
+    term: r.term,
+    evaluationType: (r.evaluation_type ?? undefined) as EvaluationType | undefined,
+    grade: r.grade ?? undefined,
+    devoir1: r.devoir1 ?? undefined,
+    devoir2: r.devoir2 ?? undefined,
+    composition: r.composition ?? undefined,
+    value: r.value ?? 0,
+    comment: r.comment ?? undefined,
+    createdAt: r.created_at,
+  };
+}
+
+function rowToAttendance(r: { id: string; student_id: string; date: string; status: string }): Attendance {
+  return {
+    id: r.id,
+    studentId: r.student_id,
+    date: r.date,
+    status: (r.status as Attendance["status"]) ?? "present",
+  };
+}
+
+function rowToFeeType(r: { id: string; name: string; amount: number; scope: string; due_date: string | null }): FeeType {
+  return {
+    id: r.id,
+    name: r.name,
+    amount: Number(r.amount) || 0,
+    scope: (r.scope as FeeLevelScope) ?? "Tous",
+    dueDate: r.due_date ?? undefined,
+  };
+}
+
+function rowToInvoice(r: {
+  id: string; invoice_number: string | null; student_id: string; fee_type_id: string | null;
+  amount: number; amount_paid: number; date: string; due_date: string | null;
+  type: string | null; status: string; mode: string | null; reference: string | null; notes: string | null;
+}): Payment {
+  return {
+    id: r.id,
+    invoiceNumber: r.invoice_number ?? undefined,
+    studentId: r.student_id,
+    feeTypeId: r.fee_type_id ?? undefined,
+    amount: Number(r.amount) || 0,
+    amountPaid: Number(r.amount_paid) || 0,
+    date: r.date,
+    dueDate: r.due_date ?? undefined,
+    type: r.type ?? "",
+    status: (r.status as PaymentStatus) ?? "impaye",
+    mode: (r.mode ?? undefined) as PaymentMode | undefined,
+    reference: r.reference ?? undefined,
+    notes: r.notes ?? undefined,
+  };
+}
+
+function rowToPaymentRecord(r: {
+  id: string; receipt_number: string; invoice_id: string; student_id: string;
+  amount: number; mode: string; reference: string | null; date: string; notes: string | null;
+}): PaymentRecord {
+  return {
+    id: r.id,
+    receiptNumber: r.receipt_number,
+    invoiceId: r.invoice_id,
+    studentId: r.student_id,
+    amount: Number(r.amount) || 0,
+    mode: r.mode as PaymentMode,
+    reference: r.reference ?? undefined,
+    date: r.date,
+    notes: r.notes ?? undefined,
+  };
+}
+
 // ---- Hydration ----
 export async function hydrateAll(schoolId: string): Promise<void> {
   currentSchoolId = schoolId;
-  const [schoolsRes, classesRes, studentsRes, teachersRes, subjectsRes] = await Promise.all([
+  const [
+    schoolsRes, classesRes, studentsRes, teachersRes, subjectsRes,
+    gradesRes, attendanceRes, feeTypesRes, invoicesRes, paymentRecordsRes,
+  ] = await Promise.all([
     supabase.from("schools").select("*").eq("id", schoolId),
     supabase.from("classes").select("*").eq("school_id", schoolId),
     supabase.from("students").select("*").eq("school_id", schoolId),
     supabase.from("teachers").select("*").eq("school_id", schoolId),
     supabase.from("class_subjects").select("*").eq("school_id", schoolId),
+    supabase.from("grades").select("*").eq("school_id", schoolId),
+    supabase.from("attendance").select("*").eq("school_id", schoolId),
+    supabase.from("fee_types").select("*").eq("school_id", schoolId),
+    supabase.from("invoices").select("*").eq("school_id", schoolId),
+    supabase.from("payment_records").select("*").eq("school_id", schoolId),
   ]);
 
   const schools = (schoolsRes.data ?? []).map(rowToSchool);
@@ -118,8 +231,12 @@ export async function hydrateAll(schoolId: string): Promise<void> {
   const students = (studentsRes.data ?? []).map(rowToStudent);
   const teachers = (teachersRes.data ?? []).map(rowToTeacher);
   const classSubjects = (subjectsRes.data ?? []).map(rowToClassSubject);
+  const grades = (gradesRes.data ?? []).map(rowToGrade);
+  const attendance = (attendanceRes.data ?? []).map(rowToAttendance);
+  const feeTypes = (feeTypesRes.data ?? []).map(rowToFeeType);
+  const payments = (invoicesRes.data ?? []).map(rowToInvoice);
+  const paymentRecords = (paymentRecordsRes.data ?? []).map(rowToPaymentRecord);
 
-  // Suppress sync while we apply hydration
   syncing = true;
   try {
     updateDB((db) => {
@@ -128,6 +245,11 @@ export async function hydrateAll(schoolId: string): Promise<void> {
       db.students = students;
       db.teachers = teachers;
       db.classSubjects = classSubjects;
+      db.grades = grades;
+      db.attendance = attendance;
+      db.feeTypes = feeTypes;
+      db.payments = payments;
+      db.paymentRecords = paymentRecords;
     });
   } finally {
     syncing = false;
@@ -257,6 +379,120 @@ async function pushDiffs(): Promise<void> {
     if (error) throw error;
   }
 
+  // Grades
+  const gradeDiff = diff(lastSnapshot.grades, current.grades);
+  for (const g of gradeDiff.inserted) {
+    const { error } = await supabase.from("grades").insert({
+      id: g.id, school_id: schoolId, student_id: g.studentId,
+      class_id: g.classId || null, subject_id: g.subjectId || null,
+      subject: g.subject, term: g.term, evaluation_type: g.evaluationType ?? null,
+      grade: g.grade ?? null, devoir1: g.devoir1 ?? null, devoir2: g.devoir2 ?? null,
+      composition: g.composition ?? null, value: g.value ?? 0, comment: g.comment ?? null,
+    });
+    if (error) throw error;
+  }
+  for (const g of gradeDiff.updated) {
+    const { error } = await supabase.from("grades").update({
+      student_id: g.studentId, class_id: g.classId || null, subject_id: g.subjectId || null,
+      subject: g.subject, term: g.term, evaluation_type: g.evaluationType ?? null,
+      grade: g.grade ?? null, devoir1: g.devoir1 ?? null, devoir2: g.devoir2 ?? null,
+      composition: g.composition ?? null, value: g.value ?? 0, comment: g.comment ?? null,
+    }).eq("id", g.id);
+    if (error) throw error;
+  }
+  for (const id of gradeDiff.deletedIds) {
+    const { error } = await supabase.from("grades").delete().eq("id", id);
+    if (error) throw error;
+  }
+
+  // Attendance
+  const attDiff = diff(lastSnapshot.attendance, current.attendance);
+  for (const a of attDiff.inserted) {
+    const { error } = await supabase.from("attendance").insert({
+      id: a.id, school_id: schoolId, student_id: a.studentId, date: a.date, status: a.status,
+    });
+    if (error) throw error;
+  }
+  for (const a of attDiff.updated) {
+    const { error } = await supabase.from("attendance").update({
+      student_id: a.studentId, date: a.date, status: a.status,
+    }).eq("id", a.id);
+    if (error) throw error;
+  }
+  for (const id of attDiff.deletedIds) {
+    const { error } = await supabase.from("attendance").delete().eq("id", id);
+    if (error) throw error;
+  }
+
+  // Fee types
+  const feeDiff = diff(lastSnapshot.feeTypes, current.feeTypes);
+  for (const f of feeDiff.inserted) {
+    const { error } = await supabase.from("fee_types").insert({
+      id: f.id, school_id: schoolId, name: f.name, amount: f.amount,
+      scope: f.scope, due_date: f.dueDate ?? null,
+    });
+    if (error) throw error;
+  }
+  for (const f of feeDiff.updated) {
+    const { error } = await supabase.from("fee_types").update({
+      name: f.name, amount: f.amount, scope: f.scope, due_date: f.dueDate ?? null,
+    }).eq("id", f.id);
+    if (error) throw error;
+  }
+  for (const id of feeDiff.deletedIds) {
+    const { error } = await supabase.from("fee_types").delete().eq("id", id);
+    if (error) throw error;
+  }
+
+  // Invoices (payments)
+  const invDiff = diff(lastSnapshot.payments, current.payments);
+  for (const p of invDiff.inserted) {
+    const { error } = await supabase.from("invoices").insert({
+      id: p.id, school_id: schoolId, invoice_number: p.invoiceNumber ?? null,
+      student_id: p.studentId, fee_type_id: p.feeTypeId || null,
+      amount: p.amount, amount_paid: p.amountPaid, date: p.date,
+      due_date: p.dueDate ?? null, type: p.type, status: p.status,
+      mode: p.mode ?? null, reference: p.reference ?? null, notes: p.notes ?? null,
+    });
+    if (error) throw error;
+  }
+  for (const p of invDiff.updated) {
+    const { error } = await supabase.from("invoices").update({
+      invoice_number: p.invoiceNumber ?? null, student_id: p.studentId,
+      fee_type_id: p.feeTypeId || null, amount: p.amount, amount_paid: p.amountPaid,
+      date: p.date, due_date: p.dueDate ?? null, type: p.type, status: p.status,
+      mode: p.mode ?? null, reference: p.reference ?? null, notes: p.notes ?? null,
+    }).eq("id", p.id);
+    if (error) throw error;
+  }
+  for (const id of invDiff.deletedIds) {
+    const { error } = await supabase.from("invoices").delete().eq("id", id);
+    if (error) throw error;
+  }
+
+  // Payment records
+  const prDiff = diff(lastSnapshot.paymentRecords, current.paymentRecords);
+  for (const r of prDiff.inserted) {
+    const { error } = await supabase.from("payment_records").insert({
+      id: r.id, school_id: schoolId, receipt_number: r.receiptNumber,
+      invoice_id: r.invoiceId, student_id: r.studentId, amount: r.amount,
+      mode: r.mode, reference: r.reference ?? null, date: r.date, notes: r.notes ?? null,
+    });
+    if (error) throw error;
+  }
+  for (const r of prDiff.updated) {
+    const { error } = await supabase.from("payment_records").update({
+      receipt_number: r.receiptNumber, invoice_id: r.invoiceId, student_id: r.studentId,
+      amount: r.amount, mode: r.mode, reference: r.reference ?? null,
+      date: r.date, notes: r.notes ?? null,
+    }).eq("id", r.id);
+    if (error) throw error;
+  }
+  for (const id of prDiff.deletedIds) {
+    const { error } = await supabase.from("payment_records").delete().eq("id", id);
+    if (error) throw error;
+  }
+
   lastSnapshot = current;
 }
 
@@ -271,7 +507,6 @@ export function triggerSync(): void {
     .catch((err) => {
       console.error("[sync] failed", err);
       toast.error("Erreur d'enregistrement: " + (err as Error).message);
-      // Re-hydrate to recover
       if (currentSchoolId) hydrateAll(currentSchoolId).catch(() => {});
     })
     .finally(() => {
