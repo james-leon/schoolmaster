@@ -1,10 +1,12 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { StatCard } from "@/components/shared";
 import { useDB } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { fcfa, timeAgo } from "@/lib/format";
 import { visibleAnnouncements, formatDateFr } from "@/lib/announcements";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Users, TrendingUp, AlertCircle, AlertTriangle, UserPlus, CreditCard,
   GraduationCap, CalendarCheck, FileText, BookOpen, ClipboardList, Megaphone,
@@ -15,6 +17,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from "recharts";
+
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
