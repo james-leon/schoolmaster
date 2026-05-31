@@ -28,11 +28,8 @@ const LEVEL_GROUPS: Record<string, string> = {
 const pieColors = ["#1A6BB5", "#F58B1F", "#1A7A3C", "#0D2C54", "#C0392B", "#7B61FF", "#16A085"];
 
 function DashboardPage() {
-  const db = useDB();
   const { user } = useAuth();
-  const isTeacher = user?.role === "teacher";
-
-  if (isTeacher) return <TeacherDashboard />;
+  if (user?.role === "teacher") return <TeacherDashboard />;
   return <AdminDashboard />;
 }
 
