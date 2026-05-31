@@ -14,16 +14,237 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      classes: {
+        Row: {
+          capacity: number | null
+          created_at: string
+          id: string
+          level: string | null
+          name: string
+          school_id: string
+          teacher_id: string | null
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string
+          id?: string
+          level?: string | null
+          name: string
+          school_id: string
+          teacher_id?: string | null
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string
+          id?: string
+          level?: string | null
+          name?: string
+          school_id?: string
+          teacher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          assigned_classes: string[] | null
+          assigned_subjects: string[] | null
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          school_id: string | null
+          student_id: string | null
+        }
+        Insert: {
+          assigned_classes?: string[] | null
+          assigned_subjects?: string[] | null
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          school_id?: string | null
+          student_id?: string | null
+        }
+        Update: {
+          assigned_classes?: string[] | null
+          assigned_subjects?: string[] | null
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          school_id?: string | null
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schools: {
+        Row: {
+          address: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          director_name: string | null
+          email: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          phone: string | null
+          subscription_plan: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          director_name?: string | null
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          subscription_plan?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          director_name?: string | null
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          subscription_plan?: string | null
+        }
+        Relationships: []
+      }
+      students: {
+        Row: {
+          birth_date: string | null
+          birth_place: string | null
+          class_id: string | null
+          created_at: string
+          enrollment_date: string | null
+          first_name: string
+          gender: string | null
+          id: string
+          last_name: string
+          photo_url: string | null
+          school_id: string
+          status: string | null
+          student_code: string | null
+        }
+        Insert: {
+          birth_date?: string | null
+          birth_place?: string | null
+          class_id?: string | null
+          created_at?: string
+          enrollment_date?: string | null
+          first_name: string
+          gender?: string | null
+          id?: string
+          last_name: string
+          photo_url?: string | null
+          school_id: string
+          status?: string | null
+          student_code?: string | null
+        }
+        Update: {
+          birth_date?: string | null
+          birth_place?: string | null
+          class_id?: string | null
+          created_at?: string
+          enrollment_date?: string | null
+          first_name?: string
+          gender?: string | null
+          id?: string
+          last_name?: string
+          photo_url?: string | null
+          school_id?: string
+          status?: string | null
+          student_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_school_id: { Args: { _user_id: string }; Returns: string }
+      get_user_student_id: { Args: { _user_id: string }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "school_admin" | "teacher" | "parent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +371,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["school_admin", "teacher", "parent"],
+    },
   },
 } as const
