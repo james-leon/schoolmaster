@@ -11,6 +11,9 @@ export interface User {
   assignedClasses?: string[];
   assignedSubjects?: string[];
   studentId?: string;
+  studentIds?: string[];
+  mustChangePassword?: boolean;
+  isActive?: boolean;
   avatar?: string;
 }
 
