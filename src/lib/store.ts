@@ -27,6 +27,9 @@ function load(): DB {
       if (!parsed.classSubjects) parsed.classSubjects = [];
       if (!parsed.feeTypes) parsed.feeTypes = [];
       if (!parsed.paymentRecords) parsed.paymentRecords = [];
+      if (!parsed.parents) parsed.parents = [];
+      if (!parsed.announcements) parsed.announcements = [];
+      if (!parsed.academicYears) parsed.academicYears = [];
       cache = parsed;
       return cache;
     } catch {
