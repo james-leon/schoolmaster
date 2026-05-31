@@ -14,6 +14,58 @@ export type Database = {
   }
   public: {
     Tables: {
+      class_subjects: {
+        Row: {
+          class_id: string
+          coefficient: number
+          created_at: string
+          id: string
+          name: string
+          school_id: string
+          teacher_id: string | null
+        }
+        Insert: {
+          class_id: string
+          coefficient?: number
+          created_at?: string
+          id?: string
+          name: string
+          school_id: string
+          teacher_id?: string | null
+        }
+        Update: {
+          class_id?: string
+          coefficient?: number
+          created_at?: string
+          id?: string
+          name?: string
+          school_id?: string
+          teacher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_subjects_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_subjects_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_subjects_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       classes: {
         Row: {
           capacity: number | null
@@ -48,6 +100,13 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classes_teacher_fk"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
@@ -200,6 +259,50 @@ export type Database = {
           },
           {
             foreignKeyName: "students_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teachers: {
+        Row: {
+          created_at: string
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          school_id: string
+          status: string | null
+          subjects: string[] | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          phone?: string | null
+          school_id: string
+          status?: string | null
+          subjects?: string[] | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          school_id?: string
+          status?: string | null
+          subjects?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teachers_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
