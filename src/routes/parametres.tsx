@@ -91,9 +91,11 @@ function ParametresPage() {
       <Tabs defaultValue="ecole">
         <TabsList>
           <TabsTrigger value="ecole">École</TabsTrigger>
+          <TabsTrigger value="objectifs">Objectifs</TabsTrigger>
           <TabsTrigger value="annonces">Annonces</TabsTrigger>
           <TabsTrigger value="compte">Compte</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="ecole" className="mt-4">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
