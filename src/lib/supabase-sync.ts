@@ -373,7 +373,8 @@ async function pushDiffs(): Promise<void> {
   // Schools
   for (const s of diff(lastSnapshot.schools, current.schools).updated) {
     const { error } = await supabase.from("schools").update({
-      name: s.name, director_name: s.director, email: s.email, phone: s.phone, city: s.city, country: s.country,
+      name: s.name, director_name: s.director, email: s.email, phone: s.phone,
+      city: s.city, country: s.country, address: s.address ?? null, logo_url: s.logo ?? null,
     }).eq("id", s.id);
     if (error) throw error;
   }
