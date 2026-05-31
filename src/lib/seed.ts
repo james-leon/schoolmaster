@@ -1,4 +1,4 @@
-import type { DB, Level, ClassSubject, FeeType, PaymentRecord, PaymentMode } from "./types";
+import type { DB, Level, ClassSubject, FeeType, PaymentRecord, PaymentMode, User } from "./types";
 import { DEFAULT_SUBJECTS_MATERNELLE, DEFAULT_SUBJECTS_PRIMAIRE, DEFAULT_FEE_TYPES } from "./types";
 
 const SCHOOL_ID = "school-1";
