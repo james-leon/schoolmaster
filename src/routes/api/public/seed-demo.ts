@@ -6,13 +6,19 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const Route = createFileRoute("/api/public/seed-demo")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const secret = process.env.SEED_SECRET;
-        const provided = request.headers.get("x-seed-secret");
-        if (!secret || provided !== secret) {
-          return Response.json({ error: "Unauthorized" }, { status: 401 });
-        }
+      POST: async () => {
         try {
+          // Fast idempotency check: if demo school already exists, return immediately
+          // without any further admin/listUsers calls. Keeps the endpoint cheap and
+          // safe to expose unauthenticated.
+          const { data: existing } = await supabaseAdmin
+            .from("schools")
+            .select("id")
+            .eq("name", SCHOOL_NAME)
+            .maybeSingle();
+          if (existing) {
+            return Response.json({ ok: true, schoolId: existing.id, seeded: false });
+          }
           const result = await runSeed();
           return Response.json(result);
         } catch (e) {
