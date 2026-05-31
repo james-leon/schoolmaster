@@ -48,9 +48,14 @@ function EnseignantsPage() {
   const [toDelete, setToDelete] = useState<Teacher | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [credentials, setCredentials] = useState<CredentialsInfo | null>(null);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const school = db.schools.find((s) => s.id === user?.schoolId);
+  const { plan, canAddTeacher, limits, teacherCount } = usePlan();
 
-  const openNew = () => { setEditing(null); setForm(empty); setErrors({}); setOpen(true); };
+  const openNew = () => {
+    if (!canAddTeacher()) { setUpgradeOpen(true); return; }
+    setEditing(null); setForm(empty); setErrors({}); setOpen(true);
+  };
   const openEdit = (t: Teacher) => {
     setEditing(t);
     setForm({
