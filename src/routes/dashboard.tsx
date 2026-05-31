@@ -127,7 +127,7 @@ function TeacherDashboard() {
           </CardContent>
         </Card>
 
-        <AnnoncesWidget role="teacher" />
+        <AnnoncesWidget />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -322,7 +322,7 @@ function AdminDashboard() {
       </div>
 
       <div className="mt-6">
-        <AnnoncesWidget role="admin" />
+        <AnnoncesWidget />
       </div>
     </AppLayout>
   );
