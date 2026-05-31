@@ -178,12 +178,16 @@ function TeacherDashboard() {
   );
 }
 
+const MONTH_LABELS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
+
 function AdminDashboard() {
   const db = useDB();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const today = new Date().toISOString().slice(0, 10);
   const thisMonth = new Date().toISOString().slice(0, 7);
+  const currentYear = new Date().getFullYear();
 
   const totalStudents = db.students.length;
   const monthPayments = db.payments.filter((p) => p.date.startsWith(thisMonth));
@@ -191,12 +195,33 @@ function AdminDashboard() {
   const absentToday = db.attendance.filter((a) => a.date === today && a.status === "absent").length;
   const unpaid = db.payments.filter((p) => p.status === "impaye").length;
 
-  const months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin"];
-  const enrollData = months.map((m, i) => ({
+  // Fetch enrollment targets from the school record.
+  const [targets, setTargets] = useState<Record<string, number>>({});
+  useEffect(() => {
+    if (!user?.schoolId) return;
+    let cancelled = false;
+    supabase.from("schools").select("enrollment_targets").eq("id", user.schoolId).maybeSingle().then(({ data }) => {
+      if (cancelled) return;
+      const raw = (data?.enrollment_targets ?? {}) as Record<string, number>;
+      setTargets(raw);
+    });
+    return () => { cancelled = true; };
+  }, [user?.schoolId]);
+
+  // Count real enrollments per month (current year) from local students cache.
+  const enrolledByMonth = new Array(12).fill(0) as number[];
+  for (const s of db.students) {
+    if (!s.enrolledAt) continue;
+    const d = new Date(s.enrolledAt);
+    if (isNaN(d.getTime()) || d.getFullYear() !== currentYear) continue;
+    enrolledByMonth[d.getMonth()] += 1;
+  }
+  const enrollData = MONTH_LABELS.map((m, i) => ({
     name: m,
-    Inscrits: 20 + Math.round(Math.sin(i) * 6) + i * 3,
-    Objectif: 30 + i * 2,
+    Inscrits: enrolledByMonth[i],
+    Objectif: Number(targets[String(i + 1)] ?? 0),
   }));
+
 
   const levelCount: Record<string, number> = { Maternelle: 0, Primaire: 0 };
   const detail: Record<string, number> = {};
