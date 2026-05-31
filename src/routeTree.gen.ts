@@ -26,6 +26,7 @@ import { Route as ClassesRouteImport } from './routes/classes'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ElevesStudentIdRouteImport } from './routes/eleves.$studentId'
 import { Route as ApiPublicSeedDemoRouteImport } from './routes/api/public/seed-demo'
+import { Route as ApiPublicRegisterSchoolRouteImport } from './routes/api/public/register-school'
 
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
@@ -112,6 +113,11 @@ const ApiPublicSeedDemoRoute = ApiPublicSeedDemoRouteImport.update({
   path: '/api/public/seed-demo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRegisterSchoolRoute = ApiPublicRegisterSchoolRouteImport.update({
+  id: '/api/public/register-school',
+  path: '/api/public/register-school',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
+  '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
 }
 export interface FileRoutesByTo {
@@ -149,6 +156,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
+  '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
 }
 export interface FileRoutesById {
@@ -169,6 +177,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
+  '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
 }
 export interface FileRouteTypes {
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/unauthorized'
     | '/eleves/$studentId'
+    | '/api/public/register-school'
     | '/api/public/seed-demo'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/unauthorized'
     | '/eleves/$studentId'
+    | '/api/public/register-school'
     | '/api/public/seed-demo'
   id:
     | '__root__'
@@ -228,6 +239,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/unauthorized'
     | '/eleves/$studentId'
+    | '/api/public/register-school'
     | '/api/public/seed-demo'
   fileRoutesById: FileRoutesById
 }
@@ -247,6 +259,7 @@ export interface RootRouteChildren {
   ScolariteRoute: typeof ScolariteRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
+  ApiPublicRegisterSchoolRoute: typeof ApiPublicRegisterSchoolRoute
   ApiPublicSeedDemoRoute: typeof ApiPublicSeedDemoRoute
 }
 
@@ -371,6 +384,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSeedDemoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/register-school': {
+      id: '/api/public/register-school'
+      path: '/api/public/register-school'
+      fullPath: '/api/public/register-school'
+      preLoaderRoute: typeof ApiPublicRegisterSchoolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -401,8 +421,19 @@ const rootRouteChildren: RootRouteChildren = {
   ScolariteRoute: ScolariteRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   UnauthorizedRoute: UnauthorizedRoute,
+  ApiPublicRegisterSchoolRoute: ApiPublicRegisterSchoolRoute,
   ApiPublicSeedDemoRoute: ApiPublicSeedDemoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
