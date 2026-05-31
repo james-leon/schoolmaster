@@ -250,7 +250,16 @@ async function runSeed() {
     }
 
     // Upsert profile
-    const profilePatch: Record<string, unknown> = {
+    const profilePatch: {
+      id: string;
+      school_id: string;
+      full_name: string;
+      email: string;
+      role: "school_admin" | "teacher" | "parent";
+      assigned_classes: string[];
+      assigned_subjects: string[];
+      student_id?: string;
+    } = {
       id: userId,
       school_id: schoolId,
       full_name: u.full_name,
@@ -262,7 +271,7 @@ async function runSeed() {
     if (u.role === "parent" && firstStudentId) {
       profilePatch.student_id = firstStudentId;
     }
-    const { error: pErr } = await supabaseAdmin.from("profiles").upsert(profilePatch, { onConflict: "id" });
+    const { error: pErr } = await supabaseAdmin.from("profiles").upsert([profilePatch], { onConflict: "id" });
     if (pErr) throw pErr;
 
     // Upsert role (unique on user_id, role)
