@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
+import { Route as SuperAdminRouteImport } from './routes/super-admin'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ScolariteRouteImport } from './routes/scolarite'
 import { Route as RegisterRouteImport } from './routes/register'
@@ -27,6 +28,7 @@ import { Route as ChangerMotDePasseRouteImport } from './routes/changer-mot-de-p
 import { Route as AnnoncesRouteImport } from './routes/annonces'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ElevesStudentIdRouteImport } from './routes/eleves.$studentId'
+import { Route as ApiPublicSuperAdminRouteImport } from './routes/api/public/super-admin'
 import { Route as ApiPublicSeedDemoRouteImport } from './routes/api/public/seed-demo'
 import { Route as ApiPublicRegisterSchoolRouteImport } from './routes/api/public/register-school'
 import { Route as ApiPublicAdminUsersRouteImport } from './routes/api/public/admin-users'
@@ -34,6 +36,11 @@ import { Route as ApiPublicAdminUsersRouteImport } from './routes/api/public/adm
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
   path: '/unauthorized',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuperAdminRoute = SuperAdminRouteImport.update({
+  id: '/super-admin',
+  path: '/super-admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -121,6 +128,11 @@ const ElevesStudentIdRoute = ElevesStudentIdRouteImport.update({
   path: '/$studentId',
   getParentRoute: () => ElevesRoute,
 } as any)
+const ApiPublicSuperAdminRoute = ApiPublicSuperAdminRouteImport.update({
+  id: '/api/public/super-admin',
+  path: '/api/public/super-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSeedDemoRoute = ApiPublicSeedDemoRouteImport.update({
   id: '/api/public/seed-demo',
   path: '/api/public/seed-demo',
@@ -154,11 +166,13 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/super-admin': typeof SuperAdminRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
+  '/api/public/super-admin': typeof ApiPublicSuperAdminRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -177,11 +191,13 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/super-admin': typeof SuperAdminRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
+  '/api/public/super-admin': typeof ApiPublicSuperAdminRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -201,11 +217,13 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/super-admin': typeof SuperAdminRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
+  '/api/public/super-admin': typeof ApiPublicSuperAdminRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -226,11 +244,13 @@ export interface FileRouteTypes {
     | '/register'
     | '/scolarite'
     | '/sitemap.xml'
+    | '/super-admin'
     | '/unauthorized'
     | '/eleves/$studentId'
     | '/api/public/admin-users'
     | '/api/public/register-school'
     | '/api/public/seed-demo'
+    | '/api/public/super-admin'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -249,11 +269,13 @@ export interface FileRouteTypes {
     | '/register'
     | '/scolarite'
     | '/sitemap.xml'
+    | '/super-admin'
     | '/unauthorized'
     | '/eleves/$studentId'
     | '/api/public/admin-users'
     | '/api/public/register-school'
     | '/api/public/seed-demo'
+    | '/api/public/super-admin'
   id:
     | '__root__'
     | '/'
@@ -272,11 +294,13 @@ export interface FileRouteTypes {
     | '/register'
     | '/scolarite'
     | '/sitemap.xml'
+    | '/super-admin'
     | '/unauthorized'
     | '/eleves/$studentId'
     | '/api/public/admin-users'
     | '/api/public/register-school'
     | '/api/public/seed-demo'
+    | '/api/public/super-admin'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -296,10 +320,12 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ScolariteRoute: typeof ScolariteRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SuperAdminRoute: typeof SuperAdminRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
   ApiPublicAdminUsersRoute: typeof ApiPublicAdminUsersRoute
   ApiPublicRegisterSchoolRoute: typeof ApiPublicRegisterSchoolRoute
   ApiPublicSeedDemoRoute: typeof ApiPublicSeedDemoRoute
+  ApiPublicSuperAdminRoute: typeof ApiPublicSuperAdminRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -309,6 +335,13 @@ declare module '@tanstack/react-router' {
       path: '/unauthorized'
       fullPath: '/unauthorized'
       preLoaderRoute: typeof UnauthorizedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/super-admin': {
+      id: '/super-admin'
+      path: '/super-admin'
+      fullPath: '/super-admin'
+      preLoaderRoute: typeof SuperAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -430,6 +463,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ElevesStudentIdRouteImport
       parentRoute: typeof ElevesRoute
     }
+    '/api/public/super-admin': {
+      id: '/api/public/super-admin'
+      path: '/api/public/super-admin'
+      fullPath: '/api/public/super-admin'
+      preLoaderRoute: typeof ApiPublicSuperAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/seed-demo': {
       id: '/api/public/seed-demo'
       path: '/api/public/seed-demo'
@@ -482,10 +522,12 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ScolariteRoute: ScolariteRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SuperAdminRoute: SuperAdminRoute,
   UnauthorizedRoute: UnauthorizedRoute,
   ApiPublicAdminUsersRoute: ApiPublicAdminUsersRoute,
   ApiPublicRegisterSchoolRoute: ApiPublicRegisterSchoolRoute,
   ApiPublicSeedDemoRoute: ApiPublicSeedDemoRoute,
+  ApiPublicSuperAdminRoute: ApiPublicSuperAdminRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

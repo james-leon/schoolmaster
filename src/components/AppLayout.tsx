@@ -5,18 +5,23 @@ import { Sidebar, MobileNav } from "./Sidebar";
 import { Header } from "./Header";
 import { useAuth } from "@/lib/auth";
 import { allowedRoutes, NAV_ITEMS } from "@/lib/nav";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ShieldAlert } from "lucide-react";
+import { Button } from "./ui/button";
 
 export function AppLayout({ title, children }: { title: string; children: ReactNode }) {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, originalUser, isImpersonating, stopImpersonating, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
-    // Wait for auth to finish hydrating before deciding anything.
     if (loading) return;
     if (!isAuthenticated || !user) {
       navigate({ to: "/login", replace: true });
+      return;
+    }
+    // Real super_admin without impersonation → platform console
+    if (originalUser?.role === "super_admin" && !isImpersonating) {
+      navigate({ to: "/super-admin", replace: true });
       return;
     }
     if (user.mustChangePassword && pathname !== "/changer-mot-de-passe") {
@@ -31,7 +36,7 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
     if (!allowed.includes(pathname)) {
       navigate({ to: "/unauthorized", replace: true });
     }
-  }, [user, loading, isAuthenticated, navigate, pathname]);
+  }, [user, originalUser, isImpersonating, loading, isAuthenticated, navigate, pathname]);
 
   if (loading || !user) {
     return (
@@ -41,9 +46,26 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
     );
   }
 
-
   return (
     <div className="min-h-screen bg-background">
+      {isImpersonating && originalUser && (
+        <div className="sticky top-0 z-40 flex items-center justify-between gap-3 bg-accent px-4 py-2 text-accent-foreground">
+          <div className="flex items-center gap-2 text-sm">
+            <ShieldAlert className="h-4 w-4" />
+            <span>
+              Mode support — connecté en tant que <strong>{user.schoolId ? "cette école" : ""}</strong>{" "}
+              (super admin: {originalUser.name})
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => { stopImpersonating(); navigate({ to: "/super-admin" }); }}
+          >
+            Retour Super Admin
+          </Button>
+        </div>
+      )}
       <Sidebar />
       <div className="md:pl-[260px]">
         <Header title={title} />
