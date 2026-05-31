@@ -324,6 +324,9 @@ function ElevesPage() {
                     <TableCell className="text-muted-foreground">{s.parentPhone}</TableCell>
                     <TableCell>{statusBadge(s.status)}</TableCell>
                     <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" onClick={() => setParentAccountFor(s)} aria-label="Créer compte parent" title="Créer compte parent">
+                        <UserPlus className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(s)} aria-label="Modifier">
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -462,7 +465,119 @@ function ElevesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <ParentAccountDialog
+        student={parentAccountFor}
+        onClose={() => setParentAccountFor(null)}
+        onCreated={(creds) => { setParentAccountFor(null); setCredentials(creds); }}
+        schoolName={school?.name}
+      />
+      <CredentialsModal info={credentials} onClose={() => setCredentials(null)} />
     </AppLayout>
+  );
+}
+
+function ParentAccountDialog({
+  student, onClose, onCreated, schoolName,
+}: {
+  student: Student | null;
+  onClose: () => void;
+  onCreated: (c: CredentialsInfo) => void;
+  schoolName?: string;
+}) {
+  const db = useDB();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  if (!student) return null;
+  // Prefill from existing parent record on open
+  if (!firstName && !lastName && !email) {
+    const p = db.parents.find((x) => x.studentId === student.id);
+    if (p) {
+      setFirstName(p.firstName || student.parentName.split(" ")[0] || "");
+      setLastName(p.lastName || student.parentName.split(" ").slice(1).join(" ") || "");
+      setEmail(p.email || student.parentEmail || "");
+      setPhone(p.phone || student.parentPhone || "");
+    } else {
+      const [fn, ...rest] = (student.parentName || "").trim().split(/\s+/);
+      setFirstName(fn || "");
+      setLastName(rest.join(" "));
+      setEmail(student.parentEmail || "");
+      setPhone(student.parentPhone || "");
+    }
+  }
+
+  // Find any sibling students sharing the same parent email
+  const siblingIds = email
+    ? db.parents.filter((p) => p.email && p.email.toLowerCase() === email.toLowerCase()).map((p) => p.studentId)
+    : [];
+  const studentIds = Array.from(new Set([student.id, ...siblingIds]));
+
+  const submit = async () => {
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      toast.error("Prénom, nom et email requis");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await adminApi.createParent({
+        firstName: firstName.trim(), lastName: lastName.trim(),
+        email: email.trim(), phone: phone.trim() || undefined,
+        studentIds,
+      });
+      onCreated({
+        name: `${firstName} ${lastName}`,
+        email: email.trim(),
+        tempPassword: res.tempPassword,
+        role: "parent",
+        schoolName,
+      });
+      setFirstName(""); setLastName(""); setEmail(""); setPhone("");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && !submitting && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Créer un compte parent</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground">
+          Compte lié à {student.firstName} {student.lastName}
+          {studentIds.length > 1 && ` (et ${studentIds.length - 1} autre(s) enfant(s))`}
+        </p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>Prénom</Label>
+            <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Nom</Label>
+            <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Email (login)</Label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Téléphone</Label>
+            <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={submitting}>Annuler</Button>
+          <Button onClick={submit} disabled={submitting}>
+            {submitting ? "Création..." : "Créer le compte"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
