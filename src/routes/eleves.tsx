@@ -183,7 +183,7 @@ function ElevesPage() {
       });
       toast.success("Élève modifié avec succès");
     } else {
-      const id = "student-" + Math.random().toString(36).slice(2, 9);
+      const id = crypto.randomUUID();
       updateDB((d) => {
         d.students.push({
           id,
@@ -193,7 +193,7 @@ function ElevesPage() {
           enrolledAt: new Date().toISOString().slice(0, 10),
         });
         d.activities.unshift({
-          id: "act-" + Math.random().toString(36).slice(2, 7),
+          id: crypto.randomUUID(),
           type: "student",
           text: `Nouvel élève inscrit : ${form.firstName} ${form.lastName}`,
           date: new Date().toISOString(),

@@ -42,13 +42,13 @@ function PresencesPage() {
     updateDB((d) => {
       const existing = d.attendance.find((a) => a.studentId === studentId && a.date === date);
       if (existing) existing.status = status;
-      else d.attendance.push({ id: "att-" + Math.random().toString(36).slice(2, 9), studentId, date, status });
+      else d.attendance.push({ id: crypto.randomUUID(), studentId, date, status });
     });
   };
 
   const save = () => {
     updateDB((d) => {
-      d.activities.unshift({ id: "act-" + Math.random().toString(36).slice(2, 7), type: "attendance", text: `Présences enregistrées (${db.classes.find((c) => c.id === classId)?.name}) - ${date}`, date: new Date().toISOString() });
+      d.activities.unshift({ id: crypto.randomUUID(), type: "attendance", text: `Présences enregistrées (${db.classes.find((c) => c.id === classId)?.name}) - ${date}`, date: new Date().toISOString() });
     });
     toast.success("Présences enregistrées avec succès");
   };

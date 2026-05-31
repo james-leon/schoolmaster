@@ -65,7 +65,7 @@ function ClassesPage() {
         const c = d.classes.find((x) => x.id === editing.id);
         if (c) Object.assign(c, data);
       } else {
-        d.classes.push({ id: "class-" + Math.random().toString(36).slice(2, 9), ...data });
+        d.classes.push({ id: crypto.randomUUID(), ...data });
       }
     });
     toast.success(editing ? "Classe modifiée" : "Classe créée");
@@ -216,7 +216,7 @@ function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: ()
         if (s) { s.name = name; s.coefficient = coef; s.teacherId = draft.teacherId || undefined; }
       } else {
         d.classSubjects.push({
-          id: "subj-" + Math.random().toString(36).slice(2, 9),
+          id: crypto.randomUUID(),
           classId: classe.id,
           name,
           coefficient: coef,
