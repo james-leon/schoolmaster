@@ -26,6 +26,7 @@ const DEMOS = [
 ];
 
 function redirectFor(role: string) {
+  if (role === "super_admin") return "/super-admin";
   if (role === "parent") return "/parent";
   return "/dashboard";
 }
@@ -33,8 +34,8 @@ function redirectFor(role: string) {
 function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("admin@queenmary.cm");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
@@ -106,7 +107,7 @@ function LoginPage() {
                   setPassword(d.password);
                   doLogin(d.email, d.password);
                 }}
-                className={`flex flex-col items-center gap-1 rounded-md border border-border p-3 text-xs font-medium transition-colors hover:bg-muted ${''}`}
+                className="flex flex-col items-center gap-1 rounded-md border border-border p-3 text-xs font-medium transition-colors hover:bg-muted"
               >
                 <span className={`flex h-8 w-8 items-center justify-center rounded-full ${d.tone}`}>
                   <d.icon className="h-4 w-4" />
@@ -121,12 +122,13 @@ function LoginPage() {
           <Link to="/forgot-password" className="text-secondary hover:underline">
             Mot de passe oublié ?
           </Link>
-          <span className="text-muted-foreground">
-            Pas encore de compte ?{" "}
-            <Link to="/register" className="font-medium text-secondary hover:underline">
-              Inscrire une école
-            </Link>
-          </span>
+          <button
+            type="button"
+            onClick={() => { setEmail("admin@wintek.cm"); setPassword(""); }}
+            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Accès Super Admin (Wintek)
+          </button>
         </div>
       </Card>
     </div>

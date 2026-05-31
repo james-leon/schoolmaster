@@ -4,28 +4,24 @@ import { getDB, clearLocalDB } from "./store";
 import { supabase } from "@/integrations/supabase/client";
 import { hydrateAll, clearHydration, triggerSync, getCurrentSchoolId } from "./supabase-sync";
 import { registerPersistHook } from "./store";
+import { getImpersonatedSchoolId, setImpersonatedSchoolId } from "./super-admin-api";
 
 interface AuthContextType {
   user: User | null;
+  /** When super_admin is impersonating, this is the real super_admin user. */
+  originalUser: User | null;
+  isImpersonating: boolean;
+  stopImpersonating: () => void;
+  startImpersonating: (schoolId: string) => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  registerSchool: (data: {
-    schoolName: string;
-    director: string;
-    email: string;
-    phone: string;
-    password: string;
-    city: string;
-    country: string;
-  }) => Promise<User>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Wire the store -> Supabase sync once.
 registerPersistHook(() => triggerSync());
 
 type ProfileRow = {
@@ -33,7 +29,7 @@ type ProfileRow = {
   school_id: string | null;
   full_name: string | null;
   email: string | null;
-  role: "school_admin" | "teacher" | "parent" | null;
+  role: "school_admin" | "teacher" | "parent" | "super_admin" | null;
   avatar_url: string | null;
   assigned_classes: string[] | null;
   assigned_subjects: string[] | null;
@@ -57,59 +53,92 @@ function profileToUser(p: ProfileRow): User {
     studentIds: p.student_ids ?? [],
     mustChangePassword: !!p.must_change_password,
     isActive: p.is_active !== false,
-    avatar: name
-      .split(" ")
-      .map((w) => w[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase(),
+    avatar: name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
   };
 }
 
 async function loadProfile(userId: string): Promise<User | null> {
-  const { data, error } = await supabase
+  // 1) Try profiles table
+  const { data } = await supabase
     .from("profiles")
     .select("id, school_id, full_name, email, role, avatar_url, assigned_classes, assigned_subjects, student_id, student_ids, must_change_password, is_active")
     .eq("id", userId)
     .maybeSingle();
-  if (error || !data) return null;
-  return profileToUser(data as ProfileRow);
+
+  // 2) Fall back to user_roles for the super_admin case (super admin has no
+  //    school-scoped profile row when first created).
+  if (data) {
+    const user = profileToUser(data as ProfileRow);
+    if (user.role && user.role !== "school_admin" && user.role !== "teacher" && user.role !== "parent" && user.role !== "super_admin") {
+      // unknown role — fall through to role lookup
+    } else {
+      return user;
+    }
+  }
+  const { data: roleRow } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
+  if (roleRow?.role === "super_admin") {
+    const { data: authUser } = await supabase.auth.getUser();
+    const email = authUser.user?.email ?? "";
+    const name = (authUser.user?.user_metadata as any)?.full_name ?? email;
+    return {
+      id: userId, name, email, role: "super_admin",
+      mustChangePassword: false, isActive: true,
+      avatar: (name as string).split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase(),
+    };
+  }
+  return null;
 }
 
-
-/** Trigger the idempotent demo seeder. Safe to call on every boot. */
 let seedPromise: Promise<void> | null = null;
 function ensureSeed(): Promise<void> {
   if (!seedPromise) {
     seedPromise = fetch("/api/public/seed-demo", { method: "POST" })
-      .then((r) => {
-        if (!r.ok) throw new Error("Seed failed");
-      })
-      .catch((e) => {
-        console.error("[seed] failed", e);
-        // Allow retry next time
-        seedPromise = null;
-      });
+      .then((r) => { if (!r.ok) throw new Error("Seed failed"); })
+      .catch((e) => { console.error("[seed] failed", e); seedPromise = null; });
   }
   return seedPromise;
 }
 
+/** Apply an active impersonation, if any. Returns the effective user. */
+function applyImpersonation(realUser: User): User {
+  if (realUser.role !== "super_admin") return realUser;
+  const impSchoolId = getImpersonatedSchoolId();
+  if (!impSchoolId) return realUser;
+  return {
+    ...realUser,
+    role: "school_admin",
+    schoolId: impSchoolId,
+    mustChangePassword: false,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [originalUser, setOriginalUser] = useState<User | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const installUser = async (real: User | null) => {
+    setOriginalUser(real);
+    if (!real) { setUser(null); return; }
+    const effective = applyImpersonation(real);
+    setUser(effective);
+    if (effective.schoolId && effective.schoolId !== getCurrentSchoolId()) {
+      clearLocalDB();
+      hydrateAll(effective.schoolId).catch((e) => console.error("[hydrate]", e));
+    }
+  };
 
   useEffect(() => {
     ensureSeed();
     let cancelled = false;
 
-    // CRITICAL: never await another supabase call directly inside
-    // onAuthStateChange — it deadlocks against the auth client's internal
-    // lock. Defer with setTimeout(0).
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) {
         setUser(null);
+        setOriginalUser(null);
         clearHydration();
         clearLocalDB();
+        setImpersonatedSchoolId(null);
         return;
       }
       const uid = session.user.id;
@@ -118,15 +147,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const u = await loadProfile(uid);
           if (!u || cancelled) return;
-          setUser(u);
-          if (u.schoolId && u.schoolId !== getCurrentSchoolId()) {
-            // Switching tenants — wipe the previous school's local cache first.
-            clearLocalDB();
-            hydrateAll(u.schoolId).catch((e) => console.error("[hydrate]", e));
-          }
-        } catch (e) {
-          console.error("[auth] profile load failed", e);
-        }
+          await installUser(u);
+        } catch (e) { console.error("[auth] profile load failed", e); }
       }, 0);
     });
 
@@ -135,21 +157,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.session?.user) {
         try {
           const u = await loadProfile(data.session.user.id);
-          if (u && !cancelled) {
-            setUser(u);
-            if (u.schoolId) hydrateAll(u.schoolId).catch((e) => console.error(e));
-          }
-        } catch (e) {
-          console.error(e);
-        }
+          if (u && !cancelled) await installUser(u);
+        } catch (e) { console.error(e); }
       }
       setLoading(false);
     });
 
-    return () => {
-      cancelled = true;
-      sub.subscription.unsubscribe();
-    };
+    return () => { cancelled = true; sub.subscription.unsubscribe(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async (email: string, password: string): Promise<User> => {
@@ -162,79 +177,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
 
     const { data, error } = await withTimeout(
-      supabase.auth.signInWithPassword({ email, password }),
-      10000,
-      "connexion",
+      supabase.auth.signInWithPassword({ email, password }), 10000, "connexion",
     );
     if (error) throw new Error(error.message === "Invalid login credentials" ? "Email ou mot de passe incorrect" : error.message);
     if (!data.user) throw new Error("Connexion échouée");
 
     const u = await withTimeout(loadProfile(data.user.id), 8000, "profil");
     if (!u) throw new Error("Profil introuvable");
-    setUser(u);
-    // Always wipe the previous tenant's local cache before hydrating.
-    if (u.schoolId !== getCurrentSchoolId()) clearLocalDB();
-    if (u.schoolId) hydrateAll(u.schoolId).catch((e) => console.error("[hydrate]", e));
-    return u;
+
+    // Block suspended schools (for school members, not super admin)
+    if (u.role !== "super_admin" && u.schoolId) {
+      const { data: school } = await supabase.from("schools").select("status").eq("id", u.schoolId).maybeSingle();
+      if (school?.status === "suspended") {
+        await supabase.auth.signOut();
+        throw new Error("Compte suspendu. Contactez Wintek pour réactiver votre école.");
+      }
+    }
+
+    // Clear any leftover impersonation on a fresh login.
+    setImpersonatedSchoolId(null);
+    await installUser(u);
+    return applyImpersonation(u);
   };
 
   const logout = async () => {
+    setImpersonatedSchoolId(null);
     await supabase.auth.signOut();
     setUser(null);
+    setOriginalUser(null);
     clearHydration();
     clearLocalDB();
   };
 
-  const registerSchool: AuthContextType["registerSchool"] = async (data) => {
-    const { data: sign, error: signErr } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: { data: { full_name: data.director } },
-    });
-    if (signErr) throw new Error(signErr.message);
-    if (!sign.user) throw new Error("Échec de l'inscription");
-
-    // Get the access token from the new session and let the server route
-    // create the school + role + profile via the admin client.
-    const { data: sess } = await supabase.auth.getSession();
-    const token = sess.session?.access_token;
-    if (!token) throw new Error("Session manquante");
-
-    const res = await fetch("/api/public/register-school", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({
-        schoolName: data.schoolName,
-        director: data.director,
-        email: data.email,
-        phone: data.phone,
-        city: data.city,
-        country: data.country,
-      }),
-    });
-    if (!res.ok) {
-      const j = await res.json().catch(() => ({}));
-      throw new Error(j.error || "Échec de l'inscription");
+  const startImpersonating = async (schoolId: string) => {
+    if (!originalUser || originalUser.role !== "super_admin") {
+      throw new Error("Action réservée au super administrateur");
     }
-    const { schoolId } = (await res.json()) as { schoolId: string };
-
-    const u = await loadProfile(sign.user.id);
-    if (!u) throw new Error("Profil introuvable");
-    setUser(u);
+    setImpersonatedSchoolId(schoolId);
+    clearLocalDB();
+    const effective: User = { ...originalUser, role: "school_admin", schoolId, mustChangePassword: false };
+    setUser(effective);
     await hydrateAll(schoolId);
-    return u;
+  };
+
+  const stopImpersonating = () => {
+    setImpersonatedSchoolId(null);
+    clearLocalDB();
+    clearHydration();
+    if (originalUser) setUser(originalUser);
   };
 
   const refreshUser = async () => {
     const { data } = await supabase.auth.getSession();
     if (data.session?.user) {
       const u = await loadProfile(data.session.user.id);
-      if (u) setUser(u);
+      if (u) await installUser(u);
     }
   };
 
+  const isImpersonating = !!(originalUser && originalUser.role === "super_admin" && user && user.id === originalUser.id && user.role !== "super_admin");
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, login, logout, refreshUser, registerSchool }}>
+    <AuthContext.Provider value={{
+      user, originalUser, isImpersonating, startImpersonating, stopImpersonating,
+      isAuthenticated: !!user, loading, login, logout, refreshUser,
+    }}>
       {children}
     </AuthContext.Provider>
   );
@@ -246,7 +253,6 @@ export function useAuth() {
   return ctx;
 }
 
-/** Returns the list of class IDs visible to the current user (teacher = assigned only). */
 export function visibleClassIds(user: User | null): string[] | null {
   if (!user) return [];
   if (user.role === "teacher" && user.assignedClasses?.length) {
@@ -258,7 +264,6 @@ export function visibleClassIds(user: User | null): string[] | null {
   return null;
 }
 
-// Kept for compatibility with components that still import DEMO_ACCOUNTS metadata.
 export const DEMO_ACCOUNTS = [
   { email: "admin@queenmary.cm", password: "admin123" },
   { email: "prof.martin@queenmary.cm", password: "prof123" },
