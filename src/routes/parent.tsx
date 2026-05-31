@@ -78,17 +78,20 @@ function ensureParentStudent(preferredId?: string): Student {
 }
 
 function ParentPortal() {
-  const { user, logout } = useAuth();
+  const { user, loading, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const db = useDB();
   const [tab, setTab] = useState<TabKey>("enfant");
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = localStorage.getItem("currentUser");
-    if (!stored) navigate({ to: "/login" });
-    else if (user && user.role !== "parent") navigate({ to: "/dashboard" });
-  }, [user, navigate]);
+    if (loading) return;
+    if (!isAuthenticated || !user) {
+      navigate({ to: "/login", replace: true });
+      return;
+    }
+    if (user.role !== "parent") navigate({ to: "/dashboard", replace: true });
+  }, [user, loading, isAuthenticated, navigate]);
+
 
   const student = useMemo(() => ensureParentStudent(user?.studentId), [user, db.students.length]);
 
