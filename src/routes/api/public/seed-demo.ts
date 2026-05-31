@@ -151,10 +151,10 @@ async function runSeed() {
   // 3) Classes
   const { data: existingClasses } = await supabaseAdmin
     .from("classes")
-    .select("*")
+    .select("id,name,level")
     .eq("school_id", schoolId);
 
-  let classes: { id: string; name: string; level: string }[] = [];
+  let classes: { id: string; name: string; level: string | null }[] = [];
   if (existingClasses && existingClasses.length > 0) {
     classes = existingClasses;
   } else {
@@ -165,7 +165,7 @@ async function runSeed() {
       capacity: c.capacity,
       teacher_id: teacherIds[i % teacherIds.length] ?? null,
     }));
-    const { data, error } = await supabaseAdmin.from("classes").insert(rows).select();
+    const { data, error } = await supabaseAdmin.from("classes").insert(rows).select("id,name,level");
     if (error) throw error;
     classes = data;
   }
