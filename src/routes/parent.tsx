@@ -44,20 +44,20 @@ function ensureParentStudent(preferredId?: string): Student {
   // Create a demo student + matching class if needed.
   let classId = db.classes.find((c) => c.name === "CE1")?.id;
   if (!classId) {
-    classId = "class-demo-ce1";
+    classId = crypto.randomUUID();
     updateDB((d) => {
       d.classes.push({
         id: classId!,
         name: "CE1",
         level: "CE1",
-        teacherId: d.teachers[0]?.id ?? "teacher-demo",
+        teacherId: d.teachers[0]?.id ?? crypto.randomUUID(),
         fees: 160000,
         capacity: 30,
       });
     });
   }
   const demo: Student = {
-    id: "student-001",
+    id: crypto.randomUUID(),
     code: "EL-2026-001",
     firstName: "Arielle",
     lastName: "Ekane",
