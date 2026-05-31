@@ -481,6 +481,7 @@ export type Database = {
           created_at: string
           director_name: string | null
           email: string | null
+          enrollment_targets: Json
           id: string
           logo_url: string | null
           name: string
@@ -494,6 +495,7 @@ export type Database = {
           created_at?: string
           director_name?: string | null
           email?: string | null
+          enrollment_targets?: Json
           id?: string
           logo_url?: string | null
           name: string
@@ -507,6 +509,7 @@ export type Database = {
           created_at?: string
           director_name?: string | null
           email?: string | null
+          enrollment_targets?: Json
           id?: string
           logo_url?: string | null
           name?: string
