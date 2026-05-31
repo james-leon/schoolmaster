@@ -45,7 +45,6 @@ function profileToUser(p: ProfileRow): User {
     id: p.id,
     name,
     email: p.email ?? "",
-    password: "",
     role: (p.role ?? "school_admin") as User["role"],
     schoolId: p.school_id ?? undefined,
     assignedClasses: p.assigned_classes ?? [],

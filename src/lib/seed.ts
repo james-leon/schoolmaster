@@ -1,4 +1,4 @@
-import type { DB, Level, ClassSubject, FeeType, PaymentRecord, PaymentMode } from "./types";
+import type { DB, Level, ClassSubject, FeeType, PaymentRecord, PaymentMode, User } from "./types";
 import { DEFAULT_SUBJECTS_MATERNELLE, DEFAULT_SUBJECTS_PRIMAIRE, DEFAULT_FEE_TYPES } from "./types";
 
 const SCHOOL_ID = "school-1";
@@ -176,12 +176,13 @@ export function buildSeed(): DB {
 
   return {
     schools: [{ id: SCHOOL_ID, name: "Groupe Scolaire Bilingue Queen Mary", director: "Mme Pauline Essomba", email: "contact@queenmary.cm", phone: "+237699112233", city: "Douala", country: "Cameroun" }],
+    // Auth is handled by Supabase. Local user records contain NO passwords.
     users: [
-      { id: "u-admin", name: "Pauline Essomba", email: "admin@queenmary.cm", password: "admin123", role: "school_admin", schoolId: SCHOOL_ID },
-      { id: "u-teacher", name: "Georges Mbarga", email: "prof.martin@queenmary.cm", password: "prof123", role: "teacher", schoolId: SCHOOL_ID, assignedClasses: ["CE1", "CE2"], assignedSubjects: ["Mathématiques", "Sciences"] },
-      { id: "u-parent", name: "Marcel Ekane", email: "parent.ekane@gmail.com", password: "parent123", role: "parent", schoolId: SCHOOL_ID, studentId: students[0]?.id },
-      { id: "u-super", name: "Super Admin", email: "super@schoolmaster.cm", password: "password", role: "super_admin" },
-    ],
+      { id: "u-admin", name: "Pauline Essomba", email: "admin@queenmary.cm", role: "school_admin", schoolId: SCHOOL_ID },
+      { id: "u-teacher", name: "Georges Mbarga", email: "prof.martin@queenmary.cm", role: "teacher", schoolId: SCHOOL_ID, assignedClasses: ["CE1", "CE2"], assignedSubjects: ["Mathématiques", "Sciences"] },
+      { id: "u-parent", name: "Marcel Ekane", email: "parent.ekane@gmail.com", role: "parent", schoolId: SCHOOL_ID, studentId: students[0]?.id },
+      { id: "u-super", name: "Super Admin", email: "super@schoolmaster.cm", role: "super_admin" },
+    ] as User[],
     teachers,
     classes,
     students,
