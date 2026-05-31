@@ -432,10 +432,14 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          is_active: boolean
+          last_sign_in_at: string | null
+          must_change_password: boolean
           phone: string | null
           role: Database["public"]["Enums"]["app_role"] | null
           school_id: string | null
           student_id: string | null
+          student_ids: string[]
         }
         Insert: {
           assigned_classes?: string[] | null
@@ -445,10 +449,14 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          is_active?: boolean
+          last_sign_in_at?: string | null
+          must_change_password?: boolean
           phone?: string | null
           role?: Database["public"]["Enums"]["app_role"] | null
           school_id?: string | null
           student_id?: string | null
+          student_ids?: string[]
         }
         Update: {
           assigned_classes?: string[] | null
@@ -458,10 +466,14 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean
+          last_sign_in_at?: string | null
+          must_change_password?: boolean
           phone?: string | null
           role?: Database["public"]["Enums"]["app_role"] | null
           school_id?: string | null
           student_id?: string | null
+          student_ids?: string[]
         }
         Relationships: [
           {
