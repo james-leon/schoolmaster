@@ -211,7 +211,7 @@ async function runSeed() {
     .limit(1);
 
   if (!existingSubjects || existingSubjects.length === 0) {
-    const subjectRows: Array<Record<string, unknown>> = [];
+    const subjectRows: Array<{ school_id: string; class_id: string; name: string; coefficient: number; teacher_id: string | null }> = [];
     classes.forEach((cls) => {
       const list = cls.level === "PS" || cls.level === "MS" ? SUBJECTS_MAT : SUBJECTS_PRI;
       list.forEach((s, i) => {
