@@ -8,9 +8,10 @@ export const Route = createFileRoute("/api/public/seed-demo")({
     handlers: {
       POST: async () => {
         try {
-          // Fast idempotency check: if demo school already exists, return immediately
-          // without any further admin/listUsers calls. Keeps the endpoint cheap and
-          // safe to expose unauthenticated.
+          // Always ensure the Wintek super admin exists (cheap idempotent step).
+          await ensureSuperAdmin().catch((e) => console.error("[seed-demo] super admin", e));
+
+          // Fast idempotency check for the Queen Mary demo school.
           const { data: existing } = await supabaseAdmin
             .from("schools")
             .select("id")
@@ -29,6 +30,46 @@ export const Route = createFileRoute("/api/public/seed-demo")({
     },
   },
 });
+
+const SUPER_ADMIN_EMAIL = "admin@wintek.cm";
+const SUPER_ADMIN_PASSWORD = "Wintek2026!";
+const SUPER_ADMIN_NAME = "Wintek Admin";
+
+async function ensureSuperAdmin() {
+  const { data: list } = await supabaseAdmin.auth.admin.listUsers();
+  const existing = list?.users?.find((x) => x.email?.toLowerCase() === SUPER_ADMIN_EMAIL);
+  let uid: string;
+  if (existing) {
+    uid = existing.id;
+  } else {
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email: SUPER_ADMIN_EMAIL,
+      password: SUPER_ADMIN_PASSWORD,
+      email_confirm: true,
+      user_metadata: { full_name: SUPER_ADMIN_NAME },
+    });
+    if (error || !created.user) throw error ?? new Error("createUser failed");
+    uid = created.user.id;
+  }
+  // Grant the super_admin role (idempotent) and ensure a profile row exists.
+  await supabaseAdmin
+    .from("user_roles")
+    .upsert({ user_id: uid, role: "super_admin" }, { onConflict: "user_id,role" });
+  await supabaseAdmin
+    .from("profiles")
+    .upsert(
+      {
+        id: uid,
+        email: SUPER_ADMIN_EMAIL,
+        full_name: SUPER_ADMIN_NAME,
+        role: "super_admin",
+        school_id: null,
+        is_active: true,
+        must_change_password: false,
+      },
+      { onConflict: "id" },
+    );
+}
 
 const SCHOOL_NAME = "Groupe Scolaire Bilingue Queen Mary";
 
