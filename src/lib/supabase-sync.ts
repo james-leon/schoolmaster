@@ -579,6 +579,73 @@ async function pushDiffs(): Promise<void> {
     if (error) throw error;
   }
 
+
+  // Parents
+  const parentDiff = diff(lastSnapshot.parents, current.parents);
+  for (const p of parentDiff.inserted) {
+    const { error } = await supabase.from("parents").insert({
+      id: p.id, school_id: schoolId, student_id: p.studentId,
+      first_name: p.firstName, last_name: p.lastName,
+      phone: p.phone ?? null, whatsapp: p.whatsapp ?? null, email: p.email ?? null,
+      relationship: p.relationship ?? null, profession: p.profession ?? null,
+      is_emergency_contact: p.isEmergencyContact ?? false,
+    });
+    if (error) throw error;
+  }
+  for (const p of parentDiff.updated) {
+    const { error } = await supabase.from("parents").update({
+      student_id: p.studentId, first_name: p.firstName, last_name: p.lastName,
+      phone: p.phone ?? null, whatsapp: p.whatsapp ?? null, email: p.email ?? null,
+      relationship: p.relationship ?? null, profession: p.profession ?? null,
+      is_emergency_contact: p.isEmergencyContact ?? false,
+    }).eq("id", p.id);
+    if (error) throw error;
+  }
+  for (const id of parentDiff.deletedIds) {
+    const { error } = await supabase.from("parents").delete().eq("id", id);
+    if (error) throw error;
+  }
+
+  // Announcements
+  const annDiff = diff(lastSnapshot.announcements, current.announcements);
+  for (const a of annDiff.inserted) {
+    const { error } = await supabase.from("announcements").insert({
+      id: a.id, school_id: schoolId, title: a.title, content: a.content,
+      audience: a.audience, author_id: a.authorId ?? null,
+    });
+    if (error) throw error;
+  }
+  for (const a of annDiff.updated) {
+    const { error } = await supabase.from("announcements").update({
+      title: a.title, content: a.content, audience: a.audience,
+    }).eq("id", a.id);
+    if (error) throw error;
+  }
+  for (const id of annDiff.deletedIds) {
+    const { error } = await supabase.from("announcements").delete().eq("id", id);
+    if (error) throw error;
+  }
+
+  // Academic years
+  const ayDiff = diff(lastSnapshot.academicYears, current.academicYears);
+  for (const y of ayDiff.inserted) {
+    const { error } = await supabase.from("academic_years").insert({
+      id: y.id, school_id: schoolId, name: y.name,
+      start_date: y.startDate ?? null, end_date: y.endDate ?? null, is_current: y.isCurrent,
+    });
+    if (error) throw error;
+  }
+  for (const y of ayDiff.updated) {
+    const { error } = await supabase.from("academic_years").update({
+      name: y.name, start_date: y.startDate ?? null, end_date: y.endDate ?? null, is_current: y.isCurrent,
+    }).eq("id", y.id);
+    if (error) throw error;
+  }
+  for (const id of ayDiff.deletedIds) {
+    const { error } = await supabase.from("academic_years").delete().eq("id", id);
+    if (error) throw error;
+  }
+
   lastSnapshot = current;
 }
 
