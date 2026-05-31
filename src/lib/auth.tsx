@@ -109,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!session?.user) {
         setUser(null);
         clearHydration();
+        clearLocalDB();
         return;
       }
       const uid = session.user.id;
@@ -119,6 +120,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!u || cancelled) return;
           setUser(u);
           if (u.schoolId && u.schoolId !== getCurrentSchoolId()) {
+            // Switching tenants — wipe the previous school's local cache first.
+            clearLocalDB();
             hydrateAll(u.schoolId).catch((e) => console.error("[hydrate]", e));
           }
         } catch (e) {
