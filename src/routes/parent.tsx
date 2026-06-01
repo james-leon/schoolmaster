@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { useDB, updateDB, getDB } from "@/lib/store";
+import { useDB } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fcfa } from "@/lib/format";
 import { gradeValue, appreciationFor, deriveInvoiceStatus, type Grade, type Payment, type Student, type Classe } from "@/lib/types";
 import { Logo } from "@/components/Logo";
+import { useParentChildren, type ParentChild } from "@/lib/useParentChildren";
 import {
   Bell, Calendar, GraduationCap, UserCircle, LogOut, Wallet, MessageSquare,
-  CheckCircle2, Inbox, BookOpen, CalendarCheck,
+  CheckCircle2, Inbox, BookOpen, Users2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,86 +22,58 @@ export const Route = createFileRoute("/parent")({
   component: ParentPortal,
 });
 
-type TabKey = "enfant" | "notes" | "presences" | "paiements" | "messages";
-
-const TABS: { key: TabKey; label: string; icon: typeof UserCircle }[] = [
-  { key: "enfant", label: "Mon Enfant", icon: UserCircle },
-  { key: "notes", label: "Notes", icon: GraduationCap },
-  { key: "presences", label: "Présences", icon: Calendar },
-  { key: "paiements", label: "Paiements", icon: Wallet },
-  { key: "messages", label: "Messages", icon: MessageSquare },
-];
-
-/** Ensures the parent has a linked student. Falls back to first student or
- *  creates a deterministic demo student if the DB has none. */
-function ensureParentStudent(preferredId?: string): Student {
-  const db = getDB();
-  if (preferredId) {
-    const found = db.students.find((s) => s.id === preferredId);
-    if (found) return found;
-  }
-  if (db.students.length > 0) return db.students[0];
-
-  // Create a demo student + matching class if needed.
-  let classId = db.classes.find((c) => c.name === "CE1")?.id;
-  if (!classId) {
-    classId = crypto.randomUUID();
-    updateDB((d) => {
-      d.classes.push({
-        id: classId!,
-        name: "CE1",
-        level: "CE1",
-        teacherId: d.teachers[0]?.id ?? crypto.randomUUID(),
-        fees: 160000,
-        capacity: 30,
-      });
-    });
-  }
-  const demo: Student = {
-    id: crypto.randomUUID(),
-    code: "EL-2026-001",
-    firstName: "Arielle",
-    lastName: "Ekane",
-    gender: "F",
-    classId: classId!,
-    birthDate: "2018-03-15",
-    parentName: "Marcel Ekane",
-    parentPhone: "+237 677 111 222",
-    parentEmail: "parent.ekane@gmail.com",
-    parentRelation: "Père",
-    status: "actif",
-    enrolledAt: new Date().toISOString(),
-  };
-  updateDB((d) => {
-    d.students.push(demo);
-  });
-  return demo;
-}
+type TabKey = "tous" | "enfant" | "notes" | "presences" | "paiements" | "messages";
 
 function ParentPortal() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const db = useDB();
+  const { children, loading: childrenLoading, selectedId, setSelectedId, selectedChild } = useParentChildren();
   const [tab, setTab] = useState<TabKey>("enfant");
 
   useEffect(() => {
     if (loading) return;
-    if (!isAuthenticated || !user) {
-      navigate({ to: "/login", replace: true });
-      return;
-    }
-    if (user.mustChangePassword) {
-      navigate({ to: "/changer-mot-de-passe", replace: true });
-      return;
-    }
+    if (!isAuthenticated || !user) { navigate({ to: "/login", replace: true }); return; }
+    if (user.mustChangePassword) { navigate({ to: "/changer-mot-de-passe", replace: true }); return; }
     if (user.role !== "parent") navigate({ to: "/dashboard", replace: true });
   }, [user, loading, isAuthenticated, navigate]);
 
+  const hasMultiple = children.length > 1;
 
-  const student = useMemo(() => ensureParentStudent(user?.studentId), [user, db.students.length]);
+  const TABS: { key: TabKey; label: string; icon: typeof UserCircle }[] = [
+    ...(hasMultiple ? [{ key: "tous" as TabKey, label: "Tous", icon: Users2 }] : []),
+    { key: "enfant", label: "Mon Enfant", icon: UserCircle },
+    { key: "notes", label: "Notes", icon: GraduationCap },
+    { key: "presences", label: "Présences", icon: Calendar },
+    { key: "paiements", label: "Paiements", icon: Wallet },
+    { key: "messages", label: "Messages", icon: MessageSquare },
+  ];
 
-  const klass = db.classes.find((c) => c.id === student.classId);
-  const initials = (student.firstName[0] + student.lastName[0]).toUpperCase();
+  // Resolve a Student-like object from local db (may be missing if not synced) — fall back to hook data
+  const student: Student | null = useMemo(() => {
+    if (!selectedChild) return null;
+    const local = db.students.find((s) => s.id === selectedChild.id);
+    if (local) return local;
+    return {
+      id: selectedChild.id,
+      firstName: selectedChild.firstName,
+      lastName: selectedChild.lastName,
+      gender: (selectedChild.gender as "M" | "F") || "M",
+      classId: selectedChild.classId ?? "",
+      birthDate: selectedChild.birthDate ?? "",
+      parentName: user?.name ?? "",
+      parentPhone: "",
+      parentEmail: user?.email ?? "",
+      parentRelation: (selectedChild.relationship as any) ?? "Tuteur",
+      code: selectedChild.code ?? undefined,
+      photo: selectedChild.photo ?? undefined,
+      status: "actif",
+      enrolledAt: new Date().toISOString(),
+    };
+  }, [selectedChild, db.students, user]);
+
+  const klass = student ? db.classes.find((c) => c.id === student.classId) : undefined;
+  const initials = student ? (student.firstName[0] + student.lastName[0]).toUpperCase() : "?";
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -121,18 +94,39 @@ function ParentPortal() {
             <LogOut className="h-5 w-5" />
           </Button>
         </div>
+        {hasMultiple && tab !== "tous" && (
+          <ChildSelector
+            children={children}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+          />
+        )}
       </header>
 
       <main className="mx-auto max-w-3xl px-4 pt-5">
-        {tab === "enfant" && <EnfantTab student={student} klass={klass} initials={initials} grades={db.grades} payments={db.payments} attendance={db.attendance} />}
-        {tab === "notes" && <NotesTab studentId={student.id} grades={db.grades} classSubjects={db.classSubjects.filter((s) => s.classId === student.classId)} />}
-        {tab === "presences" && <PresencesTab studentId={student.id} attendance={db.attendance} />}
-        {tab === "paiements" && <PaiementsTab studentId={student.id} payments={db.payments} />}
-        {tab === "messages" && <MessagesTab announcements={db.announcements} />}
+        {childrenLoading ? (
+          <Card><CardContent className="pt-6 text-center text-sm text-muted-foreground">Chargement…</CardContent></Card>
+        ) : children.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6 text-center text-sm text-muted-foreground">
+              Aucun enfant n'est associé à votre compte. Contactez l'école pour le lier.
+            </CardContent>
+          </Card>
+        ) : tab === "tous" && hasMultiple ? (
+          <CombinedView children={children} db={db} onPickChild={(id) => { setSelectedId(id); setTab("enfant"); }} />
+        ) : student ? (
+          <>
+            {tab === "enfant" && <EnfantTab student={student} klass={klass} initials={initials} grades={db.grades} payments={db.payments} attendance={db.attendance} />}
+            {tab === "notes" && <NotesTab studentId={student.id} grades={db.grades} classSubjects={db.classSubjects.filter((s) => s.classId === student.classId)} />}
+            {tab === "presences" && <PresencesTab studentId={student.id} attendance={db.attendance} />}
+            {tab === "paiements" && <PaiementsTab studentId={student.id} payments={db.payments} />}
+            {tab === "messages" && <MessagesTab announcements={db.announcements} />}
+          </>
+        ) : null}
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card">
-        <div className="mx-auto grid max-w-3xl grid-cols-5">
+        <div className={cn("mx-auto grid max-w-3xl", `grid-cols-${TABS.length}`)} style={{ gridTemplateColumns: `repeat(${TABS.length}, minmax(0, 1fr))` }}>
           {TABS.map((t) => {
             const active = tab === t.key;
             return (
@@ -154,6 +148,106 @@ function ParentPortal() {
     </div>
   );
 }
+
+function ChildSelector({
+  children, selectedId, onSelect,
+}: {
+  children: ParentChild[]; selectedId: string | null; onSelect: (id: string) => void;
+}) {
+  return (
+    <div className="border-t border-border bg-muted/30 px-4 py-2">
+      <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto">
+        {children.map((c) => {
+          const active = c.id === selectedId;
+          const initials = (c.firstName[0] + c.lastName[0]).toUpperCase();
+          return (
+            <button
+              key={c.id}
+              onClick={() => onSelect(c.id)}
+              className={cn(
+                "flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors",
+                active
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-card text-foreground hover:bg-muted",
+              )}
+            >
+              {c.photo ? (
+                <img src={c.photo} alt="" className="h-6 w-6 rounded-full object-cover" />
+              ) : (
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback className="text-[10px] bg-primary/20 text-primary">{initials}</AvatarFallback>
+                </Avatar>
+              )}
+              <span className="font-medium">{c.firstName} {c.lastName}</span>
+              {c.className && <Badge variant="outline" className="text-[10px]">{c.className}</Badge>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CombinedView({
+  children, db, onPickChild,
+}: {
+  children: ParentChild[]; db: ReturnType<typeof useDB>; onPickChild: (id: string) => void;
+}) {
+  const month = new Date().toISOString().slice(0, 7);
+  const rows = children.map((c) => {
+    const grades = db.grades.filter((g) => g.studentId === c.id);
+    const t1 = grades.filter((g) => g.term === "1er trimestre");
+    const avg = t1.length ? Math.round((t1.reduce((s, g) => s + gradeValue(g), 0) / t1.length) * 100) / 100 : null;
+    const due = db.payments.filter((p) => p.studentId === c.id).reduce((s, p) => s + Math.max(0, p.amount - p.amountPaid), 0);
+    const absences = db.attendance.filter((a) => a.studentId === c.id && a.date.startsWith(month) && a.status === "absent").length;
+    return { child: c, avg, due, absences };
+  });
+  const totalDue = rows.reduce((s, r) => s + r.due, 0);
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="flex items-center justify-between pt-6">
+          <div>
+            <p className="text-xs text-muted-foreground">Total frais impayés (tous enfants)</p>
+            <p className={cn("text-2xl font-bold", totalDue > 0 ? "text-destructive" : "text-success")}>{fcfa(totalDue)}</p>
+          </div>
+          <Wallet className="h-8 w-8 text-muted-foreground" />
+        </CardContent>
+      </Card>
+      <div className="space-y-3">
+        {rows.map(({ child, avg, due, absences }) => {
+          const initials = (child.firstName[0] + child.lastName[0]).toUpperCase();
+          return (
+            <Card key={child.id} className="cursor-pointer transition-colors hover:bg-muted/40" onClick={() => onPickChild(child.id)}>
+              <CardContent className="flex items-center gap-3 pt-5">
+                {child.photo ? (
+                  <img src={child.photo} alt="" className="h-12 w-12 rounded-full object-cover" />
+                ) : (
+                  <Avatar className="h-12 w-12">
+                    <AvatarFallback className="bg-primary/15 text-primary font-bold">{initials}</AvatarFallback>
+                  </Avatar>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate font-semibold">{child.firstName} {child.lastName}</p>
+                    {child.className && <Badge variant="outline" className="text-[10px]">{child.className}</Badge>}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                    <span>Moyenne: <b className="text-foreground">{avg != null ? `${avg}/20` : "—"}</b></span>
+                    <span>Absences: <b className="text-foreground">{absences}</b></span>
+                    <span>Impayé: <b className={due > 0 ? "text-destructive" : "text-success"}>{fcfa(due)}</b></span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
 
 function EmptyState({ icon: Icon, message, tone = "muted" }: { icon: any; message: string; tone?: "muted" | "success" }) {
   return (
