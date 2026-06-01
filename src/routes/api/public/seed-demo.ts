@@ -24,7 +24,7 @@ export const Route = createFileRoute("/api/public/seed-demo")({
           return Response.json(result);
         } catch (e) {
           console.error("[seed-demo] failed:", e);
-          return Response.json({ error: (e as Error).message }, { status: 500 });
+          return Response.json({ error: "Internal server error" }, { status: 500 });
         }
       },
     },
@@ -32,7 +32,6 @@ export const Route = createFileRoute("/api/public/seed-demo")({
 });
 
 const SUPER_ADMIN_EMAIL = "admin@wintek.cm";
-const SUPER_ADMIN_PASSWORD = "Wintek2026!";
 const SUPER_ADMIN_NAME = "Wintek Admin";
 
 async function ensureSuperAdmin() {
@@ -42,9 +41,16 @@ async function ensureSuperAdmin() {
   if (existing) {
     uid = existing.id;
   } else {
+    // Bootstrap password must come from a secret. If absent, skip creation
+    // rather than committing a hardcoded credential to source.
+    const bootstrapPassword = process.env.SUPER_ADMIN_PASSWORD;
+    if (!bootstrapPassword) {
+      console.warn("[seed-demo] SUPER_ADMIN_PASSWORD not set; skipping super admin bootstrap");
+      return;
+    }
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: SUPER_ADMIN_EMAIL,
-      password: SUPER_ADMIN_PASSWORD,
+      password: bootstrapPassword,
       email_confirm: true,
       user_metadata: { full_name: SUPER_ADMIN_NAME },
     });
