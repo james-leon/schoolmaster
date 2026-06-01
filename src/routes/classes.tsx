@@ -339,3 +339,70 @@ function Field({ label, error, children }: { label: string; error?: string; chil
     </div>
   );
 }
+
+type ClassImport = { name: string; level: Level; capacity: number };
+
+function buildClassImportConfig(existing: Classe[]): ImportConfig<ClassImport> {
+  const columns = ["Nom de la classe", "Niveau", "Capacité"];
+  return {
+    title: "Importer des classes",
+    templateName: "modele-classes",
+    columns,
+    exampleRows: [
+      ["CP-A", "CP", 30],
+      ["CE1-B", "CE1", 28],
+    ],
+    notes: [
+      "Niveau accepté : " + LEVELS.join(", "),
+      "Ne modifiez pas les noms des colonnes.",
+    ],
+    previewColumns: columns,
+    validateRow: (raw) => {
+      const name = String(raw["Nom de la classe"] ?? "").trim();
+      const level = String(raw["Niveau"] ?? "").trim().toUpperCase();
+      const capRaw = String(raw["Capacité"] ?? "").trim();
+      const capacity = parseInt(capRaw, 10);
+      const messages: string[] = [];
+      let status: RowStatus = "valid";
+
+      if (!name) { messages.push("Nom manquant"); status = "error"; }
+      if (!LEVELS.includes(level as Level)) {
+        messages.push(`Niveau invalide (${LEVELS.join(", ")})`);
+        status = "error";
+      }
+      if (!capacity || capacity < 1 || capacity > 200) {
+        messages.push("Capacité invalide (1-200)");
+        status = status === "error" ? "error" : "warning";
+      }
+      if (existing.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+        messages.push("Classe déjà existante");
+        status = "error";
+      }
+
+      const data: ClassImport | null = status === "error" ? null : {
+        name, level: level as Level, capacity: capacity || 30,
+      };
+      return { data, status, messages, display: [name || "—", level || "—", String(capacity || "—")] };
+    },
+    importRows: async (rows, { onProgress }) => {
+      let imported = 0;
+      const valid = rows.filter((r) => r.data);
+      updateDB((d) => {
+        for (const r of valid) {
+          const data = r.data!;
+          d.classes.push({
+            id: crypto.randomUUID(),
+            name: data.name,
+            level: data.level,
+            capacity: data.capacity,
+            teacherId: "",
+            fees: 0,
+          });
+          imported++;
+          onProgress(imported, valid.length);
+        }
+      });
+      return { imported, skipped: rows.length - valid.length };
+    },
+  };
+}
