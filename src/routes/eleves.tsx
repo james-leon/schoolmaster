@@ -151,10 +151,6 @@ function ElevesPage() {
   const school = db.schools.find((s) => s.id === user?.schoolId);
   const { plan, canAddStudent, limits, studentCount } = usePlan();
 
-  if (pathname !== "/eleves") {
-    return <Outlet />;
-  }
-
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }));
   const className = (id: string) => db.classes.find((c) => c.id === id)?.name ?? "—";
 
@@ -177,6 +173,20 @@ function ElevesPage() {
       return `${s.firstName} ${s.lastName} ${className(s.classId)} ${s.code ?? ""}`.toLowerCase().includes(q);
     });
   }, [db.students, db.classes, search, classFilter, statusFilter]);
+
+  if (pathname !== "/eleves") {
+    return <Outlet />;
+  }
+
+  const logStudentClick = (s: Student) => {
+    console.log("Student clicked, id:", s.id);
+    console.log("Navigating to:", `/eleves/${s.id}`);
+  };
+
+  const openStudentProfile = (s: Student) => {
+    logStudentClick(s);
+    navigate({ to: "/eleves/$studentId", params: { studentId: s.id } });
+  };
 
   const openCreate = () => {
     if (!editingId && !canAddStudent()) {
