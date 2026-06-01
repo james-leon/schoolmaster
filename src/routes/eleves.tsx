@@ -180,6 +180,146 @@ function normalizeStatus(v: unknown): StudentStatus {
   return "actif";
 }
 
+function buildStudentImportConfig(
+  classes: { id: string; name: string; level: string; capacity: number; teacherId: string; fees: number }[],
+  existingStudents: Student[],
+): ImportConfig<StudentImport> {
+  const columns = [
+    "Prénom", "Nom", "Date de naissance", "Genre", "Classe", "Statut",
+    "Nom du parent", "Téléphone parent", "Email parent", "Relation",
+  ];
+  return {
+    title: "Importer des élèves",
+    templateName: "modele-eleves",
+    columns,
+    exampleRows: [
+      ["Awa", "Diallo", "15/03/2015", "Féminin", classes[0]?.name ?? "CP-A", "Actif",
+        "Mamadou Diallo", "+221770000000", "mamadou@example.com", "Père"],
+      ["Ibrahim", "Sow", "22/09/2014", "Masculin", classes[0]?.name ?? "CP-A", "Actif",
+        "Fatou Sow", "+221770000001", "", "Mère"],
+    ],
+    notes: [
+      "Ne modifiez pas les noms des colonnes.",
+      "Remplissez une ligne par élève.",
+      "Format de date : JJ/MM/AAAA. Genre : Masculin ou Féminin.",
+    ],
+    previewColumns: ["Prénom", "Nom", "Date naiss.", "Genre", "Classe", "Parent"],
+    showAutoCreateClasses: true,
+    validateRow: (raw, { autoCreateClasses }) => {
+      const get = (k: string) => String(raw[k] ?? "").trim();
+      const firstName = get("Prénom");
+      const lastName = get("Nom");
+      const birthRaw = raw["Date de naissance"];
+      const genderRaw = raw["Genre"];
+      const className = get("Classe");
+      const messages: string[] = [];
+      let status: RowStatus = "valid";
+
+      if (!firstName) messages.push("Prénom manquant");
+      if (!lastName) messages.push("Nom manquant");
+      const birthDate = parseDateFr(birthRaw);
+      if (birthRaw && !birthDate) messages.push("Date invalide (JJ/MM/AAAA)");
+      const gender = normalizeGender(genderRaw);
+      if (genderRaw && !gender) messages.push("Genre invalide (Masculin/Féminin)");
+
+      const classExists = !!classes.find((c) => c.name.toLowerCase() === className.toLowerCase());
+      if (className && !classExists) {
+        if (autoCreateClasses) {
+          messages.push(`Classe « ${className} » sera créée`);
+          status = "warning";
+        } else {
+          messages.push(`Classe « ${className} » introuvable`);
+          status = "warning";
+        }
+      }
+
+      // Duplicate check
+      const dup = existingStudents.find(
+        (s) => s.firstName.toLowerCase() === firstName.toLowerCase()
+          && s.lastName.toLowerCase() === lastName.toLowerCase()
+          && (birthDate ? s.birthDate === birthDate : true),
+      );
+      if (dup) { messages.push("Élève déjà existant (doublon)"); status = "error"; }
+
+      if (!firstName || !lastName) status = "error";
+
+      const data: StudentImport | null = status === "error" ? null : {
+        firstName, lastName,
+        birthDate: birthDate ?? "",
+        gender: gender ?? "M",
+        className: className || (classes[0]?.name ?? ""),
+        status: normalizeStatus(raw["Statut"]),
+        parentName: get("Nom du parent") || undefined,
+        parentPhone: get("Téléphone parent") || undefined,
+        parentEmail: get("Email parent") || undefined,
+        parentRelation: normalizeRelation(raw["Relation"]),
+      };
+
+      return {
+        data, status, messages,
+        display: [firstName || "—", lastName || "—", birthDate ?? String(birthRaw ?? "—"),
+          gender ?? String(genderRaw ?? "—"), className || "—", get("Nom du parent") || "—"],
+      };
+    },
+    importRows: async (rows, { autoCreateClasses, onProgress }) => {
+      const valid = rows.filter((r) => r.data) as Required<ParsedRow<StudentImport>>[];
+      let imported = 0;
+      const skipped = rows.length - valid.length;
+
+      updateDB((d) => {
+        const classByName = new Map(d.classes.map((c) => [c.name.toLowerCase(), c]));
+        for (const r of valid) {
+          const data = r.data!;
+          let cls = classByName.get(data.className.toLowerCase());
+          if (!cls && autoCreateClasses && data.className) {
+            const newCls = {
+              id: crypto.randomUUID(), name: data.className, level: "CP" as const,
+              teacherId: "", fees: 0, capacity: 30,
+            };
+            d.classes.push(newCls);
+            classByName.set(data.className.toLowerCase(), newCls);
+            cls = newCls;
+          }
+          if (!cls) continue; // skip unresolved class
+          const id = crypto.randomUUID();
+          d.students.push({
+            id,
+            code: nextCode(),
+            firstName: data.firstName,
+            lastName: data.lastName,
+            birthDate: data.birthDate,
+            gender: data.gender,
+            classId: cls.id,
+            status: data.status,
+            parentName: data.parentName ?? "",
+            parentPhone: data.parentPhone ?? "",
+            parentEmail: data.parentEmail || undefined,
+            parentRelation: data.parentRelation,
+            enrolledAt: new Date().toISOString().slice(0, 10),
+          });
+          if (data.parentName) {
+            const [fn, ...rest] = data.parentName.trim().split(/\s+/);
+            d.parents.push({
+              id: crypto.randomUUID(),
+              studentId: id,
+              firstName: fn || data.parentName,
+              lastName: rest.join(" "),
+              phone: data.parentPhone,
+              email: data.parentEmail,
+              relationship: data.parentRelation,
+              isEmergencyContact: true,
+            });
+          }
+          imported++;
+          onProgress(imported, valid.length);
+        }
+      });
+
+      return { imported, skipped };
+    },
+  };
+}
+
 function ElevesPage() {
   const db = useDB();
   const { user } = useAuth();
