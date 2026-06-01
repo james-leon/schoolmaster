@@ -1,4 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { NAV_ITEMS } from "@/lib/nav";
 import { Logo } from "./Logo";
 import { PlanBadge } from "./PlanBadge";
@@ -7,7 +8,9 @@ import { useAuth } from "@/lib/auth";
 import { usePlan } from "@/lib/usePlan";
 import { requiredPlanFor } from "@/lib/plans";
 import { toast } from "sonner";
-import { LogOut, Lock } from "lucide-react";
+import { LogOut, Lock, LayoutGrid } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+
 
 export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
