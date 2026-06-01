@@ -217,7 +217,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
           return Response.json({ error: "Action inconnue" }, { status: 400 });
         } catch (e) {
           console.error("[super-admin]", e);
-          return Response.json({ error: (e as Error).message }, { status: 500 });
+          return Response.json({ error: "Internal server error" }, { status: 500 });
         }
       },
     },

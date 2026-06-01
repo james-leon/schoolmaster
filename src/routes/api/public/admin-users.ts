@@ -206,7 +206,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
           return Response.json({ error: "Unknown action" }, { status: 400 });
         } catch (e) {
           console.error("[admin-users]", e);
-          return Response.json({ error: (e as Error).message }, { status: 500 });
+          return Response.json({ error: "Internal server error" }, { status: 500 });
         }
       },
     },
