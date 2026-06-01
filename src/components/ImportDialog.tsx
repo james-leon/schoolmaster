@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import * as XLSX from "xlsx";
+// xlsx is loaded dynamically to keep it out of the SSR bundle
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -88,7 +88,8 @@ export function ImportDialog<T>({ open, onOpenChange, config, onDone }: Props<T>
     onOpenChange(o);
   };
 
-  const downloadTemplate = () => {
+  const downloadTemplate = async () => {
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.aoa_to_sheet([config.columns, ...config.exampleRows]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Modèle");
@@ -97,6 +98,7 @@ export function ImportDialog<T>({ open, onOpenChange, config, onDone }: Props<T>
 
   const parseFile = async (file: File) => {
     try {
+      const XLSX = await import("xlsx");
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array", cellDates: true });
       const ws = wb.Sheets[wb.SheetNames[0]];
@@ -105,7 +107,7 @@ export function ImportDialog<T>({ open, onOpenChange, config, onDone }: Props<T>
         toast.error("Le fichier est vide.");
         return;
       }
-      const parsed: ParsedRow<T>[] = raw.map((r, i) => {
+      const parsed: ParsedRow<T>[] = raw.map((r: Record<string, unknown>, i: number) => {
         const v = config.validateRow(r, { autoCreateClasses });
         return { index: i + 2, raw: r, ...v };
       });
@@ -156,9 +158,10 @@ export function ImportDialog<T>({ open, onOpenChange, config, onDone }: Props<T>
     }
   };
 
-  const downloadErrorReport = () => {
+  const downloadErrorReport = async () => {
     const errs = rows.filter((r) => r.status === "error");
     if (errs.length === 0) return;
+    const XLSX = await import("xlsx");
     const data = errs.map((r) => ({ Ligne: r.index, Erreurs: r.messages.join(" ; "), ...r.raw }));
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
