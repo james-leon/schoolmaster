@@ -345,7 +345,7 @@ function ElevesPage() {
               </TableHeader>
               <TableBody>
                 {filtered.map((s) => (
-                  <TableRow key={s.id}>
+                  <TableRow key={s.id} className="cursor-pointer" onClick={() => openStudentProfile(s)}>
                     <TableCell>
                       {s.photo ? (
                         <img src={s.photo} alt="" className="h-9 w-9 rounded-full object-cover" />
@@ -356,12 +356,12 @@ function ElevesPage() {
                       )}
                     </TableCell>
                     <TableCell className="font-medium">
-                      <Link to="/eleves/$studentId" params={{ studentId: s.id }} className="hover:underline">
+                      <Link to="/eleves/$studentId" params={{ studentId: s.id }} className="hover:underline" onClick={(event) => { event.stopPropagation(); logStudentClick(s); }}>
                         {s.firstName}
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <Link to="/eleves/$studentId" params={{ studentId: s.id }} className="hover:underline">
+                      <Link to="/eleves/$studentId" params={{ studentId: s.id }} className="hover:underline" onClick={(event) => { event.stopPropagation(); logStudentClick(s); }}>
                         {s.lastName}
                       </Link>
                     </TableCell>
@@ -383,7 +383,7 @@ function ElevesPage() {
                       })()}
                     </TableCell>
                     <TableCell>{statusBadge(s.status)}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
                       <Button variant="ghost" size="icon" onClick={() => setParentAccountFor(s)} aria-label="Créer compte parent" title="Créer compte parent">
                         <UserPlus className="h-4 w-4" />
                       </Button>
