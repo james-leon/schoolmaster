@@ -10,12 +10,13 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Users, TrendingUp, AlertCircle, AlertTriangle, UserPlus, CreditCard,
   GraduationCap, CalendarCheck, FileText, BookOpen, ClipboardList, Megaphone,
+  PieChart as PieChartIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 
 
@@ -23,12 +24,8 @@ export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
 });
 
-const LEVEL_GROUPS: Record<string, string> = {
-  PS: "Maternelle", MS: "Maternelle",
-  CP: "Primaire", CE1: "Primaire", CE2: "Primaire", CM1: "Primaire", CM2: "Primaire",
-};
 
-const pieColors = ["#1A6BB5", "#F58B1F", "#1A7A3C", "#0D2C54", "#C0392B", "#7B61FF", "#16A085"];
+
 
 function DashboardPage() {
   const { user } = useAuth();
@@ -186,29 +183,52 @@ function AdminDashboard() {
   const navigate = useNavigate();
 
   const today = new Date().toISOString().slice(0, 10);
-  const thisMonth = new Date().toISOString().slice(0, 7);
   const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth(); // 0-11
+  const quarterStart = Math.floor(currentMonth / 3) * 3; // 0,3,6,9
 
-  const totalStudents = db.students.length;
-  const monthPayments = db.payments.filter((p) => p.date.startsWith(thisMonth));
-  const paymentsTotal = monthPayments.length ? monthPayments.reduce((s, p) => s + p.amount, 0) : db.payments.reduce((s, p) => s + p.amount, 0);
-  const absentToday = db.attendance.filter((a) => a.date === today && a.status === "absent").length;
-  const unpaid = db.payments.filter((p) => p.status === "impaye").length;
+  // Filter all data by current school (defensive — supabase-sync already scopes,
+  // but if any legacy entry leaked in we exclude it).
+  const schoolId = user?.schoolId;
+  const studentIds = new Set(db.students.map((s) => s.id));
+  const activeStudents = db.students.filter((s) => (s.status ?? "actif") === "actif");
+  const totalStudents = activeStudents.length;
 
-  // Fetch enrollment targets from the school record.
+  // Financial KPIs
+  const totalExpected = db.payments.reduce((s, p) => s + (p.amount || 0), 0);
+  const totalCollected = db.payments.reduce((s, p) => s + (p.amountPaid || 0), 0);
+  const remaining = Math.max(0, totalExpected - totalCollected);
+  const recoveryRate = totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100) : 0;
+  const recoveryColor =
+    recoveryRate >= 80 ? "text-success" : recoveryRate >= 50 ? "text-accent" : "text-destructive";
+
+  // Chiffre d'affaires this trimester (current calendar quarter)
+  const trimesterCA = db.paymentRecords.reduce((sum, r) => {
+    const d = new Date(r.date);
+    if (isNaN(d.getTime())) return sum;
+    if (d.getFullYear() !== currentYear) return sum;
+    const m = d.getMonth();
+    if (m < quarterStart || m >= quarterStart + 3) return sum;
+    return sum + (r.amount || 0);
+  }, 0);
+
+  const absentToday = db.attendance.filter((a) => a.date === today && a.status === "absent" && studentIds.has(a.studentId)).length;
+
+  // Fetch enrollment targets + toggle from the school record.
   const [targets, setTargets] = useState<Record<string, number>>({});
+  const [showTargets, setShowTargets] = useState(false);
   useEffect(() => {
-    if (!user?.schoolId) return;
+    if (!schoolId) return;
     let cancelled = false;
-    supabase.from("schools").select("enrollment_targets").eq("id", user.schoolId).maybeSingle().then(({ data }) => {
+    supabase.from("schools").select("enrollment_targets, show_enrollment_targets").eq("id", schoolId).maybeSingle().then(({ data }) => {
       if (cancelled) return;
-      const raw = (data?.enrollment_targets ?? {}) as Record<string, number>;
-      setTargets(raw);
+      setTargets((data?.enrollment_targets ?? {}) as Record<string, number>);
+      setShowTargets(Boolean((data as any)?.show_enrollment_targets));
     });
     return () => { cancelled = true; };
-  }, [user?.schoolId]);
+  }, [schoolId]);
 
-  // Count real enrollments per month (current year) from local students cache.
+  // Enrolled per month (current year)
   const enrolledByMonth = new Array(12).fill(0) as number[];
   for (const s of db.students) {
     if (!s.enrolledAt) continue;
@@ -216,73 +236,107 @@ function AdminDashboard() {
     if (isNaN(d.getTime()) || d.getFullYear() !== currentYear) continue;
     enrolledByMonth[d.getMonth()] += 1;
   }
-  const enrollData = MONTH_LABELS.map((m, i) => ({
-    name: m,
-    Inscrits: enrolledByMonth[i],
-    Objectif: Number(targets[String(i + 1)] ?? 0),
-  }));
-
-
-  const levelCount: Record<string, number> = { Maternelle: 0, Primaire: 0 };
-  const detail: Record<string, number> = {};
-  db.students.forEach((s) => {
-    const cls = db.classes.find((c) => c.id === s.classId);
-    if (cls) {
-      detail[cls.level] = (detail[cls.level] || 0) + 1;
-      levelCount[LEVEL_GROUPS[cls.level]]++;
-    }
+  const enrollData = MONTH_LABELS.map((m, i) => {
+    const row: { name: string; Inscrits: number; Objectif?: number } = {
+      name: m,
+      Inscrits: enrolledByMonth[i],
+    };
+    if (showTargets) row.Objectif = Number(targets[String(i + 1)] ?? 0);
+    return row;
   });
-  const pieData = Object.entries(detail).map(([name, value]) => ({ name, value }));
+
+  // Recettes per month (current year) — sum of payment records
+  const revenueByMonth = new Array(12).fill(0) as number[];
+  for (const r of db.paymentRecords) {
+    const d = new Date(r.date);
+    if (isNaN(d.getTime()) || d.getFullYear() !== currentYear) continue;
+    revenueByMonth[d.getMonth()] += r.amount || 0;
+  }
+  const revenueData = MONTH_LABELS.map((m, i) => ({ name: m, Recettes: revenueByMonth[i] }));
+
+  // Yearly target total (for Card 1 helper)
+  const totalTarget = showTargets
+    ? Object.values(targets).reduce((s, v) => s + (Number(v) || 0), 0)
+    : 0;
+  const targetPct = totalTarget > 0 ? Math.min(100, Math.round((totalStudents / totalTarget) * 100)) : 0;
 
   const activityIcons = { student: UserPlus, payment: CreditCard, grade: GraduationCap, attendance: CalendarCheck };
 
   const overdueStudents = db.payments
     .filter((p) => p.status === "impaye")
-    .slice(0, 4)
+    .slice(0, 5)
     .map((p) => db.students.find((s) => s.id === p.studentId))
     .filter(Boolean);
 
   return (
     <AppLayout title="Tableau de bord">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total Élèves" value={String(totalStudents)} icon={Users} tone="blue" />
-        <StatCard label="Paiements du mois" value={fcfa(paymentsTotal)} icon={TrendingUp} tone="green" />
-        <StatCard label="Absences aujourd'hui" value={String(absentToday)} icon={AlertCircle} tone="orange" />
-        <StatCard label="Factures impayées" value={String(unpaid)} icon={AlertTriangle} tone="red" />
+        <KpiCard
+          label="Élèves inscrits"
+          value={String(totalStudents)}
+          icon={Users}
+          tone="blue"
+          sub={showTargets && totalTarget > 0 ? `Objectif : ${totalTarget}` : undefined}
+          progress={showTargets && totalTarget > 0 ? targetPct : undefined}
+        />
+        <KpiCard
+          label="Chiffre d'affaires"
+          value={fcfa(trimesterCA)}
+          icon={TrendingUp}
+          tone="green"
+          sub="Ce trimestre"
+        />
+        <KpiCard
+          label="Taux de recouvrement"
+          value={`${recoveryRate} %`}
+          valueClass={recoveryColor}
+          icon={PieChartIcon}
+          tone="orange"
+          sub={`${fcfa(remaining)} restants`}
+        />
+        <KpiCard
+          label="Absences aujourd'hui"
+          value={String(absentToday)}
+          icon={AlertCircle}
+          tone="red"
+          sub={`sur ${totalStudents} élèves`}
+        />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-base">Recettes par mois</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={revenueData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} />
+                <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} />
+                <Tooltip cursor={{ fill: "rgba(0,0,0,0.04)" }} formatter={(v: any) => fcfa(Number(v))} />
+                <Bar dataKey="Recettes" fill="#1A7A3C" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card>
           <CardHeader><CardTitle className="text-base">Évolution des inscriptions</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={enrollData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} />
                 <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
                 <Tooltip cursor={{ fill: "rgba(0,0,0,0.04)" }} />
                 <Legend />
                 <Bar dataKey="Inscrits" fill="#1A6BB5" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Objectif" fill="#F58B1F" radius={[4, 4, 0, 0]} />
+                {showTargets && <Bar dataKey="Objectif" fill="#F58B1F" radius={[4, 4, 0, 0]} />}
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-base">Répartition par niveau</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={2}>
-                  {pieData.map((_, i) => (<Cell key={i} fill={pieColors[i % pieColors.length]} />))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
       </div>
+
+
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card>
@@ -359,3 +413,44 @@ function AdminDashboard() {
     </AppLayout>
   );
 }
+
+function KpiCard({
+  label, value, icon: Icon, tone, sub, progress, valueClass,
+}: {
+  label: string;
+  value: string;
+  icon: typeof Users;
+  tone: "blue" | "green" | "orange" | "red";
+  sub?: string;
+  progress?: number;
+  valueClass?: string;
+}) {
+  const tones: Record<string, string> = {
+    blue: "bg-secondary/10 text-secondary",
+    green: "bg-success/10 text-success",
+    orange: "bg-accent/15 text-accent",
+    red: "bg-destructive/10 text-destructive",
+  };
+  return (
+    <Card className="shadow-sm">
+      <CardContent className="p-5">
+        <div className="flex items-start gap-4">
+          <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-full", tones[tone])}>
+            <Icon className="h-6 w-6" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className={cn("truncate text-2xl font-bold tracking-tight", valueClass)}>{value}</div>
+            <div className="truncate text-sm text-muted-foreground">{label}</div>
+            {sub && <div className="mt-1 truncate text-xs text-muted-foreground">{sub}</div>}
+            {typeof progress === "number" && (
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-secondary" style={{ width: `${progress}%` }} />
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+

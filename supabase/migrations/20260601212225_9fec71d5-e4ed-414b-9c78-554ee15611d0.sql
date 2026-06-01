@@ -1,0 +1,1 @@
+ALTER TABLE public.schools ADD COLUMN IF NOT EXISTS show_enrollment_targets boolean NOT NULL DEFAULT false;

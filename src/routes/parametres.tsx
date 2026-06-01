@@ -334,6 +334,7 @@ const MONTHS_FR = [
 
 function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
   const [values, setValues] = useState<number[]>(() => new Array(12).fill(30));
+  const [showTargets, setShowTargets] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -341,12 +342,13 @@ function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
     if (!schoolId) return;
     let cancelled = false;
     setLoading(true);
-    supabase.from("schools").select("enrollment_targets").eq("id", schoolId).maybeSingle().then(({ data, error }) => {
+    supabase.from("schools").select("enrollment_targets, show_enrollment_targets").eq("id", schoolId).maybeSingle().then(({ data, error }) => {
       if (cancelled) return;
       if (error) toast.error("Erreur lors du chargement: " + error.message);
       const raw = (data?.enrollment_targets ?? {}) as Record<string, number>;
       const next = new Array(12).fill(30).map((d, i) => Number(raw[String(i + 1)] ?? d));
       setValues(next);
+      setShowTargets(Boolean((data as any)?.show_enrollment_targets));
       setLoading(false);
     });
     return () => { cancelled = true; };
@@ -355,6 +357,18 @@ function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
   const setMonth = (idx: number, v: string) => {
     const n = Math.max(0, Math.floor(Number(v) || 0));
     setValues((arr) => arr.map((x, i) => (i === idx ? n : x)));
+  };
+
+  const toggleShow = async (v: boolean) => {
+    if (!schoolId) return;
+    setShowTargets(v);
+    const { error } = await supabase.from("schools").update({ show_enrollment_targets: v } as any).eq("id", schoolId);
+    if (error) {
+      toast.error("Erreur: " + error.message);
+      setShowTargets(!v);
+      return;
+    }
+    toast.success(v ? "Objectifs affichés sur le tableau de bord" : "Objectifs masqués");
   };
 
   const save = async () => {
@@ -378,6 +392,13 @@ function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
         <p className="text-xs text-muted-foreground">Définissez vos objectifs d'élèves inscrits par mois.</p>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="flex items-center justify-between rounded-lg border border-border p-3">
+          <div>
+            <p className="text-sm font-medium">Afficher les objectifs d'inscription</p>
+            <p className="text-xs text-muted-foreground">Affiche l'objectif sur le tableau de bord et le graphique des inscriptions.</p>
+          </div>
+          <Switch checked={showTargets} onCheckedChange={toggleShow} disabled={loading} />
+        </div>
         {loading ? (
           <p className="py-6 text-center text-sm text-muted-foreground">Chargement...</p>
         ) : (
@@ -391,11 +412,12 @@ function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
                     min={0}
                     value={values[i]}
                     onChange={(e) => setMonth(i, e.target.value)}
+                    disabled={!showTargets}
                   />
                 </div>
               ))}
             </div>
-            <Button onClick={save} disabled={saving}>
+            <Button onClick={save} disabled={saving || !showTargets}>
               {saving ? "Enregistrement..." : "Enregistrer les objectifs"}
             </Button>
           </>

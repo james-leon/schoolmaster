@@ -567,6 +567,7 @@ export type Database = {
           logo_url: string | null
           name: string
           phone: string | null
+          show_enrollment_targets: boolean
           status: string
           subscription_end: string | null
           subscription_plan: string | null
@@ -585,6 +586,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           phone?: string | null
+          show_enrollment_targets?: boolean
           status?: string
           subscription_end?: string | null
           subscription_plan?: string | null
@@ -603,6 +605,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           phone?: string | null
+          show_enrollment_targets?: boolean
           status?: string
           subscription_end?: string | null
           subscription_plan?: string | null
