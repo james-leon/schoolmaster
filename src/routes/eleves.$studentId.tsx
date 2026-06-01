@@ -127,7 +127,7 @@ function StudentDetailPage() {
               </CardContent>
             </Card>
             <Card>
-              <CardHeader><CardTitle className="text-base">Parent / Tuteur</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base">Parent / Tuteur (fiche)</CardTitle></CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <Row label="Nom" value={student.parentName} />
                 <Row label="Relation" value={student.parentRelation ?? "—"} />
@@ -136,6 +136,9 @@ function StudentDetailPage() {
                 {student.parentWhatsapp && <Row label="WhatsApp" value={<span className="inline-flex items-center gap-1.5"><MessageCircle className="h-3.5 w-3.5" />{student.parentWhatsapp}</span>} />}
               </CardContent>
             </Card>
+            <div className="md:col-span-2">
+              <LinkedParentsCard studentId={studentId} />
+            </div>
           </div>
         </TabsContent>
 
