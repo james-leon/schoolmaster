@@ -336,10 +336,28 @@ function ElevesPage() {
                         {s.firstName}
                       </Link>
                     </TableCell>
-                    <TableCell>{s.lastName}</TableCell>
+                    <TableCell>
+                      <Link to="/eleves/$studentId" params={{ studentId: s.id }} className="hover:underline">
+                        {s.lastName}
+                      </Link>
+                    </TableCell>
                     <TableCell><Badge variant="secondary">{className(s.classId)}</Badge></TableCell>
                     <TableCell className="text-muted-foreground">{s.birthDate}</TableCell>
-                    <TableCell className="text-muted-foreground">{s.parentPhone}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {(() => {
+                        const ps = parentsByStudent.get(s.id) ?? [];
+                        const primary = ps.find((p) => p.phone) ?? ps[0];
+                        if (!primary?.phone) return "—";
+                        return (
+                          <span className="inline-flex items-center gap-1.5">
+                            {primary.phone}
+                            {ps.length > 1 && (
+                              <Badge variant="outline" className="px-1.5 text-[10px]">+{ps.length - 1}</Badge>
+                            )}
+                          </span>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell>{statusBadge(s.status)}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={() => setParentAccountFor(s)} aria-label="Créer compte parent" title="Créer compte parent">
