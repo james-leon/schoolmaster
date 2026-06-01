@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useMemo, useState, useRef } from "react";
 
 import { AppLayout } from "@/components/AppLayout";
@@ -132,6 +132,8 @@ function statusBadge(s?: StudentStatus) {
 function ElevesPage() {
   const db = useDB();
   const { user } = useAuth();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate({ from: "/eleves" });
   const loaded = useLoaded();
   const [search, setSearch] = useState("");
   const [classFilter, setClassFilter] = useState<string>("all");
@@ -148,6 +150,10 @@ function ElevesPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const school = db.schools.find((s) => s.id === user?.schoolId);
   const { plan, canAddStudent, limits, studentCount } = usePlan();
+
+  if (pathname !== "/eleves") {
+    return <Outlet />;
+  }
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }));
   const className = (id: string) => db.classes.find((c) => c.id === id)?.name ?? "—";
