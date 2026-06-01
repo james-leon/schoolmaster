@@ -86,7 +86,12 @@ function ClassesPage() {
 
   return (
     <AppLayout title="Classes">
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex justify-end gap-2">
+        {user?.role === "school_admin" && (
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <FileUp className="mr-1.5 h-4 w-4" /> Importer
+          </Button>
+        )}
         <Button onClick={openNew}><Plus className="mr-1.5 h-4 w-4" /> Nouvelle classe</Button>
       </div>
 
