@@ -188,27 +188,159 @@ function AdminDashboard() {
   const navigate = useNavigate();
 
   const today = new Date().toISOString().slice(0, 10);
-  const thisMonth = new Date().toISOString().slice(0, 7);
   const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth(); // 0-11
+  const quarterStart = Math.floor(currentMonth / 3) * 3; // 0,3,6,9
 
-  const totalStudents = db.students.length;
-  const monthPayments = db.payments.filter((p) => p.date.startsWith(thisMonth));
-  const paymentsTotal = monthPayments.length ? monthPayments.reduce((s, p) => s + p.amount, 0) : db.payments.reduce((s, p) => s + p.amount, 0);
-  const absentToday = db.attendance.filter((a) => a.date === today && a.status === "absent").length;
-  const unpaid = db.payments.filter((p) => p.status === "impaye").length;
+  // Filter all data by current school (defensive — supabase-sync already scopes,
+  // but if any legacy entry leaked in we exclude it).
+  const schoolId = user?.schoolId;
+  const studentIds = new Set(db.students.map((s) => s.id));
+  const activeStudents = db.students.filter((s) => (s.status ?? "actif") === "actif");
+  const totalStudents = activeStudents.length;
 
-  // Fetch enrollment targets from the school record.
+  // Financial KPIs
+  const totalExpected = db.payments.reduce((s, p) => s + (p.amount || 0), 0);
+  const totalCollected = db.payments.reduce((s, p) => s + (p.amountPaid || 0), 0);
+  const remaining = Math.max(0, totalExpected - totalCollected);
+  const recoveryRate = totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100) : 0;
+  const recoveryColor =
+    recoveryRate >= 80 ? "text-success" : recoveryRate >= 50 ? "text-accent" : "text-destructive";
+
+  // Chiffre d'affaires this trimester (current calendar quarter)
+  const trimesterCA = db.paymentRecords.reduce((sum, r) => {
+    const d = new Date(r.date);
+    if (isNaN(d.getTime())) return sum;
+    if (d.getFullYear() !== currentYear) return sum;
+    const m = d.getMonth();
+    if (m < quarterStart || m >= quarterStart + 3) return sum;
+    return sum + (r.amount || 0);
+  }, 0);
+
+  const absentToday = db.attendance.filter((a) => a.date === today && a.status === "absent" && studentIds.has(a.studentId)).length;
+
+  // Fetch enrollment targets + toggle from the school record.
   const [targets, setTargets] = useState<Record<string, number>>({});
+  const [showTargets, setShowTargets] = useState(false);
   useEffect(() => {
-    if (!user?.schoolId) return;
+    if (!schoolId) return;
     let cancelled = false;
-    supabase.from("schools").select("enrollment_targets").eq("id", user.schoolId).maybeSingle().then(({ data }) => {
+    supabase.from("schools").select("enrollment_targets, show_enrollment_targets").eq("id", schoolId).maybeSingle().then(({ data }) => {
       if (cancelled) return;
-      const raw = (data?.enrollment_targets ?? {}) as Record<string, number>;
-      setTargets(raw);
+      setTargets((data?.enrollment_targets ?? {}) as Record<string, number>);
+      setShowTargets(Boolean((data as any)?.show_enrollment_targets));
     });
     return () => { cancelled = true; };
-  }, [user?.schoolId]);
+  }, [schoolId]);
+
+  // Enrolled per month (current year)
+  const enrolledByMonth = new Array(12).fill(0) as number[];
+  for (const s of db.students) {
+    if (!s.enrolledAt) continue;
+    const d = new Date(s.enrolledAt);
+    if (isNaN(d.getTime()) || d.getFullYear() !== currentYear) continue;
+    enrolledByMonth[d.getMonth()] += 1;
+  }
+  const enrollData = MONTH_LABELS.map((m, i) => {
+    const row: { name: string; Inscrits: number; Objectif?: number } = {
+      name: m,
+      Inscrits: enrolledByMonth[i],
+    };
+    if (showTargets) row.Objectif = Number(targets[String(i + 1)] ?? 0);
+    return row;
+  });
+
+  // Recettes per month (current year) — sum of payment records
+  const revenueByMonth = new Array(12).fill(0) as number[];
+  for (const r of db.paymentRecords) {
+    const d = new Date(r.date);
+    if (isNaN(d.getTime()) || d.getFullYear() !== currentYear) continue;
+    revenueByMonth[d.getMonth()] += r.amount || 0;
+  }
+  const revenueData = MONTH_LABELS.map((m, i) => ({ name: m, Recettes: revenueByMonth[i] }));
+
+  // Yearly target total (for Card 1 helper)
+  const totalTarget = showTargets
+    ? Object.values(targets).reduce((s, v) => s + (Number(v) || 0), 0)
+    : 0;
+  const targetPct = totalTarget > 0 ? Math.min(100, Math.round((totalStudents / totalTarget) * 100)) : 0;
+
+  const activityIcons = { student: UserPlus, payment: CreditCard, grade: GraduationCap, attendance: CalendarCheck };
+
+  const overdueStudents = db.payments
+    .filter((p) => p.status === "impaye")
+    .slice(0, 5)
+    .map((p) => db.students.find((s) => s.id === p.studentId))
+    .filter(Boolean);
+
+  return (
+    <AppLayout title="Tableau de bord">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          label="Élèves inscrits"
+          value={String(totalStudents)}
+          icon={Users}
+          tone="blue"
+          sub={showTargets && totalTarget > 0 ? `Objectif : ${totalTarget}` : undefined}
+          progress={showTargets && totalTarget > 0 ? targetPct : undefined}
+        />
+        <KpiCard
+          label="Chiffre d'affaires"
+          value={fcfa(trimesterCA)}
+          icon={TrendingUp}
+          tone="green"
+          sub="Ce trimestre"
+        />
+        <KpiCard
+          label="Taux de recouvrement"
+          value={`${recoveryRate} %`}
+          valueClass={recoveryColor}
+          icon={PieChartIcon}
+          tone="orange"
+          sub={`${fcfa(remaining)} restants`}
+        />
+        <KpiCard
+          label="Absences aujourd'hui"
+          value={String(absentToday)}
+          icon={AlertCircle}
+          tone="red"
+          sub={`sur ${totalStudents} élèves`}
+        />
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-base">Recettes par mois</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={revenueData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} />
+                <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} />
+                <Tooltip cursor={{ fill: "rgba(0,0,0,0.04)" }} formatter={(v: any) => fcfa(Number(v))} />
+                <Bar dataKey="Recettes" fill="#1A7A3C" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="text-base">Évolution des inscriptions</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={enrollData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} />
+                <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                <Tooltip cursor={{ fill: "rgba(0,0,0,0.04)" }} />
+                <Legend />
+                <Bar dataKey="Inscrits" fill="#1A6BB5" radius={[4, 4, 0, 0]} />
+                {showTargets && <Bar dataKey="Objectif" fill="#F58B1F" radius={[4, 4, 0, 0]} />}
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
 
   // Count real enrollments per month (current year) from local students cache.
   const enrolledByMonth = new Array(12).fill(0) as number[];
