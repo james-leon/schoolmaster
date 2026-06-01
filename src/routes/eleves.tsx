@@ -15,7 +15,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSchoolParentAccounts } from "@/lib/useSchoolParentAccounts";
-import { Users, Search, Plus, Trash2, Pencil, Upload, UserPlus, Eye, KeyRound, Link2, X, CheckCircle2, Mail, Phone } from "lucide-react";
+import { Users, Search, Plus, Trash2, Pencil, Upload, UserPlus, Eye, KeyRound, Link2, X, CheckCircle2, Mail, Phone, FileUp } from "lucide-react";
+import { ImportDialog, type ImportConfig, type ParsedRow, type RowStatus } from "@/components/ImportDialog";
 import { z } from "zod";
 import { toast } from "sonner";
 import { STUDENT_STATUSES, PARENT_RELATIONS, type Student, type StudentStatus, type ParentRelation, type DB } from "@/lib/types";
@@ -129,6 +130,196 @@ function statusBadge(s?: StudentStatus) {
   return <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", v.cls)}>{v.label}</span>;
 }
 
+// ---------- Import helpers ----------
+type StudentImport = {
+  firstName: string; lastName: string; birthDate: string;
+  gender: "M" | "F"; className: string; status: StudentStatus;
+  parentName?: string; parentPhone?: string; parentEmail?: string; parentRelation?: ParentRelation;
+};
+
+function parseDateFr(v: unknown): string | null {
+  if (!v) return null;
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  const s = String(v).trim();
+  if (!s) return null;
+  // JJ/MM/AAAA or JJ-MM-AAAA
+  const m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (m) {
+    let [, d, mo, y] = m;
+    if (y.length === 2) y = "20" + y;
+    const dd = d.padStart(2, "0"), mm = mo.padStart(2, "0");
+    const iso = `${y}-${mm}-${dd}`;
+    if (!isNaN(new Date(iso).getTime())) return iso;
+  }
+  // ISO YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  const dt = new Date(s);
+  if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10);
+  return null;
+}
+
+function normalizeGender(v: unknown): "M" | "F" | null {
+  const s = String(v ?? "").trim().toLowerCase();
+  if (!s) return null;
+  if (s.startsWith("m") || s === "garçon" || s === "garcon") return "M";
+  if (s.startsWith("f")) return "F";
+  return null;
+}
+
+function normalizeRelation(v: unknown): ParentRelation {
+  const s = String(v ?? "").trim().toLowerCase();
+  if (s.startsWith("mè") || s.startsWith("me")) return "Mère";
+  if (s.startsWith("tu")) return "Tuteur";
+  return "Père";
+}
+
+function normalizeStatus(v: unknown): StudentStatus {
+  const s = String(v ?? "actif").trim().toLowerCase();
+  if (s.startsWith("inact")) return "inactif";
+  if (s.startsWith("trans")) return "transfere";
+  return "actif";
+}
+
+function buildStudentImportConfig(
+  classes: { id: string; name: string; level: string; capacity: number; teacherId: string; fees: number }[],
+  existingStudents: Student[],
+): ImportConfig<StudentImport> {
+  const columns = [
+    "Prénom", "Nom", "Date de naissance", "Genre", "Classe", "Statut",
+    "Nom du parent", "Téléphone parent", "Email parent", "Relation",
+  ];
+  return {
+    title: "Importer des élèves",
+    templateName: "modele-eleves",
+    columns,
+    exampleRows: [
+      ["Awa", "Diallo", "15/03/2015", "Féminin", classes[0]?.name ?? "CP-A", "Actif",
+        "Mamadou Diallo", "+221770000000", "mamadou@example.com", "Père"],
+      ["Ibrahim", "Sow", "22/09/2014", "Masculin", classes[0]?.name ?? "CP-A", "Actif",
+        "Fatou Sow", "+221770000001", "", "Mère"],
+    ],
+    notes: [
+      "Ne modifiez pas les noms des colonnes.",
+      "Remplissez une ligne par élève.",
+      "Format de date : JJ/MM/AAAA. Genre : Masculin ou Féminin.",
+    ],
+    previewColumns: ["Prénom", "Nom", "Date naiss.", "Genre", "Classe", "Parent"],
+    showAutoCreateClasses: true,
+    validateRow: (raw, { autoCreateClasses }) => {
+      const get = (k: string) => String(raw[k] ?? "").trim();
+      const firstName = get("Prénom");
+      const lastName = get("Nom");
+      const birthRaw = raw["Date de naissance"];
+      const genderRaw = raw["Genre"];
+      const className = get("Classe");
+      const messages: string[] = [];
+      let status: RowStatus = "valid";
+
+      if (!firstName) messages.push("Prénom manquant");
+      if (!lastName) messages.push("Nom manquant");
+      const birthDate = parseDateFr(birthRaw);
+      if (birthRaw && !birthDate) messages.push("Date invalide (JJ/MM/AAAA)");
+      const gender = normalizeGender(genderRaw);
+      if (genderRaw && !gender) messages.push("Genre invalide (Masculin/Féminin)");
+
+      const classExists = !!classes.find((c) => c.name.toLowerCase() === className.toLowerCase());
+      if (className && !classExists) {
+        if (autoCreateClasses) {
+          messages.push(`Classe « ${className} » sera créée`);
+          status = "warning";
+        } else {
+          messages.push(`Classe « ${className} » introuvable`);
+          status = "warning";
+        }
+      }
+
+      // Duplicate check
+      const dup = existingStudents.find(
+        (s) => s.firstName.toLowerCase() === firstName.toLowerCase()
+          && s.lastName.toLowerCase() === lastName.toLowerCase()
+          && (birthDate ? s.birthDate === birthDate : true),
+      );
+      if (dup) { messages.push("Élève déjà existant (doublon)"); status = "error"; }
+
+      if (!firstName || !lastName) status = "error";
+
+      const data: StudentImport | null = status === "error" ? null : {
+        firstName, lastName,
+        birthDate: birthDate ?? "",
+        gender: gender ?? "M",
+        className: className || (classes[0]?.name ?? ""),
+        status: normalizeStatus(raw["Statut"]),
+        parentName: get("Nom du parent") || undefined,
+        parentPhone: get("Téléphone parent") || undefined,
+        parentEmail: get("Email parent") || undefined,
+        parentRelation: normalizeRelation(raw["Relation"]),
+      };
+
+      return {
+        data, status, messages,
+        display: [firstName || "—", lastName || "—", birthDate ?? String(birthRaw ?? "—"),
+          gender ?? String(genderRaw ?? "—"), className || "—", get("Nom du parent") || "—"],
+      };
+    },
+    importRows: async (rows, { autoCreateClasses, onProgress }) => {
+      const valid = rows.filter((r) => r.data) as Required<ParsedRow<StudentImport>>[];
+      let imported = 0;
+      const skipped = rows.length - valid.length;
+
+      updateDB((d) => {
+        const classByName = new Map(d.classes.map((c) => [c.name.toLowerCase(), c]));
+        for (const r of valid) {
+          const data = r.data!;
+          let cls = classByName.get(data.className.toLowerCase());
+          if (!cls && autoCreateClasses && data.className) {
+            const newCls = {
+              id: crypto.randomUUID(), name: data.className, level: "CP" as const,
+              teacherId: "", fees: 0, capacity: 30,
+            };
+            d.classes.push(newCls);
+            classByName.set(data.className.toLowerCase(), newCls);
+            cls = newCls;
+          }
+          if (!cls) continue; // skip unresolved class
+          const id = crypto.randomUUID();
+          d.students.push({
+            id,
+            code: nextCode(),
+            firstName: data.firstName,
+            lastName: data.lastName,
+            birthDate: data.birthDate,
+            gender: data.gender,
+            classId: cls.id,
+            status: data.status,
+            parentName: data.parentName ?? "",
+            parentPhone: data.parentPhone ?? "",
+            parentEmail: data.parentEmail || undefined,
+            parentRelation: data.parentRelation,
+            enrolledAt: new Date().toISOString().slice(0, 10),
+          });
+          if (data.parentName) {
+            const [fn, ...rest] = data.parentName.trim().split(/\s+/);
+            d.parents.push({
+              id: crypto.randomUUID(),
+              studentId: id,
+              firstName: fn || data.parentName,
+              lastName: rest.join(" "),
+              phone: data.parentPhone,
+              email: data.parentEmail,
+              relationship: data.parentRelation,
+              isEmergencyContact: true,
+            });
+          }
+          imported++;
+          onProgress(imported, valid.length);
+        }
+      });
+
+      return { imported, skipped };
+    },
+  };
+}
+
 function ElevesPage() {
   const db = useDB();
   const { user } = useAuth();
@@ -147,6 +338,7 @@ function ElevesPage() {
   const [parentAccountFor, setParentAccountFor] = useState<Student | null>(null);
   const [credentials, setCredentials] = useState<CredentialsInfo | null>(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const school = db.schools.find((s) => s.id === user?.schoolId);
   const { plan, canAddStudent, limits, studentCount } = usePlan();
@@ -318,9 +510,16 @@ function ElevesPage() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="mr-1.5 h-4 w-4" /> Nouvel élève
-        </Button>
+        <div className="flex gap-2">
+          {user?.role === "school_admin" && (
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <FileUp className="mr-1.5 h-4 w-4" /> Importer
+            </Button>
+          )}
+          <Button onClick={openCreate}>
+            <Plus className="mr-1.5 h-4 w-4" /> Nouvel élève
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -544,6 +743,11 @@ function ElevesPage() {
         onClose={() => setUpgradeOpen(false)}
         title={`Limite du plan ${plan.label} atteinte`}
         message={`Vous avez atteint la limite de ${limits.maxStudents} élèves (${studentCount} inscrits) de votre plan ${plan.label}. Passez à un plan supérieur pour ajouter plus d'élèves.`}
+      />
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        config={buildStudentImportConfig(db.classes, db.students)}
       />
     </AppLayout>
   );

@@ -14,9 +14,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BookOpen, Plus, Pencil, Trash2, Users } from "lucide-react";
+import { BookOpen, Plus, Pencil, Trash2, Users, FileUp } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { ImportDialog, type ImportConfig, type RowStatus } from "@/components/ImportDialog";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/classes")({ component: ClassesPage });
 
@@ -33,6 +35,7 @@ const empty: FormState = { name: "", level: "CP", capacity: "30", teacherId: "",
 
 function ClassesPage() {
   const db = useDB();
+  const { user } = useAuth();
   const loaded = useLoaded();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Classe | null>(null);
@@ -40,6 +43,7 @@ function ClassesPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [toDelete, setToDelete] = useState<Classe | null>(null);
   const [subjectsFor, setSubjectsFor] = useState<Classe | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const set = (k: keyof FormState, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -82,7 +86,12 @@ function ClassesPage() {
 
   return (
     <AppLayout title="Classes">
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex justify-end gap-2">
+        {user?.role === "school_admin" && (
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <FileUp className="mr-1.5 h-4 w-4" /> Importer
+          </Button>
+        )}
         <Button onClick={openNew}><Plus className="mr-1.5 h-4 w-4" /> Nouvelle classe</Button>
       </div>
 
@@ -183,6 +192,11 @@ function ClassesPage() {
         </AlertDialogContent>
       </AlertDialog>
       <SubjectsModal classe={subjectsFor} onClose={() => setSubjectsFor(null)} />
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        config={buildClassImportConfig(db.classes)}
+      />
     </AppLayout>
   );
 }
@@ -324,4 +338,71 @@ function Field({ label, error, children }: { label: string; error?: string; chil
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
+}
+
+type ClassImport = { name: string; level: Level; capacity: number };
+
+function buildClassImportConfig(existing: Classe[]): ImportConfig<ClassImport> {
+  const columns = ["Nom de la classe", "Niveau", "Capacité"];
+  return {
+    title: "Importer des classes",
+    templateName: "modele-classes",
+    columns,
+    exampleRows: [
+      ["CP-A", "CP", 30],
+      ["CE1-B", "CE1", 28],
+    ],
+    notes: [
+      "Niveau accepté : " + LEVELS.join(", "),
+      "Ne modifiez pas les noms des colonnes.",
+    ],
+    previewColumns: columns,
+    validateRow: (raw) => {
+      const name = String(raw["Nom de la classe"] ?? "").trim();
+      const level = String(raw["Niveau"] ?? "").trim().toUpperCase();
+      const capRaw = String(raw["Capacité"] ?? "").trim();
+      const capacity = parseInt(capRaw, 10);
+      const messages: string[] = [];
+      let status: RowStatus = "valid";
+
+      if (!name) { messages.push("Nom manquant"); status = "error"; }
+      if (!LEVELS.includes(level as Level)) {
+        messages.push(`Niveau invalide (${LEVELS.join(", ")})`);
+        status = "error";
+      }
+      if (!capacity || capacity < 1 || capacity > 200) {
+        messages.push("Capacité invalide (1-200)");
+        status = status === "error" ? "error" : "warning";
+      }
+      if (existing.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+        messages.push("Classe déjà existante");
+        status = "error";
+      }
+
+      const data: ClassImport | null = status === "error" ? null : {
+        name, level: level as Level, capacity: capacity || 30,
+      };
+      return { data, status, messages, display: [name || "—", level || "—", String(capacity || "—")] };
+    },
+    importRows: async (rows, { onProgress }) => {
+      let imported = 0;
+      const valid = rows.filter((r) => r.data);
+      updateDB((d) => {
+        for (const r of valid) {
+          const data = r.data!;
+          d.classes.push({
+            id: crypto.randomUUID(),
+            name: data.name,
+            level: data.level,
+            capacity: data.capacity,
+            teacherId: "",
+            fees: 0,
+          });
+          imported++;
+          onProgress(imported, valid.length);
+        }
+      });
+      return { imported, skipped: rows.length - valid.length };
+    },
+  };
 }
