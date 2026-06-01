@@ -24,12 +24,8 @@ export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
 });
 
-const LEVEL_GROUPS: Record<string, string> = {
-  PS: "Maternelle", MS: "Maternelle",
-  CP: "Primaire", CE1: "Primaire", CE2: "Primaire", CM1: "Primaire", CM2: "Primaire",
-};
 
-const pieColors = ["#1A6BB5", "#F58B1F", "#1A7A3C", "#0D2C54", "#C0392B", "#7B61FF", "#16A085"];
+
 
 function DashboardPage() {
   const { user } = useAuth();
