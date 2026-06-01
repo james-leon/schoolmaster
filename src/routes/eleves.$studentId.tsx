@@ -111,6 +111,7 @@ function StudentDetailPage() {
       <Tabs defaultValue="info">
         <TabsList>
           <TabsTrigger value="info">Informations</TabsTrigger>
+          <TabsTrigger value="parents">Parents &amp; Tuteurs</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="paiements">Paiements</TabsTrigger>
           <TabsTrigger value="presences">Présences</TabsTrigger>
@@ -130,21 +131,13 @@ function StudentDetailPage() {
                 <Row label="Inscrit le" value={student.enrolledAt} />
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader><CardTitle className="text-base">Parent / Tuteur (fiche)</CardTitle></CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <Row label="Nom" value={student.parentName} />
-                <Row label="Relation" value={student.parentRelation ?? "—"} />
-                <Row label="Téléphone" value={<span className="inline-flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" />{student.parentPhone}</span>} />
-                {student.parentEmail && <Row label="Email" value={<span className="inline-flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" />{student.parentEmail}</span>} />}
-                {student.parentWhatsapp && <Row label="WhatsApp" value={<span className="inline-flex items-center gap-1.5"><MessageCircle className="h-3.5 w-3.5" />{student.parentWhatsapp}</span>} />}
-              </CardContent>
-            </Card>
-            <div className="md:col-span-2">
-              <LinkedParentsCard studentId={studentId} />
-            </div>
           </div>
         </TabsContent>
+
+        <TabsContent value="parents" className="mt-4">
+          <ParentsTuteursTab studentId={studentId} schoolName={school?.name} />
+        </TabsContent>
+
 
         <TabsContent value="notes" className="mt-4 space-y-4">
           <NotesTab studentId={studentId} grades={grades} classId={student.classId} />
