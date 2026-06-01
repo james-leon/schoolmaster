@@ -1,4 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { NAV_ITEMS } from "@/lib/nav";
 import { Logo } from "./Logo";
 import { PlanBadge } from "./PlanBadge";
@@ -7,7 +8,9 @@ import { useAuth } from "@/lib/auth";
 import { usePlan } from "@/lib/usePlan";
 import { requiredPlanFor } from "@/lib/plans";
 import { toast } from "sonner";
-import { LogOut, Lock } from "lucide-react";
+import { LogOut, Lock, LayoutGrid } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+
 
 export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -91,28 +94,84 @@ export function Sidebar() {
   );
 }
 
+const PRIMARY_BY_ROLE: Record<string, string[]> = {
+  school_admin: ["/dashboard", "/eleves", "/scolarite", "/notes"],
+  super_admin: ["/dashboard", "/eleves", "/scolarite", "/notes"],
+  teacher: ["/dashboard", "/eleves", "/notes", "/presences"],
+};
+
 export function MobileNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useAuth();
-  const items = NAV_ITEMS.filter((i) => !user || !i.roles || i.roles.includes(user.role)).slice(0, 5);
+  const [open, setOpen] = useState(false);
+  const allItems = NAV_ITEMS.filter((i) => !user || !i.roles || i.roles.includes(user.role));
+  const primaryPaths = (user && PRIMARY_BY_ROLE[user.role]) ?? allItems.slice(0, 4).map((i) => i.to);
+  const primary = primaryPaths
+    .map((p) => allItems.find((i) => i.to === p))
+    .filter((i): i is (typeof allItems)[number] => !!i)
+    .slice(0, 4);
+  const primarySet = new Set(primary.map((i) => i.to));
+  const overflow = allItems.filter((i) => !primarySet.has(i.to));
+  const plusActive = overflow.some((i) => i.to === pathname);
+
+  const tabClass = (active: boolean) =>
+    cn(
+      "flex flex-1 flex-col items-center gap-0.5 rounded-md py-1 text-[10px] font-medium text-sidebar-foreground/70",
+      active && "text-accent",
+    );
+
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 flex justify-around border-t border-sidebar-border bg-sidebar px-1 py-1.5 md:hidden">
-      {items.map((item) => {
-        const active = pathname === item.to;
-        return (
-          <Link
-            key={item.to}
-            to={item.to}
-            className={cn(
-              "flex flex-1 flex-col items-center gap-0.5 rounded-md py-1 text-[10px] font-medium text-sidebar-foreground/70",
-              active && "text-accent",
-            )}
+    <>
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex justify-around border-t border-sidebar-border bg-sidebar px-1 py-1.5 md:hidden">
+        {primary.map((item) => {
+          const active = pathname === item.to;
+          return (
+            <Link key={item.to} to={item.to} className={tabClass(active)}>
+              <item.icon className="h-5 w-5" />
+              <span className="truncate">{item.label.split(" ")[0]}</span>
+            </Link>
+          );
+        })}
+        {overflow.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className={tabClass(plusActive)}
+            aria-label="Plus de modules"
           >
-            <item.icon className="h-5 w-5" />
-            <span className="truncate">{item.label.split(" ")[0]}</span>
-          </Link>
-        );
-      })}
-    </nav>
+            <LayoutGrid className="h-5 w-5" />
+            <span className="truncate">Plus</span>
+          </button>
+        )}
+      </nav>
+
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl p-0">
+          <SheetHeader className="border-b px-4 py-3 text-left">
+            <SheetTitle>Menu</SheetTitle>
+          </SheetHeader>
+          <div className="grid max-h-[70vh] grid-cols-1 gap-1 overflow-y-auto p-3">
+            {overflow.map((item) => {
+              const active = pathname === item.to;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-4 py-3 text-sm font-medium hover:bg-accent/10",
+                    active && "bg-accent/10 text-accent",
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
+
