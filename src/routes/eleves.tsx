@@ -370,9 +370,16 @@ function ElevesPage() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="mr-1.5 h-4 w-4" /> Nouvel élève
-        </Button>
+        <div className="flex gap-2">
+          {user?.role === "school_admin" && (
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <FileUp className="mr-1.5 h-4 w-4" /> Importer
+            </Button>
+          )}
+          <Button onClick={openCreate}>
+            <Plus className="mr-1.5 h-4 w-4" /> Nouvel élève
+          </Button>
+        </div>
       </div>
 
       <Card>
