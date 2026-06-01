@@ -51,37 +51,37 @@ L'équipe ${info.schoolName ?? "SchoolMaster"}`;
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-[480px] max-h-[90vh] overflow-y-auto p-6 box-border">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-success" />
-            Compte {roleLabel} créé !
+          <DialogTitle className="flex items-center gap-2 pr-6">
+            <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+            <span className="break-words">Compte {roleLabel} créé !</span>
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-3 text-sm">
-          <div className="rounded-md border border-border bg-muted/40 p-3 space-y-2">
-            <div>
+        <div className="space-y-3 text-sm min-w-0">
+          <div className="rounded-md border border-border bg-muted/40 p-4 space-y-2 w-full min-w-0">
+            <div className="min-w-0">
               <div className="text-xs text-muted-foreground">Email</div>
               <div className="font-mono font-medium break-all">{info.email}</div>
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="text-xs text-muted-foreground">Mot de passe temporaire</div>
-              <div className="font-mono font-semibold tracking-wider">{info.tempPassword}</div>
+              <div className="font-mono font-semibold tracking-wider break-all">{info.tempPassword}</div>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground break-words">
             Transmettez ces identifiants à l'{roleLabel}. Il devra changer son mot de passe à la première connexion.
           </p>
         </div>
-        <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between gap-2">
-          <Button variant="outline" onClick={copy}>
-            <Copy className="mr-1.5 h-4 w-4" /> Copier les identifiants
+        <DialogFooter className="flex flex-col sm:flex-row sm:justify-between gap-2 flex-wrap">
+          <Button variant="outline" onClick={copy} className="w-full sm:w-auto">
+            <Copy className="mr-1.5 h-4 w-4" /> Copier
           </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={sendEmail}>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={sendEmail} className="w-full sm:w-auto">
               <Mail className="mr-1.5 h-4 w-4" /> Envoyer par email
             </Button>
-            <Button onClick={onClose}>Fermer</Button>
+            <Button onClick={onClose} className="w-full sm:w-auto">Fermer</Button>
           </div>
         </DialogFooter>
       </DialogContent>
