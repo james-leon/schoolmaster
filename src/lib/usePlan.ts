@@ -28,6 +28,7 @@ interface UsePlanResult extends SchoolSubscription {
   isBlocked: boolean;
   isTrial: boolean;
   daysLeftInTrial: number | null;
+  daysUntilExpiry: number | null;
   refresh: () => Promise<void>;
 }
 
@@ -99,13 +100,19 @@ export function usePlan(): UsePlanResult {
     daysLeftInTrial = Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
   }
 
+  let daysUntilExpiry: number | null = null;
+  if (sub.subscriptionEnd) {
+    const ms = new Date(sub.subscriptionEnd).getTime() - Date.now();
+    daysUntilExpiry = Math.ceil(ms / (1000 * 60 * 60 * 24));
+  }
+
   return {
     ...sub,
     loading,
     limits: { maxStudents: sub.plan.maxStudents, maxTeachers: sub.plan.maxTeachers },
     studentCount, teacherCount,
     hasFeature, canAddStudent, canAddTeacher,
-    isBlocked, isTrial, daysLeftInTrial,
+    isBlocked, isTrial, daysLeftInTrial, daysUntilExpiry,
     refresh: fetchSub,
   };
 }
