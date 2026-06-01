@@ -31,7 +31,9 @@ function statusBadge(s?: StudentStatus) {
 
 function StudentDetailPage() {
   const { studentId } = useParams({ from: "/eleves/$studentId" });
+  const { user } = useAuth();
   const db = useDB();
+  const school = db.schools.find((s) => s.id === user?.schoolId);
   const student = db.students.find((s) => s.id === studentId);
   const cls = student ? db.classes.find((c) => c.id === student.classId) : null;
 
