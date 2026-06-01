@@ -19,8 +19,32 @@ const ALL_FEATURES: FeatureId[] = [
 ];
 
 function MonAbonnementPage() {
-  const { plan, planId, status, studentCount, teacherCount, limits, isTrial, daysLeftInTrial, loading } = usePlan();
+  const {
+    plan, planId, status, effectiveStatus,
+    studentCount, teacherCount, limits,
+    isTrial, daysLeftInTrial,
+    subscriptionStart, subscriptionEnd, daysUntilExpiry,
+    loading,
+  } = usePlan();
   const navigate = useNavigate();
+
+  const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString("fr-FR") : "—";
+
+  let expiryTone = "text-success";
+  if (daysUntilExpiry != null) {
+    if (daysUntilExpiry < 7) expiryTone = "text-destructive";
+    else if (daysUntilExpiry <= 15) expiryTone = "text-accent";
+  }
+
+  // Progress through subscription period
+  let elapsedPct = 0;
+  if (subscriptionStart && subscriptionEnd) {
+    const start = new Date(subscriptionStart).getTime();
+    const end = new Date(subscriptionEnd).getTime();
+    const now = Date.now();
+    elapsedPct = Math.max(0, Math.min(100, ((now - start) / (end - start)) * 100));
+  }
+
 
   return (
     <AppLayout title="Mon abonnement">
