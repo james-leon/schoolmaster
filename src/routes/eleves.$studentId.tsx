@@ -12,6 +12,7 @@ import { fcfa } from "@/lib/format";
 import { TERMS, gradeValue, type StudentStatus, type Grade } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { LinkedParentsCard } from "@/components/LinkedParentsCard";
 
 export const Route = createFileRoute("/eleves/$studentId")({
   component: StudentDetailPage,
