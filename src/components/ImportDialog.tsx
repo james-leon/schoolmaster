@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import * as XLSX from "xlsx";
+// xlsx is loaded dynamically to keep it out of the SSR bundle
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
