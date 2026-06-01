@@ -74,7 +74,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
           }
 
           if (action === "create-parent") {
-            const { firstName, lastName, email, phone, studentIds } = body;
+            const { firstName, lastName, email, phone, studentIds, relationship } = body;
             if (!firstName || !lastName || !email || !Array.isArray(studentIds) || studentIds.length === 0) {
               return Response.json({ error: "Champs requis manquants" }, { status: 400 });
             }
@@ -92,7 +92,79 @@ export const Route = createFileRoute("/api/public/admin-users")({
               student_id: studentIds[0], student_ids: studentIds,
               must_change_password: true, is_active: true,
             }, { onConflict: "id" });
+            const links = (studentIds as string[]).map((sid) => ({
+              parent_profile_id: uid, student_id: sid,
+              school_id: ctx.schoolId, relationship: relationship || "Tuteur",
+            }));
+            await supabaseAdmin.from("parent_students").upsert(links, { onConflict: "parent_profile_id,student_id" });
             return Response.json({ ok: true, userId: uid, tempPassword });
+          }
+
+          if (action === "link-parent-student") {
+            const { parentProfileId, studentId, relationship } = body;
+            if (!parentProfileId || !studentId) return Response.json({ error: "Paramètres manquants" }, { status: 400 });
+            if (!(await ensureTargetInSchool(parentProfileId, ctx.schoolId))) return Response.json({ error: "Forbidden" }, { status: 403 });
+            const { data: st } = await supabaseAdmin.from("students").select("school_id").eq("id", studentId).maybeSingle();
+            if (st?.school_id !== ctx.schoolId) return Response.json({ error: "Élève hors école" }, { status: 403 });
+            const { error } = await supabaseAdmin.from("parent_students")
+              .upsert({ parent_profile_id: parentProfileId, student_id: studentId,
+                        school_id: ctx.schoolId, relationship: relationship || "Tuteur" },
+                      { onConflict: "parent_profile_id,student_id" });
+            if (error) return Response.json({ error: error.message }, { status: 400 });
+            const { data: links } = await supabaseAdmin.from("parent_students")
+              .select("student_id").eq("parent_profile_id", parentProfileId);
+            const ids = (links ?? []).map((r: any) => r.student_id);
+            await supabaseAdmin.from("profiles").update({
+              student_id: ids[0] ?? null, student_ids: ids,
+            }).eq("id", parentProfileId);
+            return Response.json({ ok: true });
+          }
+
+          if (action === "unlink-parent-student") {
+            const { parentProfileId, studentId } = body;
+            if (!parentProfileId || !studentId) return Response.json({ error: "Paramètres manquants" }, { status: 400 });
+            if (!(await ensureTargetInSchool(parentProfileId, ctx.schoolId))) return Response.json({ error: "Forbidden" }, { status: 403 });
+            await supabaseAdmin.from("parent_students")
+              .delete()
+              .eq("parent_profile_id", parentProfileId)
+              .eq("student_id", studentId);
+            const { data: links } = await supabaseAdmin.from("parent_students")
+              .select("student_id").eq("parent_profile_id", parentProfileId);
+            const ids = (links ?? []).map((r: any) => r.student_id);
+            await supabaseAdmin.from("profiles").update({
+              student_id: ids[0] ?? null, student_ids: ids,
+            }).eq("id", parentProfileId);
+            return Response.json({ ok: true });
+          }
+
+          if (action === "list-school-parents") {
+            const { data, error } = await supabaseAdmin
+              .from("profiles")
+              .select("id, full_name, email, phone")
+              .eq("school_id", ctx.schoolId)
+              .eq("role", "parent")
+              .order("full_name", { ascending: true });
+            if (error) return Response.json({ error: error.message }, { status: 400 });
+            return Response.json({ parents: data ?? [] });
+          }
+
+          if (action === "list-student-parents") {
+            const { studentId } = body;
+            if (!studentId) return Response.json({ error: "Élève requis" }, { status: 400 });
+            const { data: links } = await supabaseAdmin
+              .from("parent_students")
+              .select("id, parent_profile_id, relationship, created_at")
+              .eq("student_id", studentId)
+              .eq("school_id", ctx.schoolId);
+            const ids = (links ?? []).map((l: any) => l.parent_profile_id);
+            const profsRes = ids.length
+              ? await supabaseAdmin.from("profiles").select("id, full_name, email, phone").in("id", ids)
+              : { data: [] as any[] };
+            const byId = new Map((profsRes.data ?? []).map((p: any) => [p.id, p]));
+            const merged = (links ?? []).map((l: any) => ({
+              ...l, profile: byId.get(l.parent_profile_id) ?? null,
+            }));
+            return Response.json({ links: merged });
           }
 
           if (action === "reset-password") {
