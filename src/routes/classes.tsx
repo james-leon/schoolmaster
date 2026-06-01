@@ -35,6 +35,7 @@ const empty: FormState = { name: "", level: "CP", capacity: "30", teacherId: "",
 
 function ClassesPage() {
   const db = useDB();
+  const { user } = useAuth();
   const loaded = useLoaded();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Classe | null>(null);
@@ -42,6 +43,7 @@ function ClassesPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [toDelete, setToDelete] = useState<Classe | null>(null);
   const [subjectsFor, setSubjectsFor] = useState<Classe | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const set = (k: keyof FormState, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
