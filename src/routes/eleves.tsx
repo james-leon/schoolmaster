@@ -683,3 +683,87 @@ function Field({ label, error, children }: { label: string; error?: string; chil
     </div>
   );
 }
+
+function ParentsListView() {
+  const db = useDB();
+  const { accounts, accountFor } = useSchoolParentAccounts();
+  const [search, setSearch] = useState("");
+
+  // Group local parents by email (or name+phone) — one parent may appear once per child.
+  const groups = useMemo(() => {
+    const m = new Map<string, { key: string; firstName: string; lastName: string; phone?: string; email?: string; studentIds: string[] }>();
+    for (const p of db.parents) {
+      const key = (p.email?.toLowerCase() || `${p.firstName}|${p.lastName}|${p.phone ?? ""}`).trim();
+      const g = m.get(key) ?? { key, firstName: p.firstName, lastName: p.lastName, phone: p.phone, email: p.email, studentIds: [] };
+      if (!g.studentIds.includes(p.studentId)) g.studentIds.push(p.studentId);
+      m.set(key, g);
+    }
+    return Array.from(m.values());
+  }, [db.parents]);
+
+  const studentName = (id: string) => {
+    const s = db.students.find((x) => x.id === id);
+    return s ? `${s.firstName} ${s.lastName}` : "—";
+  };
+
+  const filtered = groups.filter((g) => {
+    const q = search.toLowerCase().trim();
+    if (!q) return true;
+    return `${g.firstName} ${g.lastName} ${g.phone ?? ""} ${g.email ?? ""}`.toLowerCase().includes(q);
+  });
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="relative max-w-xs">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Rechercher un parent..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        {filtered.length === 0 ? (
+          <p className="p-8 text-center text-sm text-muted-foreground">Aucun parent enregistré.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nom complet</TableHead>
+                <TableHead>Téléphone</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Enfant(s)</TableHead>
+                <TableHead>Compte</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((g) => {
+                const acc = accountFor(g.email);
+                return (
+                  <TableRow key={g.key}>
+                    <TableCell className="font-medium">{g.firstName} {g.lastName}</TableCell>
+                    <TableCell className="text-muted-foreground">{g.phone ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{g.email ?? "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {g.studentIds.map((sid) => (
+                          <Link key={sid} to="/eleves/$studentId" params={{ studentId: sid }}>
+                            <Badge variant="secondary" className="hover:bg-secondary/80">{studentName(sid)}</Badge>
+                          </Link>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {acc ? (
+                        <Badge className="bg-success/15 text-success hover:bg-success/15">Actif</Badge>
+                      ) : (
+                        <Badge variant="secondary">Aucun</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+        <p className="text-xs text-muted-foreground">{filtered.length} parent(s) · {accounts.length} compte(s) actif(s)</p>
+      </CardContent>
+    </Card>
+  );
+}
