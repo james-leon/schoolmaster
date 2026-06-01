@@ -88,7 +88,8 @@ export function ImportDialog<T>({ open, onOpenChange, config, onDone }: Props<T>
     onOpenChange(o);
   };
 
-  const downloadTemplate = () => {
+  const downloadTemplate = async () => {
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.aoa_to_sheet([config.columns, ...config.exampleRows]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Modèle");
