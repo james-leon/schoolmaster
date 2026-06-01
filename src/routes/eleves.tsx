@@ -13,6 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSchoolParentAccounts } from "@/lib/useSchoolParentAccounts";
 import { Users, Search, Plus, Trash2, Pencil, Upload, UserPlus } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -150,6 +152,16 @@ function ElevesPage() {
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }));
   const className = (id: string) => db.classes.find((c) => c.id === id)?.name ?? "—";
 
+  const parentsByStudent = useMemo(() => {
+    const m = new Map<string, typeof db.parents>();
+    for (const p of db.parents) {
+      const arr = m.get(p.studentId) ?? [];
+      arr.push(p);
+      m.set(p.studentId, arr);
+    }
+    return m;
+  }, [db.parents]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return db.students.filter((s) => {
@@ -259,7 +271,13 @@ function ElevesPage() {
 
   return (
     <AppLayout title="Élèves">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <Tabs defaultValue="eleves" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="eleves">Élèves</TabsTrigger>
+          <TabsTrigger value="parents">Parents</TabsTrigger>
+        </TabsList>
+        <TabsContent value="eleves" className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative max-w-xs flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -326,10 +344,28 @@ function ElevesPage() {
                         {s.firstName}
                       </Link>
                     </TableCell>
-                    <TableCell>{s.lastName}</TableCell>
+                    <TableCell>
+                      <Link to="/eleves/$studentId" params={{ studentId: s.id }} className="hover:underline">
+                        {s.lastName}
+                      </Link>
+                    </TableCell>
                     <TableCell><Badge variant="secondary">{className(s.classId)}</Badge></TableCell>
                     <TableCell className="text-muted-foreground">{s.birthDate}</TableCell>
-                    <TableCell className="text-muted-foreground">{s.parentPhone}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {(() => {
+                        const ps = parentsByStudent.get(s.id) ?? [];
+                        const primary = ps.find((p) => p.phone) ?? ps[0];
+                        if (!primary?.phone) return "—";
+                        return (
+                          <span className="inline-flex items-center gap-1.5">
+                            {primary.phone}
+                            {ps.length > 1 && (
+                              <Badge variant="outline" className="px-1.5 text-[10px]">+{ps.length - 1}</Badge>
+                            )}
+                          </span>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell>{statusBadge(s.status)}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={() => setParentAccountFor(s)} aria-label="Créer compte parent" title="Créer compte parent">
@@ -349,6 +385,13 @@ function ElevesPage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+        <TabsContent value="parents">
+          <ParentsListView />
+        </TabsContent>
+      </Tabs>
+
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
@@ -638,5 +681,89 @@ function Field({ label, error, children }: { label: string; error?: string; chil
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
+  );
+}
+
+function ParentsListView() {
+  const db = useDB();
+  const { accounts, accountFor } = useSchoolParentAccounts();
+  const [search, setSearch] = useState("");
+
+  // Group local parents by email (or name+phone) — one parent may appear once per child.
+  const groups = useMemo(() => {
+    const m = new Map<string, { key: string; firstName: string; lastName: string; phone?: string; email?: string; studentIds: string[] }>();
+    for (const p of db.parents) {
+      const key = (p.email?.toLowerCase() || `${p.firstName}|${p.lastName}|${p.phone ?? ""}`).trim();
+      const g = m.get(key) ?? { key, firstName: p.firstName, lastName: p.lastName, phone: p.phone, email: p.email, studentIds: [] };
+      if (!g.studentIds.includes(p.studentId)) g.studentIds.push(p.studentId);
+      m.set(key, g);
+    }
+    return Array.from(m.values());
+  }, [db.parents]);
+
+  const studentName = (id: string) => {
+    const s = db.students.find((x) => x.id === id);
+    return s ? `${s.firstName} ${s.lastName}` : "—";
+  };
+
+  const filtered = groups.filter((g) => {
+    const q = search.toLowerCase().trim();
+    if (!q) return true;
+    return `${g.firstName} ${g.lastName} ${g.phone ?? ""} ${g.email ?? ""}`.toLowerCase().includes(q);
+  });
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="relative max-w-xs">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Rechercher un parent..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        {filtered.length === 0 ? (
+          <p className="p-8 text-center text-sm text-muted-foreground">Aucun parent enregistré.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nom complet</TableHead>
+                <TableHead>Téléphone</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Enfant(s)</TableHead>
+                <TableHead>Compte</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((g) => {
+                const acc = accountFor(g.email);
+                return (
+                  <TableRow key={g.key}>
+                    <TableCell className="font-medium">{g.firstName} {g.lastName}</TableCell>
+                    <TableCell className="text-muted-foreground">{g.phone ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{g.email ?? "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {g.studentIds.map((sid) => (
+                          <Link key={sid} to="/eleves/$studentId" params={{ studentId: sid }}>
+                            <Badge variant="secondary" className="hover:bg-secondary/80">{studentName(sid)}</Badge>
+                          </Link>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {acc ? (
+                        <Badge className="bg-success/15 text-success hover:bg-success/15">Actif</Badge>
+                      ) : (
+                        <Badge variant="secondary">Aucun</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+        <p className="text-xs text-muted-foreground">{filtered.length} parent(s) · {accounts.length} compte(s) actif(s)</p>
+      </CardContent>
+    </Card>
   );
 }

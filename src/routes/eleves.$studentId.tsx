@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Mail, Phone, MessageCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { fcfa } from "@/lib/format";
 import { TERMS, gradeValue, type StudentStatus, type Grade } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { LinkedParentsCard } from "@/components/LinkedParentsCard";
+import { ParentsTuteursTab } from "@/components/ParentsTuteursTab";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/eleves/$studentId")({
   component: StudentDetailPage,
@@ -30,7 +31,9 @@ function statusBadge(s?: StudentStatus) {
 
 function StudentDetailPage() {
   const { studentId } = useParams({ from: "/eleves/$studentId" });
+  const { user } = useAuth();
   const db = useDB();
+  const school = db.schools.find((s) => s.id === user?.schoolId);
   const student = db.students.find((s) => s.id === studentId);
   const cls = student ? db.classes.find((c) => c.id === student.classId) : null;
 
@@ -108,6 +111,7 @@ function StudentDetailPage() {
       <Tabs defaultValue="info">
         <TabsList>
           <TabsTrigger value="info">Informations</TabsTrigger>
+          <TabsTrigger value="parents">Parents &amp; Tuteurs</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="paiements">Paiements</TabsTrigger>
           <TabsTrigger value="presences">Présences</TabsTrigger>
@@ -127,21 +131,13 @@ function StudentDetailPage() {
                 <Row label="Inscrit le" value={student.enrolledAt} />
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader><CardTitle className="text-base">Parent / Tuteur (fiche)</CardTitle></CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <Row label="Nom" value={student.parentName} />
-                <Row label="Relation" value={student.parentRelation ?? "—"} />
-                <Row label="Téléphone" value={<span className="inline-flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" />{student.parentPhone}</span>} />
-                {student.parentEmail && <Row label="Email" value={<span className="inline-flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" />{student.parentEmail}</span>} />}
-                {student.parentWhatsapp && <Row label="WhatsApp" value={<span className="inline-flex items-center gap-1.5"><MessageCircle className="h-3.5 w-3.5" />{student.parentWhatsapp}</span>} />}
-              </CardContent>
-            </Card>
-            <div className="md:col-span-2">
-              <LinkedParentsCard studentId={studentId} />
-            </div>
           </div>
         </TabsContent>
+
+        <TabsContent value="parents" className="mt-4">
+          <ParentsTuteursTab studentId={studentId} schoolName={school?.name} />
+        </TabsContent>
+
 
         <TabsContent value="notes" className="mt-4 space-y-4">
           <NotesTab studentId={studentId} grades={grades} classId={student.classId} />
