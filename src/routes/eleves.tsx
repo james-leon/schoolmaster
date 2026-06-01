@@ -734,7 +734,7 @@ function ParentsListView() {
         phone: p.phone, whatsapp: p.whatsapp, email: p.email,
         profession: (p as any).profession,
         relationship: p.relationship as ParentRelation | undefined,
-        studentIds: [], parentRowIds: [],
+        studentIds: [] as string[], parentRowIds: [] as string[],
       };
       if (!g.studentIds.includes(p.studentId)) g.studentIds.push(p.studentId);
       g.parentRowIds.push(p.id);
