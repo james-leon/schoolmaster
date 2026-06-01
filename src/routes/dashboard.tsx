@@ -418,3 +418,44 @@ function AdminDashboard() {
     </AppLayout>
   );
 }
+
+function KpiCard({
+  label, value, icon: Icon, tone, sub, progress, valueClass,
+}: {
+  label: string;
+  value: string;
+  icon: typeof Users;
+  tone: "blue" | "green" | "orange" | "red";
+  sub?: string;
+  progress?: number;
+  valueClass?: string;
+}) {
+  const tones: Record<string, string> = {
+    blue: "bg-secondary/10 text-secondary",
+    green: "bg-success/10 text-success",
+    orange: "bg-accent/15 text-accent",
+    red: "bg-destructive/10 text-destructive",
+  };
+  return (
+    <Card className="shadow-sm">
+      <CardContent className="p-5">
+        <div className="flex items-start gap-4">
+          <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-full", tones[tone])}>
+            <Icon className="h-6 w-6" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className={cn("truncate text-2xl font-bold tracking-tight", valueClass)}>{value}</div>
+            <div className="truncate text-sm text-muted-foreground">{label}</div>
+            {sub && <div className="mt-1 truncate text-xs text-muted-foreground">{sub}</div>}
+            {typeof progress === "number" && (
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-secondary" style={{ width: `${progress}%` }} />
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
