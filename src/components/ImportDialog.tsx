@@ -98,6 +98,7 @@ export function ImportDialog<T>({ open, onOpenChange, config, onDone }: Props<T>
 
   const parseFile = async (file: File) => {
     try {
+      const XLSX = await import("xlsx");
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array", cellDates: true });
       const ws = wb.Sheets[wb.SheetNames[0]];
@@ -106,7 +107,7 @@ export function ImportDialog<T>({ open, onOpenChange, config, onDone }: Props<T>
         toast.error("Le fichier est vide.");
         return;
       }
-      const parsed: ParsedRow<T>[] = raw.map((r, i) => {
+      const parsed: ParsedRow<T>[] = raw.map((r: Record<string, unknown>, i: number) => {
         const v = config.validateRow(r, { autoCreateClasses });
         return { index: i + 2, raw: r, ...v };
       });
