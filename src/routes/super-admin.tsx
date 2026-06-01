@@ -53,6 +53,7 @@ function SuperAdminPage() {
   const [creds, setCreds] = useState<CredentialsInfo | null>(null);
   const [extendingSchoolId, setExtendingSchoolId] = useState<string | null>(null);
   const [newTrialDate, setNewTrialDate] = useState("");
+  const [subSchool, setSubSchool] = useState<PlatformSchool | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -179,6 +180,7 @@ function SuperAdminPage() {
                       <TableHead>Plan</TableHead>
                       <TableHead>Élèves</TableHead>
                       <TableHead>Statut</TableHead>
+                      <TableHead>Expire le</TableHead>
                       <TableHead>Créée</TableHead>
                       <TableHead className="w-12 text-right">Actions</TableHead>
                     </TableRow>
@@ -211,6 +213,15 @@ function SuperAdminPage() {
                             {s.status === "trial" && s.trial_ends_at && (
                               <div className="mt-0.5 text-[10px] text-muted-foreground">jusqu'au {s.trial_ends_at}</div>
                             )}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {(() => {
+                              const end = s.subscription_end ?? s.trial_ends_at;
+                              if (!end) return <span className="text-muted-foreground">—</span>;
+                              const days = Math.ceil((new Date(end).getTime() - Date.now()) / 86400000);
+                              const cls = days < 0 ? "text-destructive font-semibold" : days < 7 ? "text-accent font-semibold" : "text-muted-foreground";
+                              return <span className={cls}>{new Date(end).toLocaleDateString("fr-FR")}</span>;
+                            })()}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
                             {new Date(s.created_at).toLocaleDateString("fr-FR")}
