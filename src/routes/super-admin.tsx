@@ -320,6 +320,14 @@ function SuperAdminPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {subSchool && (
+        <ManageSubscriptionDialog
+          school={subSchool}
+          onClose={() => setSubSchool(null)}
+          onSaved={() => { setSubSchool(null); refresh(); }}
+        />
+      )}
     </div>
   );
 }
