@@ -19,8 +19,32 @@ const ALL_FEATURES: FeatureId[] = [
 ];
 
 function MonAbonnementPage() {
-  const { plan, planId, status, studentCount, teacherCount, limits, isTrial, daysLeftInTrial, loading } = usePlan();
+  const {
+    plan, planId, effectiveStatus,
+    studentCount, teacherCount, limits,
+    isTrial, daysLeftInTrial,
+    subscriptionStart, subscriptionEnd, daysUntilExpiry,
+    loading,
+  } = usePlan();
   const navigate = useNavigate();
+
+  const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString("fr-FR") : "—";
+
+  let expiryTone = "text-success";
+  if (daysUntilExpiry != null) {
+    if (daysUntilExpiry < 7) expiryTone = "text-destructive";
+    else if (daysUntilExpiry <= 15) expiryTone = "text-accent";
+  }
+
+  // Progress through subscription period
+  let elapsedPct = 0;
+  if (subscriptionStart && subscriptionEnd) {
+    const start = new Date(subscriptionStart).getTime();
+    const end = new Date(subscriptionEnd).getTime();
+    const now = Date.now();
+    elapsedPct = Math.max(0, Math.min(100, ((now - start) / (end - start)) * 100));
+  }
+
 
   return (
     <AppLayout title="Mon abonnement">
@@ -35,12 +59,18 @@ function MonAbonnementPage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Crown className="h-5 w-5 text-accent" />
-                  Plan {plan.label}
+                  Plan actuel : {plan.label.toUpperCase()}
                 </CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">{fcfa(plan.priceFcfa)} / mois</p>
               </div>
-              <Badge variant={status === "active" ? "default" : "secondary"} className="capitalize">
-                {status === "trial" ? "Essai" : status === "active" ? "Actif" : status === "suspended" ? "Suspendu" : "Expiré"}
+              <Badge variant={effectiveStatus === "active" ? "default" : "secondary"} className="capitalize">
+                <span className={cn(
+                  "mr-1.5 inline-block h-2 w-2 rounded-full",
+                  effectiveStatus === "active" ? "bg-success" :
+                  effectiveStatus === "trial" ? "bg-accent" :
+                  "bg-destructive"
+                )} />
+                {effectiveStatus === "trial" ? "Essai" : effectiveStatus === "active" ? "Actif" : effectiveStatus === "suspended" ? "Suspendu" : "Expiré"}
               </Badge>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -49,6 +79,36 @@ function MonAbonnementPage() {
                   Période d'essai — {daysLeftInTrial} jour{daysLeftInTrial > 1 ? "s" : ""} restant{daysLeftInTrial > 1 ? "s" : ""}
                 </div>
               )}
+              {(subscriptionStart || subscriptionEnd) && (
+                <div className="rounded-md border border-border bg-muted/30 p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <div className="text-xs text-muted-foreground">Début</div>
+                      <div className="font-medium">{fmt(subscriptionStart)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Fin</div>
+                      <div className="font-medium">{fmt(subscriptionEnd)}</div>
+                    </div>
+                  </div>
+                  {daysUntilExpiry != null && (
+                    <div className={cn("text-sm font-semibold", expiryTone)}>
+                      {daysUntilExpiry < 0
+                        ? `Expiré depuis ${Math.abs(daysUntilExpiry)} jour${Math.abs(daysUntilExpiry) > 1 ? "s" : ""}`
+                        : daysUntilExpiry === 0
+                        ? "Expire aujourd'hui"
+                        : `${daysUntilExpiry} jour${daysUntilExpiry > 1 ? "s" : ""} restant${daysUntilExpiry > 1 ? "s" : ""}`}
+                    </div>
+                  )}
+                  {subscriptionStart && subscriptionEnd && (
+                    <Progress value={elapsedPct} />
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Renouvellement : Contactez Wintek — {WINTEK_CONTACT.phone}
+                  </p>
+                </div>
+              )}
+
               <div>
                 <div className="mb-1 flex items-center justify-between text-sm">
                   <span>Élèves utilisés</span>

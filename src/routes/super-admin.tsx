@@ -53,6 +53,7 @@ function SuperAdminPage() {
   const [creds, setCreds] = useState<CredentialsInfo | null>(null);
   const [extendingSchoolId, setExtendingSchoolId] = useState<string | null>(null);
   const [newTrialDate, setNewTrialDate] = useState("");
+  const [subSchool, setSubSchool] = useState<PlatformSchool | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -179,6 +180,7 @@ function SuperAdminPage() {
                       <TableHead>Plan</TableHead>
                       <TableHead>Élèves</TableHead>
                       <TableHead>Statut</TableHead>
+                      <TableHead>Expire le</TableHead>
                       <TableHead>Créée</TableHead>
                       <TableHead className="w-12 text-right">Actions</TableHead>
                     </TableRow>
@@ -212,6 +214,15 @@ function SuperAdminPage() {
                               <div className="mt-0.5 text-[10px] text-muted-foreground">jusqu'au {s.trial_ends_at}</div>
                             )}
                           </TableCell>
+                          <TableCell className="text-xs">
+                            {(() => {
+                              const end = s.subscription_end ?? s.trial_ends_at;
+                              if (!end) return <span className="text-muted-foreground">—</span>;
+                              const days = Math.ceil((new Date(end).getTime() - Date.now()) / 86400000);
+                              const cls = days < 0 ? "text-destructive font-semibold" : days < 7 ? "text-accent font-semibold" : "text-muted-foreground";
+                              return <span className={cls}>{new Date(end).toLocaleDateString("fr-FR")}</span>;
+                            })()}
+                          </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
                             {new Date(s.created_at).toLocaleDateString("fr-FR")}
                           </TableCell>
@@ -228,6 +239,9 @@ function SuperAdminPage() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleImpersonate(s)}>
                                   <Eye className="mr-2 h-4 w-4" /> Voir
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setSubSchool(s)}>
+                                  <CreditCard className="mr-2 h-4 w-4" /> Gérer l'abonnement
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => { setExtendingSchoolId(s.id); setNewTrialDate(s.trial_ends_at ?? ""); }}>
                                   <CalendarPlus className="mr-2 h-4 w-4" /> Prolonger l'essai
@@ -306,6 +320,14 @@ function SuperAdminPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {subSchool && (
+        <ManageSubscriptionDialog
+          school={subSchool}
+          onClose={() => setSubSchool(null)}
+          onSaved={() => { setSubSchool(null); refresh(); }}
+        />
+      )}
     </div>
   );
 }
@@ -466,3 +488,112 @@ function CreateSchoolDialog({ onClose, onCreated }: { onClose: () => void; onCre
 }
 
 void AlertOctagon;
+
+function addMonths(d: Date, months: number): Date {
+  const r = new Date(d);
+  r.setMonth(r.getMonth() + months);
+  return r;
+}
+function toISODate(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function ManageSubscriptionDialog({
+  school, onClose, onSaved,
+}: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
+  const today = toISODate(new Date());
+  const [plan, setPlan] = useState<string>(school.subscription_plan ?? "starter");
+  const [status, setStatus] = useState<"active" | "trial" | "suspended" | "expired">(
+    (school.status as "active" | "trial" | "suspended" | "expired") ?? "active",
+  );
+  const [start, setStart] = useState<string>(school.subscription_start ?? today);
+  const [end, setEnd] = useState<string>(
+    school.subscription_end ?? toISODate(addMonths(new Date(school.subscription_start ?? today), 1)),
+  );
+  const [trialEnd, setTrialEnd] = useState<string>(school.trial_ends_at ?? "");
+  const [saving, setSaving] = useState(false);
+
+  // Auto-suggest end = start + 1 month when start changes
+  const handleStartChange = (v: string) => {
+    setStart(v);
+    if (v) setEnd(toISODate(addMonths(new Date(v), 1)));
+  };
+
+  const submit = async () => {
+    setSaving(true);
+    try {
+      await superAdminApi.updateSubscription({
+        schoolId: school.id,
+        plan,
+        status,
+        subscriptionStart: start || undefined,
+        subscriptionEnd: end || undefined,
+        trialEnd: status === "trial" ? (trialEnd || end || undefined) : undefined,
+      });
+      toast.success("Abonnement mis à jour");
+      onSaved();
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Gérer l'abonnement — {school.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Plan</Label>
+              <Select value={plan} onValueChange={setPlan}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PLAN_OPTIONS.map((p) => (
+                    <SelectItem key={p} value={p}>{PLAN_LABELS[p] ?? p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Statut</Label>
+              <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Actif</SelectItem>
+                  <SelectItem value="trial">Essai</SelectItem>
+                  <SelectItem value="suspended">Suspendu</SelectItem>
+                  <SelectItem value="expired">Expiré</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="sub-start">Début</Label>
+              <Input id="sub-start" type="date" value={start} onChange={(e) => handleStartChange(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="sub-end">Fin</Label>
+              <Input id="sub-end" type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+            </div>
+          </div>
+          {status === "trial" && (
+            <div className="space-y-1.5">
+              <Label htmlFor="sub-trial">Fin de l'essai (optionnel)</Label>
+              <Input id="sub-trial" type="date" value={trialEnd} onChange={(e) => setTrialEnd(e.target.value)} />
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            La date de fin est automatiquement suggérée à 1 mois après la date de début.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button onClick={submit} disabled={saving}>{saving ? "Enregistrement…" : "Enregistrer"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+

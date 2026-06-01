@@ -2,6 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
 import { useDB } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
+import { usePlan } from "@/lib/usePlan";
+import { requiredPlanFor } from "@/lib/plans";
+import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
 import { visibleAnnouncements, formatDateFr, markAllSeen } from "@/lib/announcements";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,15 +18,23 @@ export const Route = createFileRoute("/annonces")({
 function AnnoncesPage() {
   const db = useDB();
   const { user } = useAuth();
+  const { hasFeature, loading } = usePlan();
   const items = visibleAnnouncements(db.announcements, user?.role);
 
   useEffect(() => {
     markAllSeen();
   }, [items.length]);
 
+  const locked = !loading && user?.role !== "super_admin" && !hasFeature("announcements");
+
   return (
     <AppLayout title="Annonces">
-      {items.length === 0 ? (
+      {locked ? (
+        <LockedFeatureOverlay
+          requiredPlan={requiredPlanFor("announcements")}
+          featureLabel="Les annonces"
+        />
+      ) : items.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-16 text-center text-muted-foreground">
             <Megaphone className="h-10 w-10 opacity-40" />

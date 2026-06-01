@@ -22,8 +22,10 @@ export interface PlatformSchool {
   email: string | null;
   phone: string | null;
   subscription_plan: string | null;
-  status: "active" | "trial" | "suspended";
+  status: "active" | "trial" | "suspended" | "expired";
   trial_ends_at: string | null;
+  subscription_start: string | null;
+  subscription_end: string | null;
   created_at: string;
   director_name: string | null;
   student_count: number;

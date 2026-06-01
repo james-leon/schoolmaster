@@ -43,7 +43,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
           if (action === "list-schools") {
             const { data: schools, error } = await supabaseAdmin
               .from("schools")
-              .select("id, name, city, country, email, phone, subscription_plan, status, trial_ends_at, created_at, director_name")
+              .select("id, name, city, country, email, phone, subscription_plan, status, trial_ends_at, subscription_start, subscription_end, created_at, director_name")
               .order("created_at", { ascending: false });
             if (error) return Response.json({ error: error.message }, { status: 500 });
 
