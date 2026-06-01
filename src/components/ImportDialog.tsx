@@ -158,9 +158,10 @@ export function ImportDialog<T>({ open, onOpenChange, config, onDone }: Props<T>
     }
   };
 
-  const downloadErrorReport = () => {
+  const downloadErrorReport = async () => {
     const errs = rows.filter((r) => r.status === "error");
     if (errs.length === 0) return;
+    const XLSX = await import("xlsx");
     const data = errs.map((r) => ({ Ligne: r.index, Erreurs: r.messages.join(" ; "), ...r.raw }));
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
