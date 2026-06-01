@@ -14,9 +14,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BookOpen, Plus, Pencil, Trash2, Users } from "lucide-react";
+import { BookOpen, Plus, Pencil, Trash2, Users, FileUp } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { ImportDialog, type ImportConfig, type RowStatus } from "@/components/ImportDialog";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/classes")({ component: ClassesPage });
 
