@@ -130,6 +130,56 @@ function statusBadge(s?: StudentStatus) {
   return <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", v.cls)}>{v.label}</span>;
 }
 
+// ---------- Import helpers ----------
+type StudentImport = {
+  firstName: string; lastName: string; birthDate: string;
+  gender: "M" | "F"; className: string; status: StudentStatus;
+  parentName?: string; parentPhone?: string; parentEmail?: string; parentRelation?: ParentRelation;
+};
+
+function parseDateFr(v: unknown): string | null {
+  if (!v) return null;
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  const s = String(v).trim();
+  if (!s) return null;
+  // JJ/MM/AAAA or JJ-MM-AAAA
+  const m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (m) {
+    let [, d, mo, y] = m;
+    if (y.length === 2) y = "20" + y;
+    const dd = d.padStart(2, "0"), mm = mo.padStart(2, "0");
+    const iso = `${y}-${mm}-${dd}`;
+    if (!isNaN(new Date(iso).getTime())) return iso;
+  }
+  // ISO YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  const dt = new Date(s);
+  if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10);
+  return null;
+}
+
+function normalizeGender(v: unknown): "M" | "F" | null {
+  const s = String(v ?? "").trim().toLowerCase();
+  if (!s) return null;
+  if (s.startsWith("m") || s === "garçon" || s === "garcon") return "M";
+  if (s.startsWith("f")) return "F";
+  return null;
+}
+
+function normalizeRelation(v: unknown): ParentRelation {
+  const s = String(v ?? "").trim().toLowerCase();
+  if (s.startsWith("mè") || s.startsWith("me")) return "Mère";
+  if (s.startsWith("tu")) return "Tuteur";
+  return "Père";
+}
+
+function normalizeStatus(v: unknown): StudentStatus {
+  const s = String(v ?? "actif").trim().toLowerCase();
+  if (s.startsWith("inact")) return "inactif";
+  if (s.startsWith("trans")) return "transfere";
+  return "actif";
+}
+
 function ElevesPage() {
   const db = useDB();
   const { user } = useAuth();
