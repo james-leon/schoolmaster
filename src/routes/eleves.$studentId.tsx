@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Mail, Phone, MessageCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { fcfa } from "@/lib/format";
 import { TERMS, gradeValue, type StudentStatus, type Grade } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { LinkedParentsCard } from "@/components/LinkedParentsCard";
+import { ParentsTuteursTab } from "@/components/ParentsTuteursTab";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/eleves/$studentId")({
   component: StudentDetailPage,
