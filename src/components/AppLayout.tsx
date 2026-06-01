@@ -35,7 +35,8 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
       return;
     }
     const allowed = allowedRoutes(user.role);
-    if (!allowed.includes(pathname)) {
+    const isAllowed = allowed.some((r) => pathname === r || pathname.startsWith(r + "/"));
+    if (!isAllowed) {
       navigate({ to: "/unauthorized", replace: true });
     }
   }, [user, originalUser, isImpersonating, loading, isAuthenticated, navigate, pathname]);
