@@ -1,4 +1,4 @@
-import { Bell, Moon, Sun, User as UserIcon, LogOut, Megaphone } from "lucide-react";
+import { Bell, Moon, Sun, User as UserIcon, LogOut, Megaphone, Settings, CreditCard, Shield } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
@@ -16,6 +16,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
 const ROLE_BADGE: Record<string, string> = {
   school_admin: "bg-primary text-primary-foreground",
@@ -105,19 +106,66 @@ export function Header({ title }: { title: string }) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="ml-1 flex items-center gap-2 rounded-full outline-none">
-              <Avatar className="h-9 w-9">
+            <button className="ml-1 flex items-center gap-2 rounded-full outline-none focus:ring-2 focus:ring-ring" aria-label="Menu profil">
+              <Avatar className="h-9 w-9 cursor-pointer">
                 <AvatarFallback className="bg-secondary text-secondary-foreground text-xs font-semibold">
                   {initials || <UserIcon className="h-4 w-4" />}
                 </AvatarFallback>
               </Avatar>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <div className="font-medium">{user?.name}</div>
-              <div className="text-xs font-normal text-muted-foreground">{user ? ROLE_LABELS[user.role] : ""}</div>
+          <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuLabel className="flex items-start gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback className="bg-secondary text-secondary-foreground text-xs font-semibold">
+                  {initials || <UserIcon className="h-4 w-4" />}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-medium">{user?.name}</div>
+                {user?.email && (
+                  <div className="truncate text-xs font-normal text-muted-foreground">{user.email}</div>
+                )}
+                <div className="text-xs font-normal text-muted-foreground">{user ? ROLE_LABELS[user.role] : ""}</div>
+              </div>
             </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/changer-mot-de-passe">
+                <UserIcon className="mr-2 h-4 w-4" /> Mon profil
+              </Link>
+            </DropdownMenuItem>
+            {user?.role === "school_admin" && (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link to="/parametres">
+                    <Settings className="mr-2 h-4 w-4" /> Paramètres
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/mon-abonnement">
+                    <CreditCard className="mr-2 h-4 w-4" /> Mon abonnement
+                  </Link>
+                </DropdownMenuItem>
+              </>
+            )}
+            {user?.role === "super_admin" && (
+              <DropdownMenuItem asChild>
+                <Link to="/super-admin">
+                  <Shield className="mr-2 h-4 w-4" /> Console plateforme
+                </Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem
+              onSelect={(e) => { e.preventDefault(); toggle(); }}
+              className="flex items-center justify-between"
+            >
+              <span className="flex items-center">
+                {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+                Mode sombre
+              </span>
+              <Switch checked={theme === "dark"} onCheckedChange={toggle} />
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="text-destructive">
               <LogOut className="mr-2 h-4 w-4" /> Déconnexion
