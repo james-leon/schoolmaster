@@ -383,6 +383,13 @@ function ElevesPage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+        <TabsContent value="parents">
+          <ParentsListView />
+        </TabsContent>
+      </Tabs>
+
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
