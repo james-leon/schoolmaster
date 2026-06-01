@@ -197,6 +197,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
             if (!(await ensureTargetInSchool(targetUserId, ctx.schoolId))) return Response.json({ error: "Forbidden" }, { status: 403 });
             const { error } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
             if (error) return Response.json({ error: error.message }, { status: 400 });
+            await supabaseAdmin.from("parent_students").delete().eq("parent_profile_id", targetUserId);
             await supabaseAdmin.from("user_roles").delete().eq("user_id", targetUserId);
             await supabaseAdmin.from("profiles").delete().eq("id", targetUserId);
             return Response.json({ ok: true });
