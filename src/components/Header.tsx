@@ -1,4 +1,4 @@
-import { Bell, Moon, Sun, User as UserIcon, LogOut, Megaphone } from "lucide-react";
+import { Bell, Moon, Sun, User as UserIcon, LogOut, Megaphone, Settings, CreditCard, Shield } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
@@ -16,6 +16,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
 const ROLE_BADGE: Record<string, string> = {
   school_admin: "bg-primary text-primary-foreground",
