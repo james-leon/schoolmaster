@@ -14,7 +14,7 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
   const { user, originalUser, isImpersonating, stopImpersonating, logout, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { isBlocked, isTrial, daysLeftInTrial, effectiveStatus, plan } = usePlan();
+  const { isBlocked, isTrial, daysLeftInTrial, daysUntilExpiry, effectiveStatus, plan, subscriptionEnd } = usePlan();
 
   useEffect(() => {
     if (loading) return;
@@ -98,6 +98,12 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
         <div className="flex items-center justify-center gap-2 bg-accent/15 px-4 py-1.5 text-xs text-accent">
           <Clock className="h-3.5 w-3.5" />
           Période d'essai (plan {plan.label}) — {daysLeftInTrial} jour{daysLeftInTrial > 1 ? "s" : ""} restant{daysLeftInTrial > 1 ? "s" : ""}
+        </div>
+      )}
+      {!isTrial && !isBlocked && user.role !== "super_admin" && daysUntilExpiry != null && daysUntilExpiry <= 7 && subscriptionEnd && (
+        <div className="flex items-center justify-center gap-2 bg-destructive/10 px-4 py-1.5 text-xs font-medium text-destructive">
+          <Clock className="h-3.5 w-3.5" />
+          ⚠️ Votre abonnement expire {daysUntilExpiry <= 0 ? "aujourd'hui" : `dans ${daysUntilExpiry} jour${daysUntilExpiry > 1 ? "s" : ""}`}. Contactez Wintek pour renouveler.
         </div>
       )}
       <Sidebar />
