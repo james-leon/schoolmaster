@@ -150,6 +150,16 @@ function ElevesPage() {
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }));
   const className = (id: string) => db.classes.find((c) => c.id === id)?.name ?? "—";
 
+  const parentsByStudent = useMemo(() => {
+    const m = new Map<string, typeof db.parents>();
+    for (const p of db.parents) {
+      const arr = m.get(p.studentId) ?? [];
+      arr.push(p);
+      m.set(p.studentId, arr);
+    }
+    return m;
+  }, [db.parents]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return db.students.filter((s) => {
