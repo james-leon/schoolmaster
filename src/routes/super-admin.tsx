@@ -240,6 +240,9 @@ function SuperAdminPage() {
                                 <DropdownMenuItem onClick={() => handleImpersonate(s)}>
                                   <Eye className="mr-2 h-4 w-4" /> Voir
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setSubSchool(s)}>
+                                  <CreditCard className="mr-2 h-4 w-4" /> Gérer l'abonnement
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => { setExtendingSchoolId(s.id); setNewTrialDate(s.trial_ends_at ?? ""); }}>
                                   <CalendarPlus className="mr-2 h-4 w-4" /> Prolonger l'essai
                                 </DropdownMenuItem>
