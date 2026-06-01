@@ -192,6 +192,11 @@ function ClassesPage() {
         </AlertDialogContent>
       </AlertDialog>
       <SubjectsModal classe={subjectsFor} onClose={() => setSubjectsFor(null)} />
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        config={buildClassImportConfig(db.classes)}
+      />
     </AppLayout>
   );
 }
