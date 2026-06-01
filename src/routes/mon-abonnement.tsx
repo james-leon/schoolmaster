@@ -20,7 +20,7 @@ const ALL_FEATURES: FeatureId[] = [
 
 function MonAbonnementPage() {
   const {
-    plan, planId, status, effectiveStatus,
+    plan, planId, effectiveStatus,
     studentCount, teacherCount, limits,
     isTrial, daysLeftInTrial,
     subscriptionStart, subscriptionEnd, daysUntilExpiry,
