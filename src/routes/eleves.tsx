@@ -503,35 +503,45 @@ function ParentAccountDialog({
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [relationship, setRelationship] = useState<ParentRelation>("Père");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [primed, setPrimed] = useState(false);
 
   if (!student) return null;
-  // Prefill from existing parent record on open
-  if (!firstName && !lastName && !email) {
+  if (!primed) {
+    setPrimed(true);
     const p = db.parents.find((x) => x.studentId === student.id);
     if (p) {
       setFirstName(p.firstName || student.parentName.split(" ")[0] || "");
       setLastName(p.lastName || student.parentName.split(" ").slice(1).join(" ") || "");
       setEmail(p.email || student.parentEmail || "");
       setPhone(p.phone || student.parentPhone || "");
+      if (p.relationship) setRelationship(p.relationship as ParentRelation);
     } else {
       const [fn, ...rest] = (student.parentName || "").trim().split(/\s+/);
       setFirstName(fn || "");
       setLastName(rest.join(" "));
       setEmail(student.parentEmail || "");
       setPhone(student.parentPhone || "");
+      if (student.parentRelation) setRelationship(student.parentRelation);
     }
+    setSelectedIds([student.id]);
   }
 
-  // Find any sibling students sharing the same parent email
-  const siblingIds = email
-    ? db.parents.filter((p) => p.email && p.email.toLowerCase() === email.toLowerCase()).map((p) => p.studentId)
-    : [];
-  const studentIds = Array.from(new Set([student.id, ...siblingIds]));
+  const toggle = (sid: string) =>
+    setSelectedIds((cur) => cur.includes(sid) ? cur.filter((x) => x !== sid) : [...cur, sid]);
+
+  // Other students in the school = potential siblings
+  const otherStudents = db.students.filter((s) => s.id !== student.id);
 
   const submit = async () => {
     if (!firstName.trim() || !lastName.trim() || !email.trim()) {
       toast.error("Prénom, nom et email requis");
+      return;
+    }
+    if (selectedIds.length === 0) {
+      toast.error("Sélectionnez au moins un enfant");
       return;
     }
     setSubmitting(true);
@@ -539,7 +549,8 @@ function ParentAccountDialog({
       const res = await adminApi.createParent({
         firstName: firstName.trim(), lastName: lastName.trim(),
         email: email.trim(), phone: phone.trim() || undefined,
-        studentIds,
+        studentIds: selectedIds,
+        relationship,
       });
       onCreated({
         name: `${firstName} ${lastName}`,
@@ -548,7 +559,7 @@ function ParentAccountDialog({
         role: "parent",
         schoolName,
       });
-      setFirstName(""); setLastName(""); setEmail(""); setPhone("");
+      setFirstName(""); setLastName(""); setEmail(""); setPhone(""); setSelectedIds([]); setPrimed(false);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -557,15 +568,11 @@ function ParentAccountDialog({
   };
 
   return (
-    <Dialog open onOpenChange={(o) => !o && !submitting && onClose()}>
-      <DialogContent>
+    <Dialog open onOpenChange={(o) => !o && !submitting && (onClose(), setPrimed(false))}>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Créer un compte parent</DialogTitle>
         </DialogHeader>
-        <p className="text-xs text-muted-foreground">
-          Compte lié à {student.firstName} {student.lastName}
-          {studentIds.length > 1 && ` (et ${studentIds.length - 1} autre(s) enfant(s))`}
-        </p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label>Prénom</Label>
@@ -579,13 +586,42 @@ function ParentAccountDialog({
             <Label>Email (login)</Label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
-          <div className="space-y-1.5 sm:col-span-2">
+          <div className="space-y-1.5">
             <Label>Téléphone</Label>
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
           </div>
+          <div className="space-y-1.5">
+            <Label>Relation</Label>
+            <Select value={relationship} onValueChange={(v) => setRelationship(v as ParentRelation)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PARENT_RELATIONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Enfants liés à ce compte</Label>
+          <div className="rounded-md border border-border max-h-48 overflow-auto divide-y">
+            <label className="flex items-center gap-2 p-2 text-sm bg-muted/30">
+              <input type="checkbox" checked={selectedIds.includes(student.id)} onChange={() => toggle(student.id)} />
+              <span className="font-medium">{student.firstName} {student.lastName}</span>
+              <Badge variant="outline" className="ml-auto text-[10px]">Élève courant</Badge>
+            </label>
+            {otherStudents.map((s) => (
+              <label key={s.id} className="flex items-center gap-2 p-2 text-sm">
+                <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggle(s.id)} />
+                <span>{s.firstName} {s.lastName}</span>
+                <span className="text-xs text-muted-foreground ml-auto">{db.classes.find((c) => c.id === s.classId)?.name ?? "—"}</span>
+              </label>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {selectedIds.length} enfant{selectedIds.length > 1 ? "s" : ""} sélectionné{selectedIds.length > 1 ? "s" : ""}
+          </p>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={submitting}>Annuler</Button>
+          <Button variant="outline" onClick={() => { onClose(); setPrimed(false); }} disabled={submitting}>Annuler</Button>
           <Button onClick={submit} disabled={submitting}>
             {submitting ? "Création..." : "Créer le compte"}
           </Button>

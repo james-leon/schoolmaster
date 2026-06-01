@@ -336,6 +336,33 @@ export type Database = {
         }
         Relationships: []
       }
+      parent_students: {
+        Row: {
+          created_at: string
+          id: string
+          parent_profile_id: string
+          relationship: string | null
+          school_id: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          parent_profile_id: string
+          relationship?: string | null
+          school_id: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          parent_profile_id?: string
+          relationship?: string | null
+          school_id?: string
+          student_id?: string
+        }
+        Relationships: []
+      }
       parents: {
         Row: {
           created_at: string
@@ -726,6 +753,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_parent_of_student: { Args: { _student_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
