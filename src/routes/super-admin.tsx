@@ -23,10 +23,11 @@ import { toast } from "sonner";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
 import {
   Building2, Users, TrendingUp, AlertOctagon, Plus, MoreVertical, Eye, Ban,
-  Play, LogIn, Trash2, CalendarPlus, CreditCard, LogOut,
+  Play, LogIn, Trash2, CalendarPlus, CreditCard, LogOut, AlertTriangle, Clock, History, RefreshCw, Rocket,
 } from "lucide-react";
 import { fcfa } from "@/lib/format";
 import { Logo } from "@/components/Logo";
+import { PLAN_CONFIG, type PlanId } from "@/lib/plans";
 
 export const Route = createFileRoute("/super-admin")({
   component: SuperAdminPage,
@@ -38,10 +39,17 @@ const PLAN_LABELS: Record<string, string> = {
 const PLAN_OPTIONS = ["starter", "pro", "school+"];
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   active:    { label: "Actif",     cls: "bg-success/15 text-success" },
-  trial:     { label: "Essai",     cls: "bg-accent/15 text-accent" },
-  suspended: { label: "Suspendu",  cls: "bg-destructive/15 text-destructive" },
+  trial:     { label: "Essai",     cls: "bg-primary/15 text-primary" },
+  suspended: { label: "Suspendu",  cls: "bg-muted text-muted-foreground" },
+  expired:   { label: "Expiré",    cls: "bg-destructive/15 text-destructive" },
 };
-const PLAN_MRR: Record<string, number> = { starter: 25000, pro: 50000, "school+": 100000 };
+const PLAN_MRR: Record<string, number> = {
+  starter: PLAN_CONFIG.starter.priceFcfa,
+  pro: PLAN_CONFIG.pro.priceFcfa,
+  "school+": PLAN_CONFIG["school+"].priceFcfa,
+};
+
+type SubFilter = "all" | "soon" | "expired" | "trial" | "active";
 
 function SuperAdminPage() {
   const { originalUser, loading, logout, startImpersonating } = useAuth();
