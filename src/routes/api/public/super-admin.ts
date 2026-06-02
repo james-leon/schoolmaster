@@ -41,6 +41,17 @@ export const Route = createFileRoute("/api/public/super-admin")({
           const action = String(body?.action ?? "");
 
           if (action === "list-schools") {
+            // Auto-expire schools whose subscription_end or trial_ends_at has passed.
+            const today = new Date().toISOString().slice(0, 10);
+            await (supabaseAdmin.from("schools") as any)
+              .update({ status: "expired" })
+              .lt("subscription_end", today)
+              .in("status", ["active"]);
+            await (supabaseAdmin.from("schools") as any)
+              .update({ status: "expired" })
+              .lt("trial_ends_at", today)
+              .eq("status", "trial");
+
             const { data: schools, error } = await supabaseAdmin
               .from("schools")
               .select("id, name, city, country, email, phone, subscription_plan, status, trial_ends_at, subscription_start, subscription_end, created_at, director_name")
