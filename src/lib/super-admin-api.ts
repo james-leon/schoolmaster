@@ -66,6 +66,23 @@ export const superAdminApi = {
     subscriptionEnd?: string;
     trialEnd?: string;
   }) => call({ action: "update-subscription", ...p }),
+  renewSubscription: (p: {
+    schoolId: string; plan: string; months: number;
+    amount?: number; paymentMethod?: string; reference?: string;
+  }) => call({ action: "renew-subscription", ...p }) as Promise<{ ok: true; newEnd: string }>,
+  convertTrial: (p: {
+    schoolId: string; plan: string; months: number;
+    amount?: number; paymentMethod?: string; reference?: string;
+  }) => call({ action: "convert-trial", ...p }) as Promise<{ ok: true; newEnd: string }>,
+  listSubscriptionPayments: (schoolId: string) =>
+    call({ action: "list-subscription-payments", schoolId }) as Promise<{
+      ok: true;
+      payments: {
+        id: string; plan: string; amount: number; payment_date: string;
+        payment_method: string | null; status: string;
+        period_start: string | null; period_end: string | null; reference: string | null;
+      }[];
+    }>,
 };
 
 // Impersonation state lives in localStorage so the AuthProvider can hydrate
