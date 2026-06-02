@@ -807,3 +807,265 @@ function ManageSubscriptionDialog({
   );
 }
 
+
+const PERIOD_OPTIONS: { months: number; label: string }[] = [
+  { months: 1, label: "1 mois" },
+  { months: 3, label: "3 mois" },
+  { months: 6, label: "6 mois" },
+  { months: 12, label: "12 mois" },
+];
+const PAYMENT_METHODS = ["Espèces", "Mobile Money", "Virement", "Carte", "Autre"];
+
+function RenewSubscriptionDialog({
+  school, onClose, onSaved,
+}: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
+  const [plan, setPlan] = useState<PlanId>((school.subscription_plan as PlanId) ?? "starter");
+  const [months, setMonths] = useState(1);
+  const [amount, setAmount] = useState<number>(PLAN_CONFIG[plan].priceFcfa);
+  const [method, setMethod] = useState<string>("Mobile Money");
+  const [reference, setReference] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const setPlanAndPrice = (p: string) => {
+    const pid = p as PlanId;
+    setPlan(pid);
+    setAmount(PLAN_CONFIG[pid].priceFcfa * months);
+  };
+  const setMonthsAndPrice = (m: number) => {
+    setMonths(m);
+    setAmount(PLAN_CONFIG[plan].priceFcfa * m);
+  };
+
+  const submit = async () => {
+    setSaving(true);
+    try {
+      const r = await superAdminApi.renewSubscription({
+        schoolId: school.id, plan, months,
+        amount, paymentMethod: method, reference: reference || undefined,
+      });
+      toast.success(`Abonnement renouvelé jusqu'au ${new Date(r.newEnd).toLocaleDateString("fr-FR")}`);
+      onSaved();
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Renouveler — {school.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="rounded-md border bg-muted/40 p-3 text-xs">
+            <div>Plan actuel : <strong>{PLAN_LABELS[school.subscription_plan ?? "starter"]}</strong></div>
+            <div>Fin actuelle : <strong>{school.subscription_end ? new Date(school.subscription_end).toLocaleDateString("fr-FR") : "—"}</strong></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Plan</Label>
+              <Select value={plan} onValueChange={setPlanAndPrice}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PLAN_OPTIONS.map((p) => <SelectItem key={p} value={p}>{PLAN_LABELS[p]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Période</Label>
+              <Select value={String(months)} onValueChange={(v) => setMonthsAndPrice(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PERIOD_OPTIONS.map((p) => <SelectItem key={p.months} value={String(p.months)}>{p.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="renew-amount">Montant reçu (FCFA)</Label>
+              <Input id="renew-amount" type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Méthode</Label>
+              <Select value={method} onValueChange={setMethod}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="renew-ref">Référence (optionnel)</Label>
+            <Input id="renew-ref" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Transaction ID, n° reçu…" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button onClick={submit} disabled={saving}>{saving ? "…" : "Renouveler"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ConvertTrialDialog({
+  school, onClose, onSaved,
+}: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
+  const [plan, setPlan] = useState<PlanId>((school.subscription_plan as PlanId) ?? "starter");
+  const [months, setMonths] = useState(1);
+  const [amount, setAmount] = useState<number>(PLAN_CONFIG[plan].priceFcfa);
+  const [method, setMethod] = useState<string>("Mobile Money");
+  const [reference, setReference] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const setPlanAndPrice = (p: string) => {
+    const pid = p as PlanId;
+    setPlan(pid);
+    setAmount(PLAN_CONFIG[pid].priceFcfa * months);
+  };
+  const setMonthsAndPrice = (m: number) => {
+    setMonths(m);
+    setAmount(PLAN_CONFIG[plan].priceFcfa * m);
+  };
+
+  const submit = async () => {
+    setSaving(true);
+    try {
+      const r = await superAdminApi.convertTrial({
+        schoolId: school.id, plan, months,
+        amount, paymentMethod: method, reference: reference || undefined,
+      });
+      toast.success(`Essai converti — actif jusqu'au ${new Date(r.newEnd).toLocaleDateString("fr-FR")}`);
+      onSaved();
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Convertir l'essai — {school.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Plan</Label>
+              <Select value={plan} onValueChange={setPlanAndPrice}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PLAN_OPTIONS.map((p) => <SelectItem key={p} value={p}>{PLAN_LABELS[p]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Période</Label>
+              <Select value={String(months)} onValueChange={(v) => setMonthsAndPrice(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PERIOD_OPTIONS.map((p) => <SelectItem key={p.months} value={String(p.months)}>{p.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="conv-amount">Montant reçu (FCFA)</Label>
+              <Input id="conv-amount" type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Méthode</Label>
+              <Select value={method} onValueChange={setMethod}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="conv-ref">Référence (optionnel)</Label>
+            <Input id="conv-ref" value={reference} onChange={(e) => setReference(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button onClick={submit} disabled={saving}>{saving ? "…" : "Convertir en payant"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SubscriptionHistoryDialog({
+  school, onClose,
+}: { school: PlatformSchool; onClose: () => void }) {
+  const [payments, setPayments] = useState<{
+    id: string; plan: string; amount: number; payment_date: string;
+    payment_method: string | null; status: string;
+    period_start: string | null; period_end: string | null; reference: string | null;
+  }[]>([]);
+  const [busy, setBusy] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await superAdminApi.listSubscriptionPayments(school.id);
+        setPayments(r.payments);
+      } catch (e) { toast.error((e as Error).message); }
+      finally { setBusy(false); }
+    })();
+  }, [school.id]);
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Historique des paiements — {school.name}</DialogTitle>
+        </DialogHeader>
+        {busy ? (
+          <div className="flex justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
+          </div>
+        ) : payments.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">Aucun paiement enregistré.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Plan</TableHead>
+                  <TableHead>Montant</TableHead>
+                  <TableHead>Période</TableHead>
+                  <TableHead>Méthode</TableHead>
+                  <TableHead>Référence</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {payments.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="text-xs">{new Date(p.payment_date).toLocaleDateString("fr-FR")}</TableCell>
+                    <TableCell className="text-sm">{PLAN_LABELS[p.plan] ?? p.plan}</TableCell>
+                    <TableCell className="text-sm font-medium">{fcfa(Number(p.amount))}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {p.period_start ? new Date(p.period_start).toLocaleDateString("fr-FR") : "—"}
+                      {" → "}
+                      {p.period_end ? new Date(p.period_end).toLocaleDateString("fr-FR") : "—"}
+                    </TableCell>
+                    <TableCell className="text-sm">{p.payment_method ?? "—"}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{p.reference ?? "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Fermer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
