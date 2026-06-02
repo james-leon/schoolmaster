@@ -80,6 +80,8 @@ export const superAdminApi = {
     schoolId: string; plan: string; months: number;
     amount?: number; paymentMethod?: string; reference?: string;
   }) => call({ action: "convert-trial", ...p }) as Promise<{ ok: true; newEnd: string }>,
+  updateNotes: (schoolId: string, notes: string | null) =>
+    call({ action: "update-notes", schoolId, notes }) as Promise<{ ok: true }>,
   listSubscriptionPayments: (schoolId: string) =>
     call({ action: "list-subscription-payments", schoolId }) as Promise<{
       ok: true;
