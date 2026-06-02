@@ -62,6 +62,10 @@ function SuperAdminPage() {
   const [extendingSchoolId, setExtendingSchoolId] = useState<string | null>(null);
   const [newTrialDate, setNewTrialDate] = useState("");
   const [subSchool, setSubSchool] = useState<PlatformSchool | null>(null);
+  const [renewSchool, setRenewSchool] = useState<PlatformSchool | null>(null);
+  const [convertSchool, setConvertSchool] = useState<PlatformSchool | null>(null);
+  const [historySchool, setHistorySchool] = useState<PlatformSchool | null>(null);
+  const [subFilter, setSubFilter] = useState<SubFilter>("all");
 
   useEffect(() => {
     if (loading) return;
