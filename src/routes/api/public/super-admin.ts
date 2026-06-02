@@ -225,6 +225,89 @@ export const Route = createFileRoute("/api/public/super-admin")({
             return Response.json({ ok: true });
           }
 
+
+          if (action === "renew-subscription") {
+            const { schoolId, plan, months, amount, paymentMethod, reference } = body;
+            if (!schoolId || !plan || !months) {
+              return Response.json({ error: "Paramètres invalides" }, { status: 400 });
+            }
+            const { data: cur } = await supabaseAdmin.from("schools")
+              .select("subscription_end, subscription_start").eq("id", schoolId).maybeSingle();
+            const today = new Date();
+            const baseEnd = cur?.subscription_end ? new Date(cur.subscription_end as string) : today;
+            const start = baseEnd > today ? baseEnd : today;
+            const newEnd = new Date(start);
+            newEnd.setMonth(newEnd.getMonth() + Number(months));
+            const periodStart = (cur?.subscription_end as string | null) ?? today.toISOString().slice(0, 10);
+            const periodEnd = newEnd.toISOString().slice(0, 10);
+
+            const { error: uErr } = await (supabaseAdmin.from("schools") as any).update({
+              subscription_plan: plan,
+              status: "active",
+              subscription_start: (cur?.subscription_start as string | null) ?? today.toISOString().slice(0, 10),
+              subscription_end: periodEnd,
+              trial_ends_at: null,
+            }).eq("id", schoolId);
+            if (uErr) return Response.json({ error: uErr.message }, { status: 500 });
+
+            const { error: pErr } = await (supabaseAdmin.from("payment_subscriptions") as any).insert({
+              school_id: schoolId, plan,
+              amount: Number(amount ?? 0),
+              payment_method: paymentMethod ?? null,
+              status: "paid",
+              period_start: periodStart, period_end: periodEnd,
+              reference: reference ?? null,
+              recorded_by: ctx.userId,
+            });
+            if (pErr) return Response.json({ error: pErr.message }, { status: 500 });
+            return Response.json({ ok: true, newEnd: periodEnd });
+          }
+
+          if (action === "convert-trial") {
+            const { schoolId, plan, months, amount, paymentMethod, reference } = body;
+            if (!schoolId || !plan || !months) {
+              return Response.json({ error: "Paramètres invalides" }, { status: 400 });
+            }
+            const today = new Date();
+            const newEnd = new Date(today);
+            newEnd.setMonth(newEnd.getMonth() + Number(months));
+            const periodStart = today.toISOString().slice(0, 10);
+            const periodEnd = newEnd.toISOString().slice(0, 10);
+
+            const { error: uErr } = await (supabaseAdmin.from("schools") as any).update({
+              subscription_plan: plan,
+              status: "active",
+              subscription_start: periodStart,
+              subscription_end: periodEnd,
+              trial_ends_at: null,
+            }).eq("id", schoolId);
+            if (uErr) return Response.json({ error: uErr.message }, { status: 500 });
+
+            const { error: pErr } = await (supabaseAdmin.from("payment_subscriptions") as any).insert({
+              school_id: schoolId, plan,
+              amount: Number(amount ?? 0),
+              payment_method: paymentMethod ?? null,
+              status: "paid",
+              period_start: periodStart, period_end: periodEnd,
+              reference: reference ?? null,
+              recorded_by: ctx.userId,
+            });
+            if (pErr) return Response.json({ error: pErr.message }, { status: 500 });
+            return Response.json({ ok: true, newEnd: periodEnd });
+          }
+
+          if (action === "list-subscription-payments") {
+            const { schoolId } = body;
+            if (!schoolId) return Response.json({ error: "Paramètres invalides" }, { status: 400 });
+            const { data, error } = await supabaseAdmin
+              .from("payment_subscriptions")
+              .select("id, plan, amount, payment_date, payment_method, status, period_start, period_end, reference")
+              .eq("school_id", schoolId)
+              .order("payment_date", { ascending: false });
+            if (error) return Response.json({ error: error.message }, { status: 500 });
+            return Response.json({ ok: true, payments: data ?? [] });
+          }
+
           return Response.json({ error: "Action inconnue" }, { status: 400 });
         } catch (e) {
           console.error("[super-admin]", e);
