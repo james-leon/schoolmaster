@@ -197,6 +197,122 @@ function SuperAdminPage() {
           />
         </div>
 
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <AlertCard
+            tone="orange" icon={Clock} label="Expirent bientôt"
+            value={expiringSoon.length} hint="dans les 7 prochains jours"
+            active={subFilter === "soon"}
+            onClick={() => setSubFilter("soon")}
+          />
+          <AlertCard
+            tone="red" icon={AlertOctagon} label="Abonnements expirés"
+            value={expired.length} hint="action urgente requise"
+            active={subFilter === "expired"}
+            onClick={() => setSubFilter("expired")}
+          />
+          <AlertCard
+            tone="blue" icon={Rocket} label="En période d'essai"
+            value={trialing.length} hint="écoles en test"
+            active={subFilter === "trial"}
+            onClick={() => setSubFilter("trial")}
+          />
+        </div>
+
+        <Card className="mt-6">
+          <CardHeader className="space-y-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Suivi des abonnements</CardTitle>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  { id: "all", label: "Tous" },
+                  { id: "soon", label: "Expirent bientôt" },
+                  { id: "expired", label: "Expirés" },
+                  { id: "trial", label: "En essai" },
+                  { id: "active", label: "Actifs" },
+                ] as { id: SubFilter; label: string }[]).map((f) => (
+                  <Button
+                    key={f.id}
+                    size="sm"
+                    variant={subFilter === f.id ? "default" : "outline"}
+                    onClick={() => setSubFilter(f.id)}
+                  >{f.label}</Button>
+                ))}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {filteredSchools.length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">Aucune école pour ce filtre.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>École</TableHead>
+                      <TableHead>Plan</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Début</TableHead>
+                      <TableHead>Fin</TableHead>
+                      <TableHead>Jours restants</TableHead>
+                      <TableHead>Montant / mois</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredSchools.map((s) => {
+                      const st = STATUS_LABELS[s.status] ?? { label: s.status, cls: "" };
+                      const end = s.subscription_end ?? s.trial_ends_at;
+                      const d = daysLeft(s);
+                      let daysCls = "text-muted-foreground";
+                      let daysLabel = "—";
+                      if (d !== null) {
+                        if (d < 0) { daysCls = "text-destructive font-semibold"; daysLabel = `Expiré (${Math.abs(d)} j)`; }
+                        else if (d < 7) { daysCls = "text-destructive font-semibold"; daysLabel = `${d} j`; }
+                        else if (d <= 15) { daysCls = "text-warning font-semibold"; daysLabel = `${d} j`; }
+                        else { daysCls = "text-success font-medium"; daysLabel = `${d} j`; }
+                      }
+                      return (
+                        <TableRow key={s.id}>
+                          <TableCell>
+                            <div className="font-medium">{s.name}</div>
+                            <div className="text-xs text-muted-foreground">{s.city ?? "—"}</div>
+                          </TableCell>
+                          <TableCell className="text-sm">{PLAN_LABELS[s.subscription_plan ?? "starter"] ?? s.subscription_plan}</TableCell>
+                          <TableCell><Badge className={st.cls}>{st.label}</Badge></TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {s.subscription_start ? new Date(s.subscription_start).toLocaleDateString("fr-FR") : "—"}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {end ? new Date(end).toLocaleDateString("fr-FR") : "—"}
+                          </TableCell>
+                          <TableCell className={`text-xs ${daysCls}`}>{daysLabel}</TableCell>
+                          <TableCell className="text-sm font-medium">{fcfa(PLAN_MRR[s.subscription_plan ?? ""] ?? 0)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              {s.status === "trial" ? (
+                                <Button size="sm" variant="default" onClick={() => setConvertSchool(s)}>
+                                  <Rocket className="mr-1 h-3.5 w-3.5" /> Convertir
+                                </Button>
+                              ) : (
+                                <Button size="sm" variant="default" onClick={() => setRenewSchool(s)}>
+                                  <RefreshCw className="mr-1 h-3.5 w-3.5" /> Renouveler
+                                </Button>
+                              )}
+                              <Button size="sm" variant="ghost" onClick={() => setHistorySchool(s)}>
+                                <History className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Card className="mt-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-base">Écoles clientes</CardTitle>
