@@ -460,6 +460,7 @@ export type Database = {
           period_end: string | null
           period_start: string | null
           plan: string
+          recorded_by: string | null
           reference: string | null
           school_id: string
           status: string
@@ -473,6 +474,7 @@ export type Database = {
           period_end?: string | null
           period_start?: string | null
           plan: string
+          recorded_by?: string | null
           reference?: string | null
           school_id: string
           status?: string
@@ -486,6 +488,7 @@ export type Database = {
           period_end?: string | null
           period_start?: string | null
           plan?: string
+          recorded_by?: string | null
           reference?: string | null
           school_id?: string
           status?: string

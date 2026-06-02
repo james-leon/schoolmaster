@@ -1,0 +1,1 @@
+ALTER TABLE public.payment_subscriptions ADD COLUMN IF NOT EXISTS recorded_by uuid;

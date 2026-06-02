@@ -23,10 +23,11 @@ import { toast } from "sonner";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
 import {
   Building2, Users, TrendingUp, AlertOctagon, Plus, MoreVertical, Eye, Ban,
-  Play, LogIn, Trash2, CalendarPlus, CreditCard, LogOut,
+  Play, LogIn, Trash2, CalendarPlus, CreditCard, LogOut, AlertTriangle, Clock, History, RefreshCw, Rocket,
 } from "lucide-react";
 import { fcfa } from "@/lib/format";
 import { Logo } from "@/components/Logo";
+import { PLAN_CONFIG, type PlanId } from "@/lib/plans";
 
 export const Route = createFileRoute("/super-admin")({
   component: SuperAdminPage,
@@ -38,10 +39,17 @@ const PLAN_LABELS: Record<string, string> = {
 const PLAN_OPTIONS = ["starter", "pro", "school+"];
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   active:    { label: "Actif",     cls: "bg-success/15 text-success" },
-  trial:     { label: "Essai",     cls: "bg-accent/15 text-accent" },
-  suspended: { label: "Suspendu",  cls: "bg-destructive/15 text-destructive" },
+  trial:     { label: "Essai",     cls: "bg-primary/15 text-primary" },
+  suspended: { label: "Suspendu",  cls: "bg-muted text-muted-foreground" },
+  expired:   { label: "Expiré",    cls: "bg-destructive/15 text-destructive" },
 };
-const PLAN_MRR: Record<string, number> = { starter: 25000, pro: 50000, "school+": 100000 };
+const PLAN_MRR: Record<string, number> = {
+  starter: PLAN_CONFIG.starter.priceFcfa,
+  pro: PLAN_CONFIG.pro.priceFcfa,
+  "school+": PLAN_CONFIG["school+"].priceFcfa,
+};
+
+type SubFilter = "all" | "soon" | "expired" | "trial" | "active";
 
 function SuperAdminPage() {
   const { originalUser, loading, logout, startImpersonating } = useAuth();
@@ -54,6 +62,10 @@ function SuperAdminPage() {
   const [extendingSchoolId, setExtendingSchoolId] = useState<string | null>(null);
   const [newTrialDate, setNewTrialDate] = useState("");
   const [subSchool, setSubSchool] = useState<PlatformSchool | null>(null);
+  const [renewSchool, setRenewSchool] = useState<PlatformSchool | null>(null);
+  const [convertSchool, setConvertSchool] = useState<PlatformSchool | null>(null);
+  const [historySchool, setHistorySchool] = useState<PlatformSchool | null>(null);
+  const [subFilter, setSubFilter] = useState<SubFilter>("all");
 
   useEffect(() => {
     if (loading) return;
@@ -89,6 +101,37 @@ function SuperAdminPage() {
     if (s.status !== "active") return sum;
     return sum + (PLAN_MRR[s.subscription_plan ?? ""] ?? 0);
   }, 0);
+
+  const todayMs = Date.now();
+  const daysLeft = (s: PlatformSchool): number | null => {
+    const end = s.subscription_end ?? s.trial_ends_at;
+    if (!end) return null;
+    return Math.ceil((new Date(end).getTime() - todayMs) / 86400000);
+  };
+  const expiringSoon = schools.filter((s) => {
+    const d = daysLeft(s); return d !== null && d >= 0 && d <= 7 && s.status !== "expired" && s.status !== "suspended";
+  });
+  const expired = schools.filter((s) => s.status === "expired");
+  const trialing = schools.filter((s) => s.status === "trial");
+
+  const filteredSchools = [...schools]
+    .filter((s) => {
+      if (subFilter === "all") return true;
+      if (subFilter === "expired") return s.status === "expired";
+      if (subFilter === "trial") return s.status === "trial";
+      if (subFilter === "active") return s.status === "active";
+      if (subFilter === "soon") {
+        const d = daysLeft(s); return d !== null && d >= 0 && d <= 7 && s.status !== "expired" && s.status !== "suspended";
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const da = daysLeft(a); const db = daysLeft(b);
+      if (da === null && db === null) return 0;
+      if (da === null) return 1;
+      if (db === null) return -1;
+      return da - db;
+    });
 
   const handleSuspend = async (s: PlatformSchool) => {
     try { await superAdminApi.updateStatus(s.id, "suspended"); toast.success("École suspendue"); refresh(); }
@@ -153,6 +196,122 @@ function SuperAdminPage() {
             icon={CreditCard} tone="purple"
           />
         </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <AlertCard
+            tone="orange" icon={Clock} label="Expirent bientôt"
+            value={expiringSoon.length} hint="dans les 7 prochains jours"
+            active={subFilter === "soon"}
+            onClick={() => setSubFilter("soon")}
+          />
+          <AlertCard
+            tone="red" icon={AlertOctagon} label="Abonnements expirés"
+            value={expired.length} hint="action urgente requise"
+            active={subFilter === "expired"}
+            onClick={() => setSubFilter("expired")}
+          />
+          <AlertCard
+            tone="blue" icon={Rocket} label="En période d'essai"
+            value={trialing.length} hint="écoles en test"
+            active={subFilter === "trial"}
+            onClick={() => setSubFilter("trial")}
+          />
+        </div>
+
+        <Card className="mt-6">
+          <CardHeader className="space-y-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Suivi des abonnements</CardTitle>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  { id: "all", label: "Tous" },
+                  { id: "soon", label: "Expirent bientôt" },
+                  { id: "expired", label: "Expirés" },
+                  { id: "trial", label: "En essai" },
+                  { id: "active", label: "Actifs" },
+                ] as { id: SubFilter; label: string }[]).map((f) => (
+                  <Button
+                    key={f.id}
+                    size="sm"
+                    variant={subFilter === f.id ? "default" : "outline"}
+                    onClick={() => setSubFilter(f.id)}
+                  >{f.label}</Button>
+                ))}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {filteredSchools.length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">Aucune école pour ce filtre.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>École</TableHead>
+                      <TableHead>Plan</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Début</TableHead>
+                      <TableHead>Fin</TableHead>
+                      <TableHead>Jours restants</TableHead>
+                      <TableHead>Montant / mois</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredSchools.map((s) => {
+                      const st = STATUS_LABELS[s.status] ?? { label: s.status, cls: "" };
+                      const end = s.subscription_end ?? s.trial_ends_at;
+                      const d = daysLeft(s);
+                      let daysCls = "text-muted-foreground";
+                      let daysLabel = "—";
+                      if (d !== null) {
+                        if (d < 0) { daysCls = "text-destructive font-semibold"; daysLabel = `Expiré (${Math.abs(d)} j)`; }
+                        else if (d < 7) { daysCls = "text-destructive font-semibold"; daysLabel = `${d} j`; }
+                        else if (d <= 15) { daysCls = "text-accent font-semibold"; daysLabel = `${d} j`; }
+                        else { daysCls = "text-success font-medium"; daysLabel = `${d} j`; }
+                      }
+                      return (
+                        <TableRow key={s.id}>
+                          <TableCell>
+                            <div className="font-medium">{s.name}</div>
+                            <div className="text-xs text-muted-foreground">{s.city ?? "—"}</div>
+                          </TableCell>
+                          <TableCell className="text-sm">{PLAN_LABELS[s.subscription_plan ?? "starter"] ?? s.subscription_plan}</TableCell>
+                          <TableCell><Badge className={st.cls}>{st.label}</Badge></TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {s.subscription_start ? new Date(s.subscription_start).toLocaleDateString("fr-FR") : "—"}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {end ? new Date(end).toLocaleDateString("fr-FR") : "—"}
+                          </TableCell>
+                          <TableCell className={`text-xs ${daysCls}`}>{daysLabel}</TableCell>
+                          <TableCell className="text-sm font-medium">{fcfa(PLAN_MRR[s.subscription_plan ?? ""] ?? 0)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              {s.status === "trial" ? (
+                                <Button size="sm" variant="default" onClick={() => setConvertSchool(s)}>
+                                  <Rocket className="mr-1 h-3.5 w-3.5" /> Convertir
+                                </Button>
+                              ) : (
+                                <Button size="sm" variant="default" onClick={() => setRenewSchool(s)}>
+                                  <RefreshCw className="mr-1 h-3.5 w-3.5" /> Renouveler
+                                </Button>
+                              )}
+                              <Button size="sm" variant="ghost" onClick={() => setHistorySchool(s)}>
+                                <History className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card className="mt-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -328,9 +487,60 @@ function SuperAdminPage() {
           onSaved={() => { setSubSchool(null); refresh(); }}
         />
       )}
+
+      {renewSchool && (
+        <RenewSubscriptionDialog
+          school={renewSchool}
+          onClose={() => setRenewSchool(null)}
+          onSaved={() => { setRenewSchool(null); refresh(); }}
+        />
+      )}
+      {convertSchool && (
+        <ConvertTrialDialog
+          school={convertSchool}
+          onClose={() => setConvertSchool(null)}
+          onSaved={() => { setConvertSchool(null); refresh(); }}
+        />
+      )}
+      {historySchool && (
+        <SubscriptionHistoryDialog
+          school={historySchool}
+          onClose={() => setHistorySchool(null)}
+        />
+      )}
     </div>
   );
 }
+
+function AlertCard({
+  tone, icon: Icon, label, value, hint, active, onClick,
+}: {
+  tone: "orange" | "red" | "blue"; icon: any; label: string; value: number;
+  hint: string; active?: boolean; onClick?: () => void;
+}) {
+  const tones: Record<string, string> = {
+    orange: "border-accent/40 bg-accent/5 text-accent",
+    red: "border-destructive/40 bg-destructive/5 text-destructive",
+    blue: "border-primary/40 bg-primary/5 text-primary",
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-3 rounded-lg border p-4 text-left transition hover:shadow-sm ${tones[tone]} ${active ? "ring-2 ring-offset-1 ring-current" : ""}`}
+    >
+      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-background/60">
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="flex-1">
+        <div className="text-xs font-medium">{label}</div>
+        <div className="text-2xl font-bold leading-none mt-1 text-foreground">{value}</div>
+        <div className="text-[11px] text-muted-foreground mt-0.5">{hint}</div>
+      </div>
+    </button>
+  );
+}
+
 
 function KpiCard({ label, value, icon: Icon, tone }: { label: string; value: string; icon: any; tone: "blue" | "green" | "orange" | "purple" }) {
   const tones: Record<string, string> = {
@@ -597,3 +807,265 @@ function ManageSubscriptionDialog({
   );
 }
 
+
+const PERIOD_OPTIONS: { months: number; label: string }[] = [
+  { months: 1, label: "1 mois" },
+  { months: 3, label: "3 mois" },
+  { months: 6, label: "6 mois" },
+  { months: 12, label: "12 mois" },
+];
+const PAYMENT_METHODS = ["Espèces", "Mobile Money", "Virement", "Carte", "Autre"];
+
+function RenewSubscriptionDialog({
+  school, onClose, onSaved,
+}: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
+  const [plan, setPlan] = useState<PlanId>((school.subscription_plan as PlanId) ?? "starter");
+  const [months, setMonths] = useState(1);
+  const [amount, setAmount] = useState<number>(PLAN_CONFIG[plan].priceFcfa);
+  const [method, setMethod] = useState<string>("Mobile Money");
+  const [reference, setReference] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const setPlanAndPrice = (p: string) => {
+    const pid = p as PlanId;
+    setPlan(pid);
+    setAmount(PLAN_CONFIG[pid].priceFcfa * months);
+  };
+  const setMonthsAndPrice = (m: number) => {
+    setMonths(m);
+    setAmount(PLAN_CONFIG[plan].priceFcfa * m);
+  };
+
+  const submit = async () => {
+    setSaving(true);
+    try {
+      const r = await superAdminApi.renewSubscription({
+        schoolId: school.id, plan, months,
+        amount, paymentMethod: method, reference: reference || undefined,
+      });
+      toast.success(`Abonnement renouvelé jusqu'au ${new Date(r.newEnd).toLocaleDateString("fr-FR")}`);
+      onSaved();
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Renouveler — {school.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="rounded-md border bg-muted/40 p-3 text-xs">
+            <div>Plan actuel : <strong>{PLAN_LABELS[school.subscription_plan ?? "starter"]}</strong></div>
+            <div>Fin actuelle : <strong>{school.subscription_end ? new Date(school.subscription_end).toLocaleDateString("fr-FR") : "—"}</strong></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Plan</Label>
+              <Select value={plan} onValueChange={setPlanAndPrice}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PLAN_OPTIONS.map((p) => <SelectItem key={p} value={p}>{PLAN_LABELS[p]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Période</Label>
+              <Select value={String(months)} onValueChange={(v) => setMonthsAndPrice(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PERIOD_OPTIONS.map((p) => <SelectItem key={p.months} value={String(p.months)}>{p.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="renew-amount">Montant reçu (FCFA)</Label>
+              <Input id="renew-amount" type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Méthode</Label>
+              <Select value={method} onValueChange={setMethod}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="renew-ref">Référence (optionnel)</Label>
+            <Input id="renew-ref" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Transaction ID, n° reçu…" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button onClick={submit} disabled={saving}>{saving ? "…" : "Renouveler"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ConvertTrialDialog({
+  school, onClose, onSaved,
+}: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
+  const [plan, setPlan] = useState<PlanId>((school.subscription_plan as PlanId) ?? "starter");
+  const [months, setMonths] = useState(1);
+  const [amount, setAmount] = useState<number>(PLAN_CONFIG[plan].priceFcfa);
+  const [method, setMethod] = useState<string>("Mobile Money");
+  const [reference, setReference] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const setPlanAndPrice = (p: string) => {
+    const pid = p as PlanId;
+    setPlan(pid);
+    setAmount(PLAN_CONFIG[pid].priceFcfa * months);
+  };
+  const setMonthsAndPrice = (m: number) => {
+    setMonths(m);
+    setAmount(PLAN_CONFIG[plan].priceFcfa * m);
+  };
+
+  const submit = async () => {
+    setSaving(true);
+    try {
+      const r = await superAdminApi.convertTrial({
+        schoolId: school.id, plan, months,
+        amount, paymentMethod: method, reference: reference || undefined,
+      });
+      toast.success(`Essai converti — actif jusqu'au ${new Date(r.newEnd).toLocaleDateString("fr-FR")}`);
+      onSaved();
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Convertir l'essai — {school.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Plan</Label>
+              <Select value={plan} onValueChange={setPlanAndPrice}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PLAN_OPTIONS.map((p) => <SelectItem key={p} value={p}>{PLAN_LABELS[p]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Période</Label>
+              <Select value={String(months)} onValueChange={(v) => setMonthsAndPrice(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PERIOD_OPTIONS.map((p) => <SelectItem key={p.months} value={String(p.months)}>{p.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="conv-amount">Montant reçu (FCFA)</Label>
+              <Input id="conv-amount" type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Méthode</Label>
+              <Select value={method} onValueChange={setMethod}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="conv-ref">Référence (optionnel)</Label>
+            <Input id="conv-ref" value={reference} onChange={(e) => setReference(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button onClick={submit} disabled={saving}>{saving ? "…" : "Convertir en payant"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SubscriptionHistoryDialog({
+  school, onClose,
+}: { school: PlatformSchool; onClose: () => void }) {
+  const [payments, setPayments] = useState<{
+    id: string; plan: string; amount: number; payment_date: string;
+    payment_method: string | null; status: string;
+    period_start: string | null; period_end: string | null; reference: string | null;
+  }[]>([]);
+  const [busy, setBusy] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await superAdminApi.listSubscriptionPayments(school.id);
+        setPayments(r.payments);
+      } catch (e) { toast.error((e as Error).message); }
+      finally { setBusy(false); }
+    })();
+  }, [school.id]);
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Historique des paiements — {school.name}</DialogTitle>
+        </DialogHeader>
+        {busy ? (
+          <div className="flex justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
+          </div>
+        ) : payments.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">Aucun paiement enregistré.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Plan</TableHead>
+                  <TableHead>Montant</TableHead>
+                  <TableHead>Période</TableHead>
+                  <TableHead>Méthode</TableHead>
+                  <TableHead>Référence</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {payments.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="text-xs">{new Date(p.payment_date).toLocaleDateString("fr-FR")}</TableCell>
+                    <TableCell className="text-sm">{PLAN_LABELS[p.plan] ?? p.plan}</TableCell>
+                    <TableCell className="text-sm font-medium">{fcfa(Number(p.amount))}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {p.period_start ? new Date(p.period_start).toLocaleDateString("fr-FR") : "—"}
+                      {" → "}
+                      {p.period_end ? new Date(p.period_end).toLocaleDateString("fr-FR") : "—"}
+                    </TableCell>
+                    <TableCell className="text-sm">{p.payment_method ?? "—"}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{p.reference ?? "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Fermer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
