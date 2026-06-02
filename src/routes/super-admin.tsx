@@ -102,6 +102,37 @@ function SuperAdminPage() {
     return sum + (PLAN_MRR[s.subscription_plan ?? ""] ?? 0);
   }, 0);
 
+  const todayMs = Date.now();
+  const daysLeft = (s: PlatformSchool): number | null => {
+    const end = s.subscription_end ?? s.trial_ends_at;
+    if (!end) return null;
+    return Math.ceil((new Date(end).getTime() - todayMs) / 86400000);
+  };
+  const expiringSoon = schools.filter((s) => {
+    const d = daysLeft(s); return d !== null && d >= 0 && d <= 7 && s.status !== "expired" && s.status !== "suspended";
+  });
+  const expired = schools.filter((s) => s.status === "expired");
+  const trialing = schools.filter((s) => s.status === "trial");
+
+  const filteredSchools = [...schools]
+    .filter((s) => {
+      if (subFilter === "all") return true;
+      if (subFilter === "expired") return s.status === "expired";
+      if (subFilter === "trial") return s.status === "trial";
+      if (subFilter === "active") return s.status === "active";
+      if (subFilter === "soon") {
+        const d = daysLeft(s); return d !== null && d >= 0 && d <= 7 && s.status !== "expired" && s.status !== "suspended";
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const da = daysLeft(a); const db = daysLeft(b);
+      if (da === null && db === null) return 0;
+      if (da === null) return 1;
+      if (db === null) return -1;
+      return da - db;
+    });
+
   const handleSuspend = async (s: PlatformSchool) => {
     try { await superAdminApi.updateStatus(s.id, "suspended"); toast.success("École suspendue"); refresh(); }
     catch (e) { toast.error((e as Error).message); }
