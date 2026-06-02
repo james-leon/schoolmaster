@@ -54,7 +54,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
 
             const { data: schools, error } = await supabaseAdmin
               .from("schools")
-              .select("id, name, city, country, email, phone, subscription_plan, status, trial_ends_at, subscription_start, subscription_end, created_at, director_name")
+              .select("id, name, city, country, email, phone, subscription_plan, status, trial_ends_at, subscription_start, subscription_end, created_at, director_name, last_activity_at, internal_notes")
               .order("created_at", { ascending: false });
             if (error) return Response.json({ error: error.message }, { status: 500 });
 
@@ -64,9 +64,30 @@ export const Route = createFileRoute("/api/public/super-admin")({
             for (const s of students ?? []) {
               countsBySchool[s.school_id] = (countsBySchool[s.school_id] ?? 0) + 1;
             }
-            const enriched = (schools ?? []).map((s) => ({
+
+            // Engagement signals: activity in the last 30 days
+            const since = new Date(Date.now() - 30 * 86400000).toISOString();
+            const sinceDate = since.slice(0, 10);
+            const [paymentsRes, gradesRes, attRes] = await Promise.all([
+              supabaseAdmin.from("payment_records").select("school_id").gte("date", sinceDate),
+              supabaseAdmin.from("grades").select("school_id").gte("created_at", since),
+              supabaseAdmin.from("attendance").select("school_id").gte("date", sinceDate),
+            ]);
+            const countBy = (rows: { school_id: string }[] | null | undefined) => {
+              const m: Record<string, number> = {};
+              for (const r of rows ?? []) m[r.school_id] = (m[r.school_id] ?? 0) + 1;
+              return m;
+            };
+            const payCount = countBy(paymentsRes.data as any);
+            const gradeCount = countBy(gradesRes.data as any);
+            const attCount = countBy(attRes.data as any);
+
+            const enriched = (schools ?? []).map((s: any) => ({
               ...s,
               student_count: countsBySchool[s.id] ?? 0,
+              recent_payments: payCount[s.id] ?? 0,
+              recent_grades: gradeCount[s.id] ?? 0,
+              recent_attendance: attCount[s.id] ?? 0,
             }));
             const totalStudents = Object.values(countsBySchool).reduce((a, b) => a + b, 0);
             return Response.json({
@@ -82,6 +103,18 @@ export const Route = createFileRoute("/api/public/super-admin")({
               },
             });
           }
+
+          if (action === "update-notes") {
+            const { schoolId, notes } = body;
+            if (!schoolId) return Response.json({ error: "Paramètres invalides" }, { status: 400 });
+            const trimmed = notes == null ? null : String(notes).slice(0, 4000);
+            const { error } = await (supabaseAdmin.from("schools") as any)
+              .update({ internal_notes: trimmed })
+              .eq("id", schoolId);
+            if (error) return Response.json({ error: error.message }, { status: 500 });
+            return Response.json({ ok: true });
+          }
+
 
           if (action === "create-school") {
             const {

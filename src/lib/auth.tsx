@@ -126,7 +126,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearLocalDB();
       hydrateAll(effective.schoolId).catch((e) => console.error("[hydrate]", e));
     }
+    // Stamp school activity (anti-churn signal). Only for real school users;
+    // super_admin impersonating another school still bumps that school.
+    if (real.role !== "super_admin" || effective.schoolId) {
+      supabase.rpc("touch_school_activity").then(({ error }) => {
+        if (error) console.warn("[touch_school_activity]", error.message);
+      });
+    }
   };
+
 
   useEffect(() => {
     ensureSeed();

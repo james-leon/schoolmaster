@@ -29,6 +29,7 @@ import { fcfa } from "@/lib/format";
 import { Logo } from "@/components/Logo";
 import { PLAN_CONFIG, type PlanId } from "@/lib/plans";
 import { MrrAnalytics } from "@/components/super-admin/MrrAnalytics";
+import { SchoolHealth } from "@/components/super-admin/SchoolHealth";
 
 export const Route = createFileRoute("/super-admin")({
   component: SuperAdminPage,
@@ -220,6 +221,9 @@ function SuperAdminPage() {
         </div>
 
         <MrrAnalytics schools={schools} />
+
+        <SchoolHealth schools={schools} onChanged={refresh} />
+
 
 
         <Card className="mt-6">

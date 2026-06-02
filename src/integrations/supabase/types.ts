@@ -567,6 +567,8 @@ export type Database = {
           email: string | null
           enrollment_targets: Json
           id: string
+          internal_notes: string | null
+          last_activity_at: string | null
           logo_url: string | null
           name: string
           phone: string | null
@@ -586,6 +588,8 @@ export type Database = {
           email?: string | null
           enrollment_targets?: Json
           id?: string
+          internal_notes?: string | null
+          last_activity_at?: string | null
           logo_url?: string | null
           name: string
           phone?: string | null
@@ -605,6 +609,8 @@ export type Database = {
           email?: string | null
           enrollment_targets?: Json
           id?: string
+          internal_notes?: string | null
+          last_activity_at?: string | null
           logo_url?: string | null
           name?: string
           phone?: string | null
@@ -761,6 +767,7 @@ export type Database = {
       }
       is_parent_of_student: { Args: { _student_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      touch_school_activity: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "school_admin" | "teacher" | "parent" | "super_admin"
