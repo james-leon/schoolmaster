@@ -28,6 +28,7 @@ import {
 import { fcfa } from "@/lib/format";
 import { Logo } from "@/components/Logo";
 import { PLAN_CONFIG, type PlanId } from "@/lib/plans";
+import { MrrAnalytics } from "@/components/super-admin/MrrAnalytics";
 
 export const Route = createFileRoute("/super-admin")({
   component: SuperAdminPage,
@@ -217,6 +218,9 @@ function SuperAdminPage() {
             onClick={() => setSubFilter("trial")}
           />
         </div>
+
+        <MrrAnalytics schools={schools} />
+
 
         <Card className="mt-6">
           <CardHeader className="space-y-3">
