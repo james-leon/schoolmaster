@@ -222,6 +222,9 @@ function SuperAdminPage() {
 
         <MrrAnalytics schools={schools} />
 
+        <SchoolHealth schools={schools} onChanged={refresh} />
+
+
 
         <Card className="mt-6">
           <CardHeader className="space-y-3">
