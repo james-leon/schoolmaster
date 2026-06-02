@@ -487,9 +487,60 @@ function SuperAdminPage() {
           onSaved={() => { setSubSchool(null); refresh(); }}
         />
       )}
+
+      {renewSchool && (
+        <RenewSubscriptionDialog
+          school={renewSchool}
+          onClose={() => setRenewSchool(null)}
+          onSaved={() => { setRenewSchool(null); refresh(); }}
+        />
+      )}
+      {convertSchool && (
+        <ConvertTrialDialog
+          school={convertSchool}
+          onClose={() => setConvertSchool(null)}
+          onSaved={() => { setConvertSchool(null); refresh(); }}
+        />
+      )}
+      {historySchool && (
+        <SubscriptionHistoryDialog
+          school={historySchool}
+          onClose={() => setHistorySchool(null)}
+        />
+      )}
     </div>
   );
 }
+
+function AlertCard({
+  tone, icon: Icon, label, value, hint, active, onClick,
+}: {
+  tone: "orange" | "red" | "blue"; icon: any; label: string; value: number;
+  hint: string; active?: boolean; onClick?: () => void;
+}) {
+  const tones: Record<string, string> = {
+    orange: "border-warning/40 bg-warning/5 text-warning",
+    red: "border-destructive/40 bg-destructive/5 text-destructive",
+    blue: "border-primary/40 bg-primary/5 text-primary",
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-3 rounded-lg border p-4 text-left transition hover:shadow-sm ${tones[tone]} ${active ? "ring-2 ring-offset-1 ring-current" : ""}`}
+    >
+      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-background/60">
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="flex-1">
+        <div className="text-xs font-medium">{label}</div>
+        <div className="text-2xl font-bold leading-none mt-1 text-foreground">{value}</div>
+        <div className="text-[11px] text-muted-foreground mt-0.5">{hint}</div>
+      </div>
+    </button>
+  );
+}
+
 
 function KpiCard({ label, value, icon: Icon, tone }: { label: string; value: string; icon: any; tone: "blue" | "green" | "orange" | "purple" }) {
   const tones: Record<string, string> = {
