@@ -268,7 +268,7 @@ function SuperAdminPage() {
                       if (d !== null) {
                         if (d < 0) { daysCls = "text-destructive font-semibold"; daysLabel = `Expiré (${Math.abs(d)} j)`; }
                         else if (d < 7) { daysCls = "text-destructive font-semibold"; daysLabel = `${d} j`; }
-                        else if (d <= 15) { daysCls = "text-warning font-semibold"; daysLabel = `${d} j`; }
+                        else if (d <= 15) { daysCls = "text-accent font-semibold"; daysLabel = `${d} j`; }
                         else { daysCls = "text-success font-medium"; daysLabel = `${d} j`; }
                       }
                       return (
@@ -519,7 +519,7 @@ function AlertCard({
   hint: string; active?: boolean; onClick?: () => void;
 }) {
   const tones: Record<string, string> = {
-    orange: "border-warning/40 bg-warning/5 text-warning",
+    orange: "border-accent/40 bg-accent/5 text-accent",
     red: "border-destructive/40 bg-destructive/5 text-destructive",
     blue: "border-primary/40 bg-primary/5 text-primary",
   };
