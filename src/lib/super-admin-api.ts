@@ -29,7 +29,13 @@ export interface PlatformSchool {
   created_at: string;
   director_name: string | null;
   student_count: number;
+  last_activity_at: string | null;
+  internal_notes: string | null;
+  recent_payments: number;
+  recent_grades: number;
+  recent_attendance: number;
 }
+
 
 export interface PlatformKpis {
   totalSchools: number;
