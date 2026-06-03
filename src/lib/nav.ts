@@ -1,4 +1,4 @@
-import { BarChart3, Users, BookOpen, CreditCard, GraduationCap, CalendarCheck, UserCheck, Settings, Megaphone, type LucideIcon } from "lucide-react";
+import { BarChart3, Users, BookOpen, CreditCard, GraduationCap, CalendarCheck, UserCheck, Settings, Megaphone, Calendar, type LucideIcon } from "lucide-react";
 import type { Role } from "./types";
 import type { FeatureId } from "./plans";
 
@@ -18,6 +18,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/scolarite", label: "Scolarité & Paiements", icon: CreditCard, roles: ["super_admin", "school_admin"] },
   { to: "/notes", label: "Notes & Bulletins", icon: GraduationCap, roles: ["super_admin", "school_admin", "teacher"] },
   { to: "/presences", label: "Présences", icon: CalendarCheck, roles: ["super_admin", "school_admin", "teacher"] },
+  { to: "/emploi-du-temps", label: "Emploi du temps", icon: Calendar, roles: ["super_admin", "school_admin", "teacher"] },
   { to: "/annonces", label: "Annonces", icon: Megaphone, roles: ["super_admin", "school_admin", "teacher"], feature: "announcements" },
   { to: "/enseignants", label: "Enseignants", icon: UserCheck, roles: ["super_admin", "school_admin"] },
   { to: "/parametres", label: "Paramètres", icon: Settings, roles: ["super_admin", "school_admin"] },

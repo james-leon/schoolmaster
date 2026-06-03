@@ -22,6 +22,7 @@ import { Route as MonAbonnementRouteImport } from './routes/mon-abonnement'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as EnseignantsRouteImport } from './routes/enseignants'
+import { Route as EmploiDuTempsRouteImport } from './routes/emploi-du-temps'
 import { Route as ElevesRouteImport } from './routes/eleves'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ClassesRouteImport } from './routes/classes'
@@ -99,6 +100,11 @@ const EnseignantsRoute = EnseignantsRouteImport.update({
   path: '/enseignants',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmploiDuTempsRoute = EmploiDuTempsRouteImport.update({
+  id: '/emploi-du-temps',
+  path: '/emploi-du-temps',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ElevesRoute = ElevesRouteImport.update({
   id: '/eleves',
   path: '/eleves',
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRouteWithChildren
+  '/emploi-du-temps': typeof EmploiDuTempsRoute
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRouteWithChildren
+  '/emploi-du-temps': typeof EmploiDuTempsRoute
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/classes': typeof ClassesRoute
   '/dashboard': typeof DashboardRoute
   '/eleves': typeof ElevesRouteWithChildren
+  '/emploi-du-temps': typeof EmploiDuTempsRoute
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -243,6 +252,7 @@ export interface FileRouteTypes {
     | '/classes'
     | '/dashboard'
     | '/eleves'
+    | '/emploi-du-temps'
     | '/enseignants'
     | '/forgot-password'
     | '/login'
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/classes'
     | '/dashboard'
     | '/eleves'
+    | '/emploi-du-temps'
     | '/enseignants'
     | '/forgot-password'
     | '/login'
@@ -295,6 +306,7 @@ export interface FileRouteTypes {
     | '/classes'
     | '/dashboard'
     | '/eleves'
+    | '/emploi-du-temps'
     | '/enseignants'
     | '/forgot-password'
     | '/login'
@@ -322,6 +334,7 @@ export interface RootRouteChildren {
   ClassesRoute: typeof ClassesRoute
   DashboardRoute: typeof DashboardRoute
   ElevesRoute: typeof ElevesRouteWithChildren
+  EmploiDuTempsRoute: typeof EmploiDuTempsRoute
   EnseignantsRoute: typeof EnseignantsRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
@@ -434,6 +447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EnseignantsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/emploi-du-temps': {
+      id: '/emploi-du-temps'
+      path: '/emploi-du-temps'
+      fullPath: '/emploi-du-temps'
+      preLoaderRoute: typeof EmploiDuTempsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/eleves': {
       id: '/eleves'
       path: '/eleves'
@@ -532,6 +552,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClassesRoute: ClassesRoute,
   DashboardRoute: DashboardRoute,
   ElevesRoute: ElevesRouteWithChildren,
+  EmploiDuTempsRoute: EmploiDuTempsRoute,
   EnseignantsRoute: EnseignantsRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
