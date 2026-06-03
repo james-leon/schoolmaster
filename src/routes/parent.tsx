@@ -532,10 +532,20 @@ function PaiementsTab({ studentId, payments }: { studentId: string; payments: Pa
   );
 }
 
-function MessagesTab({ announcements }: { announcements: import("@/lib/types").Announcement[] }) {
+function MessagesTab({ announcements, classIds }: { announcements: import("@/lib/types").Announcement[]; classIds: string[] }) {
+  const classSet = new Set(classIds);
   const visible = announcements
-    .filter((a) => a.audience === "Tous" || a.audience === "Parents")
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    .filter((a) => {
+      if (a.audience === "Tous" || a.audience === "Parents") return true;
+      if (a.audience === "Classe" && a.targetClassId && classSet.has(a.targetClassId)) return true;
+      return false;
+    })
+    .sort((a, b) => {
+      const pa = a.pinned ? 1 : 0;
+      const pb = b.pinned ? 1 : 0;
+      if (pa !== pb) return pb - pa;
+      return b.createdAt.localeCompare(a.createdAt);
+    });
   if (visible.length === 0) {
     return (
       <Card>
@@ -548,11 +558,14 @@ function MessagesTab({ announcements }: { announcements: import("@/lib/types").A
   return (
     <div className="space-y-3">
       {visible.map((a) => (
-        <Card key={a.id}>
+        <Card key={a.id} className={a.pinned ? "border-accent/60 bg-accent/5" : undefined}>
           <CardContent className="pt-5">
             <div className="mb-1 flex items-start justify-between gap-2">
-              <p className="text-sm font-semibold">{a.title}</p>
-              <Badge variant="outline" className="text-[10px]">{a.audience}</Badge>
+              <p className="text-sm font-semibold">
+                {a.pinned && <span className="mr-1 text-accent">📌</span>}
+                {a.title}
+              </p>
+              <Badge variant="outline" className="text-[10px]">{a.audience === "Classe" ? "Classe" : a.audience}</Badge>
             </div>
             <p className="mb-2 text-[11px] text-muted-foreground">
               {new Date(a.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
