@@ -615,12 +615,14 @@ async function pushDiffs(): Promise<void> {
     const { error } = await supabase.from("announcements").insert({
       id: a.id, school_id: schoolId, title: a.title, content: a.content,
       audience: a.audience, author_id: a.authorId ?? null,
+      pinned: a.pinned ?? false, target_class_id: a.targetClassId ?? null,
     });
     if (error) throw error;
   }
   for (const a of annDiff.updated) {
     const { error } = await supabase.from("announcements").update({
       title: a.title, content: a.content, audience: a.audience,
+      pinned: a.pinned ?? false, target_class_id: a.targetClassId ?? null,
     }).eq("id", a.id);
     if (error) throw error;
   }
