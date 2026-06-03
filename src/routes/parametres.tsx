@@ -195,9 +195,6 @@ function ParametresPage() {
           <EnrollmentTargetsPanel schoolId={school?.id} />
         </TabsContent>
 
-        <TabsContent value="annonces" className="mt-4">
-          <AnnouncementsPanel authorId={user?.id} />
-        </TabsContent>
 
         <TabsContent value="utilisateurs" className="mt-4">
           <UsersPanel schoolId={school?.id} schoolName={school?.name} currentUserId={user?.id} />
