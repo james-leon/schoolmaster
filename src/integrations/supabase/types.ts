@@ -51,7 +51,9 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          pinned: boolean
           school_id: string
+          target_class_id: string | null
           title: string
         }
         Insert: {
@@ -60,7 +62,9 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          pinned?: boolean
           school_id: string
+          target_class_id?: string | null
           title: string
         }
         Update: {
@@ -69,10 +73,20 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          pinned?: boolean
           school_id?: string
+          target_class_id?: string | null
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "announcements_target_class_id_fkey"
+            columns: ["target_class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       attendance: {
         Row: {

@@ -46,9 +46,11 @@ export interface Announcement {
   id: string;
   title: string;
   content: string;
-  audience: "Tous" | "Parents" | "Enseignants";
+  audience: "Tous" | "Parents" | "Enseignants" | "Classe";
   authorId?: string;
   createdAt: string;
+  pinned?: boolean;
+  targetClassId?: string | null;
 }
 
 export interface AcademicYear {

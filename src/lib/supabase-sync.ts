@@ -241,6 +241,7 @@ function rowToParent(r: {
 function rowToAnnouncement(r: {
   id: string; title: string; content: string; audience: string;
   author_id: string | null; created_at: string;
+  pinned?: boolean | null; target_class_id?: string | null;
 }): Announcement {
   return {
     id: r.id,
@@ -249,6 +250,8 @@ function rowToAnnouncement(r: {
     audience: (r.audience as Announcement["audience"]) ?? "Tous",
     authorId: r.author_id ?? undefined,
     createdAt: r.created_at,
+    pinned: r.pinned ?? false,
+    targetClassId: r.target_class_id ?? null,
   };
 }
 
@@ -612,12 +615,14 @@ async function pushDiffs(): Promise<void> {
     const { error } = await supabase.from("announcements").insert({
       id: a.id, school_id: schoolId, title: a.title, content: a.content,
       audience: a.audience, author_id: a.authorId ?? null,
+      pinned: a.pinned ?? false, target_class_id: a.targetClassId ?? null,
     });
     if (error) throw error;
   }
   for (const a of annDiff.updated) {
     const { error } = await supabase.from("announcements").update({
       title: a.title, content: a.content, audience: a.audience,
+      pinned: a.pinned ?? false, target_class_id: a.targetClassId ?? null,
     }).eq("id", a.id);
     if (error) throw error;
   }

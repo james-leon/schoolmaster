@@ -19,7 +19,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/notes", label: "Notes & Bulletins", icon: GraduationCap, roles: ["super_admin", "school_admin", "teacher"] },
   { to: "/presences", label: "Présences", icon: CalendarCheck, roles: ["super_admin", "school_admin", "teacher"] },
   { to: "/emploi-du-temps", label: "Emploi du temps", icon: Calendar, roles: ["super_admin", "school_admin", "teacher"] },
-  { to: "/annonces", label: "Annonces", icon: Megaphone, roles: ["super_admin", "school_admin", "teacher"], feature: "announcements" },
+  { to: "/annonces", label: "Annonces", icon: Megaphone, roles: ["super_admin", "school_admin", "teacher"] },
   { to: "/enseignants", label: "Enseignants", icon: UserCheck, roles: ["super_admin", "school_admin"] },
   { to: "/parametres", label: "Paramètres", icon: Settings, roles: ["super_admin", "school_admin"] },
 ];

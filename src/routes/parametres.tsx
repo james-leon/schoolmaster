@@ -10,15 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Megaphone, Upload, Image as ImageIcon, KeyRound, UserX, UserCheck } from "lucide-react";
+import { Trash2, Upload, Image as ImageIcon, KeyRound, UserX, UserCheck } from "lucide-react";
 import { toast } from "sonner";
-import type { Announcement } from "@/lib/types";
 import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
 
@@ -119,7 +116,7 @@ function ParametresPage() {
         <TabsList>
           <TabsTrigger value="ecole">École</TabsTrigger>
           <TabsTrigger value="objectifs">Objectifs</TabsTrigger>
-          <TabsTrigger value="annonces">Annonces</TabsTrigger>
+          
           <TabsTrigger value="utilisateurs">Utilisateurs</TabsTrigger>
           <TabsTrigger value="compte">Compte</TabsTrigger>
         </TabsList>
@@ -198,9 +195,6 @@ function ParametresPage() {
           <EnrollmentTargetsPanel schoolId={school?.id} />
         </TabsContent>
 
-        <TabsContent value="annonces" className="mt-4">
-          <AnnouncementsPanel authorId={user?.id} />
-        </TabsContent>
 
         <TabsContent value="utilisateurs" className="mt-4">
           <UsersPanel schoolId={school?.id} schoolName={school?.name} currentUserId={user?.id} />
@@ -225,107 +219,6 @@ function ParametresPage() {
   );
 }
 
-function AnnouncementsPanel({ authorId }: { authorId?: string }) {
-  const db = useDB();
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [audience, setAudience] = useState<Announcement["audience"]>("Tous");
-
-  const sorted = [...db.announcements].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-
-  const submit = () => {
-    if (!title.trim() || !content.trim()) {
-      toast.error("Titre et contenu requis");
-      return;
-    }
-    updateDB((d) => {
-      d.announcements.unshift({
-        id: crypto.randomUUID(),
-        title: title.trim(),
-        content: content.trim(),
-        audience,
-        authorId,
-        createdAt: new Date().toISOString(),
-      });
-    });
-    setTitle("");
-    setContent("");
-    setAudience("Tous");
-    toast.success("Annonce publiée");
-  };
-
-  const remove = (id: string) => {
-    updateDB((d) => {
-      d.announcements = d.announcements.filter((a) => a.id !== id);
-    });
-    toast.success("Annonce supprimée");
-  };
-
-  return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Megaphone className="h-4 w-4" /> Nouvelle annonce
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-1.5">
-            <Label>Titre</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Réunion parents-professeurs" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Audience</Label>
-            <Select value={audience} onValueChange={(v) => setAudience(v as Announcement["audience"])}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Tous">Tous</SelectItem>
-                <SelectItem value="Parents">Parents</SelectItem>
-                <SelectItem value="Enseignants">Enseignants</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Contenu</Label>
-            <Textarea rows={5} value={content} onChange={(e) => setContent(e.target.value)} placeholder="Détails de l'annonce..." />
-          </div>
-          <Button onClick={submit}>Publier l'annonce</Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Annonces récentes ({sorted.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {sorted.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">Aucune annonce</p>
-          ) : (
-            sorted.map((a) => (
-              <div key={a.id} className="rounded-lg border border-border p-3">
-                <div className="mb-1 flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{a.title}</p>
-                    <div className="mt-1 flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px]">{a.audience}</Badge>
-                      <span className="text-[10px] text-muted-foreground">
-                        {new Date(a.createdAt).toLocaleDateString("fr-FR")}
-                      </span>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={() => remove(a.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-3">{a.content}</p>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 
 const MONTHS_FR = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
