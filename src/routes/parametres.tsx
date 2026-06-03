@@ -116,7 +116,7 @@ function ParametresPage() {
         <TabsList>
           <TabsTrigger value="ecole">École</TabsTrigger>
           <TabsTrigger value="objectifs">Objectifs</TabsTrigger>
-          <TabsTrigger value="annonces">Annonces</TabsTrigger>
+          
           <TabsTrigger value="utilisateurs">Utilisateurs</TabsTrigger>
           <TabsTrigger value="compte">Compte</TabsTrigger>
         </TabsList>
