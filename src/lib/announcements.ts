@@ -1,17 +1,37 @@
 import { useEffect, useState } from "react";
 import type { Announcement, Role } from "./types";
 
-export function audienceFor(role: Role | undefined): Announcement["audience"][] {
-  if (role === "teacher") return ["Tous", "Enseignants"];
-  if (role === "parent") return ["Tous", "Parents"];
-  return ["Tous", "Enseignants", "Parents"]; // admins see everything
+export interface AudienceContext {
+  /** For parents: the class IDs of their children */
+  classIds?: string[];
 }
 
-export function visibleAnnouncements(all: Announcement[], role: Role | undefined): Announcement[] {
-  const allow = new Set(audienceFor(role));
-  return [...all]
-    .filter((a) => allow.has(a.audience))
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+export function visibleAnnouncements(
+  all: Announcement[],
+  role: Role | undefined,
+  ctx: AudienceContext = {},
+): Announcement[] {
+  const classIds = new Set(ctx.classIds ?? []);
+  const filtered = all.filter((a) => {
+    // School admin & super_admin see everything for their school
+    if (role === "school_admin" || role === "super_admin") return true;
+    if (role === "teacher") {
+      return a.audience === "Tous" || a.audience === "Enseignants";
+    }
+    if (role === "parent") {
+      if (a.audience === "Tous" || a.audience === "Parents") return true;
+      if (a.audience === "Classe" && a.targetClassId && classIds.has(a.targetClassId)) return true;
+      return false;
+    }
+    return false;
+  });
+  return filtered.sort((a, b) => {
+    // Pinned first, then newest first
+    const pa = a.pinned ? 1 : 0;
+    const pb = b.pinned ? 1 : 0;
+    if (pa !== pb) return pb - pa;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 }
 
 export function formatDateFr(iso: string): string {
