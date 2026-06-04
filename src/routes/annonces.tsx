@@ -67,11 +67,33 @@ function AnnoncesPage() {
 
   useEffect(() => { markAllSeen(); }, [items.length]);
 
+  // Auto-mark as read for teacher/parent viewing the list (full content visible on the page).
+  useEffect(() => {
+    if (!user || !user.schoolId) return;
+    if (user.role !== "teacher" && user.role !== "parent") return;
+    items.forEach((a) => { markAnnouncementRead(a.id, user.schoolId, user.id); });
+  }, [items, user]);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [confirmDel, setConfirmDel] = useState<Announcement | null>(null);
 
+  // Admin read stats
+  const [stats, setStats] = useState<Record<string, { read: number; total: number }>>({});
+  const isAdminView = user?.role === "school_admin";
+  const loadStats = useCallback(async () => {
+    if (!isAdminView) return;
+    try {
+      const r = await adminApi.announcementReadStats();
+      setStats(r.stats);
+    } catch { /* silent */ }
+  }, [isAdminView]);
+  useEffect(() => { loadStats(); }, [loadStats, db.announcements.length]);
+
+  const [detailsFor, setDetailsFor] = useState<Announcement | null>(null);
+
   const locked = !loading && user?.role !== "super_admin" && !hasFeature("announcements");
+
 
   const openNew = () => { setForm(EMPTY); setDialogOpen(true); };
   const openEdit = (a: Announcement) => {
