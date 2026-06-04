@@ -532,7 +532,7 @@ function PaiementsTab({ studentId, payments }: { studentId: string; payments: Pa
   );
 }
 
-function MessagesTab({ announcements, classIds }: { announcements: import("@/lib/types").Announcement[]; classIds: string[] }) {
+function MessagesTab({ announcements, classIds, userId, schoolId }: { announcements: import("@/lib/types").Announcement[]; classIds: string[]; userId?: string; schoolId?: string }) {
   const classSet = new Set(classIds);
   const visible = announcements
     .filter((a) => {
@@ -546,6 +546,12 @@ function MessagesTab({ announcements, classIds }: { announcements: import("@/lib
       if (pa !== pb) return pb - pa;
       return b.createdAt.localeCompare(a.createdAt);
     });
+  useEffect(() => {
+    if (!userId || !schoolId) return;
+    import("@/lib/announcement-reads").then(({ markAnnouncementRead }) => {
+      visible.forEach((a) => { markAnnouncementRead(a.id, schoolId, userId); });
+    });
+  }, [visible, userId, schoolId]);
   if (visible.length === 0) {
     return (
       <Card>
