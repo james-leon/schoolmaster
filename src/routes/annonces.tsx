@@ -238,6 +238,12 @@ function AnnoncesPage() {
                   )}
                 </div>
                 <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{a.content}</p>
+                {isAdminView && (
+                  <ReadIndicator
+                    stats={stats[a.id]}
+                    onOpen={() => setDetailsFor(a)}
+                  />
+                )}
               </CardContent>
             </Card>
           ))}
