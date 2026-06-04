@@ -120,7 +120,7 @@ function ParentPortal() {
             {tab === "notes" && <NotesTab studentId={student.id} grades={db.grades} classSubjects={db.classSubjects.filter((s) => s.classId === student.classId)} />}
             {tab === "presences" && <PresencesTab studentId={student.id} attendance={db.attendance} />}
             {tab === "paiements" && <PaiementsTab studentId={student.id} payments={db.payments} />}
-            {tab === "messages" && <MessagesTab announcements={db.announcements} classIds={children.map((c) => c.classId).filter((id): id is string => !!id)} />}
+            {tab === "messages" && <MessagesTab announcements={db.announcements} classIds={children.map((c) => c.classId).filter((id): id is string => !!id)} userId={user?.id} schoolId={user?.schoolId} />}
           </>
         ) : null}
       </main>
