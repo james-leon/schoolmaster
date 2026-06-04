@@ -120,7 +120,7 @@ function ParentPortal() {
             {tab === "notes" && <NotesTab studentId={student.id} grades={db.grades} classSubjects={db.classSubjects.filter((s) => s.classId === student.classId)} />}
             {tab === "presences" && <PresencesTab studentId={student.id} attendance={db.attendance} />}
             {tab === "paiements" && <PaiementsTab studentId={student.id} payments={db.payments} />}
-            {tab === "messages" && <MessagesTab announcements={db.announcements} classIds={children.map((c) => c.classId).filter((id): id is string => !!id)} />}
+            {tab === "messages" && <MessagesTab announcements={db.announcements} classIds={children.map((c) => c.classId).filter((id): id is string => !!id)} userId={user?.id} schoolId={user?.schoolId} />}
           </>
         ) : null}
       </main>
@@ -532,7 +532,7 @@ function PaiementsTab({ studentId, payments }: { studentId: string; payments: Pa
   );
 }
 
-function MessagesTab({ announcements, classIds }: { announcements: import("@/lib/types").Announcement[]; classIds: string[] }) {
+function MessagesTab({ announcements, classIds, userId, schoolId }: { announcements: import("@/lib/types").Announcement[]; classIds: string[]; userId?: string; schoolId?: string }) {
   const classSet = new Set(classIds);
   const visible = announcements
     .filter((a) => {
@@ -546,6 +546,12 @@ function MessagesTab({ announcements, classIds }: { announcements: import("@/lib
       if (pa !== pb) return pb - pa;
       return b.createdAt.localeCompare(a.createdAt);
     });
+  useEffect(() => {
+    if (!userId || !schoolId) return;
+    import("@/lib/announcement-reads").then(({ markAnnouncementRead }) => {
+      visible.forEach((a) => { markAnnouncementRead(a.id, schoolId, userId); });
+    });
+  }, [visible, userId, schoolId]);
   if (visible.length === 0) {
     return (
       <Card>

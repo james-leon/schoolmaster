@@ -36,4 +36,14 @@ export const adminApi = {
     callAdmin({ action: "set-active", targetUserId, isActive }),
   delete: (targetUserId: string) =>
     callAdmin({ action: "delete", targetUserId }),
+  announcementReadStats: () =>
+    callAdmin({ action: "announcement-read-stats" }) as Promise<{
+      ok: true; stats: Record<string, { read: number; total: number }>;
+    }>,
+  announcementReadDetails: (announcementId: string) =>
+    callAdmin({ action: "announcement-read-details", announcementId }) as Promise<{
+      ok: true; total: number;
+      readers: { id: string; full_name: string; role: string; email: string | null; phone: string | null; read_at: string }[];
+      nonReaders: { id: string; full_name: string; role: string; email: string | null; phone: string | null }[];
+    }>,
 };

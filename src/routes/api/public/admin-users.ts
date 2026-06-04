@@ -203,6 +203,102 @@ export const Route = createFileRoute("/api/public/admin-users")({
             return Response.json({ ok: true });
           }
 
+          if (action === "announcement-read-stats" || action === "announcement-read-details") {
+            const { data: anns } = await supabaseAdmin
+              .from("announcements")
+              .select("id,audience,target_class_id")
+              .eq("school_id", ctx.schoolId);
+            const annList = anns ?? [];
+
+            const { data: profiles } = await supabaseAdmin
+              .from("profiles")
+              .select("id,full_name,email,phone,role")
+              .eq("school_id", ctx.schoolId)
+              .eq("is_active", true)
+              .in("role", ["parent", "teacher"]);
+            const profs = profiles ?? [];
+
+            const { data: links } = await supabaseAdmin
+              .from("parent_students")
+              .select("parent_profile_id,student_id")
+              .eq("school_id", ctx.schoolId);
+            const { data: students } = await supabaseAdmin
+              .from("students").select("id,class_id").eq("school_id", ctx.schoolId);
+            const studentClass = new Map<string, string | null>(
+              (students ?? []).map((s) => [s.id as string, (s.class_id as string | null) ?? null]),
+            );
+            const parentClasses = new Map<string, Set<string>>();
+            for (const l of links ?? []) {
+              const cls = studentClass.get(l.student_id as string);
+              if (!cls) continue;
+              const pid = l.parent_profile_id as string;
+              if (!parentClasses.has(pid)) parentClasses.set(pid, new Set());
+              parentClasses.get(pid)!.add(cls);
+            }
+
+            const teachers = profs.filter((p) => p.role === "teacher");
+            const parents = profs.filter((p) => p.role === "parent");
+
+            const recipientsFor = (audience: string, targetClassId: string | null) => {
+              if (audience === "Tous") return profs;
+              if (audience === "Enseignants") return teachers;
+              if (audience === "Parents") return parents;
+              if (audience === "Classe" && targetClassId) {
+                return parents.filter((p) => parentClasses.get(p.id as string)?.has(targetClassId));
+              }
+              return [];
+            };
+
+            if (action === "announcement-read-stats") {
+              const { data: reads } = await supabaseAdmin
+                .from("announcement_reads")
+                .select("announcement_id,user_id")
+                .eq("school_id", ctx.schoolId);
+              const readsBy = new Map<string, Set<string>>();
+              for (const r of reads ?? []) {
+                const aid = r.announcement_id as string;
+                if (!readsBy.has(aid)) readsBy.set(aid, new Set());
+                readsBy.get(aid)!.add(r.user_id as string);
+              }
+              const stats: Record<string, { read: number; total: number }> = {};
+              for (const a of annList) {
+                const rec = recipientsFor(a.audience as string, (a.target_class_id as string | null) ?? null);
+                const readSet = readsBy.get(a.id as string) ?? new Set();
+                let read = 0;
+                for (const r of rec) if (readSet.has(r.id as string)) read++;
+                stats[a.id as string] = { read, total: rec.length };
+              }
+              return Response.json({ ok: true, stats });
+            }
+
+            const { announcementId } = body;
+            const ann = annList.find((a) => a.id === announcementId);
+            if (!ann) return Response.json({ error: "Annonce introuvable" }, { status: 404 });
+            const rec = recipientsFor(ann.audience as string, (ann.target_class_id as string | null) ?? null);
+            const { data: reads } = await supabaseAdmin
+              .from("announcement_reads")
+              .select("user_id,read_at")
+              .eq("announcement_id", announcementId);
+            const readMap = new Map<string, string>((reads ?? []).map((r) => [r.user_id as string, r.read_at as string]));
+            const readers: Array<{ id: string; full_name: string; role: string; email: string | null; phone: string | null; read_at: string }> = [];
+            const nonReaders: Array<{ id: string; full_name: string; role: string; email: string | null; phone: string | null }> = [];
+            for (const p of rec) {
+              const base = {
+                id: p.id as string,
+                full_name: (p.full_name as string) ?? "",
+                role: (p.role as string) ?? "",
+                email: (p.email as string | null) ?? null,
+                phone: (p.phone as string | null) ?? null,
+              };
+              const rAt = readMap.get(base.id);
+              if (rAt) readers.push({ ...base, read_at: rAt });
+              else nonReaders.push(base);
+            }
+            readers.sort((a, b) => b.read_at.localeCompare(a.read_at));
+            nonReaders.sort((a, b) => a.full_name.localeCompare(b.full_name));
+            return Response.json({ ok: true, readers, nonReaders, total: rec.length });
+          }
+
           return Response.json({ error: "Unknown action" }, { status: 400 });
         } catch (e) {
           console.error("[admin-users]", e);

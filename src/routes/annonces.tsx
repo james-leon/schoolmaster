@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useDB, updateDB } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
@@ -7,6 +7,8 @@ import { usePlan } from "@/lib/usePlan";
 import { requiredPlanFor } from "@/lib/plans";
 import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
 import { visibleAnnouncements, formatDateFr, markAllSeen } from "@/lib/announcements";
+import { markAnnouncementRead } from "@/lib/announcement-reads";
+import { adminApi } from "@/lib/admin-api";
 import type { Announcement } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,14 +16,15 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Megaphone, Pin, PinOff, Plus, Pencil, Trash2 } from "lucide-react";
+import { Megaphone, Pin, PinOff, Plus, Pencil, Trash2, Eye, Phone, Mail, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { useEffect } from "react";
+
 
 export const Route = createFileRoute("/annonces")({
   component: AnnoncesPage,
@@ -63,11 +66,33 @@ function AnnoncesPage() {
 
   useEffect(() => { markAllSeen(); }, [items.length]);
 
+  // Auto-mark as read for teacher/parent viewing the list (full content visible on the page).
+  useEffect(() => {
+    if (!user || !user.schoolId) return;
+    if (user.role !== "teacher" && user.role !== "parent") return;
+    items.forEach((a) => { markAnnouncementRead(a.id, user.schoolId, user.id); });
+  }, [items, user]);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [confirmDel, setConfirmDel] = useState<Announcement | null>(null);
 
+  // Admin read stats
+  const [stats, setStats] = useState<Record<string, { read: number; total: number }>>({});
+  const isAdminView = user?.role === "school_admin";
+  const loadStats = useCallback(async () => {
+    if (!isAdminView) return;
+    try {
+      const r = await adminApi.announcementReadStats();
+      setStats(r.stats);
+    } catch { /* silent */ }
+  }, [isAdminView]);
+  useEffect(() => { loadStats(); }, [loadStats, db.announcements.length]);
+
+  const [detailsFor, setDetailsFor] = useState<Announcement | null>(null);
+
   const locked = !loading && user?.role !== "super_admin" && !hasFeature("announcements");
+
 
   const openNew = () => { setForm(EMPTY); setDialogOpen(true); };
   const openEdit = (a: Announcement) => {
@@ -212,6 +237,12 @@ function AnnoncesPage() {
                   )}
                 </div>
                 <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{a.content}</p>
+                {isAdminView && (
+                  <ReadIndicator
+                    stats={stats[a.id]}
+                    onOpen={() => setDetailsFor(a)}
+                  />
+                )}
               </CardContent>
             </Card>
           ))}
@@ -314,6 +345,156 @@ function AnnoncesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Read details modal */}
+      <ReadDetailsDialog
+        announcement={detailsFor}
+        onClose={() => setDetailsFor(null)}
+        onChanged={loadStats}
+      />
     </AppLayout>
   );
 }
+
+function readColor(read: number, total: number): { text: string; bar: string; pct: number } {
+  const pct = total > 0 ? Math.round((read / total) * 100) : 0;
+  if (pct >= 75) return { text: "text-emerald-600", bar: "bg-emerald-500", pct };
+  if (pct >= 40) return { text: "text-orange-500", bar: "bg-orange-500", pct };
+  return { text: "text-red-600", bar: "bg-red-500", pct };
+}
+
+function ReadIndicator({ stats, onOpen }: { stats?: { read: number; total: number }; onOpen: () => void }) {
+  const read = stats?.read ?? 0;
+  const total = stats?.total ?? 0;
+  const c = readColor(read, total);
+  return (
+    <div className="mt-4 rounded-md border bg-muted/30 p-3">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm">
+          <Eye className="h-4 w-4 text-muted-foreground" />
+          <span className={`font-medium ${c.text}`}>
+            Lu par {read} / {total} {total > 0 && `(${c.pct}%)`}
+          </span>
+        </div>
+        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={onOpen}>
+          Voir les détails
+        </Button>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className={`h-full ${c.bar} transition-all`} style={{ width: `${c.pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function roleLabel(role: string): string {
+  if (role === "parent") return "Parent";
+  if (role === "teacher") return "Enseignant";
+  if (role === "school_admin") return "Admin";
+  return role;
+}
+
+function ReadDetailsDialog({
+  announcement, onClose, onChanged,
+}: {
+  announcement: Announcement | null;
+  onClose: () => void;
+  onChanged: () => void;
+}) {
+  const [data, setData] = useState<{
+    readers: { id: string; full_name: string; role: string; email: string | null; phone: string | null; read_at: string }[];
+    nonReaders: { id: string; full_name: string; role: string; email: string | null; phone: string | null }[];
+    total: number;
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!announcement) { setData(null); return; }
+    let cancelled = false;
+    setLoading(true);
+    adminApi.announcementReadDetails(announcement.id)
+      .then((r) => { if (!cancelled) setData({ readers: r.readers, nonReaders: r.nonReaders, total: r.total }); })
+      .catch((e) => toast.error(e?.message ?? "Erreur de chargement"))
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; onChanged(); };
+  }, [announcement, onChanged]);
+
+  const readCount = data?.readers.length ?? 0;
+  const nonCount = data?.nonReaders.length ?? 0;
+
+  return (
+    <Dialog open={!!announcement} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="truncate">Détails de lecture</DialogTitle>
+          <DialogDescription className="truncate">{announcement?.title}</DialogDescription>
+        </DialogHeader>
+        {loading ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">Chargement…</p>
+        ) : !data ? null : (
+          <Tabs defaultValue="read" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="read">
+                <CheckCircle2 className="mr-1.5 h-4 w-4" /> Ont lu ({readCount})
+              </TabsTrigger>
+              <TabsTrigger value="unread">
+                <Clock className="mr-1.5 h-4 w-4" /> N'ont pas lu ({nonCount})
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="read" className="max-h-[60vh] overflow-y-auto">
+              {data.readers.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">Personne n'a encore lu cette annonce.</p>
+              ) : (
+                <ul className="divide-y">
+                  {data.readers.map((r) => (
+                    <li key={r.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{r.full_name || r.email || "—"}</p>
+                        <p className="text-xs text-muted-foreground">{roleLabel(r.role)}</p>
+                      </div>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        lu le {new Date(r.read_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })} à {new Date(r.read_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </TabsContent>
+            <TabsContent value="unread" className="max-h-[60vh] overflow-y-auto">
+              {data.nonReaders.length === 0 ? (
+                <p className="py-8 text-center text-sm text-emerald-600">Tout le monde a lu cette annonce. 🎉</p>
+              ) : (
+                <ul className="divide-y">
+                  {data.nonReaders.map((r) => (
+                    <li key={r.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{r.full_name || r.email || "—"}</p>
+                        <p className="text-xs text-muted-foreground">{roleLabel(r.role)}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2 text-xs">
+                        {r.phone && (
+                          <a href={`tel:${r.phone}`} className="inline-flex items-center gap-1 rounded border px-2 py-1 hover:bg-muted">
+                            <Phone className="h-3 w-3" /> {r.phone}
+                          </a>
+                        )}
+                        {r.email && (
+                          <a href={`mailto:${r.email}`} className="inline-flex items-center gap-1 rounded border px-2 py-1 hover:bg-muted">
+                            <Mail className="h-3 w-3" />
+                          </a>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </TabsContent>
+          </Tabs>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Fermer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
