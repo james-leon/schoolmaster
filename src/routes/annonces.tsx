@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useDB, updateDB } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
@@ -7,6 +7,8 @@ import { usePlan } from "@/lib/usePlan";
 import { requiredPlanFor } from "@/lib/plans";
 import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
 import { visibleAnnouncements, formatDateFr, markAllSeen } from "@/lib/announcements";
+import { markAnnouncementRead } from "@/lib/announcement-reads";
+import { adminApi } from "@/lib/admin-api";
 import type { Announcement } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,14 +16,16 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Megaphone, Pin, PinOff, Plus, Pencil, Trash2 } from "lucide-react";
+import { Megaphone, Pin, PinOff, Plus, Pencil, Trash2, Eye, Phone, Mail, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { useEffect } from "react";
+
 
 export const Route = createFileRoute("/annonces")({
   component: AnnoncesPage,
