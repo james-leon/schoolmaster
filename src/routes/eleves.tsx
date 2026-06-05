@@ -566,9 +566,16 @@ function ElevesPage() {
                       )}
                     </TableCell>
                     <TableCell className="font-medium">
-                      <Link to="/eleves/$studentId" params={{ studentId: s.id }} className="hover:underline" onClick={(event) => { event.stopPropagation(); logStudentClick(s); }}>
-                        {s.firstName}
-                      </Link>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Link to="/eleves/$studentId" params={{ studentId: s.id }} className="hover:underline" onClick={(event) => { event.stopPropagation(); logStudentClick(s); }}>
+                          {s.firstName}
+                        </Link>
+                        {!s.consentGiven && (
+                          <span title="Consentement parental non enregistré" className="inline-flex items-center text-accent">
+                            <ShieldAlert className="h-3.5 w-3.5" />
+                          </span>
+                        )}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <Link to="/eleves/$studentId" params={{ studentId: s.id }} className="hover:underline" onClick={(event) => { event.stopPropagation(); logStudentClick(s); }}>
