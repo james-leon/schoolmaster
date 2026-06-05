@@ -200,6 +200,9 @@ function ParametresPage() {
           <UsersPanel schoolId={school?.id} schoolName={school?.name} currentUserId={user?.id} />
         </TabsContent>
 
+        <TabsContent value="confidentialite" className="mt-4">
+          <PrivacyPanel schoolId={school?.id} />
+        </TabsContent>
 
 
         <TabsContent value="compte" className="mt-4">
