@@ -97,7 +97,7 @@ function rowToClasse(r: { id: string; name: string; level: string | null; capaci
   };
 }
 
-function rowToStudent(r: { id: string; class_id: string | null; first_name: string; last_name: string; gender: string | null; birth_date: string | null; enrollment_date: string | null; student_code: string | null; status: string | null; photo_url: string | null }): Student {
+function rowToStudent(r: { id: string; class_id: string | null; first_name: string; last_name: string; gender: string | null; birth_date: string | null; enrollment_date: string | null; student_code: string | null; status: string | null; photo_url: string | null; consent_given?: boolean | null; consent_date?: string | null }): Student {
   const statusMap: Record<string, Student["status"]> = { active: "actif", inactive: "inactif", transferred: "transfere" };
   return {
     id: r.id,
@@ -112,6 +112,8 @@ function rowToStudent(r: { id: string; class_id: string | null; first_name: stri
     photo: r.photo_url ?? undefined,
     parentName: "",
     parentPhone: "",
+    consentGiven: r.consent_given ?? false,
+    consentDate: r.consent_date ?? undefined,
   };
 }
 
