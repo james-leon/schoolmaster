@@ -15,7 +15,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSchoolParentAccounts } from "@/lib/useSchoolParentAccounts";
-import { Users, Search, Plus, Trash2, Pencil, Upload, UserPlus, Eye, KeyRound, Link2, X, CheckCircle2, Mail, Phone, FileUp } from "lucide-react";
+import { Users, Search, Plus, Trash2, Pencil, Upload, UserPlus, Eye, KeyRound, Link2, X, CheckCircle2, Mail, Phone, FileUp, ShieldAlert, Download } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ImportDialog, type ImportConfig, type ParsedRow, type RowStatus } from "@/components/ImportDialog";
 import { z } from "zod";
 import { toast } from "sonner";
