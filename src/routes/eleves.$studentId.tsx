@@ -95,6 +95,13 @@ function StudentDetailPage() {
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-xl font-bold">{student.firstName} {student.lastName}</h2>
               {statusBadge(student.status)}
+              {student.consentGiven ? (
+                <Badge variant="outline" className="border-success/40 text-success">
+                  <ShieldCheck className="mr-1 h-3 w-3" /> Consentement OK
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="border-accent/50 text-accent">Consentement à recueillir</Badge>
+              )}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <Badge variant="secondary">{cls?.name ?? "—"}</Badge>
@@ -104,6 +111,33 @@ function StudentDetailPage() {
               <span>•</span>
               <span>Né(e) le {student.birthDate}</span>
             </div>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const payload = {
+                  exportedAt: new Date().toISOString(),
+                  school: school?.name,
+                  student,
+                  classe: cls,
+                  grades,
+                  payments,
+                  attendance,
+                  parents: db.parents.filter((p) => p.studentId === student.id),
+                };
+                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `donnees-${student.lastName}-${student.firstName}-${student.id.slice(0, 8)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              <Download className="mr-1.5 h-4 w-4" /> Exporter les données
+            </Button>
           </div>
         </CardContent>
       </Card>
