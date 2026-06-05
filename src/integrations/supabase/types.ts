@@ -632,6 +632,8 @@ export type Database = {
           logo_url: string | null
           name: string
           phone: string | null
+          privacy_accepted_at: string | null
+          privacy_accepted_by: string | null
           show_enrollment_targets: boolean
           status: string
           subscription_end: string | null
@@ -653,6 +655,8 @@ export type Database = {
           logo_url?: string | null
           name: string
           phone?: string | null
+          privacy_accepted_at?: string | null
+          privacy_accepted_by?: string | null
           show_enrollment_targets?: boolean
           status?: string
           subscription_end?: string | null
@@ -674,6 +678,8 @@ export type Database = {
           logo_url?: string | null
           name?: string
           phone?: string | null
+          privacy_accepted_at?: string | null
+          privacy_accepted_by?: string | null
           show_enrollment_targets?: boolean
           status?: string
           subscription_end?: string | null
@@ -688,6 +694,8 @@ export type Database = {
           birth_date: string | null
           birth_place: string | null
           class_id: string | null
+          consent_date: string | null
+          consent_given: boolean
           created_at: string
           enrollment_date: string | null
           first_name: string
@@ -703,6 +711,8 @@ export type Database = {
           birth_date?: string | null
           birth_place?: string | null
           class_id?: string | null
+          consent_date?: string | null
+          consent_given?: boolean
           created_at?: string
           enrollment_date?: string | null
           first_name: string
@@ -718,6 +728,8 @@ export type Database = {
           birth_date?: string | null
           birth_place?: string | null
           class_id?: string | null
+          consent_date?: string | null
+          consent_given?: boolean
           created_at?: string
           enrollment_date?: string | null
           first_name?: string
