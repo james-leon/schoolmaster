@@ -410,6 +410,7 @@ function ElevesPage() {
       parentEmail: s.parentEmail ?? "",
       parentRelation: s.parentRelation ?? "Père",
       parentWhatsapp: s.parentWhatsapp ?? "",
+      consentGiven: s.consentGiven ?? false,
     });
     setOpen(true);
   };
