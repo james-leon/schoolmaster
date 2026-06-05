@@ -719,6 +719,21 @@ function ElevesPage() {
             </div>
           </div>
 
+          <div className="mt-2 rounded-md border border-border bg-muted/30 p-3">
+            <label className="flex items-start gap-2 text-sm">
+              <Checkbox
+                checked={form.consentGiven}
+                onCheckedChange={(v) => set("consentGiven", !!v)}
+                className="mt-0.5"
+              />
+              <span>
+                Le parent/tuteur a donné son consentement pour le traitement des données de cet élève
+                <span className="ml-1 text-xs text-muted-foreground">(loi n°2024/017)</span>
+              </span>
+            </label>
+          </div>
+
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
             <Button onClick={submit}>{editingId ? "Enregistrer les modifications" : "Enregistrer"}</Button>
