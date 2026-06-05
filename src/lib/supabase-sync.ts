@@ -434,7 +434,8 @@ async function pushDiffs(): Promise<void> {
       first_name: s.firstName, last_name: s.lastName, gender: s.gender,
       birth_date: s.birthDate || null, enrollment_date: s.enrolledAt || null,
       student_code: s.code ?? null, status: studentStatusMap[s.status ?? "actif"], photo_url: s.photo ?? null,
-    });
+      consent_given: s.consentGiven ?? false, consent_date: s.consentDate ?? null,
+    } as any);
     if (error) throw error;
   }
   for (const s of studentDiff.updated) {
@@ -442,7 +443,8 @@ async function pushDiffs(): Promise<void> {
       class_id: s.classId || null, first_name: s.firstName, last_name: s.lastName,
       gender: s.gender, birth_date: s.birthDate || null, enrollment_date: s.enrolledAt || null,
       student_code: s.code ?? null, status: studentStatusMap[s.status ?? "actif"], photo_url: s.photo ?? null,
-    }).eq("id", s.id);
+      consent_given: s.consentGiven ?? false, consent_date: s.consentDate ?? null,
+    } as any).eq("id", s.id);
     if (error) throw error;
   }
   for (const id of studentDiff.deletedIds) {
