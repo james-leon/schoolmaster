@@ -119,9 +119,11 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
             <span className="font-medium text-foreground">{title}</span>
           </nav>
           {children}
+          <AppFooter className="mt-8 border-t border-border" />
         </main>
       </div>
       <MobileNav />
+      <PrivacyConsentGate />
     </div>
   );
 }
