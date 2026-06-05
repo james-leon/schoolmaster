@@ -15,7 +15,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSchoolParentAccounts } from "@/lib/useSchoolParentAccounts";
-import { Users, Search, Plus, Trash2, Pencil, Upload, UserPlus, Eye, KeyRound, Link2, X, CheckCircle2, Mail, Phone, FileUp } from "lucide-react";
+import { Users, Search, Plus, Trash2, Pencil, Upload, UserPlus, Eye, KeyRound, Link2, X, CheckCircle2, Mail, Phone, FileUp, ShieldAlert, Download } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ImportDialog, type ImportConfig, type ParsedRow, type RowStatus } from "@/components/ImportDialog";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -85,6 +86,7 @@ type FormState = {
   parentEmail: string;
   parentRelation: ParentRelation;
   parentWhatsapp: string;
+  consentGiven: boolean;
 };
 
 const emptyForm = (): FormState => ({
@@ -101,6 +103,7 @@ const emptyForm = (): FormState => ({
   parentEmail: "",
   parentRelation: "Père",
   parentWhatsapp: "",
+  consentGiven: false,
 });
 
 function nextCode(): string {
@@ -408,6 +411,7 @@ function ElevesPage() {
       parentEmail: s.parentEmail ?? "",
       parentRelation: s.parentRelation ?? "Père",
       parentWhatsapp: s.parentWhatsapp ?? "",
+      consentGiven: s.consentGiven ?? false,
     });
     setOpen(true);
   };
@@ -433,12 +437,17 @@ function ElevesPage() {
       updateDB((d) => {
         const idx = d.students.findIndex((x) => x.id === editingId);
         if (idx >= 0) {
+          const prev = d.students[idx];
+          const consentDate =
+            form.consentGiven && !prev.consentGiven ? new Date().toISOString() : prev.consentDate;
           d.students[idx] = {
-            ...d.students[idx],
+            ...prev,
             ...form,
             parentEmail: form.parentEmail || undefined,
             parentWhatsapp: form.parentWhatsapp || undefined,
             photo: form.photo,
+            consentGiven: form.consentGiven,
+            consentDate: form.consentGiven ? consentDate : undefined,
           };
         }
         upsertParentForStudent(d, editingId, form);
@@ -453,6 +462,8 @@ function ElevesPage() {
           parentEmail: form.parentEmail || undefined,
           parentWhatsapp: form.parentWhatsapp || undefined,
           enrolledAt: new Date().toISOString().slice(0, 10),
+          consentGiven: form.consentGiven,
+          consentDate: form.consentGiven ? new Date().toISOString() : undefined,
         });
         upsertParentForStudent(d, id, form);
         d.activities.unshift({
@@ -555,9 +566,16 @@ function ElevesPage() {
                       )}
                     </TableCell>
                     <TableCell className="font-medium">
-                      <Link to="/eleves/$studentId" params={{ studentId: s.id }} className="hover:underline" onClick={(event) => { event.stopPropagation(); logStudentClick(s); }}>
-                        {s.firstName}
-                      </Link>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Link to="/eleves/$studentId" params={{ studentId: s.id }} className="hover:underline" onClick={(event) => { event.stopPropagation(); logStudentClick(s); }}>
+                          {s.firstName}
+                        </Link>
+                        {!s.consentGiven && (
+                          <span title="Consentement parental non enregistré" className="inline-flex items-center text-accent">
+                            <ShieldAlert className="h-3.5 w-3.5" />
+                          </span>
+                        )}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <Link to="/eleves/$studentId" params={{ studentId: s.id }} className="hover:underline" onClick={(event) => { event.stopPropagation(); logStudentClick(s); }}>
@@ -707,6 +725,21 @@ function ElevesPage() {
               </Field>
             </div>
           </div>
+
+          <div className="mt-2 rounded-md border border-border bg-muted/30 p-3">
+            <label className="flex items-start gap-2 text-sm">
+              <Checkbox
+                checked={form.consentGiven}
+                onCheckedChange={(v) => set("consentGiven", !!v)}
+                className="mt-0.5"
+              />
+              <span>
+                Le parent/tuteur a donné son consentement pour le traitement des données de cet élève
+                <span className="ml-1 text-xs text-muted-foreground">(loi n°2024/017)</span>
+              </span>
+            </label>
+          </div>
+
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>

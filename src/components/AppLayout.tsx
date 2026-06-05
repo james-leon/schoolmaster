@@ -3,6 +3,8 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Sidebar, MobileNav } from "./Sidebar";
 import { Header } from "./Header";
+import { AppFooter } from "./AppFooter";
+import { PrivacyConsentGate } from "./PrivacyConsentGate";
 import { useAuth } from "@/lib/auth";
 import { allowedRoutes, NAV_ITEMS } from "@/lib/nav";
 import { usePlan } from "@/lib/usePlan";
@@ -117,9 +119,11 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
             <span className="font-medium text-foreground">{title}</span>
           </nav>
           {children}
+          <AppFooter className="mt-8 border-t border-border" />
         </main>
       </div>
       <MobileNav />
+      <PrivacyConsentGate />
     </div>
   );
 }

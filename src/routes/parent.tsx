@@ -123,7 +123,13 @@ function ParentPortal() {
             {tab === "messages" && <MessagesTab announcements={db.announcements} classIds={children.map((c) => c.classId).filter((id): id is string => !!id)} userId={user?.id} schoolId={user?.schoolId} />}
           </>
         ) : null}
+        <div className="mx-auto mt-6 max-w-3xl px-4 pb-20 text-center text-xs text-muted-foreground">
+          <a href="/confidentialite" target="_blank" rel="noreferrer" className="hover:text-foreground">Politique de confidentialité</a>
+          <span className="mx-2">•</span>
+          <span>Loi n°2024/017</span>
+        </div>
       </main>
+
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card">
         <div className={cn("mx-auto grid max-w-3xl", `grid-cols-${TABS.length}`)} style={{ gridTemplateColumns: `repeat(${TABS.length}, minmax(0, 1fr))` }}>

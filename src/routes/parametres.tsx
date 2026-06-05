@@ -116,8 +116,8 @@ function ParametresPage() {
         <TabsList>
           <TabsTrigger value="ecole">École</TabsTrigger>
           <TabsTrigger value="objectifs">Objectifs</TabsTrigger>
-          
           <TabsTrigger value="utilisateurs">Utilisateurs</TabsTrigger>
+          <TabsTrigger value="confidentialite">Confidentialité</TabsTrigger>
           <TabsTrigger value="compte">Compte</TabsTrigger>
         </TabsList>
 
@@ -200,6 +200,9 @@ function ParametresPage() {
           <UsersPanel schoolId={school?.id} schoolName={school?.name} currentUserId={user?.id} />
         </TabsContent>
 
+        <TabsContent value="confidentialite" className="mt-4">
+          <PrivacyPanel schoolId={school?.id} />
+        </TabsContent>
 
 
         <TabsContent value="compte" className="mt-4">
@@ -416,5 +419,103 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function PrivacyPanel({ schoolId }: { schoolId?: string }) {
+  const db = useDB();
+  const [acceptedAt, setAcceptedAt] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!schoolId) return;
+    let cancelled = false;
+    setLoading(true);
+    supabase.from("schools").select("privacy_accepted_at").eq("id", schoolId).maybeSingle().then(({ data }) => {
+      if (cancelled) return;
+      setAcceptedAt((data as any)?.privacy_accepted_at ?? null);
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [schoolId]);
+
+  const exportAll = () => {
+    const schoolPayload = {
+      exportedAt: new Date().toISOString(),
+      school: db.schools.find((s) => s.id === schoolId),
+      classes: db.classes,
+      students: db.students,
+      teachers: db.teachers,
+      parents: db.parents,
+      grades: db.grades,
+      attendance: db.attendance,
+      payments: db.payments,
+      paymentRecords: db.paymentRecords,
+      classSubjects: db.classSubjects,
+      feeTypes: db.feeTypes,
+      announcements: db.announcements,
+      academicYears: db.academicYears,
+    };
+    const blob = new Blob([JSON.stringify(schoolPayload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `export-ecole-${stamp}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Export généré");
+  };
+
+  const missingConsent = db.students.filter((s) => !s.consentGiven).length;
+
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Données &amp; Confidentialité</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm">
+          <div className="rounded-md border border-border bg-muted/30 p-3">
+            <p className="font-medium">Conformité — Loi n°2024/017 (Cameroun)</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              SchoolMaster isole vos données par école, restreint l'accès par rôle, et chiffre les communications.
+              Vous êtes responsable du traitement des données scolaires.
+            </p>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Politique acceptée</span>
+            <span className="font-medium">
+              {loading ? "…" : acceptedAt ? new Date(acceptedAt).toLocaleDateString("fr-FR") : "Non"}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Élèves sans consentement enregistré</span>
+            <span className={"font-medium " + (missingConsent > 0 ? "text-accent" : "text-success")}>
+              {missingConsent}
+            </span>
+          </div>
+          <a href="/confidentialite" target="_blank" rel="noreferrer" className="inline-block text-sm text-primary hover:underline">
+            Lire la politique de confidentialité →
+          </a>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Exporter les données</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <p className="text-muted-foreground">
+            Téléchargez l'ensemble des données de votre école au format JSON. Utile pour vos archives ou en cas
+            d'exercice du droit d'accès par un parent ou un employé.
+          </p>
+          <Button onClick={exportAll}>
+            <Upload className="mr-1.5 h-4 w-4 rotate-180" />
+            Exporter toutes les données
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

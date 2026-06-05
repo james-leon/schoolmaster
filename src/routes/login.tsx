@@ -129,6 +129,9 @@ function LoginPage() {
           >
             Accès Super Admin (Wintek)
           </button>
+          <Link to="/confidentialite" className="mt-2 text-xs text-muted-foreground hover:text-foreground">
+            Politique de confidentialité
+          </Link>
         </div>
       </Card>
     </div>
