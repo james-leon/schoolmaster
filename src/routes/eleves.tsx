@@ -85,6 +85,7 @@ type FormState = {
   parentEmail: string;
   parentRelation: ParentRelation;
   parentWhatsapp: string;
+  consentGiven: boolean;
 };
 
 const emptyForm = (): FormState => ({
@@ -101,6 +102,7 @@ const emptyForm = (): FormState => ({
   parentEmail: "",
   parentRelation: "Père",
   parentWhatsapp: "",
+  consentGiven: false,
 });
 
 function nextCode(): string {
