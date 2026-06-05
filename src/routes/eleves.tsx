@@ -436,12 +436,17 @@ function ElevesPage() {
       updateDB((d) => {
         const idx = d.students.findIndex((x) => x.id === editingId);
         if (idx >= 0) {
+          const prev = d.students[idx];
+          const consentDate =
+            form.consentGiven && !prev.consentGiven ? new Date().toISOString() : prev.consentDate;
           d.students[idx] = {
-            ...d.students[idx],
+            ...prev,
             ...form,
             parentEmail: form.parentEmail || undefined,
             parentWhatsapp: form.parentWhatsapp || undefined,
             photo: form.photo,
+            consentGiven: form.consentGiven,
+            consentDate: form.consentGiven ? consentDate : undefined,
           };
         }
         upsertParentForStudent(d, editingId, form);
@@ -456,6 +461,8 @@ function ElevesPage() {
           parentEmail: form.parentEmail || undefined,
           parentWhatsapp: form.parentWhatsapp || undefined,
           enrolledAt: new Date().toISOString().slice(0, 10),
+          consentGiven: form.consentGiven,
+          consentDate: form.consentGiven ? new Date().toISOString() : undefined,
         });
         upsertParentForStudent(d, id, form);
         d.activities.unshift({
