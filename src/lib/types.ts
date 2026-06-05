@@ -91,6 +91,8 @@ export interface Student {
   status?: StudentStatus;
   photo?: string;
   enrolledAt: string;
+  consentGiven?: boolean;
+  consentDate?: string;
 }
 
 export const STUDENT_STATUSES: { value: StudentStatus; label: string }[] = [
