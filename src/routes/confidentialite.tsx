@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
+import { useAuth } from "@/lib/auth";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
 import { WINTEK_CONTACT } from "@/lib/plans";
 
