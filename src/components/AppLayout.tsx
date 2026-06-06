@@ -36,6 +36,11 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
       navigate({ to: "/parent", replace: true });
       return;
     }
+    // Public routes (not wrapped in AppLayout) should not trigger the access-denied redirect
+    // during navigation transitions — AppLayout briefly sees the new pathname before unmounting.
+    const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/confidentialite", "/unauthorized"];
+    const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+    if (isPublic) return;
     const allowed = allowedRoutes(user.role);
     const isAllowed = allowed.some((r) => pathname === r || pathname.startsWith(r + "/"));
     if (!isAllowed) {
