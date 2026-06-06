@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
+import { useAuth } from "@/lib/auth";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
 import { WINTEK_CONTACT } from "@/lib/plans";
 
@@ -25,12 +26,24 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function PrivacyPage() {
+  const { isAuthenticated, user } = useAuth();
+
+  const backTo = !isAuthenticated || !user
+    ? "/login"
+    : user.role === "parent"
+    ? "/parent"
+    : user.role === "super_admin"
+    ? "/super-admin"
+    : "/dashboard";
+
+  const backLabel = !isAuthenticated || !user ? "Retour" : "Retour à l'accueil";
+
   return (
     <div className="min-h-screen bg-muted/30 px-4 py-8">
       <div className="mx-auto max-w-3xl">
         <div className="mb-4 flex items-center justify-between">
-          <Link to="/login" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="mr-1.5 h-4 w-4" /> Retour
+          <Link to={backTo} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> {backLabel}
           </Link>
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Logo compact />
@@ -121,7 +134,7 @@ function PrivacyPage() {
 
             <div className="border-t pt-4">
               <Button asChild variant="outline">
-                <Link to="/login"><ArrowLeft className="mr-1.5 h-4 w-4" /> Retour à la connexion</Link>
+                <Link to={backTo}><ArrowLeft className="mr-1.5 h-4 w-4" /> {backLabel}</Link>
               </Button>
             </div>
           </CardContent>
