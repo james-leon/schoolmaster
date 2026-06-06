@@ -272,8 +272,4 @@ export function visibleClassIds(user: User | null): string[] | null {
   return null;
 }
 
-export const DEMO_ACCOUNTS = [
-  { email: "admin@queenmary.cm", password: "admin123" },
-  { email: "prof.martin@queenmary.cm", password: "prof123" },
-  { email: "parent.ekane@gmail.com", password: "parent123" },
-];
+// DEMO_ACCOUNTS removed: hard-coded credentials must not ship in the client bundle.
