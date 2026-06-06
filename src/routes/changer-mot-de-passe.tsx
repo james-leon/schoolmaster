@@ -28,6 +28,19 @@ function ChangePasswordPage() {
     if (pwd !== confirm) return toast.error("Les mots de passe ne correspondent pas");
     setSubmitting(true);
     try {
+      // Make sure we have an active session before calling updateUser —
+      // otherwise Supabase throws "Auth session missing".
+      let { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        const refreshed = await supabase.auth.refreshSession();
+        session = refreshed.data.session;
+      }
+      if (!session) {
+        toast.error("Session expirée. Veuillez vous reconnecter.");
+        await logout();
+        navigate({ to: "/login", replace: true });
+        return;
+      }
       const { error } = await supabase.auth.updateUser({ password: pwd });
       if (error) throw error;
       const { error: pErr } = await supabase.from("profiles").update({ must_change_password: false }).eq("id", user!.id);

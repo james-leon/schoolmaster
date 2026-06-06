@@ -19,6 +19,7 @@ import { Route as ParentsRouteImport } from './routes/parents'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as NotesRouteImport } from './routes/notes'
+import { Route as MonProfilRouteImport } from './routes/mon-profil'
 import { Route as MonAbonnementRouteImport } from './routes/mon-abonnement'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -85,6 +86,11 @@ const ParametresRoute = ParametresRouteImport.update({
 const NotesRoute = NotesRouteImport.update({
   id: '/notes',
   path: '/notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonProfilRoute = MonProfilRouteImport.update({
+  id: '/mon-profil',
+  path: '/mon-profil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MonAbonnementRoute = MonAbonnementRouteImport.update({
@@ -186,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/mon-abonnement': typeof MonAbonnementRoute
+  '/mon-profil': typeof MonProfilRoute
   '/notes': typeof NotesRoute
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
@@ -215,6 +222,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/mon-abonnement': typeof MonAbonnementRoute
+  '/mon-profil': typeof MonProfilRoute
   '/notes': typeof NotesRoute
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
@@ -245,6 +253,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/mon-abonnement': typeof MonAbonnementRoute
+  '/mon-profil': typeof MonProfilRoute
   '/notes': typeof NotesRoute
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/mon-abonnement'
+    | '/mon-profil'
     | '/notes'
     | '/parametres'
     | '/parent'
@@ -305,6 +315,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/mon-abonnement'
+    | '/mon-profil'
     | '/notes'
     | '/parametres'
     | '/parent'
@@ -334,6 +345,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/mon-abonnement'
+    | '/mon-profil'
     | '/notes'
     | '/parametres'
     | '/parent'
@@ -364,6 +376,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   MonAbonnementRoute: typeof MonAbonnementRoute
+  MonProfilRoute: typeof MonProfilRoute
   NotesRoute: typeof NotesRoute
   ParametresRoute: typeof ParametresRoute
   ParentRoute: typeof ParentRoute
@@ -450,6 +463,13 @@ declare module '@tanstack/react-router' {
       path: '/notes'
       fullPath: '/notes'
       preLoaderRoute: typeof NotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mon-profil': {
+      id: '/mon-profil'
+      path: '/mon-profil'
+      fullPath: '/mon-profil'
+      preLoaderRoute: typeof MonProfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mon-abonnement': {
@@ -598,6 +618,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   MonAbonnementRoute: MonAbonnementRoute,
+  MonProfilRoute: MonProfilRoute,
   NotesRoute: NotesRoute,
   ParametresRoute: ParametresRoute,
   ParentRoute: ParentRoute,
@@ -616,13 +637,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
