@@ -26,6 +26,18 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function PrivacyPage() {
+  const { isAuthenticated, user } = useAuth();
+
+  const backTo = !isAuthenticated || !user
+    ? "/login"
+    : user.role === "parent"
+    ? "/parent"
+    : user.role === "super_admin"
+    ? "/super-admin"
+    : "/dashboard";
+
+  const backLabel = !isAuthenticated || !user ? "Retour" : "Retour à l'accueil";
+
   return (
     <div className="min-h-screen bg-muted/30 px-4 py-8">
       <div className="mx-auto max-w-3xl">
