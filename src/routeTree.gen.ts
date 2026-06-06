@@ -98,11 +98,6 @@ const MonAbonnementRoute = MonAbonnementRouteImport.update({
   path: '/mon-abonnement',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MonProfilRoute = MonProfilRouteImport.update({
-  id: '/mon-profil',
-  path: '/mon-profil',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -623,6 +618,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   MonAbonnementRoute: MonAbonnementRoute,
+  MonProfilRoute: MonProfilRoute,
   MonProfilRoute: MonProfilRoute,
   NotesRoute: NotesRoute,
   ParametresRoute: ParametresRoute,
