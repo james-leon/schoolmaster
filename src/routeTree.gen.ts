@@ -377,7 +377,6 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MonAbonnementRoute: typeof MonAbonnementRoute
   MonProfilRoute: typeof MonProfilRoute
-  MonProfilRoute: typeof MonProfilRoute
   NotesRoute: typeof NotesRoute
   ParametresRoute: typeof ParametresRoute
   ParentRoute: typeof ParentRoute
