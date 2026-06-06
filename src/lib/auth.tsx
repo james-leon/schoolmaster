@@ -89,15 +89,10 @@ async function loadProfile(userId: string): Promise<User | null> {
   return null;
 }
 
-let seedPromise: Promise<void> | null = null;
-function ensureSeed(): Promise<void> {
-  if (!seedPromise) {
-    seedPromise = fetch("/api/public/seed-demo", { method: "POST" })
-      .then((r) => { if (!r.ok) throw new Error("Seed failed"); })
-      .catch((e) => { console.error("[seed] failed", e); seedPromise = null; });
-  }
-  return seedPromise;
-}
+// The demo seeder is gated server-side behind SEED_SECRET and is no longer
+// invoked from the client. Seeding is an operator action, not something
+// triggered by visiting the app or logging in.
+
 
 /** Apply an active impersonation, if any. Returns the effective user. */
 function applyImpersonation(realUser: User): User {

@@ -78,6 +78,19 @@ export const Route = createFileRoute("/api/public/admin-users")({
             if (!firstName || !lastName || !email || !Array.isArray(studentIds) || studentIds.length === 0) {
               return Response.json({ error: "Champs requis manquants" }, { status: 400 });
             }
+            // Verify EVERY studentId belongs to the caller's school before
+            // creating any auth user or parent_students link.
+            const { data: stRows, error: stErr } = await supabaseAdmin
+              .from("students")
+              .select("id, school_id")
+              .in("id", studentIds as string[]);
+            if (stErr) return Response.json({ error: stErr.message }, { status: 400 });
+            const foundIds = new Set((stRows ?? []).map((r: any) => r.id));
+            const allInSchool =
+              (stRows ?? []).every((r: any) => r.school_id === ctx.schoolId) &&
+              (studentIds as string[]).every((id) => foundIds.has(id));
+            if (!allInSchool) return Response.json({ error: "Élève hors école" }, { status: 403 });
+
             const tempPassword = genPassword(10);
             const { data: created, error: cErr } = await supabaseAdmin.auth.admin.createUser({
               email, password: tempPassword, email_confirm: true,
