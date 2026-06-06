@@ -42,8 +42,8 @@ function PrivacyPage() {
     <div className="min-h-screen bg-muted/30 px-4 py-8">
       <div className="mx-auto max-w-3xl">
         <div className="mb-4 flex items-center justify-between">
-          <Link to="/login" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="mr-1.5 h-4 w-4" /> Retour
+          <Link to={backTo} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> {backLabel}
           </Link>
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Logo compact />
