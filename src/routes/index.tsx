@@ -15,6 +15,11 @@ function Index() {
       navigate({ to: "/login", replace: true });
       return;
     }
+    // First-login password change is always reachable, no role gating.
+    if (user.mustChangePassword) {
+      navigate({ to: "/changer-mot-de-passe", replace: true });
+      return;
+    }
     if (originalUser?.role === "super_admin" && !isImpersonating) {
       navigate({ to: "/super-admin", replace: true });
       return;
