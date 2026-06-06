@@ -374,14 +374,20 @@ function OverviewTab() {
   });
 
   const exportCSV = () => {
-    const header = ["Élève", ...subjects.map((s) => s.name), "Moy. Générale", "Rang"];
+    // CSV-safe escaping + formula-injection guard.
+    const esc = (v: unknown) => {
+      let s = v == null ? "" : String(v);
+      if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+      return `"${s.replace(/"/g, '""')}"`;
+    };
+    const header = ["Élève", ...subjects.map((s) => s.name), "Moy. Générale", "Rang"].map(esc);
     const lines = [header.join(",")];
     rows.forEach((r) => {
       const row = [
-        `"${r.student.firstName} ${r.student.lastName}"`,
-        ...r.subjAvgs.map((v) => (v == null ? "" : v.toFixed(2))),
-        r.gen != null ? r.gen.toFixed(2) : "",
-        r.rank || "",
+        esc(`${r.student.firstName} ${r.student.lastName}`),
+        ...r.subjAvgs.map((v) => esc(v == null ? "" : v.toFixed(2))),
+        esc(r.gen != null ? r.gen.toFixed(2) : ""),
+        esc(r.rank || ""),
       ];
       lines.push(row.join(","));
     });

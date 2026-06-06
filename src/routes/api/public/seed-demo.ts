@@ -6,12 +6,25 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const Route = createFileRoute("/api/public/seed-demo")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
         try {
-          // Always ensure the Wintek super admin exists (cheap idempotent step).
+          // Gate the seeder behind a server-side secret. Without SEED_SECRET
+          // configured, the endpoint refuses every call — including the
+          // super-admin bootstrap — to avoid unauthenticated privileged ops.
+          const required = process.env.SEED_SECRET;
+          if (!required) {
+            return Response.json({ error: "Seeding disabled" }, { status: 403 });
+          }
+          const provided =
+            request.headers.get("x-seed-token") ??
+            request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
+            "";
+          if (provided !== required) {
+            return Response.json({ error: "Forbidden" }, { status: 403 });
+          }
+
           await ensureSuperAdmin().catch((e) => console.error("[seed-demo] super admin", e));
 
-          // Fast idempotency check for the Queen Mary demo school.
           const { data: existing } = await supabaseAdmin
             .from("schools")
             .select("id")

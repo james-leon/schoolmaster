@@ -89,15 +89,10 @@ async function loadProfile(userId: string): Promise<User | null> {
   return null;
 }
 
-let seedPromise: Promise<void> | null = null;
-function ensureSeed(): Promise<void> {
-  if (!seedPromise) {
-    seedPromise = fetch("/api/public/seed-demo", { method: "POST" })
-      .then((r) => { if (!r.ok) throw new Error("Seed failed"); })
-      .catch((e) => { console.error("[seed] failed", e); seedPromise = null; });
-  }
-  return seedPromise;
-}
+// The demo seeder is gated server-side behind SEED_SECRET and is no longer
+// invoked from the client. Seeding is an operator action, not something
+// triggered by visiting the app or logging in.
+
 
 /** Apply an active impersonation, if any. Returns the effective user. */
 function applyImpersonation(realUser: User): User {
@@ -137,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   useEffect(() => {
-    ensureSeed();
+    // Demo seeding is no longer auto-triggered on app boot (security).
     let cancelled = false;
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -176,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<User> => {
-    await ensureSeed().catch(() => {});
+    // Demo seeding is no longer triggered from the client (security).
 
     const withTimeout = <T,>(p: PromiseLike<T>, ms: number, label: string) =>
       Promise.race<T>([
@@ -272,8 +267,4 @@ export function visibleClassIds(user: User | null): string[] | null {
   return null;
 }
 
-export const DEMO_ACCOUNTS = [
-  { email: "admin@queenmary.cm", password: "admin123" },
-  { email: "prof.martin@queenmary.cm", password: "prof123" },
-  { email: "parent.ekane@gmail.com", password: "parent123" },
-];
+// DEMO_ACCOUNTS removed: hard-coded credentials must not ship in the client bundle.

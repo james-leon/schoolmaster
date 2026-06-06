@@ -233,6 +233,13 @@ function EmploiDuTempsPage() {
     gridRows.find((r) => r.day_of_week === day && r.start_time === slot.start && r.end_time === slot.end);
 
   const printTimetable = () => {
+    const esc = (s: unknown) =>
+      String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
     const className = visibleClasses.find((c) => c.id === classId)?.name ?? "";
     const schoolName = db.schools[0]?.name ?? "École";
     const logo = db.schools[0]?.logo ?? "";
@@ -241,12 +248,12 @@ function EmploiDuTempsPage() {
         const cells = DAYS.map((day) => {
           const r = findRow(day, slot);
           if (!r) return `<td></td>`;
-          return `<td><strong>${r.subject_name}</strong><br/><small>${r.teacher_name ?? ""}</small>${r.room ? `<br/><em>${r.room}</em>` : ""}</td>`;
+          return `<td><strong>${esc(r.subject_name)}</strong><br/><small>${esc(r.teacher_name ?? "")}</small>${r.room ? `<br/><em>${esc(r.room)}</em>` : ""}</td>`;
         }).join("");
-        return `<tr><th>${slot.start} - ${slot.end}</th>${cells}</tr>`;
+        return `<tr><th>${esc(slot.start)} - ${esc(slot.end)}</th>${cells}</tr>`;
       })
       .join("");
-    const html = `<!doctype html><html><head><meta charset="utf-8"/><title>Emploi du temps - ${className}</title>
+    const html = `<!doctype html><html><head><meta charset="utf-8"/><title>Emploi du temps - ${esc(className)}</title>
       <style>
         body{font-family:system-ui,sans-serif;padding:24px;color:#111}
         header{display:flex;align-items:center;gap:16px;margin-bottom:16px;border-bottom:2px solid #111;padding-bottom:12px}
@@ -258,9 +265,9 @@ function EmploiDuTempsPage() {
         thead th{background:#f3f4f6}
         tbody th{background:#fafafa;width:110px;font-weight:600}
       </style></head><body>
-      <header>${logo ? `<img src="${logo}" alt="logo"/>` : ""}<div><h1>${schoolName}</h1><h2>Emploi du temps — ${className}</h2></div></header>
+      <header>${logo ? `<img src="${esc(logo)}" alt="logo"/>` : ""}<div><h1>${esc(schoolName)}</h1><h2>Emploi du temps — ${esc(className)}</h2></div></header>
       <table>
-        <thead><tr><th>Horaire</th>${DAYS.map((d) => `<th>${d}</th>`).join("")}</tr></thead>
+        <thead><tr><th>Horaire</th>${DAYS.map((d) => `<th>${esc(d)}</th>`).join("")}</tr></thead>
         <tbody>${cellsHtml}</tbody>
       </table>
       <script>window.onload=()=>{window.print();}</script>

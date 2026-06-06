@@ -19,10 +19,12 @@ const schema = z.object({
   password: z.string().min(1, "Le mot de passe est requis"),
 });
 
+// Demo shortcuts prefill the email only; passwords must be entered manually
+// and are never embedded in the client bundle.
 const DEMOS = [
-  { key: "admin", label: "Admin", icon: Shield, email: "admin@queenmary.cm", password: "admin123", tone: "bg-primary text-primary-foreground" },
-  { key: "teacher", label: "Prof", icon: GraduationCap, email: "prof.martin@queenmary.cm", password: "prof123", tone: "bg-secondary text-secondary-foreground" },
-  { key: "parent", label: "Parent", icon: UsersIcon, email: "parent.ekane@gmail.com", password: "parent123", tone: "bg-success text-success-foreground" },
+  { key: "admin", label: "Admin", icon: Shield, email: "admin@queenmary.cm", tone: "bg-primary text-primary-foreground" },
+  { key: "teacher", label: "Prof", icon: GraduationCap, email: "prof.martin@queenmary.cm", tone: "bg-secondary text-secondary-foreground" },
+  { key: "parent", label: "Parent", icon: UsersIcon, email: "parent.ekane@gmail.com", tone: "bg-success text-success-foreground" },
 ];
 
 function redirectFor(role: string) {
@@ -109,8 +111,8 @@ function LoginPage() {
                 type="button"
                 onClick={() => {
                   setEmail(d.email);
-                  setPassword(d.password);
-                  doLogin(d.email, d.password);
+                  setPassword("");
+                  toast.info("Email pré-rempli. Saisissez le mot de passe pour vous connecter.");
                 }}
                 className="flex flex-col items-center gap-1 rounded-md border border-border p-3 text-xs font-medium transition-colors hover:bg-muted"
               >
