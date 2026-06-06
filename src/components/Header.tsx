@@ -131,7 +131,7 @@ export function Header({ title }: { title: string }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link to="/changer-mot-de-passe">
+              <Link to="/mon-profil">
                 <UserIcon className="mr-2 h-4 w-4" /> Mon profil
               </Link>
             </DropdownMenuItem>
