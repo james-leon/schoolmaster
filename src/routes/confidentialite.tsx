@@ -134,7 +134,7 @@ function PrivacyPage() {
 
             <div className="border-t pt-4">
               <Button asChild variant="outline">
-                <Link to="/login"><ArrowLeft className="mr-1.5 h-4 w-4" /> Retour à la connexion</Link>
+                <Link to={backTo}><ArrowLeft className="mr-1.5 h-4 w-4" /> {backLabel}</Link>
               </Button>
             </div>
           </CardContent>
