@@ -45,7 +45,12 @@ function LoginPage() {
     try {
       const u = await login(em, pw);
       toast.success(`Bienvenue, ${u.name} !`);
-      navigate({ to: redirectFor(u.role) });
+      // First-login password change must take absolute priority over role routing.
+      if (u.mustChangePassword) {
+        navigate({ to: "/changer-mot-de-passe", replace: true });
+      } else {
+        navigate({ to: redirectFor(u.role), replace: true });
+      }
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
