@@ -1,3 +1,4 @@
+import * as React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -34,9 +35,59 @@ function NotFoundComponent() {
   );
 }
 
+function isChunkLoadError(error: unknown): boolean {
+  const msg = (error as Error)?.message ?? String(error ?? "");
+  return (
+    /Importing a module script failed/i.test(msg) ||
+    /Failed to fetch dynamically imported module/i.test(msg) ||
+    /Loading chunk \d+ failed/i.test(msg) ||
+    /Loading CSS chunk/i.test(msg) ||
+    /ChunkLoadError/i.test((error as Error)?.name ?? "")
+  );
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const pathname = (typeof window !== "undefined" ? window.location.pathname : "") + "";
+  const lastPathRef = React.useRef(pathname);
+  const reloadedRef = React.useRef(false);
+
+  // Stale-chunk errors (after a new deploy or transient network blip) are
+  // recoverable — reload once instead of flashing the error page.
+  React.useEffect(() => {
+    if (isChunkLoadError(error) && !reloadedRef.current && typeof window !== "undefined") {
+      reloadedRef.current = true;
+      const key = "__chunkReloadAt";
+      const last = Number(sessionStorage.getItem(key) ?? 0);
+      // Avoid reload loops if the chunk is genuinely missing.
+      if (Date.now() - last > 10_000) {
+        sessionStorage.setItem(key, String(Date.now()));
+        window.location.reload();
+      }
+    }
+  }, [error]);
+
+  // Auto-reset the error boundary when the user navigates away — prevents
+  // the previous route's transient error from sticking on the new route.
+  React.useEffect(() => {
+    const unsub = router.subscribe("onResolved", () => {
+      if (window.location.pathname !== lastPathRef.current) {
+        lastPathRef.current = window.location.pathname;
+        router.invalidate();
+        reset();
+      }
+    });
+    return unsub;
+  }, [router, reset]);
+
+  if (isChunkLoadError(error)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
