@@ -43,7 +43,7 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
     }
   }, [user, originalUser, isImpersonating, loading, isAuthenticated, navigate, pathname]);
 
-  if (loading || !user) {
+  if (loading || !user || user.mustChangePassword) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
