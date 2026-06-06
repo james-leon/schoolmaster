@@ -132,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   useEffect(() => {
-    ensureSeed();
+    // Demo seeding is no longer auto-triggered on app boot (security).
     let cancelled = false;
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -171,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<User> => {
-    await ensureSeed().catch(() => {});
+    // Demo seeding is no longer triggered from the client (security).
 
     const withTimeout = <T,>(p: PromiseLike<T>, ms: number, label: string) =>
       Promise.race<T>([
