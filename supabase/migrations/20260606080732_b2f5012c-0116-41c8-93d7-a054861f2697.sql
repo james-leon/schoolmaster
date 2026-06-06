@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "admin insert school" ON public.schools;
