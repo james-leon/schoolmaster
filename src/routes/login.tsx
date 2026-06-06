@@ -111,8 +111,8 @@ function LoginPage() {
                 type="button"
                 onClick={() => {
                   setEmail(d.email);
-                  setPassword(d.password);
-                  doLogin(d.email, d.password);
+                  setPassword("");
+                  toast.info("Email pré-rempli. Saisissez le mot de passe pour vous connecter.");
                 }}
                 className="flex flex-col items-center gap-1 rounded-md border border-border p-3 text-xs font-medium transition-colors hover:bg-muted"
               >
