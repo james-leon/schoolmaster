@@ -84,23 +84,40 @@ function ClassesPage() {
     setToDelete(null);
   };
 
+  const isTeacher = user?.role === "teacher";
+  const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
+
+  // Teachers see only their assigned classes (matched by name or level, mirroring TeacherDashboard).
+  const assigned = user?.assignedClasses ?? [];
+  const visibleClasses = isTeacher
+    ? db.classes.filter((c) => assigned.some((a) => c.name === a || c.level === a))
+    : db.classes;
+
   return (
     <AppLayout title="Classes">
-      <div className="mb-4 flex justify-end gap-2">
-        {user?.role === "school_admin" && (
-          <Button variant="outline" onClick={() => setImportOpen(true)}>
-            <FileUp className="mr-1.5 h-4 w-4" /> Importer
-          </Button>
-        )}
-        <Button onClick={openNew}><Plus className="mr-1.5 h-4 w-4" /> Nouvelle classe</Button>
-      </div>
+      {isAdmin && (
+        <div className="mb-4 flex justify-end gap-2">
+          {user?.role === "school_admin" && (
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <FileUp className="mr-1.5 h-4 w-4" /> Importer
+            </Button>
+          )}
+          <Button onClick={openNew}><Plus className="mr-1.5 h-4 w-4" /> Nouvelle classe</Button>
+        </div>
+      )}
 
       <Card>
         <CardContent className="p-4">
           {!loaded ? (
             <TableSkeleton rows={5} cols={5} />
-          ) : db.classes.length === 0 ? (
-            <EmptyState icon={BookOpen} title="Aucune classe" description="Créez votre première classe." actionLabel="Nouvelle classe" onAction={openNew} />
+          ) : visibleClasses.length === 0 ? (
+            <EmptyState
+              icon={BookOpen}
+              title={isTeacher ? "Aucune classe assignée" : "Aucune classe"}
+              description={isTeacher ? "Vous n'êtes pas encore assigné à une classe." : "Créez votre première classe."}
+              actionLabel={isAdmin ? "Nouvelle classe" : undefined}
+              onAction={isAdmin ? openNew : undefined}
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -109,12 +126,12 @@ function ClassesPage() {
                   <TableHead>Niveau</TableHead>
                   <TableHead>Enseignant</TableHead>
                   <TableHead>Effectif / Capacité</TableHead>
-                  <TableHead>Frais</TableHead>
+                  {isAdmin && <TableHead>Frais</TableHead>}
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {db.classes.map((c) => {
+                {visibleClasses.map((c) => {
                   const count = db.students.filter((s) => s.classId === c.id).length;
                   const teacher = db.teachers.find((t) => t.id === c.teacherId);
                   return (
@@ -123,11 +140,16 @@ function ClassesPage() {
                       <TableCell><Badge variant="outline">{c.level}</Badge></TableCell>
                       <TableCell>{teacher ? `${teacher.firstName} ${teacher.lastName}` : "—"}</TableCell>
                       <TableCell className="text-muted-foreground"><Users className="mr-1 inline h-4 w-4" />{count} / {c.capacity}</TableCell>
-                      <TableCell className="font-semibold">{fcfa(c.fees)}</TableCell>
+                      {isAdmin && <TableCell className="font-semibold">{fcfa(c.fees)}</TableCell>}
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => setSubjectsFor(c)} aria-label="Matières"><BookOpen className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => setToDelete(c)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        {isAdmin && (
+                          <>
+                            <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => setToDelete(c)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          </>
+                        )}
+
                       </TableCell>
                     </TableRow>
                   );
