@@ -27,6 +27,7 @@ import { CredentialsModal, type CredentialsInfo } from "@/components/Credentials
 import { useAuth } from "@/lib/auth";
 import { usePlan } from "@/lib/usePlan";
 import { UpgradeModal } from "@/components/UpgradePrompt";
+import { ParentsListView } from "@/components/ParentsListView";
 
 type ParentForm = {
   parentName: string; parentPhone: string; parentEmail: string;
@@ -937,5 +938,4 @@ function Field({ label, error, children }: { label: string; error?: string; chil
   );
 }
 
-import { ParentsListView } from "@/components/ParentsListView";
 
