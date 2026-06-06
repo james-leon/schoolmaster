@@ -15,6 +15,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ScolariteRouteImport } from './routes/scolarite'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PresencesRouteImport } from './routes/presences'
+import { Route as ParentsRouteImport } from './routes/parents'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as NotesRouteImport } from './routes/notes'
@@ -64,6 +65,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const PresencesRoute = PresencesRouteImport.update({
   id: '/presences',
   path: '/presences',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentsRoute = ParentsRouteImport.update({
+  id: '/parents',
+  path: '/parents',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ParentRoute = ParentRouteImport.update({
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/notes': typeof NotesRoute
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
+  '/parents': typeof ParentsRoute
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
@@ -211,6 +218,7 @@ export interface FileRoutesByTo {
   '/notes': typeof NotesRoute
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
+  '/parents': typeof ParentsRoute
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
@@ -240,6 +248,7 @@ export interface FileRoutesById {
   '/notes': typeof NotesRoute
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
+  '/parents': typeof ParentsRoute
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
@@ -270,6 +279,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/parametres'
     | '/parent'
+    | '/parents'
     | '/presences'
     | '/register'
     | '/scolarite'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/parametres'
     | '/parent'
+    | '/parents'
     | '/presences'
     | '/register'
     | '/scolarite'
@@ -326,6 +337,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/parametres'
     | '/parent'
+    | '/parents'
     | '/presences'
     | '/register'
     | '/scolarite'
@@ -355,6 +367,7 @@ export interface RootRouteChildren {
   NotesRoute: typeof NotesRoute
   ParametresRoute: typeof ParametresRoute
   ParentRoute: typeof ParentRoute
+  ParentsRoute: typeof ParentsRoute
   PresencesRoute: typeof PresencesRoute
   RegisterRoute: typeof RegisterRoute
   ScolariteRoute: typeof ScolariteRoute
@@ -409,6 +422,13 @@ declare module '@tanstack/react-router' {
       path: '/presences'
       fullPath: '/presences'
       preLoaderRoute: typeof PresencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parents': {
+      id: '/parents'
+      path: '/parents'
+      fullPath: '/parents'
+      preLoaderRoute: typeof ParentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/parent': {
@@ -581,6 +601,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotesRoute: NotesRoute,
   ParametresRoute: ParametresRoute,
   ParentRoute: ParentRoute,
+  ParentsRoute: ParentsRoute,
   PresencesRoute: PresencesRoute,
   RegisterRoute: RegisterRoute,
   ScolariteRoute: ScolariteRoute,
@@ -595,3 +616,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
