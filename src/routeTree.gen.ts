@@ -21,7 +21,6 @@ import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as MonProfilRouteImport } from './routes/mon-profil'
 import { Route as MonAbonnementRouteImport } from './routes/mon-abonnement'
-import { Route as MonProfilRouteImport } from './routes/mon-profil'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as EnseignantsRouteImport } from './routes/enseignants'
@@ -97,6 +96,11 @@ const MonProfilRoute = MonProfilRouteImport.update({
 const MonAbonnementRoute = MonAbonnementRouteImport.update({
   id: '/mon-abonnement',
   path: '/mon-abonnement',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonProfilRoute = MonProfilRouteImport.update({
+  id: '/mon-profil',
+  path: '/mon-profil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
