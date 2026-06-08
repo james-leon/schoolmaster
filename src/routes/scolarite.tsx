@@ -736,6 +736,7 @@ function HistoryTab({ loaded }: { loaded: boolean }) {
   const invMap = useMemo(() => Object.fromEntries(db.payments.map((p) => [p.id, p])), [db.payments]);
 
   const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return db.paymentRecords
       .filter((r) => {
         if (from && r.date < from) return false;
@@ -743,10 +744,15 @@ function HistoryTab({ loaded }: { loaded: boolean }) {
         if (modeFilter !== "all" && r.mode !== modeFilter) return false;
         const s = studentMap[r.studentId];
         if (classFilter !== "all" && s?.classId !== classFilter) return false;
+        if (q) {
+          const name = s ? `${s.firstName} ${s.lastName}`.toLowerCase() : "";
+          const rec = (r.receiptNumber || "").toLowerCase();
+          if (!name.includes(q) && !rec.includes(q)) return false;
+        }
         return true;
       })
       .sort((a, b) => b.date.localeCompare(a.date));
-  }, [db.paymentRecords, studentMap, from, to, classFilter, modeFilter]);
+  }, [db.paymentRecords, studentMap, search, from, to, classFilter, modeFilter]);
 
   const exportCSV = () => {
     const headers = ["Date", "Reçu", "Élève", "Classe", "Type", "Mode", "Référence", "Montant"];
