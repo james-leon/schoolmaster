@@ -785,24 +785,40 @@ function HistoryTab({ loaded }: { loaded: boolean }) {
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap gap-2">
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="md:w-40" />
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="md:w-40" />
-            <Select value={classFilter} onValueChange={setClassFilter}>
-              <SelectTrigger className="md:w-40"><SelectValue placeholder="Classe" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toutes classes</SelectItem>
-                {db.classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={modeFilter} onValueChange={setModeFilter}>
-              <SelectTrigger className="md:w-44"><SelectValue placeholder="Mode" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous modes</SelectItem>
-                {PAYMENT_MODES.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-              </SelectContent>
-            </Select>
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:flex md:flex-wrap md:items-end">
+            <div className="flex flex-col gap-1 md:w-64">
+              <Label htmlFor="hist-search" className="text-xs">Rechercher</Label>
+              <Input id="hist-search" placeholder="Rechercher un élève ou un reçu..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1 md:w-40">
+              <Label htmlFor="hist-from" className="text-xs">Du</Label>
+              <Input id="hist-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1 md:w-40">
+              <Label htmlFor="hist-to" className="text-xs">Au</Label>
+              <Input id="hist-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1 md:w-40">
+              <Label className="text-xs">Classe</Label>
+              <Select value={classFilter} onValueChange={setClassFilter}>
+                <SelectTrigger><SelectValue placeholder="Classe" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes classes</SelectItem>
+                  {db.classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1 md:w-44">
+              <Label className="text-xs">Mode de paiement</Label>
+              <Select value={modeFilter} onValueChange={setModeFilter}>
+                <SelectTrigger><SelectValue placeholder="Mode" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous modes</SelectItem>
+                  {PAYMENT_MODES.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <Button variant="outline" onClick={exportCSV}><Download className="mr-1.5 h-4 w-4" /> Exporter CSV</Button>
         </div>
