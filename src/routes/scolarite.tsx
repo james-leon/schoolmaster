@@ -724,6 +724,7 @@ function printReceipt() {
 
 function HistoryTab({ loaded }: { loaded: boolean }) {
   const db = useDB();
+  const [search, setSearch] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [classFilter, setClassFilter] = useState("all");
