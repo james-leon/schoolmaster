@@ -831,12 +831,49 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
       </div>
 
       <div className="mt-3 text-sm">
-        <p className="font-semibold">Appréciation du directeur :</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-semibold">Appréciation du directeur :</p>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="no-print h-7 px-2 text-xs"
+            disabled={aiLoading}
+            onClick={async () => {
+              setAiLoading(true);
+              try {
+                const res = await callAi({
+                  data: {
+                    firstName: student.firstName,
+                    classLevel: cls.level,
+                    term,
+                    generalAverage: gen,
+                    rank: rank > 0 ? rank : null,
+                    totalStudents,
+                    subjects: rowsData.map((r) => ({ name: r.sub.name, average: r.moy ?? null })),
+                    absences,
+                    retards,
+                  },
+                });
+                onChangeAppreciation(res.text);
+                toast.success("Appréciation générée");
+              } catch (e: unknown) {
+                const msg = e instanceof Error ? e.message : "Échec de la génération IA";
+                toast.error(msg || "Échec IA — saisie manuelle possible");
+              } finally {
+                setAiLoading(false);
+              }
+            }}
+          >
+            {aiLoading ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : (appreciation ? <RefreshCw className="mr-1 h-3 w-3" /> : <Sparkles className="mr-1 h-3 w-3" />)}
+            {appreciation ? "Régénérer (IA)" : "Générer l'appréciation (IA)"}
+          </Button>
+        </div>
         <textarea
           className="mt-1 w-full rounded border border-gray-300 p-2 text-sm"
-          rows={2}
+          rows={3}
           value={appreciation}
-          onChange={(e) => setAppreciation(e.target.value)}
+          onChange={(e) => onChangeAppreciation(e.target.value)}
           placeholder="Saisir une appréciation avant impression…"
         />
       </div>
