@@ -308,6 +308,75 @@ export type Database = {
           },
         ]
       }
+      events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          end_time: string | null
+          id: string
+          location: string | null
+          school_id: string
+          start_date: string
+          start_time: string | null
+          target: string
+          target_class_id: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          id?: string
+          location?: string | null
+          school_id: string
+          start_date: string
+          start_time?: string | null
+          target?: string
+          target_class_id?: string | null
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          id?: string
+          location?: string | null
+          school_id?: string
+          start_date?: string
+          start_time?: string | null
+          target?: string
+          target_class_id?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_target_class_id_fkey"
+            columns: ["target_class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fee_types: {
         Row: {
           amount: number
