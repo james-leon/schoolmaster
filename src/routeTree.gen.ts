@@ -18,6 +18,7 @@ import { Route as PresencesRouteImport } from './routes/presences'
 import { Route as ParentsRouteImport } from './routes/parents'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as ParametresRouteImport } from './routes/parametres'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as MonProfilRouteImport } from './routes/mon-profil'
 import { Route as MonAbonnementRouteImport } from './routes/mon-abonnement'
@@ -81,6 +82,11 @@ const ParentRoute = ParentRouteImport.update({
 const ParametresRoute = ParametresRouteImport.update({
   id: '/parametres',
   path: '/parametres',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotesRoute = NotesRouteImport.update({
@@ -194,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/mon-abonnement': typeof MonAbonnementRoute
   '/mon-profil': typeof MonProfilRoute
   '/notes': typeof NotesRoute
+  '/notifications': typeof NotificationsRoute
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
   '/parents': typeof ParentsRoute
@@ -224,6 +231,7 @@ export interface FileRoutesByTo {
   '/mon-abonnement': typeof MonAbonnementRoute
   '/mon-profil': typeof MonProfilRoute
   '/notes': typeof NotesRoute
+  '/notifications': typeof NotificationsRoute
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
   '/parents': typeof ParentsRoute
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/mon-abonnement': typeof MonAbonnementRoute
   '/mon-profil': typeof MonProfilRoute
   '/notes': typeof NotesRoute
+  '/notifications': typeof NotificationsRoute
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
   '/parents': typeof ParentsRoute
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/mon-abonnement'
     | '/mon-profil'
     | '/notes'
+    | '/notifications'
     | '/parametres'
     | '/parent'
     | '/parents'
@@ -317,6 +327,7 @@ export interface FileRouteTypes {
     | '/mon-abonnement'
     | '/mon-profil'
     | '/notes'
+    | '/notifications'
     | '/parametres'
     | '/parent'
     | '/parents'
@@ -347,6 +358,7 @@ export interface FileRouteTypes {
     | '/mon-abonnement'
     | '/mon-profil'
     | '/notes'
+    | '/notifications'
     | '/parametres'
     | '/parent'
     | '/parents'
@@ -378,6 +390,7 @@ export interface RootRouteChildren {
   MonAbonnementRoute: typeof MonAbonnementRoute
   MonProfilRoute: typeof MonProfilRoute
   NotesRoute: typeof NotesRoute
+  NotificationsRoute: typeof NotificationsRoute
   ParametresRoute: typeof ParametresRoute
   ParentRoute: typeof ParentRoute
   ParentsRoute: typeof ParentsRoute
@@ -456,6 +469,13 @@ declare module '@tanstack/react-router' {
       path: '/parametres'
       fullPath: '/parametres'
       preLoaderRoute: typeof ParametresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notes': {
@@ -620,6 +640,7 @@ const rootRouteChildren: RootRouteChildren = {
   MonAbonnementRoute: MonAbonnementRoute,
   MonProfilRoute: MonProfilRoute,
   NotesRoute: NotesRoute,
+  NotificationsRoute: NotificationsRoute,
   ParametresRoute: ParametresRoute,
   ParentRoute: ParentRoute,
   ParentsRoute: ParentsRoute,

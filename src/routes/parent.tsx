@@ -12,6 +12,7 @@ import { fcfa } from "@/lib/format";
 import { gradeValue, appreciationFor, deriveInvoiceStatus, type Grade, type Payment, type Student, type Classe } from "@/lib/types";
 import { Logo } from "@/components/Logo";
 import { useParentChildren, type ParentChild } from "@/lib/useParentChildren";
+import { useNotifications } from "@/lib/notifications";
 import {
   Bell, Calendar, GraduationCap, UserCircle, LogOut, Wallet, MessageSquare,
   CheckCircle2, Inbox, BookOpen, Users2,
@@ -90,9 +91,12 @@ function ParentPortal() {
               <p className="text-sm font-medium">Bienvenue, {user?.name}</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => { logout(); navigate({ to: "/login" }); }} aria-label="Déconnexion">
-            <LogOut className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <ParentNotificationBell />
+            <Button variant="ghost" size="icon" onClick={() => { logout(); navigate({ to: "/login" }); }} aria-label="Déconnexion">
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
         {hasMultiple && tab !== "tous" && (
           <ChildSelector
@@ -589,3 +593,26 @@ function MessagesTab({ announcements, classIds, userId, schoolId }: { announceme
     </div>
   );
 }
+
+function ParentNotificationBell() {
+  const navigate = useNavigate();
+  const { unreadCount } = useNotifications();
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="relative"
+      aria-label="Notifications"
+      onClick={() => navigate({ to: "/notifications" })}
+    >
+      <Bell className="h-5 w-5" />
+      {unreadCount > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+          {unreadCount > 9 ? "9+" : unreadCount}
+        </span>
+      )}
+    </Button>
+  );
+}
+
+
