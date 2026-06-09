@@ -32,7 +32,7 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
       navigate({ to: "/changer-mot-de-passe", replace: true });
       return;
     }
-    if (user.role === "parent") {
+    if (user.role === "parent" && pathname !== "/notifications" && pathname !== "/mon-profil" && pathname !== "/changer-mot-de-passe") {
       navigate({ to: "/parent", replace: true });
       return;
     }
