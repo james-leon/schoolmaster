@@ -31,6 +31,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as ClassesRouteImport } from './routes/classes'
 import { Route as ChangerMotDePasseRouteImport } from './routes/changer-mot-de-passe'
+import { Route as CalendrierRouteImport } from './routes/calendrier'
 import { Route as AnnoncesRouteImport } from './routes/annonces'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ElevesStudentIdRouteImport } from './routes/eleves.$studentId'
@@ -149,6 +150,11 @@ const ChangerMotDePasseRoute = ChangerMotDePasseRouteImport.update({
   path: '/changer-mot-de-passe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CalendrierRoute = CalendrierRouteImport.update({
+  id: '/calendrier',
+  path: '/calendrier',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnnoncesRoute = AnnoncesRouteImport.update({
   id: '/annonces',
   path: '/annonces',
@@ -188,6 +194,7 @@ const ApiPublicAdminUsersRoute = ApiPublicAdminUsersRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/annonces': typeof AnnoncesRoute
+  '/calendrier': typeof CalendrierRoute
   '/changer-mot-de-passe': typeof ChangerMotDePasseRoute
   '/classes': typeof ClassesRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -219,6 +226,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/annonces': typeof AnnoncesRoute
+  '/calendrier': typeof CalendrierRoute
   '/changer-mot-de-passe': typeof ChangerMotDePasseRoute
   '/classes': typeof ClassesRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -251,6 +259,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/annonces': typeof AnnoncesRoute
+  '/calendrier': typeof CalendrierRoute
   '/changer-mot-de-passe': typeof ChangerMotDePasseRoute
   '/classes': typeof ClassesRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/annonces'
+    | '/calendrier'
     | '/changer-mot-de-passe'
     | '/classes'
     | '/confidentialite'
@@ -315,6 +325,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/annonces'
+    | '/calendrier'
     | '/changer-mot-de-passe'
     | '/classes'
     | '/confidentialite'
@@ -346,6 +357,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/annonces'
+    | '/calendrier'
     | '/changer-mot-de-passe'
     | '/classes'
     | '/confidentialite'
@@ -378,6 +390,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnnoncesRoute: typeof AnnoncesRoute
+  CalendrierRoute: typeof CalendrierRoute
   ChangerMotDePasseRoute: typeof ChangerMotDePasseRoute
   ClassesRoute: typeof ClassesRoute
   ConfidentialiteRoute: typeof ConfidentialiteRoute
@@ -562,6 +575,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChangerMotDePasseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/calendrier': {
+      id: '/calendrier'
+      path: '/calendrier'
+      fullPath: '/calendrier'
+      preLoaderRoute: typeof CalendrierRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/annonces': {
       id: '/annonces'
       path: '/annonces'
@@ -628,6 +648,7 @@ const ElevesRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnnoncesRoute: AnnoncesRoute,
+  CalendrierRoute: CalendrierRoute,
   ChangerMotDePasseRoute: ChangerMotDePasseRoute,
   ClassesRoute: ClassesRoute,
   ConfidentialiteRoute: ConfidentialiteRoute,
