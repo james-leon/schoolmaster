@@ -43,6 +43,10 @@ function StudentDetailPage() {
   const grades = useMemo(() => db.grades.filter((g) => g.studentId === studentId), [db.grades, studentId]);
   const payments = useMemo(() => db.payments.filter((p) => p.studentId === studentId), [db.payments, studentId]);
   const attendance = useMemo(() => db.attendance.filter((a) => a.studentId === studentId), [db.attendance, studentId]);
+  const { data: medical } = useMedicalInfo(studentId);
+  const hasMedicalAlert = !!(medical.allergies?.trim() || medical.chronic_conditions?.trim());
+  const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
+  const canAddDiscipline = isAdmin || user?.role === "teacher";
 
   if (!student) {
     return (
