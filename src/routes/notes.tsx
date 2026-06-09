@@ -723,7 +723,22 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
   const cls = db.classes.find((c) => c.id === classId);
   const school = db.schools[0];
   const subjects = db.classSubjects.filter((s) => s.classId === classId);
-  const [appreciation, setAppreciation] = useState("");
+  const key = appreciationKey(studentId, term);
+  const [appreciation, setAppreciation] = useState<string>(() => loadAppreciations()[key] ?? "");
+  const [aiLoading, setAiLoading] = useState(false);
+  const callAi = useServerFn(generateAppreciation);
+
+  useEffect(() => {
+    setAppreciation(loadAppreciations()[key] ?? "");
+    const onUpdate = () => setAppreciation(loadAppreciations()[key] ?? "");
+    window.addEventListener("appreciations:updated", onUpdate);
+    return () => window.removeEventListener("appreciations:updated", onUpdate);
+  }, [key]);
+
+  const onChangeAppreciation = (v: string) => {
+    setAppreciation(v);
+    saveAppreciation(key, v);
+  };
 
   if (!student || !cls) return null;
 
