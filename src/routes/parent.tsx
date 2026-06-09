@@ -45,10 +45,12 @@ function ParentPortal() {
 
   const TABS: { key: TabKey; label: string; icon: typeof UserCircle }[] = [
     ...(hasMultiple ? [{ key: "tous" as TabKey, label: "Tous", icon: Users2 }] : []),
-    { key: "enfant", label: "Mon Enfant", icon: UserCircle },
+    { key: "enfant", label: "Enfant", icon: UserCircle },
     { key: "notes", label: "Notes", icon: GraduationCap },
     { key: "presences", label: "Présences", icon: Calendar },
     { key: "paiements", label: "Paiements", icon: Wallet },
+    { key: "medical", label: "Médical", icon: HeartPulse },
+    { key: "suivi", label: "Suivi", icon: ShieldAlert },
     { key: "messages", label: "Messages", icon: MessageSquare },
   ];
 
