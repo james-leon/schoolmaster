@@ -72,7 +72,9 @@ function NotificationsPage() {
 
   const handleClick = async (n: Notification) => {
     if (!n.read) await markAsRead(n.id);
-    if (n.link) navigate({ to: n.link });
+    if (n.link && typeof n.link === "string" && n.link.startsWith("/")) {
+      try { await navigate({ to: n.link }); } catch { /* invalid link — stay */ }
+    }
   };
 
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
