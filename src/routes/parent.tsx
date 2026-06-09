@@ -595,7 +595,7 @@ function MessagesTab({ announcements, classIds, userId, schoolId }: { announceme
 
 function ParentNotificationBell() {
   const navigate = useNavigate();
-  const { unreadCount } = useParentNotifs();
+  const { unreadCount } = useNotifications();
   return (
     <Button
       variant="ghost"
@@ -614,8 +614,4 @@ function ParentNotificationBell() {
   );
 }
 
-function useParentNotifs() {
-  const { unreadCount } = useNotificationsHook();
-  return { unreadCount };
-}
 
