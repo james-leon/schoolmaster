@@ -1,10 +1,9 @@
-import { Bell, Moon, Sun, User as UserIcon, LogOut, Megaphone, Settings, CreditCard, Shield } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Bell, Moon, Sun, User as UserIcon, LogOut, Settings, CreditCard, Shield, Megaphone, AlertCircle, Calendar, Check, Trash2 } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
-import { useDB } from "@/lib/store";
 import { ROLE_LABELS } from "@/lib/format";
-import { visibleAnnouncements, formatDateFr, useUnreadCount, markAllSeen } from "@/lib/announcements";
+import { useNotifications, timeAgoFr, type Notification } from "@/lib/notifications";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +16,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 
 const ROLE_BADGE: Record<string, string> = {
   school_admin: "bg-primary text-primary-foreground",
@@ -25,15 +25,28 @@ const ROLE_BADGE: Record<string, string> = {
   parent: "bg-success text-success-foreground",
 };
 
+function typeIcon(type: string) {
+  if (type === "absence") return AlertCircle;
+  if (type === "payment") return CreditCard;
+  if (type === "announcement") return Megaphone;
+  if (type === "meeting") return Calendar;
+  return Bell;
+}
+
+function typeIconColor(type: string) {
+  if (type === "absence") return "text-destructive";
+  if (type === "payment") return "text-success";
+  if (type === "announcement") return "text-primary";
+  if (type === "meeting") return "text-accent";
+  return "text-muted-foreground";
+}
+
 export function Header({ title }: { title: string }) {
   const { theme, toggle } = useTheme();
   const { user, logout } = useAuth();
-  const db = useDB();
-  const announcements = visibleAnnouncements(db.announcements, user?.role);
-  const unread = useUnreadCount(announcements);
-  const recent = announcements.slice(0, 5);
-
-  const annoncesHref = user?.role === "parent" ? "/parent" : "/annonces";
+  const navigate = useNavigate();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const recent = notifications.slice(0, 6);
 
   const initials = user?.name
     .split(" ")
@@ -41,6 +54,11 @@ export function Header({ title }: { title: string }) {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+
+  const handleClick = async (n: Notification) => {
+    if (!n.read) await markAsRead(n.id);
+    if (n.link) navigate({ to: n.link });
+  };
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-card px-4 md:px-6">
@@ -62,43 +80,59 @@ export function Header({ title }: { title: string }) {
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
 
-        <DropdownMenu onOpenChange={(open) => { if (open) markAllSeen(); }}>
+        <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
               <Bell className="h-5 w-5" />
-              {unread > 0 && (
+              {unreadCount > 0 && (
                 <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                  {unread > 9 ? "9+" : unread}
+                  {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel className="flex items-center gap-2">
-              <Megaphone className="h-4 w-4" /> Annonces récentes
+          <DropdownMenuContent align="end" className="w-96">
+            <DropdownMenuLabel className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2"><Bell className="h-4 w-4" /> Notifications</span>
+              {unreadCount > 0 && (
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={(e) => { e.preventDefault(); markAllAsRead(); }}>
+                  <Check className="mr-1 h-3 w-3" /> Tout marquer
+                </Button>
+              )}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {recent.length === 0 && (
-              <div className="px-2 py-6 text-center text-sm text-muted-foreground">
-                Aucune annonce pour le moment
+              <div className="px-2 py-8 text-center text-sm text-muted-foreground">
+                Aucune notification
               </div>
             )}
-            {recent.map((a) => (
-              <DropdownMenuItem key={a.id} asChild className="flex flex-col items-start gap-0.5 whitespace-normal">
-                <Link to={annoncesHref}>
-                  <div className="flex w-full items-center justify-between gap-2">
-                    <span className="line-clamp-1 font-medium">{a.title}</span>
-                    <Badge variant="outline" className="text-[10px]">{a.audience}</Badge>
+            {recent.map((n) => {
+              const Icon = typeIcon(n.type);
+              return (
+                <DropdownMenuItem
+                  key={n.id}
+                  onSelect={(e) => { e.preventDefault(); handleClick(n); }}
+                  className={cn(
+                    "flex cursor-pointer items-start gap-3 whitespace-normal py-2.5",
+                    !n.read && "bg-primary/5",
+                  )}
+                >
+                  <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", typeIconColor(n.type))} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={cn("line-clamp-1 text-sm", !n.read && "font-semibold")}>{n.title}</span>
+                      {!n.read && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
+                    </div>
+                    <p className="line-clamp-2 text-xs text-muted-foreground">{n.message}</p>
+                    <span className="text-[10px] text-muted-foreground">{timeAgoFr(n.created_at)}</span>
                   </div>
-                  <span className="line-clamp-2 text-xs text-muted-foreground">{a.content}</span>
-                  <span className="text-[10px] text-muted-foreground">{formatDateFr(a.createdAt)}</span>
-                </Link>
-              </DropdownMenuItem>
-            ))}
+                </DropdownMenuItem>
+              );
+            })}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link to={annoncesHref} className="justify-center text-sm font-medium text-primary">
-                Voir toutes les annonces
+              <Link to="/notifications" className="justify-center text-sm font-medium text-primary">
+                Voir toutes les notifications
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
