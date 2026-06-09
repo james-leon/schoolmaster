@@ -15,15 +15,17 @@ import { useParentChildren, type ParentChild } from "@/lib/useParentChildren";
 import { useNotifications } from "@/lib/notifications";
 import {
   Bell, Calendar, GraduationCap, UserCircle, LogOut, Wallet, MessageSquare,
-  CheckCircle2, Inbox, BookOpen, Users2,
+  CheckCircle2, Inbox, BookOpen, Users2, HeartPulse, ShieldAlert,
 } from "lucide-react";
+import { MedicalTab } from "@/components/MedicalTab";
+import { DisciplineTab } from "@/components/DisciplineTab";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/parent")({
   component: ParentPortal,
 });
 
-type TabKey = "tous" | "enfant" | "notes" | "presences" | "paiements" | "messages";
+type TabKey = "tous" | "enfant" | "notes" | "presences" | "paiements" | "medical" | "suivi" | "messages";
 
 function ParentPortal() {
   const { user, loading, isAuthenticated, logout } = useAuth();
@@ -43,10 +45,12 @@ function ParentPortal() {
 
   const TABS: { key: TabKey; label: string; icon: typeof UserCircle }[] = [
     ...(hasMultiple ? [{ key: "tous" as TabKey, label: "Tous", icon: Users2 }] : []),
-    { key: "enfant", label: "Mon Enfant", icon: UserCircle },
+    { key: "enfant", label: "Enfant", icon: UserCircle },
     { key: "notes", label: "Notes", icon: GraduationCap },
     { key: "presences", label: "Présences", icon: Calendar },
     { key: "paiements", label: "Paiements", icon: Wallet },
+    { key: "medical", label: "Médical", icon: HeartPulse },
+    { key: "suivi", label: "Suivi", icon: ShieldAlert },
     { key: "messages", label: "Messages", icon: MessageSquare },
   ];
 
@@ -124,6 +128,8 @@ function ParentPortal() {
             {tab === "notes" && <NotesTab studentId={student.id} grades={db.grades} classSubjects={db.classSubjects.filter((s) => s.classId === student.classId)} />}
             {tab === "presences" && <PresencesTab studentId={student.id} attendance={db.attendance} />}
             {tab === "paiements" && <PaiementsTab studentId={student.id} payments={db.payments} />}
+            {tab === "medical" && <MedicalTab studentId={student.id} canEdit={false} />}
+            {tab === "suivi" && <DisciplineTab studentId={student.id} schoolId={user?.schoolId} canAdd={false} readOnly />}
             {tab === "messages" && <MessagesTab announcements={db.announcements} classIds={children.map((c) => c.classId).filter((id): id is string => !!id)} userId={user?.id} schoolId={user?.schoolId} />}
           </>
         ) : null}

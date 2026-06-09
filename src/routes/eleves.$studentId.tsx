@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Download, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Download, ShieldCheck, AlertTriangle } from "lucide-react";
 import { fcfa } from "@/lib/format";
 import { TERMS, gradeValue, type StudentStatus, type Grade } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { ParentsTuteursTab } from "@/components/ParentsTuteursTab";
+import { MedicalTab } from "@/components/MedicalTab";
+import { DisciplineTab } from "@/components/DisciplineTab";
+import { useMedicalInfo } from "@/lib/student-extras";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/eleves/$studentId")({
@@ -40,6 +43,10 @@ function StudentDetailPage() {
   const grades = useMemo(() => db.grades.filter((g) => g.studentId === studentId), [db.grades, studentId]);
   const payments = useMemo(() => db.payments.filter((p) => p.studentId === studentId), [db.payments, studentId]);
   const attendance = useMemo(() => db.attendance.filter((a) => a.studentId === studentId), [db.attendance, studentId]);
+  const { data: medical } = useMedicalInfo(studentId);
+  const hasMedicalAlert = !!(medical.allergies?.trim() || medical.chronic_conditions?.trim());
+  const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
+  const canAddDiscipline = isAdmin || user?.role === "teacher";
 
   if (!student) {
     return (
@@ -102,6 +109,11 @@ function StudentDetailPage() {
               ) : (
                 <Badge variant="outline" className="border-accent/50 text-accent">Consentement à recueillir</Badge>
               )}
+              {hasMedicalAlert && (
+                <Badge variant="outline" className="border-destructive/40 text-destructive" title={[medical.allergies, medical.chronic_conditions].filter(Boolean).join(" • ")}>
+                  <AlertTriangle className="mr-1 h-3 w-3" /> Alerte médicale
+                </Badge>
+              )}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <Badge variant="secondary">{cls?.name ?? "—"}</Badge>
@@ -143,12 +155,14 @@ function StudentDetailPage() {
       </Card>
 
       <Tabs defaultValue="info">
-        <TabsList>
+        <TabsList className="flex flex-wrap h-auto">
           <TabsTrigger value="info">Informations</TabsTrigger>
           <TabsTrigger value="parents">Parents &amp; Tuteurs</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="paiements">Paiements</TabsTrigger>
           <TabsTrigger value="presences">Présences</TabsTrigger>
+          <TabsTrigger value="medical">Médical</TabsTrigger>
+          <TabsTrigger value="discipline">Discipline &amp; Comportement</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="mt-4">
@@ -237,6 +251,14 @@ function StudentDetailPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="medical" className="mt-4">
+          <MedicalTab studentId={studentId} canEdit={isAdmin} />
+        </TabsContent>
+
+        <TabsContent value="discipline" className="mt-4">
+          <DisciplineTab studentId={studentId} schoolId={user?.schoolId} canAdd={canAddDiscipline} />
         </TabsContent>
       </Tabs>
     </AppLayout>

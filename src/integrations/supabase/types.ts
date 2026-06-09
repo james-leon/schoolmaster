@@ -258,6 +258,56 @@ export type Database = {
           },
         ]
       }
+      discipline_records: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          recorded_by: string | null
+          school_id: string
+          severity: string | null
+          student_id: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          recorded_by?: string | null
+          school_id: string
+          severity?: string | null
+          student_id: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          recorded_by?: string | null
+          school_id?: string
+          severity?: string | null
+          student_id?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discipline_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fee_types: {
         Row: {
           amount: number
@@ -742,55 +792,82 @@ export type Database = {
       }
       students: {
         Row: {
+          allergies: string | null
           birth_date: string | null
           birth_place: string | null
+          blood_group: string | null
+          chronic_conditions: string | null
           class_id: string | null
           consent_date: string | null
           consent_given: boolean
           created_at: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relation: string | null
           enrollment_date: string | null
           first_name: string
           gender: string | null
           id: string
           last_name: string
+          medical_notes: string | null
+          medications: string | null
           photo_url: string | null
           school_id: string
           status: string | null
           student_code: string | null
+          vaccinations: string | null
         }
         Insert: {
+          allergies?: string | null
           birth_date?: string | null
           birth_place?: string | null
+          blood_group?: string | null
+          chronic_conditions?: string | null
           class_id?: string | null
           consent_date?: string | null
           consent_given?: boolean
           created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
           enrollment_date?: string | null
           first_name: string
           gender?: string | null
           id?: string
           last_name: string
+          medical_notes?: string | null
+          medications?: string | null
           photo_url?: string | null
           school_id: string
           status?: string | null
           student_code?: string | null
+          vaccinations?: string | null
         }
         Update: {
+          allergies?: string | null
           birth_date?: string | null
           birth_place?: string | null
+          blood_group?: string | null
+          chronic_conditions?: string | null
           class_id?: string | null
           consent_date?: string | null
           consent_given?: boolean
           created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
           enrollment_date?: string | null
           first_name?: string
           gender?: string | null
           id?: string
           last_name?: string
+          medical_notes?: string | null
+          medications?: string | null
           photo_url?: string | null
           school_id?: string
           status?: string | null
           student_code?: string | null
+          vaccinations?: string | null
         }
         Relationships: [
           {
