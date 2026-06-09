@@ -12,6 +12,7 @@ import { fcfa } from "@/lib/format";
 import { gradeValue, appreciationFor, deriveInvoiceStatus, type Grade, type Payment, type Student, type Classe } from "@/lib/types";
 import { Logo } from "@/components/Logo";
 import { useParentChildren, type ParentChild } from "@/lib/useParentChildren";
+import { useNotifications } from "@/lib/notifications";
 import {
   Bell, Calendar, GraduationCap, UserCircle, LogOut, Wallet, MessageSquare,
   CheckCircle2, Inbox, BookOpen, Users2,
