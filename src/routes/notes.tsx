@@ -717,6 +717,82 @@ function BulletinPrintStyles() {
   );
 }
 
+function BulkGenerateButton({
+  classId,
+  term,
+  subjects,
+  students,
+}: {
+  classId: string;
+  term: string;
+  subjects: { id: string; name: string; coefficient: number }[];
+  students: { id: string; firstName: string }[];
+}) {
+  const db = useDB();
+  const cls = db.classes.find((c) => c.id === classId);
+  const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0, errors: 0 });
+  const callAi = useServerFn(generateAppreciation);
+
+  const run = async () => {
+    if (!students.length || !cls) return;
+    setRunning(true);
+    setProgress({ done: 0, total: students.length, errors: 0 });
+    let errors = 0;
+    for (let i = 0; i < students.length; i++) {
+      const s = students[i];
+      try {
+        const subjData = subjects.map((sub) => ({
+          name: sub.name,
+          average: subjectAverage(db.grades, s.id, sub.name, term, sub.id),
+        }));
+        const gen = weightedAverage(db.grades, s.id, subjects.map((x) => ({ name: x.name, coefficient: x.coefficient })), term);
+        const allRanks = students.map((st) => ({
+          id: st.id,
+          g: weightedAverage(db.grades, st.id, subjects.map((x) => ({ name: x.name, coefficient: x.coefficient })), term),
+        })).sort((a, b) => (b.g ?? -1) - (a.g ?? -1));
+        const rank = allRanks.findIndex((r) => r.id === s.id) + 1;
+        const stAtt = db.attendance.filter((a) => a.studentId === s.id);
+        const res = await callAi({
+          data: {
+            firstName: s.firstName,
+            classLevel: cls.level,
+            term,
+            generalAverage: gen,
+            rank: rank > 0 ? rank : null,
+            totalStudents: students.length,
+            subjects: subjData,
+            absences: stAtt.filter((a) => a.status === "absent").length,
+            retards: stAtt.filter((a) => a.status === "retard").length,
+          },
+        });
+        saveAppreciation(appreciationKey(s.id, term), res.text);
+      } catch (e) {
+        errors++;
+        console.error("[bulk-appreciation]", s.id, e);
+      }
+      setProgress({ done: i + 1, total: students.length, errors });
+      // small delay to avoid burst rate limits
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    setRunning(false);
+    if (errors === 0) toast.success(`${students.length} appréciations générées`);
+    else toast.warning(`${students.length - errors}/${students.length} générées (${errors} échecs)`);
+  };
+
+  return (
+    <Button variant="outline" onClick={run} disabled={running || !students.length}>
+      {running ? (
+        <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> {progress.done}/{progress.total}…</>
+      ) : (
+        <><Sparkles className="mr-1.5 h-4 w-4" /> Générer appréciations (IA)</>
+      )}
+    </Button>
+  );
+}
+
+
+
 function BulletinSheet({ studentId, classId, term }: { studentId: string; classId: string; term: string }) {
   const db = useDB();
   const student = db.students.find((s) => s.id === studentId);
