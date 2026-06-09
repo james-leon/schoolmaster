@@ -574,7 +574,13 @@ function BulletinsTab() {
             <SelectTrigger className="w-48"><SelectValue placeholder="Trimestre" /></SelectTrigger>
             <SelectContent>{TERMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
           </Select>
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex flex-wrap gap-2">
+            <BulkGenerateButton
+              classId={classId}
+              term={term}
+              subjects={subjects}
+              students={students}
+            />
             <Button variant="outline" onClick={printAll} disabled={!students.length}>
               <Printer className="mr-1.5 h-4 w-4" /> Imprimer tous ({students.length})
             </Button>
