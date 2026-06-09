@@ -135,7 +135,7 @@ export const DISCIPLINE_TYPE_LABEL: Record<DisciplineType, string> = {
 
 export function disciplineBadgeClass(t: DisciplineType): string {
   if (t === "incident") return "bg-destructive/15 text-destructive border-destructive/30";
-  if (t === "sanction") return "bg-accent/20 text-accent border-accent/40";
-  if (t === "avertissement") return "bg-warning/15 text-warning border-warning/30";
+  if (t === "sanction") return "bg-accent/25 text-accent-foreground border-accent/50";
+  if (t === "avertissement") return "bg-accent/10 text-accent border-accent/30";
   return "bg-success/15 text-success border-success/30";
 }
