@@ -25,7 +25,7 @@ export const Route = createFileRoute("/parent")({
   component: ParentPortal,
 });
 
-type TabKey = "tous" | "enfant" | "notes" | "presences" | "paiements" | "messages";
+type TabKey = "tous" | "enfant" | "notes" | "presences" | "paiements" | "medical" | "suivi" | "messages";
 
 function ParentPortal() {
   const { user, loading, isAuthenticated, logout } = useAuth();
