@@ -21,10 +21,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { GraduationCap, Save, Download, Printer, FileText, Eye } from "lucide-react";
+import { GraduationCap, Save, Download, Printer, FileText, Eye, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { useServerFn } from "@tanstack/react-start";
+import { generateAppreciation } from "@/lib/ai-appreciation.functions";
+
+const APPRECIATION_KEY = "bulletin_appreciations_v1";
+function loadAppreciations(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(localStorage.getItem(APPRECIATION_KEY) || "{}"); } catch { return {}; }
+}
+function saveAppreciation(key: string, text: string) {
+  if (typeof window === "undefined") return;
+  const all = loadAppreciations();
+  all[key] = text;
+  localStorage.setItem(APPRECIATION_KEY, JSON.stringify(all));
+  window.dispatchEvent(new Event("appreciations:updated"));
+}
+function appreciationKey(studentId: string, term: string) {
+  return `${studentId}::${term}`;
+}
 
 export const Route = createFileRoute("/notes")({ component: NotesPage });
 
@@ -556,7 +574,13 @@ function BulletinsTab() {
             <SelectTrigger className="w-48"><SelectValue placeholder="Trimestre" /></SelectTrigger>
             <SelectContent>{TERMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
           </Select>
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex flex-wrap gap-2">
+            <BulkGenerateButton
+              classId={classId}
+              term={term}
+              subjects={subjects}
+              students={students}
+            />
             <Button variant="outline" onClick={printAll} disabled={!students.length}>
               <Printer className="mr-1.5 h-4 w-4" /> Imprimer tous ({students.length})
             </Button>
@@ -693,13 +717,104 @@ function BulletinPrintStyles() {
   );
 }
 
+function BulkGenerateButton({
+  classId,
+  term,
+  subjects,
+  students,
+}: {
+  classId: string;
+  term: string;
+  subjects: { id: string; name: string; coefficient: number }[];
+  students: { id: string; firstName: string }[];
+}) {
+  const db = useDB();
+  const cls = db.classes.find((c) => c.id === classId);
+  const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0, errors: 0 });
+  const callAi = useServerFn(generateAppreciation);
+
+  const run = async () => {
+    if (!students.length || !cls) return;
+    setRunning(true);
+    setProgress({ done: 0, total: students.length, errors: 0 });
+    let errors = 0;
+    for (let i = 0; i < students.length; i++) {
+      const s = students[i];
+      try {
+        const subjData = subjects.map((sub) => ({
+          name: sub.name,
+          average: subjectAverage(db.grades, s.id, sub.name, term, sub.id),
+        }));
+        const gen = weightedAverage(db.grades, s.id, subjects.map((x) => ({ name: x.name, coefficient: x.coefficient })), term);
+        const allRanks = students.map((st) => ({
+          id: st.id,
+          g: weightedAverage(db.grades, st.id, subjects.map((x) => ({ name: x.name, coefficient: x.coefficient })), term),
+        })).sort((a, b) => (b.g ?? -1) - (a.g ?? -1));
+        const rank = allRanks.findIndex((r) => r.id === s.id) + 1;
+        const stAtt = db.attendance.filter((a) => a.studentId === s.id);
+        const res = await callAi({
+          data: {
+            firstName: s.firstName,
+            classLevel: cls.level,
+            term,
+            generalAverage: gen,
+            rank: rank > 0 ? rank : null,
+            totalStudents: students.length,
+            subjects: subjData,
+            absences: stAtt.filter((a) => a.status === "absent").length,
+            retards: stAtt.filter((a) => a.status === "retard").length,
+          },
+        });
+        saveAppreciation(appreciationKey(s.id, term), res.text);
+      } catch (e) {
+        errors++;
+        console.error("[bulk-appreciation]", s.id, e);
+      }
+      setProgress({ done: i + 1, total: students.length, errors });
+      // small delay to avoid burst rate limits
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    setRunning(false);
+    if (errors === 0) toast.success(`${students.length} appréciations générées`);
+    else toast.warning(`${students.length - errors}/${students.length} générées (${errors} échecs)`);
+  };
+
+  return (
+    <Button variant="outline" onClick={run} disabled={running || !students.length}>
+      {running ? (
+        <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> {progress.done}/{progress.total}…</>
+      ) : (
+        <><Sparkles className="mr-1.5 h-4 w-4" /> Générer appréciations (IA)</>
+      )}
+    </Button>
+  );
+}
+
+
+
 function BulletinSheet({ studentId, classId, term }: { studentId: string; classId: string; term: string }) {
   const db = useDB();
   const student = db.students.find((s) => s.id === studentId);
   const cls = db.classes.find((c) => c.id === classId);
   const school = db.schools[0];
   const subjects = db.classSubjects.filter((s) => s.classId === classId);
-  const [appreciation, setAppreciation] = useState("");
+  const key = appreciationKey(studentId, term);
+  const [appreciation, setAppreciation] = useState<string>(() => loadAppreciations()[key] ?? "");
+  const [aiLoading, setAiLoading] = useState(false);
+  const callAi = useServerFn(generateAppreciation);
+
+  useEffect(() => {
+    setAppreciation(loadAppreciations()[key] ?? "");
+    const onUpdate = () => setAppreciation(loadAppreciations()[key] ?? "");
+    window.addEventListener("appreciations:updated", onUpdate);
+    return () => window.removeEventListener("appreciations:updated", onUpdate);
+  }, [key]);
+
+  const onChangeAppreciation = (v: string) => {
+    setAppreciation(v);
+    saveAppreciation(key, v);
+  };
 
   if (!student || !cls) return null;
 
@@ -792,12 +907,49 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
       </div>
 
       <div className="mt-3 text-sm">
-        <p className="font-semibold">Appréciation du directeur :</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-semibold">Appréciation du directeur :</p>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="no-print h-7 px-2 text-xs"
+            disabled={aiLoading}
+            onClick={async () => {
+              setAiLoading(true);
+              try {
+                const res = await callAi({
+                  data: {
+                    firstName: student.firstName,
+                    classLevel: cls.level,
+                    term,
+                    generalAverage: gen,
+                    rank: rank > 0 ? rank : null,
+                    totalStudents,
+                    subjects: rowsData.map((r) => ({ name: r.sub.name, average: r.moy ?? null })),
+                    absences,
+                    retards,
+                  },
+                });
+                onChangeAppreciation(res.text);
+                toast.success("Appréciation générée");
+              } catch (e: unknown) {
+                const msg = e instanceof Error ? e.message : "Échec de la génération IA";
+                toast.error(msg || "Échec IA — saisie manuelle possible");
+              } finally {
+                setAiLoading(false);
+              }
+            }}
+          >
+            {aiLoading ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : (appreciation ? <RefreshCw className="mr-1 h-3 w-3" /> : <Sparkles className="mr-1 h-3 w-3" />)}
+            {appreciation ? "Régénérer (IA)" : "Générer l'appréciation (IA)"}
+          </Button>
+        </div>
         <textarea
           className="mt-1 w-full rounded border border-gray-300 p-2 text-sm"
-          rows={2}
+          rows={3}
           value={appreciation}
-          onChange={(e) => setAppreciation(e.target.value)}
+          onChange={(e) => onChangeAppreciation(e.target.value)}
           placeholder="Saisir une appréciation avant impression…"
         />
       </div>
