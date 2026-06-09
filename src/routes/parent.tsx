@@ -90,9 +90,12 @@ function ParentPortal() {
               <p className="text-sm font-medium">Bienvenue, {user?.name}</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => { logout(); navigate({ to: "/login" }); }} aria-label="Déconnexion">
-            <LogOut className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <ParentNotificationBell />
+            <Button variant="ghost" size="icon" onClick={() => { logout(); navigate({ to: "/login" }); }} aria-label="Déconnexion">
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
         {hasMultiple && tab !== "tous" && (
           <ChildSelector
