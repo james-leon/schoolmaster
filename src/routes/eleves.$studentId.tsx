@@ -109,6 +109,11 @@ function StudentDetailPage() {
               ) : (
                 <Badge variant="outline" className="border-accent/50 text-accent">Consentement à recueillir</Badge>
               )}
+              {hasMedicalAlert && (
+                <Badge variant="outline" className="border-destructive/40 text-destructive" title={[medical.allergies, medical.chronic_conditions].filter(Boolean).join(" • ")}>
+                  <AlertTriangle className="mr-1 h-3 w-3" /> Alerte médicale
+                </Badge>
+              )}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <Badge variant="secondary">{cls?.name ?? "—"}</Badge>
