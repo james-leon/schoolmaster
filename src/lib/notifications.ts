@@ -37,11 +37,14 @@ export function useNotifications() {
     fetchAll();
   }, [fetchAll]);
 
-  // Realtime subscription
+  // Realtime subscription — unique channel name per hook instance to avoid
+  // "cannot add postgres_changes callbacks after subscribe()" when multiple
+  // components mount the hook (e.g. Header + NotificationsPage).
   useEffect(() => {
     if (!user) return;
+    const channelName = `notifications:${user.id}:${Math.random().toString(36).slice(2)}`;
     const channel = supabase
-      .channel(`notifications:${user.id}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notifications", filter: `recipient_id=eq.${user.id}` },
