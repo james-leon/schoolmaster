@@ -592,3 +592,30 @@ function MessagesTab({ announcements, classIds, userId, schoolId }: { announceme
     </div>
   );
 }
+
+function ParentNotificationBell() {
+  const navigate = useNavigate();
+  const { unreadCount } = useParentNotifs();
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="relative"
+      aria-label="Notifications"
+      onClick={() => navigate({ to: "/notifications" })}
+    >
+      <Bell className="h-5 w-5" />
+      {unreadCount > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+          {unreadCount > 9 ? "9+" : unreadCount}
+        </span>
+      )}
+    </Button>
+  );
+}
+
+function useParentNotifs() {
+  const { unreadCount } = useNotificationsHook();
+  return { unreadCount };
+}
+
