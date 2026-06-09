@@ -155,12 +155,14 @@ function StudentDetailPage() {
       </Card>
 
       <Tabs defaultValue="info">
-        <TabsList>
+        <TabsList className="flex flex-wrap h-auto">
           <TabsTrigger value="info">Informations</TabsTrigger>
           <TabsTrigger value="parents">Parents &amp; Tuteurs</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="paiements">Paiements</TabsTrigger>
           <TabsTrigger value="presences">Présences</TabsTrigger>
+          <TabsTrigger value="medical">Médical</TabsTrigger>
+          <TabsTrigger value="discipline">Discipline &amp; Comportement</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="mt-4">
