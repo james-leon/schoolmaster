@@ -21,10 +21,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { GraduationCap, Save, Download, Printer, FileText, Eye } from "lucide-react";
+import { GraduationCap, Save, Download, Printer, FileText, Eye, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { useServerFn } from "@tanstack/react-start";
+import { generateAppreciation } from "@/lib/ai-appreciation.functions";
+
+const APPRECIATION_KEY = "bulletin_appreciations_v1";
+function loadAppreciations(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(localStorage.getItem(APPRECIATION_KEY) || "{}"); } catch { return {}; }
+}
+function saveAppreciation(key: string, text: string) {
+  if (typeof window === "undefined") return;
+  const all = loadAppreciations();
+  all[key] = text;
+  localStorage.setItem(APPRECIATION_KEY, JSON.stringify(all));
+  window.dispatchEvent(new Event("appreciations:updated"));
+}
+function appreciationKey(studentId: string, term: string) {
+  return `${studentId}::${term}`;
+}
 
 export const Route = createFileRoute("/notes")({ component: NotesPage });
 
