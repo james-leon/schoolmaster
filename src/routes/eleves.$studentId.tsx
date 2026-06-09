@@ -252,6 +252,14 @@ function StudentDetailPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="medical" className="mt-4">
+          <MedicalTab studentId={studentId} canEdit={isAdmin} />
+        </TabsContent>
+
+        <TabsContent value="discipline" className="mt-4">
+          <DisciplineTab studentId={studentId} schoolId={user?.schoolId} canAdd={canAddDiscipline} />
+        </TabsContent>
       </Tabs>
     </AppLayout>
   );
