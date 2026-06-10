@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { usePlan } from "@/lib/usePlan";
 import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
 import { requiredPlanFor } from "@/lib/plans";
+import { supabase } from "@/integrations/supabase/client";
 import { fcfa } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -240,7 +241,7 @@ function ComptabilitePage() {
   if (!planLoading && !hasFeature("accounting") && user?.role !== "super_admin") {
     return (
       <AppLayout title="Comptabilité">
-        <LockedFeatureOverlay requiredPlan={plan} featureLabel="Comptabilité" />
+        <LockedFeatureOverlay requiredPlan={requiredPlanFor("accounting")} featureLabel="Comptabilité" />
       </AppLayout>
     );
   }
