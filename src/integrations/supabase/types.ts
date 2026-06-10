@@ -725,6 +725,82 @@ export type Database = {
         }
         Relationships: []
       }
+      payroll: {
+        Row: {
+          base_salary: number
+          bonuses: number
+          created_at: string
+          deductions: number
+          id: string
+          month: number
+          net_salary: number
+          payment_date: string | null
+          payment_method: string | null
+          school_id: string
+          staff_id: string
+          status: string
+          transaction_id: string | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          base_salary?: number
+          bonuses?: number
+          created_at?: string
+          deductions?: number
+          id?: string
+          month: number
+          net_salary?: number
+          payment_date?: string | null
+          payment_method?: string | null
+          school_id: string
+          staff_id: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          base_salary?: number
+          bonuses?: number
+          created_at?: string
+          deductions?: number
+          id?: string
+          month?: number
+          net_salary?: number
+          payment_date?: string | null
+          payment_method?: string | null
+          school_id?: string
+          staff_id?: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           assigned_classes: string[] | null
@@ -858,6 +934,144 @@ export type Database = {
           trial_ends_at?: string | null
         }
         Relationships: []
+      }
+      staff: {
+        Row: {
+          address: string | null
+          base_salary: number
+          contract_end: string | null
+          contract_start: string | null
+          contract_type: string | null
+          created_at: string
+          date_of_birth: string | null
+          diplomas: string | null
+          email: string | null
+          first_name: string
+          gender: string | null
+          hire_date: string | null
+          id: string
+          last_name: string
+          linked_teacher_id: string | null
+          notes: string | null
+          phone: string | null
+          role_title: string
+          school_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          base_salary?: number
+          contract_end?: string | null
+          contract_start?: string | null
+          contract_type?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          diplomas?: string | null
+          email?: string | null
+          first_name: string
+          gender?: string | null
+          hire_date?: string | null
+          id?: string
+          last_name: string
+          linked_teacher_id?: string | null
+          notes?: string | null
+          phone?: string | null
+          role_title: string
+          school_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          base_salary?: number
+          contract_end?: string | null
+          contract_start?: string | null
+          contract_type?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          diplomas?: string | null
+          email?: string | null
+          first_name?: string
+          gender?: string | null
+          hire_date?: string | null
+          id?: string
+          last_name?: string
+          linked_teacher_id?: string | null
+          notes?: string | null
+          phone?: string | null
+          role_title?: string
+          school_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_linked_teacher_id_fkey"
+            columns: ["linked_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_leave: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          reason: string | null
+          school_id: string
+          staff_id: string
+          start_date: string
+          status: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          reason?: string | null
+          school_id: string
+          staff_id: string
+          start_date: string
+          status?: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          reason?: string | null
+          school_id?: string
+          staff_id?: string
+          start_date?: string
+          status?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_leave_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_leave_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       students: {
         Row: {

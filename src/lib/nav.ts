@@ -1,4 +1,4 @@
-import { BarChart3, Users, UserCheck, BookOpen, CreditCard, GraduationCap, CalendarCheck, Settings, Megaphone, Calendar, CalendarDays, Wallet, type LucideIcon } from "lucide-react";
+import { BarChart3, Users, UserCheck, BookOpen, CreditCard, GraduationCap, CalendarCheck, Settings, Megaphone, Calendar, CalendarDays, Wallet, Briefcase, type LucideIcon } from "lucide-react";
 import type { Role } from "./types";
 import type { FeatureId } from "./plans";
 
@@ -24,6 +24,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/calendrier", label: "Calendrier", icon: CalendarDays, roles: ["super_admin", "school_admin", "teacher", "parent"] },
   { to: "/annonces", label: "Annonces", icon: Megaphone, roles: ["super_admin", "school_admin", "teacher"] },
   { to: "/enseignants", label: "Enseignants", icon: UserCheck, roles: ["super_admin", "school_admin"] },
+  { to: "/personnel", label: "Personnel", icon: Briefcase, roles: ["super_admin", "school_admin"], feature: "accounting" },
   { to: "/parametres", label: "Paramètres", icon: Settings, roles: ["super_admin", "school_admin"] },
 ];
 

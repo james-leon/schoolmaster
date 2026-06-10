@@ -15,6 +15,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ScolariteRouteImport } from './routes/scolarite'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PresencesRouteImport } from './routes/presences'
+import { Route as PersonnelRouteImport } from './routes/personnel'
 import { Route as ParentsRouteImport } from './routes/parents'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as ParametresRouteImport } from './routes/parametres'
@@ -35,6 +36,7 @@ import { Route as ChangerMotDePasseRouteImport } from './routes/changer-mot-de-p
 import { Route as CalendrierRouteImport } from './routes/calendrier'
 import { Route as AnnoncesRouteImport } from './routes/annonces'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PersonnelStaffIdRouteImport } from './routes/personnel.$staffId'
 import { Route as ElevesStudentIdRouteImport } from './routes/eleves.$studentId'
 import { Route as ApiPublicSuperAdminRouteImport } from './routes/api/public/super-admin'
 import { Route as ApiPublicSeedDemoRouteImport } from './routes/api/public/seed-demo'
@@ -69,6 +71,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const PresencesRoute = PresencesRouteImport.update({
   id: '/presences',
   path: '/presences',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonnelRoute = PersonnelRouteImport.update({
+  id: '/personnel',
+  path: '/personnel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ParentsRoute = ParentsRouteImport.update({
@@ -171,6 +178,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PersonnelStaffIdRoute = PersonnelStaffIdRouteImport.update({
+  id: '/$staffId',
+  path: '/$staffId',
+  getParentRoute: () => PersonnelRoute,
+} as any)
 const ElevesStudentIdRoute = ElevesStudentIdRouteImport.update({
   id: '/$studentId',
   path: '/$studentId',
@@ -218,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
   '/parents': typeof ParentsRoute
+  '/personnel': typeof PersonnelRouteWithChildren
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
@@ -225,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/super-admin': typeof SuperAdminRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
+  '/personnel/$staffId': typeof PersonnelStaffIdRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
@@ -251,6 +265,7 @@ export interface FileRoutesByTo {
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
   '/parents': typeof ParentsRoute
+  '/personnel': typeof PersonnelRouteWithChildren
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
@@ -258,6 +273,7 @@ export interface FileRoutesByTo {
   '/super-admin': typeof SuperAdminRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
+  '/personnel/$staffId': typeof PersonnelStaffIdRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
@@ -285,6 +301,7 @@ export interface FileRoutesById {
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
   '/parents': typeof ParentsRoute
+  '/personnel': typeof PersonnelRouteWithChildren
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
@@ -292,6 +309,7 @@ export interface FileRoutesById {
   '/super-admin': typeof SuperAdminRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
+  '/personnel/$staffId': typeof PersonnelStaffIdRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
@@ -320,6 +338,7 @@ export interface FileRouteTypes {
     | '/parametres'
     | '/parent'
     | '/parents'
+    | '/personnel'
     | '/presences'
     | '/register'
     | '/scolarite'
@@ -327,6 +346,7 @@ export interface FileRouteTypes {
     | '/super-admin'
     | '/unauthorized'
     | '/eleves/$studentId'
+    | '/personnel/$staffId'
     | '/api/public/admin-users'
     | '/api/public/register-school'
     | '/api/public/seed-demo'
@@ -353,6 +373,7 @@ export interface FileRouteTypes {
     | '/parametres'
     | '/parent'
     | '/parents'
+    | '/personnel'
     | '/presences'
     | '/register'
     | '/scolarite'
@@ -360,6 +381,7 @@ export interface FileRouteTypes {
     | '/super-admin'
     | '/unauthorized'
     | '/eleves/$studentId'
+    | '/personnel/$staffId'
     | '/api/public/admin-users'
     | '/api/public/register-school'
     | '/api/public/seed-demo'
@@ -386,6 +408,7 @@ export interface FileRouteTypes {
     | '/parametres'
     | '/parent'
     | '/parents'
+    | '/personnel'
     | '/presences'
     | '/register'
     | '/scolarite'
@@ -393,6 +416,7 @@ export interface FileRouteTypes {
     | '/super-admin'
     | '/unauthorized'
     | '/eleves/$studentId'
+    | '/personnel/$staffId'
     | '/api/public/admin-users'
     | '/api/public/register-school'
     | '/api/public/seed-demo'
@@ -420,6 +444,7 @@ export interface RootRouteChildren {
   ParametresRoute: typeof ParametresRoute
   ParentRoute: typeof ParentRoute
   ParentsRoute: typeof ParentsRoute
+  PersonnelRoute: typeof PersonnelRouteWithChildren
   PresencesRoute: typeof PresencesRoute
   RegisterRoute: typeof RegisterRoute
   ScolariteRoute: typeof ScolariteRoute
@@ -474,6 +499,13 @@ declare module '@tanstack/react-router' {
       path: '/presences'
       fullPath: '/presences'
       preLoaderRoute: typeof PresencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/personnel': {
+      id: '/personnel'
+      path: '/personnel'
+      fullPath: '/personnel'
+      preLoaderRoute: typeof PersonnelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/parents': {
@@ -616,6 +648,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/personnel/$staffId': {
+      id: '/personnel/$staffId'
+      path: '/$staffId'
+      fullPath: '/personnel/$staffId'
+      preLoaderRoute: typeof PersonnelStaffIdRouteImport
+      parentRoute: typeof PersonnelRoute
+    }
     '/eleves/$studentId': {
       id: '/eleves/$studentId'
       path: '/$studentId'
@@ -665,6 +704,18 @@ const ElevesRouteChildren: ElevesRouteChildren = {
 const ElevesRouteWithChildren =
   ElevesRoute._addFileChildren(ElevesRouteChildren)
 
+interface PersonnelRouteChildren {
+  PersonnelStaffIdRoute: typeof PersonnelStaffIdRoute
+}
+
+const PersonnelRouteChildren: PersonnelRouteChildren = {
+  PersonnelStaffIdRoute: PersonnelStaffIdRoute,
+}
+
+const PersonnelRouteWithChildren = PersonnelRoute._addFileChildren(
+  PersonnelRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnnoncesRoute: AnnoncesRoute,
@@ -686,6 +737,7 @@ const rootRouteChildren: RootRouteChildren = {
   ParametresRoute: ParametresRoute,
   ParentRoute: ParentRoute,
   ParentsRoute: ParentsRoute,
+  PersonnelRoute: PersonnelRouteWithChildren,
   PresencesRoute: PresencesRoute,
   RegisterRoute: RegisterRoute,
   ScolariteRoute: ScolariteRoute,
