@@ -58,7 +58,7 @@ const COLORS = ["#0ea5e9","#10b981","#f59e0b","#ef4444","#8b5cf6","#ec4899","#14
 
 function ComptabilitePage() {
   const { user } = useAuth();
-  const { hasFeature, plan, loading: planLoading } = usePlan();
+  const { hasFeature, loading: planLoading } = usePlan();
   const schoolId = user?.schoolId;
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
 
