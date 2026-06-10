@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/lib/auth";
 import { usePlan } from "@/lib/usePlan";
-import { UpgradePrompt } from "@/components/UpgradePrompt";
+import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
 import { supabase } from "@/integrations/supabase/client";
 import { fcfa } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
