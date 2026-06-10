@@ -162,7 +162,7 @@ function PersonnelPage() {
   if (planLoading) return <AppLayout title="Personnel"><div className="p-8" /></AppLayout>;
   if (!isAdmin) return <AppLayout title="Personnel"><div className="p-8 text-muted-foreground">Accès réservé à l'administration.</div></AppLayout>;
   if (user?.role !== "super_admin" && !hasFeature("accounting")) {
-    return <AppLayout title="Personnel"><LockedFeatureOverlay feature="accounting" plan={requiredPlanFor("accounting")} /></AppLayout>;
+    return <AppLayout title="Personnel"><LockedFeatureOverlay requiredPlan={requiredPlanFor("accounting")} featureLabel="Personnel" /></AppLayout>;
   }
 
   return (
