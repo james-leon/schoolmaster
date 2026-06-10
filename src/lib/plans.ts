@@ -5,7 +5,7 @@ export type PlanId = "starter" | "pro" | "school+";
 export type FeatureId =
   | "students" | "classes" | "grades" | "bulletins" | "fees" | "payments" | "attendance"
   | "sms" | "parent_portal" | "announcements"
-  | "multi_campus" | "advanced_reports" | "priority_support";
+  | "multi_campus" | "advanced_reports" | "priority_support" | "accounting";
 
 export interface PlanConfig {
   id: PlanId;
@@ -25,7 +25,7 @@ const PRO_FEATURES: FeatureId[] = [
   ...STARTER_FEATURES, "sms", "parent_portal", "announcements",
 ];
 const SCHOOL_PLUS_FEATURES: FeatureId[] = [
-  ...PRO_FEATURES, "multi_campus", "advanced_reports", "priority_support",
+  ...PRO_FEATURES, "multi_campus", "advanced_reports", "priority_support", "accounting",
 ];
 
 export const PLAN_CONFIG: Record<PlanId, PlanConfig> = {
@@ -64,6 +64,7 @@ export const FEATURE_LABELS: Record<FeatureId, string> = {
   sms: "Notifications SMS", parent_portal: "Espace parent",
   announcements: "Annonces", multi_campus: "Multi-campus",
   advanced_reports: "Rapports avancés", priority_support: "Support prioritaire",
+  accounting: "Comptabilité",
 };
 
 export const WINTEK_CONTACT = {
