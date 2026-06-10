@@ -240,7 +240,7 @@ function ComptabilitePage() {
   if (!planLoading && !hasFeature("accounting") && user?.role !== "super_admin") {
     return (
       <AppLayout title="Comptabilité">
-        <UpgradePrompt feature="accounting" currentPlan={plan} />
+        <LockedFeatureOverlay requiredPlan={plan} featureLabel="Comptabilité" />
       </AppLayout>
     );
   }
