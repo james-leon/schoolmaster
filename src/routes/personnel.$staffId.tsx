@@ -117,23 +117,42 @@ function StaffDetailPage() {
   // Payroll
   const now = new Date();
   const [paySlipOpen, setPaySlipOpen] = useState(false);
-  const [payForm, setPayForm] = useState<any>({ month: now.getMonth()+1, year: now.getFullYear(), base_salary: "", bonuses: "0", deductions: "0" });
+  type Line = { label: string; amount: string };
+  const [payForm, setPayForm] = useState<{ month: number; year: number; base_salary: string; primes: Line[]; retenues: Line[] }>({
+    month: now.getMonth() + 1, year: now.getFullYear(), base_salary: "", primes: [], retenues: [],
+  });
   const openCreatePayslip = () => {
-    setPayForm({ month: now.getMonth()+1, year: now.getFullYear(),
-      base_salary: String(staff?.base_salary ?? ""), bonuses: "0", deductions: "0" });
+    setPayForm({ month: now.getMonth() + 1, year: now.getFullYear(),
+      base_salary: String(staff?.base_salary ?? ""), primes: [], retenues: [] });
     setPaySlipOpen(true);
   };
-  const computedNet = useMemo(() => (Number(payForm.base_salary)||0) + (Number(payForm.bonuses)||0) - (Number(payForm.deductions)||0), [payForm]);
+  const totalPrimes = useMemo(() => payForm.primes.reduce((a, l) => a + (Number(l.amount) || 0), 0), [payForm.primes]);
+  const totalRetenues = useMemo(() => payForm.retenues.reduce((a, l) => a + (Number(l.amount) || 0), 0), [payForm.retenues]);
+  const computedNet = useMemo(() => (Number(payForm.base_salary) || 0) + totalPrimes - totalRetenues, [payForm.base_salary, totalPrimes, totalRetenues]);
+  const addLine = (kind: "primes" | "retenues") =>
+    setPayForm(f => ({ ...f, [kind]: [...f[kind], { label: "", amount: "" }] }));
+  const updateLine = (kind: "primes" | "retenues", i: number, patch: Partial<Line>) =>
+    setPayForm(f => ({ ...f, [kind]: f[kind].map((l, idx) => idx === i ? { ...l, ...patch } : l) }));
+  const removeLine = (kind: "primes" | "retenues", i: number) =>
+    setPayForm(f => ({ ...f, [kind]: f[kind].filter((_, idx) => idx !== i) }));
+
   const createPayslip = async () => {
     if (!staff) return;
-    const payload = {
+    const primesClean = payForm.primes.filter(l => Number(l.amount) > 0);
+    const retenuesClean = payForm.retenues.filter(l => Number(l.amount) > 0);
+    const breakdownNotes = [
+      primesClean.length ? "Primes: " + primesClean.map(l => `${l.label || "—"} ${Number(l.amount)}`).join(", ") : "",
+      retenuesClean.length ? "Retenues: " + retenuesClean.map(l => `${l.label || "—"} ${Number(l.amount)}`).join(", ") : "",
+    ].filter(Boolean).join(" | ");
+    const payload: any = {
       school_id: staff.school_id, staff_id: staff.id,
       month: Number(payForm.month), year: Number(payForm.year),
-      base_salary: Number(payForm.base_salary)||0,
-      bonuses: Number(payForm.bonuses)||0,
-      deductions: Number(payForm.deductions)||0,
+      base_salary: Number(payForm.base_salary) || 0,
+      bonuses: totalPrimes,
+      deductions: totalRetenues,
       net_salary: computedNet, status: "en attente",
     };
+    if (breakdownNotes) payload.notes = breakdownNotes;
     const { error } = await sb.from("payroll").insert(payload);
     if (error) { toast.error(error.message.includes("duplicate") ? "Fiche déjà existante pour ce mois" : error.message); return; }
     toast.success("Fiche de paie créée"); setPaySlipOpen(false); fetchAll();
