@@ -372,8 +372,36 @@ function StaffDetailPage() {
               <div><Label>Année</Label><Input type="number" value={payForm.year} onChange={e => setPayForm({ ...payForm, year: Number(e.target.value) })} /></div>
             </div>
             <div><Label>Salaire de base</Label><Input type="number" value={payForm.base_salary} onChange={e => setPayForm({ ...payForm, base_salary: e.target.value })} /></div>
-            <div><Label>Primes</Label><Input type="number" value={payForm.bonuses} onChange={e => setPayForm({ ...payForm, bonuses: e.target.value })} /></div>
-            <div><Label>Retenues</Label><Input type="number" value={payForm.deductions} onChange={e => setPayForm({ ...payForm, deductions: e.target.value })} /></div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Primes (bonuses)</Label>
+                <Button type="button" size="sm" variant="outline" onClick={() => addLine("primes")}><Plus className="mr-1 h-3 w-3" />Ajouter</Button>
+              </div>
+              {payForm.primes.length === 0 && <div className="text-xs text-muted-foreground">Aucune prime</div>}
+              {payForm.primes.map((l, i) => (
+                <div key={i} className="flex gap-2">
+                  <Input placeholder="Libellé (ex: Transport)" value={l.label} onChange={e => updateLine("primes", i, { label: e.target.value })} />
+                  <Input type="number" placeholder="Montant" className="w-32" value={l.amount} onChange={e => updateLine("primes", i, { amount: e.target.value })} />
+                  <Button type="button" size="icon" variant="ghost" onClick={() => removeLine("primes", i)}><X className="h-4 w-4" /></Button>
+                </div>
+              ))}
+              <div className="text-xs text-muted-foreground">Total primes : {fcfa(totalPrimes)}</div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Retenues (deductions)</Label>
+                <Button type="button" size="sm" variant="outline" onClick={() => addLine("retenues")}><Plus className="mr-1 h-3 w-3" />Ajouter</Button>
+              </div>
+              {payForm.retenues.length === 0 && <div className="text-xs text-muted-foreground">Aucune retenue</div>}
+              {payForm.retenues.map((l, i) => (
+                <div key={i} className="flex gap-2">
+                  <Input placeholder="Libellé (ex: Avance)" value={l.label} onChange={e => updateLine("retenues", i, { label: e.target.value })} />
+                  <Input type="number" placeholder="Montant" className="w-32" value={l.amount} onChange={e => updateLine("retenues", i, { amount: e.target.value })} />
+                  <Button type="button" size="icon" variant="ghost" onClick={() => removeLine("retenues", i)}><X className="h-4 w-4" /></Button>
+                </div>
+              ))}
+              <div className="text-xs text-muted-foreground">Total retenues : {fcfa(totalRetenues)}</div>
+            </div>
             <div className="rounded-md border bg-muted/30 p-3 text-sm">
               Salaire net : <span className="font-semibold">{fcfa(computedNet)}</span>
             </div>
