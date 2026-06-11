@@ -117,23 +117,42 @@ function StaffDetailPage() {
   // Payroll
   const now = new Date();
   const [paySlipOpen, setPaySlipOpen] = useState(false);
-  const [payForm, setPayForm] = useState<any>({ month: now.getMonth()+1, year: now.getFullYear(), base_salary: "", bonuses: "0", deductions: "0" });
+  type Line = { label: string; amount: string };
+  const [payForm, setPayForm] = useState<{ month: number; year: number; base_salary: string; primes: Line[]; retenues: Line[] }>({
+    month: now.getMonth() + 1, year: now.getFullYear(), base_salary: "", primes: [], retenues: [],
+  });
   const openCreatePayslip = () => {
-    setPayForm({ month: now.getMonth()+1, year: now.getFullYear(),
-      base_salary: String(staff?.base_salary ?? ""), bonuses: "0", deductions: "0" });
+    setPayForm({ month: now.getMonth() + 1, year: now.getFullYear(),
+      base_salary: String(staff?.base_salary ?? ""), primes: [], retenues: [] });
     setPaySlipOpen(true);
   };
-  const computedNet = useMemo(() => (Number(payForm.base_salary)||0) + (Number(payForm.bonuses)||0) - (Number(payForm.deductions)||0), [payForm]);
+  const totalPrimes = useMemo(() => payForm.primes.reduce((a, l) => a + (Number(l.amount) || 0), 0), [payForm.primes]);
+  const totalRetenues = useMemo(() => payForm.retenues.reduce((a, l) => a + (Number(l.amount) || 0), 0), [payForm.retenues]);
+  const computedNet = useMemo(() => (Number(payForm.base_salary) || 0) + totalPrimes - totalRetenues, [payForm.base_salary, totalPrimes, totalRetenues]);
+  const addLine = (kind: "primes" | "retenues") =>
+    setPayForm(f => ({ ...f, [kind]: [...f[kind], { label: "", amount: "" }] }));
+  const updateLine = (kind: "primes" | "retenues", i: number, patch: Partial<Line>) =>
+    setPayForm(f => ({ ...f, [kind]: f[kind].map((l, idx) => idx === i ? { ...l, ...patch } : l) }));
+  const removeLine = (kind: "primes" | "retenues", i: number) =>
+    setPayForm(f => ({ ...f, [kind]: f[kind].filter((_, idx) => idx !== i) }));
+
   const createPayslip = async () => {
     if (!staff) return;
-    const payload = {
+    const primesClean = payForm.primes.filter(l => Number(l.amount) > 0);
+    const retenuesClean = payForm.retenues.filter(l => Number(l.amount) > 0);
+    const breakdownNotes = [
+      primesClean.length ? "Primes: " + primesClean.map(l => `${l.label || "—"} ${Number(l.amount)}`).join(", ") : "",
+      retenuesClean.length ? "Retenues: " + retenuesClean.map(l => `${l.label || "—"} ${Number(l.amount)}`).join(", ") : "",
+    ].filter(Boolean).join(" | ");
+    const payload: any = {
       school_id: staff.school_id, staff_id: staff.id,
       month: Number(payForm.month), year: Number(payForm.year),
-      base_salary: Number(payForm.base_salary)||0,
-      bonuses: Number(payForm.bonuses)||0,
-      deductions: Number(payForm.deductions)||0,
+      base_salary: Number(payForm.base_salary) || 0,
+      bonuses: totalPrimes,
+      deductions: totalRetenues,
       net_salary: computedNet, status: "en attente",
     };
+    if (breakdownNotes) payload.notes = breakdownNotes;
     const { error } = await sb.from("payroll").insert(payload);
     if (error) { toast.error(error.message.includes("duplicate") ? "Fiche déjà existante pour ce mois" : error.message); return; }
     toast.success("Fiche de paie créée"); setPaySlipOpen(false); fetchAll();
@@ -353,8 +372,36 @@ function StaffDetailPage() {
               <div><Label>Année</Label><Input type="number" value={payForm.year} onChange={e => setPayForm({ ...payForm, year: Number(e.target.value) })} /></div>
             </div>
             <div><Label>Salaire de base</Label><Input type="number" value={payForm.base_salary} onChange={e => setPayForm({ ...payForm, base_salary: e.target.value })} /></div>
-            <div><Label>Primes</Label><Input type="number" value={payForm.bonuses} onChange={e => setPayForm({ ...payForm, bonuses: e.target.value })} /></div>
-            <div><Label>Retenues</Label><Input type="number" value={payForm.deductions} onChange={e => setPayForm({ ...payForm, deductions: e.target.value })} /></div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Primes (bonuses)</Label>
+                <Button type="button" size="sm" variant="outline" onClick={() => addLine("primes")}><Plus className="mr-1 h-3 w-3" />Ajouter</Button>
+              </div>
+              {payForm.primes.length === 0 && <div className="text-xs text-muted-foreground">Aucune prime</div>}
+              {payForm.primes.map((l, i) => (
+                <div key={i} className="flex gap-2">
+                  <Input placeholder="Libellé (ex: Transport)" value={l.label} onChange={e => updateLine("primes", i, { label: e.target.value })} />
+                  <Input type="number" placeholder="Montant" className="w-32" value={l.amount} onChange={e => updateLine("primes", i, { amount: e.target.value })} />
+                  <Button type="button" size="icon" variant="ghost" onClick={() => removeLine("primes", i)}><X className="h-4 w-4" /></Button>
+                </div>
+              ))}
+              <div className="text-xs text-muted-foreground">Total primes : {fcfa(totalPrimes)}</div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Retenues (deductions)</Label>
+                <Button type="button" size="sm" variant="outline" onClick={() => addLine("retenues")}><Plus className="mr-1 h-3 w-3" />Ajouter</Button>
+              </div>
+              {payForm.retenues.length === 0 && <div className="text-xs text-muted-foreground">Aucune retenue</div>}
+              {payForm.retenues.map((l, i) => (
+                <div key={i} className="flex gap-2">
+                  <Input placeholder="Libellé (ex: Avance)" value={l.label} onChange={e => updateLine("retenues", i, { label: e.target.value })} />
+                  <Input type="number" placeholder="Montant" className="w-32" value={l.amount} onChange={e => updateLine("retenues", i, { amount: e.target.value })} />
+                  <Button type="button" size="icon" variant="ghost" onClick={() => removeLine("retenues", i)}><X className="h-4 w-4" /></Button>
+                </div>
+              ))}
+              <div className="text-xs text-muted-foreground">Total retenues : {fcfa(totalRetenues)}</div>
+            </div>
             <div className="rounded-md border bg-muted/30 p-3 text-sm">
               Salaire net : <span className="font-semibold">{fcfa(computedNet)}</span>
             </div>
