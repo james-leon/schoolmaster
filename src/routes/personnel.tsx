@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/lib/auth";
@@ -13,10 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, Briefcase, Users, Wallet, CheckCircle2, Clock } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Plus, Search, Briefcase, Users, Wallet, CheckCircle2, Clock, Eye, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/personnel")({ component: PersonnelPage });
@@ -36,6 +38,7 @@ const ROLE_TITLES = ["Enseignant","Directeur adjoint","Secrétaire","Comptable",
 const CONTRACT_TYPES = ["CDI","CDD","Stage","Vacataire"];
 const STATUSES = ["actif","suspendu","parti"];
 const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+const PAYMENT_METHODS = ["Espèces","MTN Mobile Money","Orange Money","Virement bancaire","Chèque"];
 
 function statusBadge(s: string) {
   const map: Record<string, string> = {
@@ -49,6 +52,7 @@ function statusBadge(s: string) {
 function PersonnelPage() {
   const { user } = useAuth();
   const { hasFeature, loading: planLoading } = usePlan();
+  const navigate = useNavigate();
   const schoolId = user?.schoolId;
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
 
@@ -71,6 +75,9 @@ function PersonnelPage() {
     contract_type: "CDI", contract_start: "", contract_end: "",
     base_salary: "", status: "actif", diplomas: "", notes: "", linked_teacher_id: "",
   });
+  const [confirmDel, setConfirmDel] = useState<Staff | null>(null);
+  const [payDialog, setPayDialog] = useState<Payroll | null>(null);
+  const [payMethod, setPayMethod] = useState("Espèces");
 
   const fetchAll = useCallback(async () => {
     if (!schoolId) return;
@@ -78,7 +85,7 @@ function PersonnelPage() {
     const [s, t, p] = await Promise.all([
       sb.from("staff").select("*").eq("school_id", schoolId).order("created_at", { ascending: false }),
       sb.from("teachers").select("id,first_name,last_name").eq("school_id", schoolId),
-      sb.from("payroll").select("id,staff_id,month,year,net_salary,status").eq("school_id", schoolId),
+      sb.from("payroll").select("id,staff_id,month,year,net_salary,status").eq("school_id", schoolId).order("year", { ascending: false }).order("month", { ascending: false }),
     ]);
     if (s.error) toast.error("Erreur chargement personnel");
     setStaff((s.data ?? []) as Staff[]);
@@ -103,6 +110,7 @@ function PersonnelPage() {
   const paidCount = monthPayroll.filter(p => p.status === "payé").length;
   const pendingCount = monthPayroll.filter(p => p.status !== "payé").length;
   const totalPaid = monthPayroll.filter(p => p.status === "payé").reduce((a, p) => a + Number(p.net_salary || 0), 0);
+  const staffMap = useMemo(() => Object.fromEntries(staff.map(s => [s.id, s])), [staff]);
 
   const resetForm = () => setForm({
     first_name: "", last_name: "", role_title: "Enseignant", phone: "", email: "",
@@ -142,6 +150,13 @@ function PersonnelPage() {
     setOpen(false); resetForm(); fetchAll();
   };
 
+  const deleteStaff = async (id: string) => {
+    const { error } = await sb.from("staff").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Membre supprimé");
+    setConfirmDel(null); fetchAll();
+  };
+
   const bulkGenerate = async () => {
     if (!schoolId) return;
     const active = staff.filter(s => s.status === "actif");
@@ -159,7 +174,28 @@ function PersonnelPage() {
     fetchAll();
   };
 
-  if (planLoading) return <AppLayout title="Personnel"><div className="p-8" /></AppLayout>;
+  const markPaid = async () => {
+    if (!payDialog) return;
+    const s = staffMap[payDialog.staff_id];
+    if (!s) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const { error } = await sb.from("payroll").update({
+      status: "payé", payment_date: today, payment_method: payMethod,
+    }).eq("id", payDialog.id);
+    if (error) { toast.error(error.message); return; }
+    const { data: tx } = await sb.from("transactions").insert({
+      school_id: s.school_id, type: "depense", category: "Salaires",
+      amount: Number(payDialog.net_salary || 0), date: today,
+      payment_method: payMethod,
+      description: `Salaire ${MONTHS_FR[payDialog.month - 1]} ${payDialog.year} — ${s.first_name} ${s.last_name}`,
+      reference: `PAIE-${payDialog.year}-${String(payDialog.month).padStart(2, "0")}-${s.last_name.toUpperCase()}`,
+    }).select("id").maybeSingle();
+    if (tx?.id) await sb.from("payroll").update({ transaction_id: tx.id }).eq("id", payDialog.id);
+    toast.success("Paiement enregistré (dépense ajoutée en comptabilité)");
+    setPayDialog(null); fetchAll();
+  };
+
+  if (planLoading) return <AppLayout title="Personnel"><div className="p-8 text-muted-foreground">Chargement…</div></AppLayout>;
   if (!isAdmin) return <AppLayout title="Personnel"><div className="p-8 text-muted-foreground">Accès réservé à l'administration.</div></AppLayout>;
   if (user?.role !== "super_admin" && !hasFeature("accounting")) {
     return <AppLayout title="Personnel"><LockedFeatureOverlay requiredPlan={requiredPlanFor("accounting")} featureLabel="Personnel" /></AppLayout>;
@@ -168,7 +204,7 @@ function PersonnelPage() {
   return (
     <AppLayout title="Personnel">
       <div className="space-y-6">
-        {/* Payroll Overview */}
+        {/* Summary KPIs */}
         <div className="grid gap-3 md:grid-cols-4">
           <Card><CardContent className="flex items-center gap-3 p-4">
             <div className="rounded-md bg-primary/10 p-2 text-primary"><Users className="h-5 w-5" /></div>
@@ -182,7 +218,7 @@ function PersonnelPage() {
           </CardContent></Card>
           <Card><CardContent className="flex items-center gap-3 p-4">
             <div className="rounded-md bg-green-500/10 p-2 text-green-600"><CheckCircle2 className="h-5 w-5" /></div>
-            <div><div className="text-xs text-muted-foreground">Payés ({MONTHS_FR[month-1]})</div>
+            <div><div className="text-xs text-muted-foreground">Payés ({MONTHS_FR[month - 1]})</div>
               <div className="text-lg font-semibold">{paidCount} · {fcfa(totalPaid)}</div></div>
           </CardContent></Card>
           <Card><CardContent className="flex items-center gap-3 p-4">
@@ -192,69 +228,137 @@ function PersonnelPage() {
           </CardContent></Card>
         </div>
 
-        {/* Bulk action */}
-        <Card><CardContent className="flex flex-wrap items-end gap-3 p-4">
-          <div><Label className="text-xs">Mois</Label>
-            <Select value={String(month)} onValueChange={v => setMonth(Number(v))}>
-              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-              <SelectContent>{MONTHS_FR.map((m, i) => <SelectItem key={i+1} value={String(i+1)}>{m}</SelectItem>)}</SelectContent>
-            </Select></div>
-          <div><Label className="text-xs">Année</Label>
-            <Input type="number" className="w-[100px]" value={year} onChange={e => setYear(Number(e.target.value))} /></div>
-          <Button onClick={bulkGenerate}>Générer toutes les fiches du mois</Button>
-        </CardContent></Card>
+        <Tabs defaultValue="list">
+          <TabsList>
+            <TabsTrigger value="list">Liste du personnel</TabsTrigger>
+            <TabsTrigger value="payroll">Paie</TabsTrigger>
+          </TabsList>
 
-        {/* Filters & Add */}
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[200px]">
-            <Label className="text-xs">Recherche</Label>
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input className="pl-8" value={search} onChange={e => setSearch(e.target.value)} placeholder="Nom, fonction…" />
+          <TabsContent value="list" className="space-y-4">
+            {/* Filters & Add */}
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="flex-1 min-w-[200px]">
+                <Label className="text-xs">Recherche</Label>
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input className="pl-8" value={search} onChange={e => setSearch(e.target.value)} placeholder="Nom, fonction…" />
+                </div>
+              </div>
+              <div><Label className="text-xs">Fonction</Label>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="all">Toutes</SelectItem>
+                    {ROLE_TITLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+                </Select></div>
+              <div><Label className="text-xs">Statut</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="all">Tous</SelectItem>
+                    {STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                </Select></div>
+              <Button onClick={() => { resetForm(); setOpen(true); }}><Plus className="mr-1 h-4 w-4" />Nouveau membre du personnel</Button>
             </div>
-          </div>
-          <div><Label className="text-xs">Fonction</Label>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="all">Toutes</SelectItem>
-                {ROLE_TITLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
-            </Select></div>
-          <div><Label className="text-xs">Statut</Label>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="all">Tous</SelectItem>
-                {STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select></div>
-          <Button onClick={() => { resetForm(); setOpen(true); }}><Plus className="mr-1 h-4 w-4" />Nouveau</Button>
-        </div>
 
-        {/* List */}
-        <Card><CardContent className="p-0">
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>Nom</TableHead><TableHead>Fonction</TableHead>
-              <TableHead>Contrat</TableHead><TableHead>Salaire</TableHead>
-              <TableHead>Téléphone</TableHead><TableHead>Statut</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {loading ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Chargement…</TableCell></TableRow>
-              : filtered.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                <Briefcase className="mx-auto mb-2 h-8 w-8 opacity-40" />Aucun membre du personnel
-              </TableCell></TableRow>
-              : filtered.map(s => (
-                <TableRow key={s.id} className="cursor-pointer hover:bg-muted/40">
-                  <TableCell><Link to="/personnel/$staffId" params={{ staffId: s.id }} className="font-medium hover:underline">
-                    {s.first_name} {s.last_name}</Link></TableCell>
-                  <TableCell>{s.role_title}</TableCell>
-                  <TableCell>{s.contract_type ?? "—"}</TableCell>
-                  <TableCell>{fcfa(Number(s.base_salary || 0))}</TableCell>
-                  <TableCell>{s.phone ?? "—"}</TableCell>
-                  <TableCell>{statusBadge(s.status)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent></Card>
+            <Card><CardContent className="p-0">
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>Nom</TableHead><TableHead>Fonction</TableHead>
+                  <TableHead>Contrat</TableHead><TableHead>Salaire</TableHead>
+                  <TableHead>Téléphone</TableHead><TableHead>Statut</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {loading ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Chargement…</TableCell></TableRow>
+                  : filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <Briefcase className="mx-auto mb-2 h-8 w-8 opacity-40" />
+                    Aucun membre du personnel, ajoutez-en un.
+                  </TableCell></TableRow>
+                  : filtered.map(s => (
+                    <TableRow key={s.id}>
+                      <TableCell>
+                        <Link to="/personnel/$staffId" params={{ staffId: s.id }} className="font-medium text-primary hover:underline">
+                          {s.first_name} {s.last_name}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{s.role_title}</TableCell>
+                      <TableCell>{s.contract_type ?? "—"}</TableCell>
+                      <TableCell>{fcfa(Number(s.base_salary || 0))}</TableCell>
+                      <TableCell>{s.phone ?? "—"}</TableCell>
+                      <TableCell>{statusBadge(s.status)}</TableCell>
+                      <TableCell className="text-right space-x-1">
+                        <Button size="icon" variant="ghost" title="Voir"
+                          onClick={() => navigate({ to: "/personnel/$staffId", params: { staffId: s.id } })}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" title="Modifier"
+                          onClick={() => navigate({ to: "/personnel/$staffId", params: { staffId: s.id } })}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" title="Supprimer" onClick={() => setConfirmDel(s)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent></Card>
+          </TabsContent>
+
+          <TabsContent value="payroll" className="space-y-4">
+            <Card><CardContent className="flex flex-wrap items-end gap-3 p-4">
+              <div><Label className="text-xs">Mois</Label>
+                <Select value={String(month)} onValueChange={v => setMonth(Number(v))}>
+                  <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>{MONTHS_FR.map((m, i) => <SelectItem key={i + 1} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+                </Select></div>
+              <div><Label className="text-xs">Année</Label>
+                <Input type="number" className="w-[100px]" value={year} onChange={e => setYear(Number(e.target.value))} /></div>
+              <Button onClick={bulkGenerate}>Générer toutes les fiches du mois</Button>
+            </CardContent></Card>
+
+            <Card><CardContent className="p-0">
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>Salarié</TableHead><TableHead>Période</TableHead>
+                  <TableHead>Net</TableHead><TableHead>Statut</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {monthPayroll.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                    Aucune fiche pour {MONTHS_FR[month - 1]} {year}
+                  </TableCell></TableRow>
+                  : monthPayroll.map(p => {
+                    const s = staffMap[p.staff_id];
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell>{s ? (
+                          <Link to="/personnel/$staffId" params={{ staffId: s.id }} className="font-medium text-primary hover:underline">
+                            {s.first_name} {s.last_name}
+                          </Link>
+                        ) : "—"}</TableCell>
+                        <TableCell>{MONTHS_FR[p.month - 1]} {p.year}</TableCell>
+                        <TableCell className="font-semibold">{fcfa(Number(p.net_salary))}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={p.status === "payé" ? "border-green-500/30 bg-green-500/10 text-green-700" : ""}>
+                            {p.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {p.status !== "payé" ? (
+                            <Button size="sm" variant="outline" onClick={() => { setPayDialog(p); setPayMethod("Espèces"); }}>
+                              Marquer payé
+                            </Button>
+                          ) : <span className="text-xs text-muted-foreground">Payé</span>}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent></Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Add dialog */}
@@ -304,6 +408,46 @@ function PersonnelPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
             <Button onClick={submit}>Ajouter</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm delete */}
+      <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce membre du personnel ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDel && <>Cette action supprimera <strong>{confirmDel.first_name} {confirmDel.last_name}</strong> ainsi que ses congés et fiches de paie associés. Cette action est irréversible.</>}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmDel && deleteStaff(confirmDel.id)}>Supprimer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Mark paid dialog */}
+      <Dialog open={!!payDialog} onOpenChange={(o) => !o && setPayDialog(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Marquer comme payé</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="text-sm text-muted-foreground">
+              Net à payer : <span className="font-semibold text-foreground">{fcfa(Number(payDialog?.net_salary ?? 0))}</span>
+            </div>
+            <div><Label>Méthode de paiement</Label>
+              <Select value={payMethod} onValueChange={setPayMethod}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{PAYMENT_METHODS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+              </Select></div>
+            <div className="text-xs text-muted-foreground">
+              Une dépense correspondante sera ajoutée automatiquement en Comptabilité (catégorie Salaires).
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayDialog(null)}>Annuler</Button>
+            <Button onClick={markPaid}>Confirmer le paiement</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
