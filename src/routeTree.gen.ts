@@ -36,6 +36,7 @@ import { Route as ChangerMotDePasseRouteImport } from './routes/changer-mot-de-p
 import { Route as CalendrierRouteImport } from './routes/calendrier'
 import { Route as AnnoncesRouteImport } from './routes/annonces'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PersonnelIndexRouteImport } from './routes/personnel.index'
 import { Route as PersonnelStaffIdRouteImport } from './routes/personnel.$staffId'
 import { Route as ElevesStudentIdRouteImport } from './routes/eleves.$studentId'
 import { Route as ApiPublicSuperAdminRouteImport } from './routes/api/public/super-admin'
@@ -178,6 +179,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PersonnelIndexRoute = PersonnelIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PersonnelRoute,
+} as any)
 const PersonnelStaffIdRoute = PersonnelStaffIdRouteImport.update({
   id: '/$staffId',
   path: '/$staffId',
@@ -239,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
   '/personnel/$staffId': typeof PersonnelStaffIdRoute
+  '/personnel/': typeof PersonnelIndexRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
@@ -265,7 +272,6 @@ export interface FileRoutesByTo {
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
   '/parents': typeof ParentsRoute
-  '/personnel': typeof PersonnelRouteWithChildren
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
@@ -274,6 +280,7 @@ export interface FileRoutesByTo {
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
   '/personnel/$staffId': typeof PersonnelStaffIdRoute
+  '/personnel': typeof PersonnelIndexRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
@@ -310,6 +317,7 @@ export interface FileRoutesById {
   '/unauthorized': typeof UnauthorizedRoute
   '/eleves/$studentId': typeof ElevesStudentIdRoute
   '/personnel/$staffId': typeof PersonnelStaffIdRoute
+  '/personnel/': typeof PersonnelIndexRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
@@ -347,6 +355,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/eleves/$studentId'
     | '/personnel/$staffId'
+    | '/personnel/'
     | '/api/public/admin-users'
     | '/api/public/register-school'
     | '/api/public/seed-demo'
@@ -373,7 +382,6 @@ export interface FileRouteTypes {
     | '/parametres'
     | '/parent'
     | '/parents'
-    | '/personnel'
     | '/presences'
     | '/register'
     | '/scolarite'
@@ -382,6 +390,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/eleves/$studentId'
     | '/personnel/$staffId'
+    | '/personnel'
     | '/api/public/admin-users'
     | '/api/public/register-school'
     | '/api/public/seed-demo'
@@ -417,6 +426,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/eleves/$studentId'
     | '/personnel/$staffId'
+    | '/personnel/'
     | '/api/public/admin-users'
     | '/api/public/register-school'
     | '/api/public/seed-demo'
@@ -648,6 +658,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/personnel/': {
+      id: '/personnel/'
+      path: '/'
+      fullPath: '/personnel/'
+      preLoaderRoute: typeof PersonnelIndexRouteImport
+      parentRoute: typeof PersonnelRoute
+    }
     '/personnel/$staffId': {
       id: '/personnel/$staffId'
       path: '/$staffId'
@@ -706,10 +723,12 @@ const ElevesRouteWithChildren =
 
 interface PersonnelRouteChildren {
   PersonnelStaffIdRoute: typeof PersonnelStaffIdRoute
+  PersonnelIndexRoute: typeof PersonnelIndexRoute
 }
 
 const PersonnelRouteChildren: PersonnelRouteChildren = {
   PersonnelStaffIdRoute: PersonnelStaffIdRoute,
+  PersonnelIndexRoute: PersonnelIndexRoute,
 }
 
 const PersonnelRouteWithChildren = PersonnelRoute._addFileChildren(
