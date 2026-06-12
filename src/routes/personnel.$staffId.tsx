@@ -16,8 +16,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Printer, Check, X, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ArrowLeft, Plus, Printer, Check, X, Trash2, Lock, History, Ban, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/personnel/$staffId")({ component: StaffDetailPage });
@@ -38,8 +39,12 @@ interface Staff { id: string; school_id: string; first_name: string; last_name: 
 interface Leave { id: string; type: string; start_date: string; end_date: string; reason: string | null; status: string; }
 interface Payslip { id: string; staff_id: string; month: number; year: number;
   base_salary: number; bonuses: number; deductions: number; net_salary: number;
-  payment_date: string | null; payment_method: string | null; status: string; }
+  payment_date: string | null; payment_method: string | null; status: string;
+  transaction_id: string | null; }
 interface School { name: string; logo_url: string | null; }
+interface HistoryEntry { id: string; payroll_id: string; action: string; old_status: string | null;
+  new_status: string | null; reason: string | null; changed_by: string | null; changed_at: string;
+  profile?: { full_name: string | null; email: string | null } | null; }
 
 function StaffDetailPage() {
   const { staffId } = useParams({ from: "/personnel/$staffId" });
@@ -51,6 +56,7 @@ function StaffDetailPage() {
   const [school, setSchool] = useState<School | null>(null);
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [payslips, setPayslips] = useState<Payslip[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
@@ -62,7 +68,15 @@ function StaffDetailPage() {
     ]);
     setStaff((s.data as Staff) ?? null);
     setLeaves((l.data ?? []) as Leave[]);
-    setPayslips((p.data ?? []) as Payslip[]);
+    const slips = (p.data ?? []) as Payslip[];
+    setPayslips(slips);
+    if (slips.length) {
+      const ids = slips.map(x => x.id);
+      const { data: h } = await sb.from("payroll_history")
+        .select("*, profile:profiles!payroll_history_changed_by_fkey(full_name,email)")
+        .in("payroll_id", ids).order("changed_at", { ascending: false });
+      setHistory((h ?? []) as HistoryEntry[]);
+    } else setHistory([]);
     if (s.data?.school_id) {
       const { data: sch } = await sb.from("schools").select("name,logo_url").eq("id", s.data.school_id).maybeSingle();
       setSchool(sch ?? null);
@@ -72,7 +86,21 @@ function StaffDetailPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // Edit staff form
+  const historyByPayslip = useMemo(() => {
+    const m: Record<string, HistoryEntry[]> = {};
+    history.forEach(h => { (m[h.payroll_id] ||= []).push(h); });
+    return m;
+  }, [history]);
+
+  const logHistory = async (payroll_id: string, action: string, old_status: string | null, new_status: string | null, reason: string | null) => {
+    if (!staff) return;
+    await sb.from("payroll_history").insert({
+      school_id: staff.school_id, payroll_id, action, old_status, new_status, reason,
+      changed_by: user?.id ?? null,
+    });
+  };
+
+  // Edit staff
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
   const openEdit = () => {
@@ -116,16 +144,30 @@ function StaffDetailPage() {
 
   // Payroll
   const now = new Date();
-  const [paySlipOpen, setPaySlipOpen] = useState(false);
   type Line = { label: string; amount: string };
-  const [payForm, setPayForm] = useState<{ month: number; year: number; base_salary: string; primes: Line[]; retenues: Line[] }>({
-    month: now.getMonth() + 1, year: now.getFullYear(), base_salary: "", primes: [], retenues: [],
-  });
+  type PayForm = { month: number; year: number; base_salary: string; primes: Line[]; retenues: Line[] };
+  const emptyPay: PayForm = { month: now.getMonth() + 1, year: now.getFullYear(), base_salary: "", primes: [], retenues: [] };
+
+  const [paySlipOpen, setPaySlipOpen] = useState(false);
+  const [payForm, setPayForm] = useState<PayForm>(emptyPay);
+  const [editPayslipId, setEditPayslipId] = useState<string | null>(null);
+
   const openCreatePayslip = () => {
-    setPayForm({ month: now.getMonth() + 1, year: now.getFullYear(),
-      base_salary: String(staff?.base_salary ?? ""), primes: [], retenues: [] });
+    setEditPayslipId(null);
+    setPayForm({ ...emptyPay, base_salary: String(staff?.base_salary ?? "") });
     setPaySlipOpen(true);
   };
+  const openEditPayslip = (p: Payslip) => {
+    if (p.status === "payé") { toast.error("Annulez d'abord le paiement pour modifier"); return; }
+    setEditPayslipId(p.id);
+    setPayForm({
+      month: p.month, year: p.year, base_salary: String(p.base_salary),
+      primes: Number(p.bonuses) > 0 ? [{ label: "Primes", amount: String(p.bonuses) }] : [],
+      retenues: Number(p.deductions) > 0 ? [{ label: "Retenues", amount: String(p.deductions) }] : [],
+    });
+    setPaySlipOpen(true);
+  };
+
   const totalPrimes = useMemo(() => payForm.primes.reduce((a, l) => a + (Number(l.amount) || 0), 0), [payForm.primes]);
   const totalRetenues = useMemo(() => payForm.retenues.reduce((a, l) => a + (Number(l.amount) || 0), 0), [payForm.retenues]);
   const computedNet = useMemo(() => (Number(payForm.base_salary) || 0) + totalPrimes - totalRetenues, [payForm.base_salary, totalPrimes, totalRetenues]);
@@ -136,26 +178,31 @@ function StaffDetailPage() {
   const removeLine = (kind: "primes" | "retenues", i: number) =>
     setPayForm(f => ({ ...f, [kind]: f[kind].filter((_, idx) => idx !== i) }));
 
-  const createPayslip = async () => {
+  const savePayslip = async () => {
     if (!staff) return;
-    const primesClean = payForm.primes.filter(l => Number(l.amount) > 0);
-    const retenuesClean = payForm.retenues.filter(l => Number(l.amount) > 0);
-    const breakdownNotes = [
-      primesClean.length ? "Primes: " + primesClean.map(l => `${l.label || "—"} ${Number(l.amount)}`).join(", ") : "",
-      retenuesClean.length ? "Retenues: " + retenuesClean.map(l => `${l.label || "—"} ${Number(l.amount)}`).join(", ") : "",
-    ].filter(Boolean).join(" | ");
     const payload: any = {
       school_id: staff.school_id, staff_id: staff.id,
       month: Number(payForm.month), year: Number(payForm.year),
       base_salary: Number(payForm.base_salary) || 0,
       bonuses: totalPrimes,
       deductions: totalRetenues,
-      net_salary: computedNet, status: "en attente",
+      net_salary: computedNet,
     };
-    if (breakdownNotes) payload.notes = breakdownNotes;
-    const { error } = await sb.from("payroll").insert(payload);
-    if (error) { toast.error(error.message.includes("duplicate") ? "Fiche déjà existante pour ce mois" : error.message); return; }
-    toast.success("Fiche de paie créée"); setPaySlipOpen(false); fetchAll();
+    if (editPayslipId) {
+      const prev = payslips.find(p => p.id === editPayslipId);
+      if (prev?.status === "payé") { toast.error("Fiche verrouillée"); return; }
+      const { error } = await sb.from("payroll").update(payload).eq("id", editPayslipId);
+      if (error) { toast.error(error.message); return; }
+      await logHistory(editPayslipId, "modifié", prev?.status ?? null, prev?.status ?? null, null);
+      toast.success("Fiche modifiée");
+    } else {
+      payload.status = "en attente";
+      const { data, error } = await sb.from("payroll").insert(payload).select("id").maybeSingle();
+      if (error) { toast.error(error.message.includes("duplicate") ? "Fiche déjà existante pour ce mois" : error.message); return; }
+      if (data?.id) await logHistory(data.id, "créé", null, "en attente", null);
+      toast.success("Fiche de paie créée");
+    }
+    setPaySlipOpen(false); fetchAll();
   };
 
   const [payDialog, setPayDialog] = useState<Payslip | null>(null);
@@ -167,23 +214,46 @@ function StaffDetailPage() {
       status: "payé", payment_date: today, payment_method: payMethod,
     }).eq("id", payDialog.id);
     if (error) { toast.error(error.message); return; }
-    // Create accounting transaction
-    const { data: tx, error: txErr } = await sb.from("transactions").insert({
+    const { data: tx } = await sb.from("transactions").insert({
       school_id: staff.school_id, type: "depense", category: "Salaires",
       amount: Number(payDialog.net_salary || 0), date: today,
       payment_method: payMethod,
       description: `Salaire ${MONTHS_FR[payDialog.month-1]} ${payDialog.year} — ${staff.first_name} ${staff.last_name}`,
       reference: `PAIE-${payDialog.year}-${String(payDialog.month).padStart(2,"0")}-${staff.last_name.toUpperCase()}`,
     }).select("id").maybeSingle();
-    if (!txErr && tx?.id) await sb.from("payroll").update({ transaction_id: tx.id }).eq("id", payDialog.id);
+    if (tx?.id) await sb.from("payroll").update({ transaction_id: tx.id }).eq("id", payDialog.id);
+    await logHistory(payDialog.id, "payé", payDialog.status, "payé", `Méthode: ${payMethod}`);
     toast.success("Paiement enregistré (dépense ajoutée en comptabilité)");
     setPayDialog(null); fetchAll();
   };
 
-  const deletePayslip = async (id: string) => {
-    const { error } = await sb.from("payroll").delete().eq("id", id);
+  // Cancel payment
+  const [cancelDialog, setCancelDialog] = useState<Payslip | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const openCancel = (p: Payslip) => { setCancelDialog(p); setCancelReason(""); };
+  const confirmCancel = async () => {
+    if (!cancelDialog) return;
+    if (cancelDialog.transaction_id) {
+      const { error: txErr } = await sb.from("transactions").delete().eq("id", cancelDialog.transaction_id);
+      if (txErr) { toast.error("Erreur suppression dépense : " + txErr.message); return; }
+    }
+    const { error } = await sb.from("payroll").update({
+      status: "en attente", payment_date: null, payment_method: null, transaction_id: null,
+    }).eq("id", cancelDialog.id);
+    if (error) { toast.error(error.message); return; }
+    await logHistory(cancelDialog.id, "annulé", "payé", "en attente", cancelReason || null);
+    toast.success("Paiement annulé — dépense retirée de la comptabilité");
+    setCancelDialog(null); setCancelReason(""); fetchAll();
+  };
+
+  const deletePayslip = async (p: Payslip) => {
+    if (p.status === "payé") { toast.error("Annulez d'abord le paiement"); return; }
+    const { error } = await sb.from("payroll").delete().eq("id", p.id);
     if (error) toast.error(error.message); else { toast.success("Fiche supprimée"); fetchAll(); }
   };
+
+  // History view
+  const [historyFor, setHistoryFor] = useState<Payslip | null>(null);
 
   const printRef = useRef<HTMLDivElement>(null);
   const [printSlip, setPrintSlip] = useState<Payslip | null>(null);
@@ -203,6 +273,8 @@ function StaffDetailPage() {
     return <AppLayout title="Personnel"><LockedFeatureOverlay requiredPlan={requiredPlanFor("accounting")} featureLabel="Personnel" /></AppLayout>;
   }
   if (!staff) return <AppLayout title="Personnel"><div className="p-8 text-muted-foreground">Membre introuvable.</div></AppLayout>;
+
+  const actorName = (h: HistoryEntry) => h.profile?.full_name || h.profile?.email || "—";
 
   return (
     <AppLayout title={`${staff.first_name} ${staff.last_name}`}>
@@ -279,31 +351,50 @@ function StaffDetailPage() {
               <TableHeader><TableRow>
                 <TableHead>Période</TableHead><TableHead>Base</TableHead>
                 <TableHead>Primes</TableHead><TableHead>Retenues</TableHead>
-                <TableHead>Net</TableHead><TableHead>Statut</TableHead><TableHead /></TableRow></TableHeader>
+                <TableHead>Net</TableHead><TableHead>Statut</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
               <TableBody>
                 {payslips.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Aucune fiche de paie</TableCell></TableRow>
-                : payslips.map(p => (
+                : payslips.map(p => {
+                  const paid = p.status === "payé";
+                  const lastPaid = historyByPayslip[p.id]?.find(h => h.action === "payé");
+                  return (
                   <TableRow key={p.id}>
-                    <TableCell>{MONTHS_FR[p.month-1]} {p.year}</TableCell>
+                    <TableCell>
+                      <div>{MONTHS_FR[p.month-1]} {p.year}</div>
+                      {paid && lastPaid && <div className="text-[10px] text-muted-foreground">Payé le {p.payment_date} par {actorName(lastPaid)}</div>}
+                    </TableCell>
                     <TableCell>{fcfa(Number(p.base_salary))}</TableCell>
                     <TableCell>{fcfa(Number(p.bonuses))}</TableCell>
                     <TableCell>{fcfa(Number(p.deductions))}</TableCell>
                     <TableCell className="font-semibold">{fcfa(Number(p.net_salary))}</TableCell>
-                    <TableCell><Badge variant="outline" className={p.status === "payé" ? "border-green-500/30 bg-green-500/10 text-green-700" : ""}>{p.status}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={paid ? "border-green-500/30 bg-green-500/10 text-green-700" : ""}>
+                        {paid && <Lock className="mr-1 inline h-3 w-3" />}{p.status}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-right space-x-1">
+                      <Button size="icon" variant="ghost" onClick={() => setHistoryFor(p)} title="Historique"><History className="h-4 w-4" /></Button>
                       <Button size="icon" variant="ghost" onClick={() => triggerPrint(p)} title="Imprimer"><Printer className="h-4 w-4" /></Button>
-                      {p.status !== "payé" && <Button size="sm" variant="outline" onClick={() => { setPayDialog(p); setPayMethod("Espèces"); }}>Marquer payé</Button>}
-                      <Button size="icon" variant="ghost" onClick={() => deletePayslip(p.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                      {!paid && <>
+                        <Button size="icon" variant="ghost" onClick={() => openEditPayslip(p)} title="Modifier"><Pencil className="h-4 w-4" /></Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPayDialog(p); setPayMethod("Espèces"); }}>Marquer payé</Button>
+                        <Button size="icon" variant="ghost" onClick={() => deletePayslip(p)} title="Supprimer"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                      </>}
+                      {paid && (
+                        <Button size="sm" variant="outline" className="border-amber-500/40 text-amber-700 hover:bg-amber-500/10" onClick={() => openCancel(p)}>
+                          <Ban className="mr-1 h-3 w-3" />Annuler le paiement
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
-                ))}
+                );})}
               </TableBody>
             </Table>
           </CardContent></Card>
         </TabsContent>
       </Tabs>
 
-      {/* Edit dialog */}
+      {/* Edit staff dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Modifier le membre</DialogTitle></DialogHeader>
@@ -358,10 +449,10 @@ function StaffDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Create payslip dialog */}
+      {/* Create/Edit payslip dialog */}
       <Dialog open={paySlipOpen} onOpenChange={setPaySlipOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Générer une fiche de paie</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editPayslipId ? "Modifier la fiche de paie" : "Générer une fiche de paie"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <div><Label>Mois</Label>
@@ -406,7 +497,7 @@ function StaffDetailPage() {
               Salaire net : <span className="font-semibold">{fcfa(computedNet)}</span>
             </div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setPaySlipOpen(false)}>Annuler</Button><Button onClick={createPayslip}>Créer</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setPaySlipOpen(false)}>Annuler</Button><Button onClick={savePayslip}>{editPayslipId ? "Enregistrer" : "Créer"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -424,10 +515,58 @@ function StaffDetailPage() {
                 <SelectContent>{PAYMENT_METHODS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
               </Select></div>
             <div className="text-xs text-muted-foreground">
-              Une dépense correspondante sera ajoutée automatiquement en Comptabilité (catégorie Salaires).
+              Une dépense correspondante sera ajoutée automatiquement en Comptabilité (catégorie Salaires). La fiche sera ensuite verrouillée.
             </div>
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setPayDialog(null)}>Annuler</Button><Button onClick={markPaid}>Confirmer le paiement</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel payment */}
+      <AlertDialog open={!!cancelDialog} onOpenChange={(o) => !o && setCancelDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Annuler ce paiement de salaire ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action sera enregistrée dans l'historique et la dépense correspondante sera annulée en comptabilité. La fiche redeviendra modifiable.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label>Motif d'annulation (recommandé)</Label>
+            <Textarea rows={3} value={cancelReason} onChange={e => setCancelReason(e.target.value)} placeholder="Ex: erreur de montant, paiement non effectué…" />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Retour</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancel} className="bg-amber-600 hover:bg-amber-700">Confirmer l'annulation</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* History dialog */}
+      <Dialog open={!!historyFor} onOpenChange={(o) => !o && setHistoryFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Historique de la fiche</DialogTitle>
+            <DialogDescription>{historyFor && <>{MONTHS_FR[historyFor.month-1]} {historyFor.year} — {fcfa(Number(historyFor.net_salary))}</>}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+            {historyFor && (historyByPayslip[historyFor.id] ?? []).length === 0 && (
+              <div className="text-sm text-muted-foreground">Aucun événement.</div>
+            )}
+            {historyFor && (historyByPayslip[historyFor.id] ?? []).map(h => (
+              <div key={h.id} className="rounded-md border p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline" className="capitalize">{h.action}</Badge>
+                  <span className="text-xs text-muted-foreground">{new Date(h.changed_at).toLocaleString("fr-FR")}</span>
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Par {actorName(h)}
+                  {h.old_status && h.new_status && h.old_status !== h.new_status && <> · {h.old_status} → {h.new_status}</>}
+                </div>
+                {h.reason && <div className="mt-1 text-sm">Motif : {h.reason}</div>}
+              </div>
+            ))}
+          </div>
         </DialogContent>
       </Dialog>
 
