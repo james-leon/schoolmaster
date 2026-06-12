@@ -168,11 +168,21 @@ function PersonnelPage() {
       status: "en attente",
     }));
     if (toCreate.length === 0) { toast.info("Toutes les fiches du mois sont déjà créées"); return; }
-    const { error } = await sb.from("payroll").insert(toCreate);
+    const { data: inserted, error } = await sb.from("payroll").insert(toCreate).select("id");
     if (error) { toast.error(error.message); return; }
+    if (inserted?.length) {
+      await sb.from("payroll_history").insert(
+        inserted.map((r: any) => ({
+          school_id: schoolId, payroll_id: r.id, action: "créé",
+          old_status: null, new_status: "en attente", reason: "Génération groupée",
+          changed_by: user?.id ?? null,
+        }))
+      );
+    }
     toast.success(`${toCreate.length} fiche(s) générée(s)`);
     fetchAll();
   };
+
 
   const markPaid = async () => {
     if (!payDialog) return;
