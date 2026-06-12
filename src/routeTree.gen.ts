@@ -15,6 +15,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ScolariteRouteImport } from './routes/scolarite'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PresencesRouteImport } from './routes/presences'
+import { Route as PersonnelRouteImport } from './routes/personnel'
 import { Route as ParentsRouteImport } from './routes/parents'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as ParametresRouteImport } from './routes/parametres'
@@ -71,6 +72,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const PresencesRoute = PresencesRouteImport.update({
   id: '/presences',
   path: '/presences',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonnelRoute = PersonnelRouteImport.update({
+  id: '/personnel',
+  path: '/personnel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ParentsRoute = ParentsRouteImport.update({
@@ -174,9 +180,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const PersonnelIndexRoute = PersonnelIndexRouteImport.update({
-  id: '/personnel/',
-  path: '/personnel/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => PersonnelRoute,
 } as any)
 const PersonnelStaffIdRoute = PersonnelStaffIdRouteImport.update({
   id: '/$staffId',
@@ -230,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
   '/parents': typeof ParentsRoute
+  '/personnel': typeof PersonnelRouteWithChildren
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
@@ -301,6 +308,7 @@ export interface FileRoutesById {
   '/parametres': typeof ParametresRoute
   '/parent': typeof ParentRoute
   '/parents': typeof ParentsRoute
+  '/personnel': typeof PersonnelRouteWithChildren
   '/presences': typeof PresencesRoute
   '/register': typeof RegisterRoute
   '/scolarite': typeof ScolariteRoute
@@ -338,6 +346,7 @@ export interface FileRouteTypes {
     | '/parametres'
     | '/parent'
     | '/parents'
+    | '/personnel'
     | '/presences'
     | '/register'
     | '/scolarite'
@@ -408,6 +417,7 @@ export interface FileRouteTypes {
     | '/parametres'
     | '/parent'
     | '/parents'
+    | '/personnel'
     | '/presences'
     | '/register'
     | '/scolarite'
@@ -444,13 +454,13 @@ export interface RootRouteChildren {
   ParametresRoute: typeof ParametresRoute
   ParentRoute: typeof ParentRoute
   ParentsRoute: typeof ParentsRoute
+  PersonnelRoute: typeof PersonnelRouteWithChildren
   PresencesRoute: typeof PresencesRoute
   RegisterRoute: typeof RegisterRoute
   ScolariteRoute: typeof ScolariteRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SuperAdminRoute: typeof SuperAdminRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
-  PersonnelIndexRoute: typeof PersonnelIndexRoute
   ApiPublicAdminUsersRoute: typeof ApiPublicAdminUsersRoute
   ApiPublicRegisterSchoolRoute: typeof ApiPublicRegisterSchoolRoute
   ApiPublicSeedDemoRoute: typeof ApiPublicSeedDemoRoute
@@ -499,6 +509,13 @@ declare module '@tanstack/react-router' {
       path: '/presences'
       fullPath: '/presences'
       preLoaderRoute: typeof PresencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/personnel': {
+      id: '/personnel'
+      path: '/personnel'
+      fullPath: '/personnel'
+      preLoaderRoute: typeof PersonnelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/parents': {
@@ -643,10 +660,10 @@ declare module '@tanstack/react-router' {
     }
     '/personnel/': {
       id: '/personnel/'
-      path: '/personnel'
+      path: '/'
       fullPath: '/personnel/'
       preLoaderRoute: typeof PersonnelIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof PersonnelRoute
     }
     '/personnel/$staffId': {
       id: '/personnel/$staffId'
@@ -704,6 +721,20 @@ const ElevesRouteChildren: ElevesRouteChildren = {
 const ElevesRouteWithChildren =
   ElevesRoute._addFileChildren(ElevesRouteChildren)
 
+interface PersonnelRouteChildren {
+  PersonnelStaffIdRoute: typeof PersonnelStaffIdRoute
+  PersonnelIndexRoute: typeof PersonnelIndexRoute
+}
+
+const PersonnelRouteChildren: PersonnelRouteChildren = {
+  PersonnelStaffIdRoute: PersonnelStaffIdRoute,
+  PersonnelIndexRoute: PersonnelIndexRoute,
+}
+
+const PersonnelRouteWithChildren = PersonnelRoute._addFileChildren(
+  PersonnelRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnnoncesRoute: AnnoncesRoute,
@@ -725,13 +756,13 @@ const rootRouteChildren: RootRouteChildren = {
   ParametresRoute: ParametresRoute,
   ParentRoute: ParentRoute,
   ParentsRoute: ParentsRoute,
+  PersonnelRoute: PersonnelRouteWithChildren,
   PresencesRoute: PresencesRoute,
   RegisterRoute: RegisterRoute,
   ScolariteRoute: ScolariteRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SuperAdminRoute: SuperAdminRoute,
   UnauthorizedRoute: UnauthorizedRoute,
-  PersonnelIndexRoute: PersonnelIndexRoute,
   ApiPublicAdminUsersRoute: ApiPublicAdminUsersRoute,
   ApiPublicRegisterSchoolRoute: ApiPublicRegisterSchoolRoute,
   ApiPublicSeedDemoRoute: ApiPublicSeedDemoRoute,
