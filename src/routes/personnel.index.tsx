@@ -179,6 +179,7 @@ function PersonnelPage() {
     const s = staffMap[payDialog.staff_id];
     if (!s) return;
     const today = new Date().toISOString().slice(0, 10);
+    const prevStatus = payDialog.status;
     const { error } = await sb.from("payroll").update({
       status: "payé", payment_date: today, payment_method: payMethod,
     }).eq("id", payDialog.id);
@@ -191,9 +192,15 @@ function PersonnelPage() {
       reference: `PAIE-${payDialog.year}-${String(payDialog.month).padStart(2, "0")}-${s.last_name.toUpperCase()}`,
     }).select("id").maybeSingle();
     if (tx?.id) await sb.from("payroll").update({ transaction_id: tx.id }).eq("id", payDialog.id);
+    await sb.from("payroll_history").insert({
+      school_id: s.school_id, payroll_id: payDialog.id, action: "payé",
+      old_status: prevStatus, new_status: "payé",
+      reason: `Méthode: ${payMethod}`, changed_by: user?.id ?? null,
+    });
     toast.success("Paiement enregistré (dépense ajoutée en comptabilité)");
     setPayDialog(null); fetchAll();
   };
+
 
   if (planLoading) return <AppLayout title="Personnel"><div className="p-8 text-muted-foreground">Chargement…</div></AppLayout>;
   if (!isAdmin) return <AppLayout title="Personnel"><div className="p-8 text-muted-foreground">Accès réservé à l'administration.</div></AppLayout>;
