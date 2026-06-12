@@ -21,7 +21,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Search, Briefcase, Users, Wallet, CheckCircle2, Clock, Eye, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/personnel")({ component: PersonnelPage });
+export const Route = createFileRoute("/personnel/")({ component: PersonnelPage });
 
 const sb = supabase as any;
 
