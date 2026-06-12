@@ -801,6 +801,64 @@ export type Database = {
           },
         ]
       }
+      payroll_history: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_status: string | null
+          old_status: string | null
+          payroll_id: string
+          reason: string | null
+          school_id: string
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_status?: string | null
+          old_status?: string | null
+          payroll_id: string
+          reason?: string | null
+          school_id: string
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_status?: string | null
+          old_status?: string | null
+          payroll_id?: string
+          reason?: string | null
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_history_payroll_id_fkey"
+            columns: ["payroll_id"]
+            isOneToOne: false
+            referencedRelation: "payroll"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_history_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           assigned_classes: string[] | null
