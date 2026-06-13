@@ -50,8 +50,10 @@ function EnseignantsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [credentials, setCredentials] = useState<CredentialsInfo | null>(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [resetTarget, setResetTarget] = useState<Teacher | null>(null);
   const school = db.schools.find((s) => s.id === user?.schoolId);
   const { plan, canAddTeacher, limits, teacherCount } = usePlan();
+  const { accountFor, refresh: refreshAccounts } = useSchoolTeacherAccounts();
 
   const openNew = () => {
     if (!canAddTeacher()) { setUpgradeOpen(true); return; }
