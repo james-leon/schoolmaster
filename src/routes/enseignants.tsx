@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { GraduationCap, Plus, Pencil, Trash2 } from "lucide-react";
+import { GraduationCap, Plus, Pencil, Trash2, KeyRound, UserPlus } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { adminApi } from "@/lib/admin-api";
@@ -22,6 +22,7 @@ import { hydrateAll } from "@/lib/supabase-sync";
 import { useAuth } from "@/lib/auth";
 import { usePlan } from "@/lib/usePlan";
 import { UpgradeModal } from "@/components/UpgradePrompt";
+import { useSchoolTeacherAccounts } from "@/lib/useSchoolTeacherAccounts";
 
 export const Route = createFileRoute("/enseignants")({ component: EnseignantsPage });
 
