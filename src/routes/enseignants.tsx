@@ -167,26 +167,46 @@ function EnseignantsPage() {
                   <TableHead>Email</TableHead>
                   <TableHead>Téléphone</TableHead>
                   <TableHead>Matières</TableHead>
+                  <TableHead>Compte</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {db.teachers.map((t) => (
-                  <TableRow key={t.id}>
-                    <TableCell className="font-medium">{t.firstName} {t.lastName}</TableCell>
-                    <TableCell className="text-muted-foreground">{t.email}</TableCell>
-                    <TableCell className="text-muted-foreground">{t.phone}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {(t.subjects ?? [t.subject]).map((s) => <Badge key={s} variant="secondary">{s}</Badge>)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(t)}><Pencil className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => setToDelete(t)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {db.teachers.map((t) => {
+                  const acc = accountFor(t.email);
+                  return (
+                    <TableRow key={t.id}>
+                      <TableCell className="font-medium">{t.firstName} {t.lastName}</TableCell>
+                      <TableCell className="text-muted-foreground">{t.email}</TableCell>
+                      <TableCell className="text-muted-foreground">{t.phone}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {(t.subjects ?? [t.subject]).map((s) => <Badge key={s} variant="secondary">{s}</Badge>)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {acc ? (
+                          <Badge className="bg-success/15 text-success hover:bg-success/15">Compte actif</Badge>
+                        ) : (
+                          <Badge variant="secondary">Aucun compte</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(t)} title="Modifier"><Pencil className="h-4 w-4" /></Button>
+                        {acc ? (
+                          <Button variant="ghost" size="icon" onClick={() => setResetTarget(t)} title="Réinitialiser le mot de passe">
+                            <KeyRound className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button variant="ghost" size="icon" onClick={() => createAccount(t)} title="Créer un compte" disabled={!t.email}>
+                            <UserPlus className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon" onClick={() => setToDelete(t)} title="Supprimer"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
