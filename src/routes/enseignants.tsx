@@ -284,6 +284,23 @@ function EnseignantsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={!!resetTarget} onOpenChange={(o) => !o && setResetTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Réinitialiser le mot de passe ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Un nouveau mot de passe temporaire sera généré pour {resetTarget?.firstName} {resetTarget?.lastName}.
+              Il devra le changer à sa prochaine connexion.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => resetTarget && doResetPassword(resetTarget)}>Réinitialiser</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
       <CredentialsModal info={credentials} onClose={() => setCredentials(null)} />
       <UpgradeModal
         open={upgradeOpen}
