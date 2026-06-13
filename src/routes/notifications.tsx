@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/lib/auth";
 import { AppLayout } from "@/components/AppLayout";
 import { useNotifications, timeAgoFr, TYPE_LABEL, type Notification } from "@/lib/notifications";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,9 +46,18 @@ function groupByDate(list: Notification[]) {
 
 function NotificationsPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead, remove } = useNotifications();
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [readFilter, setReadFilter] = useState<string>("all");
+
+  // Parents must stay inside the parent portal layout (bottom nav). The bell
+  // there opens an in-portal sheet; if a parent reaches /notifications directly
+  // (old link, deep link, etc.) send them back to /parent so they don't get
+  // trapped in the admin sidebar layout.
+  useEffect(() => {
+    if (user?.role === "parent") navigate({ to: "/parent", replace: true });
+  }, [user, navigate]);
 
   const filtered = useMemo(() => {
     return notifications.filter((n) => {

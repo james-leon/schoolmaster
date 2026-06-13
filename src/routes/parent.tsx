@@ -20,6 +20,7 @@ import {
 import { MedicalTab } from "@/components/MedicalTab";
 import { DisciplineTab } from "@/components/DisciplineTab";
 import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/parent")({
   component: ParentPortal,
@@ -601,23 +602,99 @@ function MessagesTab({ announcements, classIds, userId, schoolId }: { announceme
 }
 
 function ParentNotificationBell() {
-  const navigate = useNavigate();
-  const { unreadCount } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, remove } = useNotifications();
+  const [open, setOpen] = useState(false);
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="relative"
-      aria-label="Notifications"
-      onClick={() => navigate({ to: "/notifications" })}
-    >
-      <Bell className="h-5 w-5" />
-      {unreadCount > 0 && (
-        <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-          {unreadCount > 9 ? "9+" : unreadCount}
-        </span>
-      )}
-    </Button>
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="relative"
+        aria-label="Notifications"
+        onClick={() => setOpen(true)}
+      >
+        <Bell className="h-5 w-5" />
+        {unreadCount > 0 && (
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
+      </Button>
+      <ParentNotificationsSheet
+        open={open}
+        onOpenChange={setOpen}
+        notifications={notifications}
+        unreadCount={unreadCount}
+        onMarkRead={markAsRead}
+        onMarkAllRead={markAllAsRead}
+        onRemove={remove}
+      />
+    </>
+  );
+}
+
+function ParentNotificationsSheet({
+  open, onOpenChange, notifications, unreadCount, onMarkRead, onMarkAllRead, onRemove,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  notifications: ReturnType<typeof useNotifications>["notifications"];
+  unreadCount: number;
+  onMarkRead: (id: string) => void;
+  onMarkAllRead: () => void;
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full max-w-md p-0 sm:max-w-md">
+        <SheetHeader className="flex flex-row items-center justify-between border-b px-4 py-3 text-left">
+          <SheetTitle className="flex items-center gap-2"><Bell className="h-4 w-4" /> Notifications</SheetTitle>
+          {unreadCount > 0 && (
+            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={onMarkAllRead}>
+              <CheckCircle2 className="mr-1 h-3 w-3" /> Tout marquer
+            </Button>
+          )}
+        </SheetHeader>
+        <div className="max-h-[calc(100vh-56px)] overflow-y-auto">
+          {notifications.length === 0 && (
+            <div className="px-4 py-16 text-center text-sm text-muted-foreground">
+              <Inbox className="mx-auto mb-2 h-8 w-8 opacity-40" />
+              Aucune notification
+            </div>
+          )}
+          {notifications.map((n) => (
+            <div
+              key={n.id}
+              className={cn(
+                "flex items-start gap-3 border-b border-border px-4 py-3 cursor-pointer hover:bg-muted/40",
+                !n.read && "bg-primary/5",
+              )}
+              onClick={() => { if (!n.read) onMarkRead(n.id); }}
+            >
+              <Bell className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className={cn("text-sm", !n.read && "font-semibold")}>{n.title}</span>
+                  {!n.read && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
+                </div>
+                <p className="text-xs text-muted-foreground">{n.message}</p>
+                <span className="text-[10px] text-muted-foreground">
+                  {new Date(n.created_at).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+              <Button
+                variant="ghost" size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={(e) => { e.stopPropagation(); onRemove(n.id); }}
+                aria-label="Supprimer"
+              >
+                <LogOut className="h-3.5 w-3.5 rotate-180" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
