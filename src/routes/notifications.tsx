@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/lib/auth";
 import { AppLayout } from "@/components/AppLayout";
 import { useNotifications, timeAgoFr, TYPE_LABEL, type Notification } from "@/lib/notifications";
 import { Card, CardContent } from "@/components/ui/card";
