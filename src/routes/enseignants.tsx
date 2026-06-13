@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { GraduationCap, Plus, Pencil, Trash2 } from "lucide-react";
+import { GraduationCap, Plus, Pencil, Trash2, KeyRound, UserPlus } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { adminApi } from "@/lib/admin-api";
@@ -22,6 +22,7 @@ import { hydrateAll } from "@/lib/supabase-sync";
 import { useAuth } from "@/lib/auth";
 import { usePlan } from "@/lib/usePlan";
 import { UpgradeModal } from "@/components/UpgradePrompt";
+import { useSchoolTeacherAccounts } from "@/lib/useSchoolTeacherAccounts";
 
 export const Route = createFileRoute("/enseignants")({ component: EnseignantsPage });
 
@@ -49,8 +50,10 @@ function EnseignantsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [credentials, setCredentials] = useState<CredentialsInfo | null>(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [resetTarget, setResetTarget] = useState<Teacher | null>(null);
   const school = db.schools.find((s) => s.id === user?.schoolId);
   const { plan, canAddTeacher, limits, teacherCount } = usePlan();
+  const { accountFor, refresh: refreshAccounts } = useSchoolTeacherAccounts();
 
   const openNew = () => {
     if (!canAddTeacher()) { setUpgradeOpen(true); return; }
@@ -119,6 +122,31 @@ function EnseignantsPage() {
     setToDelete(null);
   };
 
+  const createAccount = async (t: Teacher) => {
+    if (!t.email) { toast.error("Cet enseignant n'a pas d'email"); return; }
+    try {
+      const res = await adminApi.createTeacherAccount(t.id);
+      setCredentials({
+        name: `${t.firstName} ${t.lastName}`, email: t.email,
+        tempPassword: res.tempPassword, role: "teacher", schoolName: school?.name,
+      });
+      refreshAccounts();
+    } catch (e) { toast.error((e as Error).message); }
+  };
+
+  const doResetPassword = async (t: Teacher) => {
+    const acc = accountFor(t.email);
+    if (!acc) return;
+    try {
+      const res = await adminApi.resetPassword(acc.id);
+      setCredentials({
+        name: `${t.firstName} ${t.lastName}`, email: t.email,
+        tempPassword: res.tempPassword, role: "teacher", schoolName: school?.name,
+      });
+      setResetTarget(null);
+    } catch (e) { toast.error((e as Error).message); }
+  };
+
   return (
     <AppLayout title="Enseignants">
       <div className="mb-4 flex justify-end">
@@ -139,26 +167,46 @@ function EnseignantsPage() {
                   <TableHead>Email</TableHead>
                   <TableHead>Téléphone</TableHead>
                   <TableHead>Matières</TableHead>
+                  <TableHead>Compte</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {db.teachers.map((t) => (
-                  <TableRow key={t.id}>
-                    <TableCell className="font-medium">{t.firstName} {t.lastName}</TableCell>
-                    <TableCell className="text-muted-foreground">{t.email}</TableCell>
-                    <TableCell className="text-muted-foreground">{t.phone}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {(t.subjects ?? [t.subject]).map((s) => <Badge key={s} variant="secondary">{s}</Badge>)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(t)}><Pencil className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => setToDelete(t)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {db.teachers.map((t) => {
+                  const acc = accountFor(t.email);
+                  return (
+                    <TableRow key={t.id}>
+                      <TableCell className="font-medium">{t.firstName} {t.lastName}</TableCell>
+                      <TableCell className="text-muted-foreground">{t.email}</TableCell>
+                      <TableCell className="text-muted-foreground">{t.phone}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {(t.subjects ?? [t.subject]).map((s) => <Badge key={s} variant="secondary">{s}</Badge>)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {acc ? (
+                          <Badge className="bg-success/15 text-success hover:bg-success/15">Compte actif</Badge>
+                        ) : (
+                          <Badge variant="secondary">Aucun compte</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(t)} title="Modifier"><Pencil className="h-4 w-4" /></Button>
+                        {acc ? (
+                          <Button variant="ghost" size="icon" onClick={() => setResetTarget(t)} title="Réinitialiser le mot de passe">
+                            <KeyRound className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button variant="ghost" size="icon" onClick={() => createAccount(t)} title="Créer un compte" disabled={!t.email}>
+                            <UserPlus className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon" onClick={() => setToDelete(t)} title="Supprimer"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
@@ -235,6 +283,23 @@ function EnseignantsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!resetTarget} onOpenChange={(o) => !o && setResetTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Réinitialiser le mot de passe ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Un nouveau mot de passe temporaire sera généré pour {resetTarget?.firstName} {resetTarget?.lastName}.
+              Il devra le changer à sa prochaine connexion.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => resetTarget && doResetPassword(resetTarget)}>Réinitialiser</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       <CredentialsModal info={credentials} onClose={() => setCredentials(null)} />
       <UpgradeModal
