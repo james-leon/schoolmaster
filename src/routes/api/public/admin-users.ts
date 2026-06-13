@@ -191,6 +191,53 @@ export const Route = createFileRoute("/api/public/admin-users")({
             return Response.json({ ok: true, tempPassword });
           }
 
+          if (action === "list-school-teachers") {
+            const { data, error } = await supabaseAdmin
+              .from("profiles")
+              .select("id, full_name, email, phone")
+              .eq("school_id", ctx.schoolId)
+              .eq("role", "teacher")
+              .order("full_name", { ascending: true });
+            if (error) return Response.json({ error: error.message }, { status: 400 });
+            return Response.json({ teachers: data ?? [] });
+          }
+
+          if (action === "create-teacher-account") {
+            const { teacherId } = body;
+            if (!teacherId) return Response.json({ error: "Enseignant requis" }, { status: 400 });
+            const { data: t } = await supabaseAdmin
+              .from("teachers")
+              .select("id, school_id, first_name, last_name, email, phone, subjects")
+              .eq("id", teacherId).maybeSingle();
+            if (!t || t.school_id !== ctx.schoolId) return Response.json({ error: "Forbidden" }, { status: 403 });
+            if (!t.email) return Response.json({ error: "Cet enseignant n'a pas d'email" }, { status: 400 });
+            // If a profile already exists for this email in this school, just reset password
+            const { data: existing } = await supabaseAdmin
+              .from("profiles").select("id, school_id").eq("email", t.email).maybeSingle();
+            const tempPassword = genPassword(10);
+            if (existing) {
+              if (existing.school_id !== ctx.schoolId) return Response.json({ error: "Email déjà utilisé" }, { status: 400 });
+              const { error: uErr } = await supabaseAdmin.auth.admin.updateUserById(existing.id, { password: tempPassword });
+              if (uErr) return Response.json({ error: uErr.message }, { status: 400 });
+              await supabaseAdmin.from("profiles").update({ must_change_password: true, is_active: true }).eq("id", existing.id);
+              return Response.json({ ok: true, userId: existing.id, tempPassword });
+            }
+            const { data: created, error: cErr } = await supabaseAdmin.auth.admin.createUser({
+              email: t.email, password: tempPassword, email_confirm: true,
+              user_metadata: { full_name: `${t.first_name} ${t.last_name}` },
+            });
+            if (cErr || !created.user) return Response.json({ error: cErr?.message ?? "Création échouée" }, { status: 400 });
+            const uid = created.user.id;
+            await supabaseAdmin.from("user_roles").upsert({ user_id: uid, role: "teacher" }, { onConflict: "user_id,role" });
+            await supabaseAdmin.from("profiles").upsert({
+              id: uid, email: t.email, full_name: `${t.first_name} ${t.last_name}`, role: "teacher",
+              school_id: ctx.schoolId, phone: t.phone ?? null,
+              assigned_subjects: t.subjects ?? [],
+              must_change_password: true, is_active: true,
+            }, { onConflict: "id" });
+            return Response.json({ ok: true, userId: uid, tempPassword });
+          }
+
           if (action === "set-active") {
             const { targetUserId, isActive } = body;
             if (!targetUserId) return Response.json({ error: "Utilisateur requis" }, { status: 400 });
