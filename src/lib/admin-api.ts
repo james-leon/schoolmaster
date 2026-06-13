@@ -17,6 +17,10 @@ async function callAdmin(payload: Record<string, unknown>): Promise<any> {
 export const adminApi = {
   createTeacher: (p: { firstName: string; lastName: string; email: string; phone?: string; subjects: string[]; assignedClasses: string[] }) =>
     callAdmin({ action: "create-teacher", ...p }),
+  createTeacherAccount: (teacherId: string) =>
+    callAdmin({ action: "create-teacher-account", teacherId }) as Promise<{ ok: true; userId: string; tempPassword: string }>,
+  listSchoolTeachers: () =>
+    callAdmin({ action: "list-school-teachers" }) as Promise<{ teachers: { id: string; full_name: string; email: string; phone: string | null }[] }>,
   createParent: (p: { firstName: string; lastName: string; email: string; phone?: string; studentIds: string[]; relationship?: string }) =>
     callAdmin({ action: "create-parent", ...p }),
   linkParentStudent: (p: { parentProfileId: string; studentId: string; relationship?: string }) =>
