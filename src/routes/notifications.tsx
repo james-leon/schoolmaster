@@ -58,7 +58,6 @@ function NotificationsPage() {
   useEffect(() => {
     if (user?.role === "parent") navigate({ to: "/parent", replace: true });
   }, [user, navigate]);
-  const [readFilter, setReadFilter] = useState<string>("all");
 
   const filtered = useMemo(() => {
     return notifications.filter((n) => {
