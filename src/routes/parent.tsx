@@ -20,6 +20,7 @@ import {
 import { MedicalTab } from "@/components/MedicalTab";
 import { DisciplineTab } from "@/components/DisciplineTab";
 import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/parent")({
   component: ParentPortal,
