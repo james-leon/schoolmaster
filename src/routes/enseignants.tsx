@@ -122,6 +122,31 @@ function EnseignantsPage() {
     setToDelete(null);
   };
 
+  const createAccount = async (t: Teacher) => {
+    if (!t.email) { toast.error("Cet enseignant n'a pas d'email"); return; }
+    try {
+      const res = await adminApi.createTeacherAccount(t.id);
+      setCredentials({
+        name: `${t.firstName} ${t.lastName}`, email: t.email,
+        tempPassword: res.tempPassword, role: "teacher", schoolName: school?.name,
+      });
+      refreshAccounts();
+    } catch (e) { toast.error((e as Error).message); }
+  };
+
+  const doResetPassword = async (t: Teacher) => {
+    const acc = accountFor(t.email);
+    if (!acc) return;
+    try {
+      const res = await adminApi.resetPassword(acc.id);
+      setCredentials({
+        name: `${t.firstName} ${t.lastName}`, email: t.email,
+        tempPassword: res.tempPassword, role: "teacher", schoolName: school?.name,
+      });
+      setResetTarget(null);
+    } catch (e) { toast.error((e as Error).message); }
+  };
+
   return (
     <AppLayout title="Enseignants">
       <div className="mb-4 flex justify-end">
