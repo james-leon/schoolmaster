@@ -45,8 +45,18 @@ function groupByDate(list: Notification[]) {
 
 function NotificationsPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead, remove } = useNotifications();
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [readFilter, setReadFilter] = useState<string>("all");
+
+  // Parents must stay inside the parent portal layout (bottom nav). The bell
+  // there opens an in-portal sheet; if a parent reaches /notifications directly
+  // (old link, deep link, etc.) send them back to /parent so they don't get
+  // trapped in the admin sidebar layout.
+  useEffect(() => {
+    if (user?.role === "parent") navigate({ to: "/parent", replace: true });
+  }, [user, navigate]);
   const [readFilter, setReadFilter] = useState<string>("all");
 
   const filtered = useMemo(() => {
