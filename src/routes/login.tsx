@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Shield, GraduationCap, Users as UsersIcon } from "lucide-react";
+import { friendlyConnectionMessage } from "@/lib/connection-friendly";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -18,14 +18,6 @@ const schema = z.object({
   email: z.string().email("Adresse email invalide"),
   password: z.string().min(1, "Le mot de passe est requis"),
 });
-
-// Demo shortcuts prefill the email only; passwords must be entered manually
-// and are never embedded in the client bundle.
-const DEMOS = [
-  { key: "admin", label: "Admin", icon: Shield, email: "admin@queenmary.cm", tone: "bg-primary text-primary-foreground" },
-  { key: "teacher", label: "Prof", icon: GraduationCap, email: "prof.martin@queenmary.cm", tone: "bg-secondary text-secondary-foreground" },
-  { key: "parent", label: "Parent", icon: UsersIcon, email: "parent.ekane@gmail.com", tone: "bg-success text-success-foreground" },
-];
 
 function redirectFor(role: string) {
   if (role === "super_admin") return "/super-admin";
@@ -54,7 +46,13 @@ function LoginPage() {
         navigate({ to: redirectFor(u.role), replace: true });
       }
     } catch (err) {
-      toast.error((err as Error).message);
+      const raw = (err as Error).message ?? "";
+      const friendly = friendlyConnectionMessage(raw);
+      if (friendly) {
+        toast.warning(friendly, { duration: 6000 });
+      } else {
+        toast.error(raw);
+      }
     } finally {
       setLoading(false);
     }
@@ -100,42 +98,10 @@ function LoginPage() {
           </Button>
         </form>
 
-        <div className="mt-6">
-          <p className="mb-2 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Connexion rapide (Démo)
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            {DEMOS.map((d) => (
-              <button
-                key={d.key}
-                type="button"
-                onClick={() => {
-                  setEmail(d.email);
-                  setPassword("");
-                  toast.info("Email pré-rempli. Saisissez le mot de passe pour vous connecter.");
-                }}
-                className="flex flex-col items-center gap-1 rounded-md border border-border p-3 text-xs font-medium transition-colors hover:bg-muted"
-              >
-                <span className={`flex h-8 w-8 items-center justify-center rounded-full ${d.tone}`}>
-                  <d.icon className="h-4 w-4" />
-                </span>
-                {d.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div className="mt-4 flex flex-col items-center gap-2 text-sm">
           <Link to="/forgot-password" className="text-secondary hover:underline">
             Mot de passe oublié ?
           </Link>
-          <button
-            type="button"
-            onClick={() => { setEmail("admin@wintek.cm"); setPassword(""); }}
-            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Accès Super Admin (Wintek)
-          </button>
           <Link to="/confidentialite" className="mt-2 text-xs text-muted-foreground hover:text-foreground">
             Politique de confidentialité
           </Link>
