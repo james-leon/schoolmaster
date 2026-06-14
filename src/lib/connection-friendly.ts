@@ -8,7 +8,7 @@ export const CONNECTION_MESSAGES = {
   timeout:
     "Votre connexion internet semble lente. Veuillez patienter ou réessayer. Vos données sont en sécurité.",
   offline: "Vous êtes hors ligne. Reconnexion en cours…",
-  failed: "Connexion lente ou interrompue. Réessayez.",
+  failed: "Connexion internet indisponible. Vérifiez votre connexion et réessayez.",
 } as const;
 
 /** Phrases we should never show to the user — they get rewritten. */
