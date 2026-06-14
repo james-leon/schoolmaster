@@ -173,19 +173,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<User> => {
     // Demo seeding is no longer triggered from the client (security).
 
-    const withTimeout = <T,>(p: PromiseLike<T>, ms: number, label: string) =>
-      Promise.race<T>([
-        Promise.resolve(p),
-        new Promise<T>((_, rej) => setTimeout(() => rej(new Error(`Délai dépassé (${label})`)), ms)),
-      ]);
+    const { withTimeoutRetry } = await import("@/lib/connection-friendly");
 
-    const { data, error } = await withTimeout(
-      supabase.auth.signInWithPassword({ email, password }), 10000, "connexion",
+    const { data, error } = await withTimeoutRetry(
+      () => supabase.auth.signInWithPassword({ email, password }),
+      { timeoutMs: 25000, retries: 1 },
     );
     if (error) throw new Error(error.message === "Invalid login credentials" ? "Email ou mot de passe incorrect" : error.message);
     if (!data.user) throw new Error("Connexion échouée");
 
-    const u = await withTimeout(loadProfile(data.user.id), 8000, "profil");
+    const u = await withTimeoutRetry(() => loadProfile(data.user.id), { timeoutMs: 20000, retries: 1 });
     if (!u) throw new Error("Profil introuvable");
 
     // Block suspended schools (for school members, not super admin)
