@@ -11,6 +11,9 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/lib/theme";
 import { AuthProvider } from "@/lib/auth";
+import { installFriendlyToastInterceptor } from "@/lib/connection-friendly";
+
+if (typeof window !== "undefined") installFriendlyToastInterceptor();
 
 import appCss from "../styles.css?url";
 function NotFoundComponent() {
