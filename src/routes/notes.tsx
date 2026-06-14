@@ -549,6 +549,8 @@ function BulletinsTab() {
   td:first-child, th:first-child { text-align: left; }
   tbody tr:nth-child(even) { background: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   img { max-width: 80px; max-height: 80px; }
+  .no-print, button, [role="tooltip"] { display: none !important; }
+  textarea, input { border: none !important; background: transparent !important; resize: none !important; outline: none !important; padding: 0 !important; font-family: inherit !important; font-size: inherit !important; color: #000 !important; }
   @page { size: A4 portrait; margin: 0; }
   @media print { body { padding: 15mm; } }
 </style></head><body>${content}</body></html>`);
@@ -709,7 +711,17 @@ function BulletinPrintStyles() {
           z-index: 99999 !important;
         }
         body.print-all-bulletins .print-all-only { display: block !important; position: static !important; }
-        .no-print, [role="dialog"] > button[aria-label] { display: none !important; }
+        .no-print, [role="dialog"] > button[aria-label], button, [role="tooltip"] { display: none !important; }
+        .bulletin-sheet textarea, .bulletin-sheet input {
+          border: none !important;
+          background: transparent !important;
+          resize: none !important;
+          outline: none !important;
+          padding: 0 !important;
+          font-family: inherit !important;
+          font-size: inherit !important;
+          color: #000 !important;
+        }
         .bulletin-sheet { box-shadow: none !important; border: none !important; page-break-after: always; }
         .bulletin-sheet:last-child { page-break-after: auto; }
       }
