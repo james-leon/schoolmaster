@@ -285,8 +285,8 @@ function EmptyState({ icon: Icon, message, tone = "muted" }: { icon: any; messag
   );
 }
 
-function EnfantTab({ student, klass, initials, grades, payments, attendance }: {
-  student: Student; klass: Classe | undefined; initials: string; grades: Grade[]; payments: Payment[]; attendance: any[];
+function EnfantTab({ student, klass, initials, grades, payments, paymentRecords, attendance }: {
+  student: Student; klass: Classe | undefined; initials: string; grades: Grade[]; payments: Payment[]; paymentRecords: PaymentRecord[]; attendance: any[];
 }) {
   const studentGrades = grades.filter((g) => g.studentId === student.id);
   const lastTerm = "1er trimestre";
@@ -299,7 +299,7 @@ function EnfantTab({ student, klass, initials, grades, payments, attendance }: {
   const absencesMois = attendance.filter((a) => a.studentId === student.id && a.date.startsWith(month) && a.status === "absent").length;
 
   const studentInvoices = payments.filter((p) => p.studentId === student.id);
-  const due = studentInvoices.reduce((s, p) => s + Math.max(0, p.amount - p.amountPaid), 0);
+  const due = studentInvoices.reduce((s, p) => s + Math.max(0, p.amount - paidFor(p, paymentRecords)), 0);
 
   return (
     <div className="space-y-4">
