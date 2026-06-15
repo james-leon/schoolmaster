@@ -9,7 +9,12 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fcfa } from "@/lib/format";
-import { gradeValue, appreciationFor, deriveInvoiceStatus, type Grade, type Payment, type Student, type Classe } from "@/lib/types";
+import { gradeValue, appreciationFor, deriveInvoiceStatus, type Grade, type Payment, type PaymentRecord, type Student, type Classe } from "@/lib/types";
+
+function paidFor(invoice: Payment, records: PaymentRecord[]): number {
+  const summed = records.filter((r) => r.invoiceId === invoice.id).reduce((s, r) => s + (r.amount || 0), 0);
+  return Math.max(invoice.amountPaid ?? 0, summed);
+}
 import { Logo } from "@/components/Logo";
 import { useParentChildren, type ParentChild } from "@/lib/useParentChildren";
 import { useNotifications } from "@/lib/notifications";
