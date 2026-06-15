@@ -499,9 +499,9 @@ function PresencesTab({ studentId, attendance }: { studentId: string; attendance
   );
 }
 
-function PaiementsTab({ studentId, payments }: { studentId: string; payments: Payment[] }) {
+function PaiementsTab({ studentId, payments, paymentRecords }: { studentId: string; payments: Payment[]; paymentRecords: PaymentRecord[] }) {
   const list = payments.filter((p) => p.studentId === studentId);
-  const due = list.reduce((s, p) => s + Math.max(0, p.amount - p.amountPaid), 0);
+  const due = list.reduce((s, p) => s + Math.max(0, p.amount - paidFor(p, paymentRecords)), 0);
 
   if (list.length === 0) {
     return (
