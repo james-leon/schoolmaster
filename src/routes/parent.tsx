@@ -534,7 +534,7 @@ function PaiementsTab({ studentId, payments, paymentRecords }: { studentId: stri
             </TableHeader>
             <TableBody>
               {list.map((p) => {
-                const st = deriveInvoiceStatus(p.amount, p.amountPaid, p.dueDate);
+                const st = deriveInvoiceStatus(p.amount, paidFor(p, paymentRecords), p.dueDate);
                 const variant = st === "paye" ? "default" : st === "partiel" ? "secondary" : "destructive";
                 const label = st === "paye" ? "Payée" : st === "partiel" ? "Partiel" : st === "retard" ? "En retard" : "En attente";
                 return (
