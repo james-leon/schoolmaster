@@ -9,7 +9,12 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fcfa } from "@/lib/format";
-import { gradeValue, appreciationFor, deriveInvoiceStatus, type Grade, type Payment, type Student, type Classe } from "@/lib/types";
+import { gradeValue, appreciationFor, deriveInvoiceStatus, type Grade, type Payment, type PaymentRecord, type Student, type Classe } from "@/lib/types";
+
+function paidFor(invoice: Payment, records: PaymentRecord[]): number {
+  const summed = records.filter((r) => r.invoiceId === invoice.id).reduce((s, r) => s + (r.amount || 0), 0);
+  return Math.max(invoice.amountPaid ?? 0, summed);
+}
 import { Logo } from "@/components/Logo";
 import { useParentChildren, type ParentChild } from "@/lib/useParentChildren";
 import { useNotifications } from "@/lib/notifications";
@@ -125,10 +130,10 @@ function ParentPortal() {
           <CombinedView children={children} db={db} onPickChild={(id) => { setSelectedId(id); setTab("enfant"); }} />
         ) : student ? (
           <>
-            {tab === "enfant" && <EnfantTab student={student} klass={klass} initials={initials} grades={db.grades} payments={db.payments} attendance={db.attendance} />}
+            {tab === "enfant" && <EnfantTab student={student} klass={klass} initials={initials} grades={db.grades} payments={db.payments} paymentRecords={db.paymentRecords} attendance={db.attendance} />}
             {tab === "notes" && <NotesTab studentId={student.id} grades={db.grades} classSubjects={db.classSubjects.filter((s) => s.classId === student.classId)} />}
             {tab === "presences" && <PresencesTab studentId={student.id} attendance={db.attendance} />}
-            {tab === "paiements" && <PaiementsTab studentId={student.id} payments={db.payments} />}
+            {tab === "paiements" && <PaiementsTab studentId={student.id} payments={db.payments} paymentRecords={db.paymentRecords} />}
             {tab === "medical" && <MedicalTab studentId={student.id} canEdit={false} />}
             {tab === "suivi" && <DisciplineTab studentId={student.id} schoolId={user?.schoolId} canAdd={false} readOnly />}
             {tab === "messages" && <MessagesTab announcements={db.announcements} classIds={children.map((c) => c.classId).filter((id): id is string => !!id)} userId={user?.id} schoolId={user?.schoolId} />}
@@ -215,7 +220,7 @@ function CombinedView({
     const grades = db.grades.filter((g) => g.studentId === c.id);
     const t1 = grades.filter((g) => g.term === "1er trimestre");
     const avg = t1.length ? Math.round((t1.reduce((s, g) => s + gradeValue(g), 0) / t1.length) * 100) / 100 : null;
-    const due = db.payments.filter((p) => p.studentId === c.id).reduce((s, p) => s + Math.max(0, p.amount - p.amountPaid), 0);
+    const due = db.payments.filter((p) => p.studentId === c.id).reduce((s, p) => s + Math.max(0, p.amount - paidFor(p, db.paymentRecords)), 0);
     const absences = db.attendance.filter((a) => a.studentId === c.id && a.date.startsWith(month) && a.status === "absent").length;
     return { child: c, avg, due, absences };
   });
@@ -280,8 +285,8 @@ function EmptyState({ icon: Icon, message, tone = "muted" }: { icon: any; messag
   );
 }
 
-function EnfantTab({ student, klass, initials, grades, payments, attendance }: {
-  student: Student; klass: Classe | undefined; initials: string; grades: Grade[]; payments: Payment[]; attendance: any[];
+function EnfantTab({ student, klass, initials, grades, payments, paymentRecords, attendance }: {
+  student: Student; klass: Classe | undefined; initials: string; grades: Grade[]; payments: Payment[]; paymentRecords: PaymentRecord[]; attendance: any[];
 }) {
   const studentGrades = grades.filter((g) => g.studentId === student.id);
   const lastTerm = "1er trimestre";
@@ -294,7 +299,7 @@ function EnfantTab({ student, klass, initials, grades, payments, attendance }: {
   const absencesMois = attendance.filter((a) => a.studentId === student.id && a.date.startsWith(month) && a.status === "absent").length;
 
   const studentInvoices = payments.filter((p) => p.studentId === student.id);
-  const due = studentInvoices.reduce((s, p) => s + Math.max(0, p.amount - p.amountPaid), 0);
+  const due = studentInvoices.reduce((s, p) => s + Math.max(0, p.amount - paidFor(p, paymentRecords)), 0);
 
   return (
     <div className="space-y-4">
@@ -494,9 +499,9 @@ function PresencesTab({ studentId, attendance }: { studentId: string; attendance
   );
 }
 
-function PaiementsTab({ studentId, payments }: { studentId: string; payments: Payment[] }) {
+function PaiementsTab({ studentId, payments, paymentRecords }: { studentId: string; payments: Payment[]; paymentRecords: PaymentRecord[] }) {
   const list = payments.filter((p) => p.studentId === studentId);
-  const due = list.reduce((s, p) => s + Math.max(0, p.amount - p.amountPaid), 0);
+  const due = list.reduce((s, p) => s + Math.max(0, p.amount - paidFor(p, paymentRecords)), 0);
 
   if (list.length === 0) {
     return (
@@ -529,7 +534,7 @@ function PaiementsTab({ studentId, payments }: { studentId: string; payments: Pa
             </TableHeader>
             <TableBody>
               {list.map((p) => {
-                const st = deriveInvoiceStatus(p.amount, p.amountPaid, p.dueDate);
+                const st = deriveInvoiceStatus(p.amount, paidFor(p, paymentRecords), p.dueDate);
                 const variant = st === "paye" ? "default" : st === "partiel" ? "secondary" : "destructive";
                 const label = st === "paye" ? "Payée" : st === "partiel" ? "Partiel" : st === "retard" ? "En retard" : "En attente";
                 return (
