@@ -220,7 +220,7 @@ function CombinedView({
     const grades = db.grades.filter((g) => g.studentId === c.id);
     const t1 = grades.filter((g) => g.term === "1er trimestre");
     const avg = t1.length ? Math.round((t1.reduce((s, g) => s + gradeValue(g), 0) / t1.length) * 100) / 100 : null;
-    const due = db.payments.filter((p) => p.studentId === c.id).reduce((s, p) => s + Math.max(0, p.amount - p.amountPaid), 0);
+    const due = db.payments.filter((p) => p.studentId === c.id).reduce((s, p) => s + Math.max(0, p.amount - paidFor(p, db.paymentRecords)), 0);
     const absences = db.attendance.filter((a) => a.studentId === c.id && a.date.startsWith(month) && a.status === "absent").length;
     return { child: c, avg, due, absences };
   });
