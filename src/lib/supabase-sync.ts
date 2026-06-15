@@ -44,22 +44,28 @@ type Snapshot = {
 
 function snapshot(): Snapshot {
   const db = getDB();
+  // Deep-clone every row. updateDB() callers often mutate objects in place
+  // (e.g. inv.amountPaid += x). A shallow snapshot would share references
+  // with the live store, so JSON.stringify(old) === JSON.stringify(new) and
+  // pushDiffs would skip the UPDATE — the row never persists to Supabase.
+  const clone = <T,>(arr: T[]): T[] => arr.map((x) => JSON.parse(JSON.stringify(x)) as T);
   return {
-    schools: [...db.schools],
-    classes: [...db.classes],
-    students: [...db.students],
-    teachers: [...db.teachers],
-    classSubjects: [...db.classSubjects],
-    grades: [...db.grades],
-    attendance: [...db.attendance],
-    feeTypes: [...db.feeTypes],
-    payments: [...db.payments],
-    paymentRecords: [...db.paymentRecords],
-    parents: [...db.parents],
-    announcements: [...db.announcements],
-    academicYears: [...db.academicYears],
+    schools: clone(db.schools),
+    classes: clone(db.classes),
+    students: clone(db.students),
+    teachers: clone(db.teachers),
+    classSubjects: clone(db.classSubjects),
+    grades: clone(db.grades),
+    attendance: clone(db.attendance),
+    feeTypes: clone(db.feeTypes),
+    payments: clone(db.payments),
+    paymentRecords: clone(db.paymentRecords),
+    parents: clone(db.parents),
+    announcements: clone(db.announcements),
+    academicYears: clone(db.academicYears),
   };
 }
+
 
 let lastSnapshot: Snapshot | null = null;
 let currentSchoolId: string | null = null;
