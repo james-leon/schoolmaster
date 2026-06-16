@@ -1,5 +1,4 @@
-import type { User, Classe } from "./types";
-import type { DB } from "./store";
+import type { User, Classe, DB } from "./types";
 
 /**
  * Resolve the classes a teacher has access to, combining all assignment sources:
