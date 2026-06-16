@@ -573,6 +573,7 @@ function ElevesPage() {
                   <TableHead>Date naissance</TableHead>
                   <TableHead>Téléphone parent</TableHead>
                   <TableHead>Statut</TableHead>
+                  <TableHead>Inscription</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
