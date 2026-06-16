@@ -559,7 +559,7 @@ function ElevesPage() {
       <Card>
         <CardContent className="p-4">
           {!loaded ? (
-            <TableSkeleton cols={8} />
+            <TableSkeleton cols={9} />
           ) : filtered.length === 0 ? (
             <EmptyState icon={Users} title="Aucun élève trouvé" description="Commencez par inscrire votre premier élève." actionLabel="Nouvel élève" onAction={openCreate} />
           ) : (
