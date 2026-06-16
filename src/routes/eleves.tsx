@@ -137,6 +137,13 @@ function statusBadge(s?: StudentStatus) {
   return <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", v.cls)}>{v.label}</span>;
 }
 
+function enrollmentBadge(e?: EnrollmentStatus) {
+  const v = e === "ancien"
+    ? { label: "Ancien", cls: "bg-muted text-muted-foreground" }
+    : { label: "Nouveau", cls: "bg-primary/15 text-primary" };
+  return <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", v.cls)}>{v.label}</span>;
+}
+
 // ---------- Import helpers ----------
 type StudentImport = {
   firstName: string; lastName: string; birthDate: string;
