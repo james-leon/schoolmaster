@@ -82,6 +82,7 @@ type FormState = {
   classId: string;
   code: string;
   status: StudentStatus;
+  enrollmentStatus: EnrollmentStatus;
   photo?: string;
   parentName: string;
   parentPhone: string;
