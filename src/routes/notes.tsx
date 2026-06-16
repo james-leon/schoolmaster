@@ -25,6 +25,7 @@ import { GraduationCap, Save, Download, Printer, FileText, Eye, Sparkles, Loader
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { resolveTeacherClasses } from "@/lib/teacher-scope";
 import { useServerFn } from "@tanstack/react-start";
 import { generateAppreciation } from "@/lib/ai-appreciation.functions";
 
