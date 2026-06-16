@@ -100,6 +100,7 @@ const emptyForm = (): FormState => ({
   classId: "",
   code: "",
   status: "actif",
+  enrollmentStatus: "nouveau",
   photo: undefined,
   parentName: "",
   parentPhone: "",
