@@ -13,6 +13,7 @@ import { CalendarCheck, Check, X, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { resolveTeacherClasses } from "@/lib/teacher-scope";
 
 export const Route = createFileRoute("/presences")({ component: PresencesPage });
 
@@ -22,12 +23,10 @@ function PresencesPage() {
   const db = useDB();
   const loaded = useLoaded();
   const { user } = useAuth();
-  const visibleClasses = useMemo(() => {
-    if (user?.role === "teacher" && user.assignedClasses?.length) {
-      return db.classes.filter((c) => user.assignedClasses!.some((a: string) => c.name === a || c.level === a));
-    }
-    return db.classes;
-  }, [db.classes, user]);
+  const visibleClasses = useMemo(
+    () => (user?.role === "teacher" ? resolveTeacherClasses(user, db) : db.classes),
+    [db, user],
+  );
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [classId, setClassId] = useState(visibleClasses[0]?.id ?? "");
 

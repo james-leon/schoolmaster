@@ -25,6 +25,7 @@ import { GraduationCap, Save, Download, Printer, FileText, Eye, Sparkles, Loader
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { resolveTeacherClasses } from "@/lib/teacher-scope";
 import { useServerFn } from "@tanstack/react-start";
 import { generateAppreciation } from "@/lib/ai-appreciation.functions";
 
@@ -121,12 +122,10 @@ function SaisieTab() {
   const [cells, setCells] = useState<Record<string, Cell>>({});
   const [confirmReplace, setConfirmReplace] = useState(false);
 
-  const visibleClasses = useMemo(() => {
-    if (user?.role === "teacher" && user.assignedClasses?.length) {
-      return db.classes.filter((c) => user.assignedClasses!.some((a: string) => c.name === a || c.level === a));
-    }
-    return db.classes;
-  }, [db.classes, user]);
+  const visibleClasses = useMemo(
+    () => (user?.role === "teacher" ? resolveTeacherClasses(user, db) : db.classes),
+    [db, user],
+  );
 
   const subjects = useMemo(() => {
     const list = db.classSubjects.filter((s) => s.classId === classId);

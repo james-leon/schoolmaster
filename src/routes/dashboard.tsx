@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { fcfa, timeAgo } from "@/lib/format";
 import { visibleAnnouncements, formatDateFr } from "@/lib/announcements";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveTeacherClasses } from "@/lib/teacher-scope";
 import {
   Users, TrendingUp, AlertCircle, AlertTriangle, UserPlus, CreditCard,
   GraduationCap, CalendarCheck, FileText, BookOpen, ClipboardList, Megaphone,
@@ -68,9 +69,9 @@ function TeacherDashboard() {
   const navigate = useNavigate();
   const today = new Date().toISOString().slice(0, 10);
 
-  // Resolve "my classes" from assignedClasses (matches by name or level).
-  const assigned = user?.assignedClasses ?? [];
-  const myClasses = db.classes.filter((c) => assigned.some((a) => c.name === a || c.level === a));
+  // Resolve "my classes" from all assignment sources (profile.assignedClasses,
+  // classes.teacherId via email link, class_subjects.teacherId via email link).
+  const myClasses = resolveTeacherClasses(user, db);
   const myClassIds = new Set(myClasses.map((c) => c.id));
   const myStudents = db.students.filter((s) => myClassIds.has(s.classId));
   const myStudentIds = new Set(myStudents.map((s) => s.id));

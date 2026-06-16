@@ -19,6 +19,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { ImportDialog, type ImportConfig, type RowStatus } from "@/components/ImportDialog";
 import { useAuth } from "@/lib/auth";
+import { resolveTeacherClasses } from "@/lib/teacher-scope";
 
 export const Route = createFileRoute("/classes")({ component: ClassesPage });
 
@@ -87,11 +88,8 @@ function ClassesPage() {
   const isTeacher = user?.role === "teacher";
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
 
-  // Teachers see only their assigned classes (matched by name or level, mirroring TeacherDashboard).
-  const assigned = user?.assignedClasses ?? [];
-  const visibleClasses = isTeacher
-    ? db.classes.filter((c) => assigned.some((a) => c.name === a || c.level === a))
-    : db.classes;
+  // Teachers see all classes they're linked to via any assignment source.
+  const visibleClasses = isTeacher ? resolveTeacherClasses(user, db) : db.classes;
 
   return (
     <AppLayout title="Classes">
