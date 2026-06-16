@@ -1146,6 +1146,7 @@ export type Database = {
           emergency_contact_phone: string | null
           emergency_contact_relation: string | null
           enrollment_date: string | null
+          enrollment_status: string
           first_name: string
           gender: string | null
           id: string
@@ -1172,6 +1173,7 @@ export type Database = {
           emergency_contact_phone?: string | null
           emergency_contact_relation?: string | null
           enrollment_date?: string | null
+          enrollment_status?: string
           first_name: string
           gender?: string | null
           id?: string
@@ -1198,6 +1200,7 @@ export type Database = {
           emergency_contact_phone?: string | null
           emergency_contact_relation?: string | null
           enrollment_date?: string | null
+          enrollment_status?: string
           first_name?: string
           gender?: string | null
           id?: string

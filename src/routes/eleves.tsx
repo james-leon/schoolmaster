@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ImportDialog, type ImportConfig, type ParsedRow, type RowStatus } from "@/components/ImportDialog";
 import { z } from "zod";
 import { toast } from "sonner";
-import { STUDENT_STATUSES, PARENT_RELATIONS, type Student, type StudentStatus, type ParentRelation, type DB } from "@/lib/types";
+import { STUDENT_STATUSES, ENROLLMENT_STATUSES, PARENT_RELATIONS, type Student, type StudentStatus, type EnrollmentStatus, type ParentRelation, type DB } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
@@ -66,6 +66,7 @@ const schema = z.object({
   gender: z.enum(["M", "F"]),
   classId: z.string().min(1, "Classe requise"),
   status: z.enum(["actif", "inactif", "transfere"]),
+  enrollmentStatus: z.enum(["nouveau", "ancien"]),
   parentName: z.string().trim().min(2, "Nom du parent requis"),
   parentPhone: z.string().trim().min(6, "Téléphone invalide"),
   parentEmail: z.string().email("Email invalide").or(z.literal("")).optional(),
@@ -81,6 +82,7 @@ type FormState = {
   classId: string;
   code: string;
   status: StudentStatus;
+  enrollmentStatus: EnrollmentStatus;
   photo?: string;
   parentName: string;
   parentPhone: string;
@@ -98,6 +100,7 @@ const emptyForm = (): FormState => ({
   classId: "",
   code: "",
   status: "actif",
+  enrollmentStatus: "nouveau",
   photo: undefined,
   parentName: "",
   parentPhone: "",
@@ -131,6 +134,13 @@ function statusBadge(s?: StudentStatus) {
     transfere: { label: "Transféré", cls: "bg-accent/20 text-accent" },
   };
   const v = map[s ?? "actif"];
+  return <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", v.cls)}>{v.label}</span>;
+}
+
+function enrollmentBadge(e?: EnrollmentStatus) {
+  const v = e === "ancien"
+    ? { label: "Ancien", cls: "bg-muted text-muted-foreground" }
+    : { label: "Nouveau", cls: "bg-primary/15 text-primary" };
   return <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", v.cls)}>{v.label}</span>;
 }
 
@@ -333,6 +343,7 @@ function ElevesPage() {
   const [search, setSearch] = useState("");
   const [classFilter, setClassFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [enrollFilter, setEnrollFilter] = useState<string>("all");
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -365,10 +376,11 @@ function ElevesPage() {
     return db.students.filter((s) => {
       if (classFilter !== "all" && s.classId !== classFilter) return false;
       if (statusFilter !== "all" && (s.status ?? "actif") !== statusFilter) return false;
+      if (enrollFilter !== "all" && (s.enrollmentStatus ?? "nouveau") !== enrollFilter) return false;
       if (!q) return true;
       return `${s.firstName} ${s.lastName} ${className(s.classId)} ${s.code ?? ""}`.toLowerCase().includes(q);
     });
-  }, [db.students, db.classes, search, classFilter, statusFilter]);
+  }, [db.students, db.classes, search, classFilter, statusFilter, enrollFilter]);
 
   if (pathname !== "/eleves") {
     return <Outlet />;
@@ -406,6 +418,7 @@ function ElevesPage() {
       classId: s.classId,
       code: s.code ?? nextCode(),
       status: s.status ?? "actif",
+      enrollmentStatus: s.enrollmentStatus ?? "nouveau",
       photo: s.photo,
       parentName: s.parentName,
       parentPhone: s.parentPhone,
@@ -521,6 +534,15 @@ function ElevesPage() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={enrollFilter} onValueChange={setEnrollFilter}>
+            <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Inscription" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous (Nouveaux + Anciens)</SelectItem>
+              {ENROLLMENT_STATUSES.map((e) => (
+                <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex gap-2">
           {user?.role === "school_admin" && (
@@ -537,7 +559,7 @@ function ElevesPage() {
       <Card>
         <CardContent className="p-4">
           {!loaded ? (
-            <TableSkeleton cols={8} />
+            <TableSkeleton cols={9} />
           ) : filtered.length === 0 ? (
             <EmptyState icon={Users} title="Aucun élève trouvé" description="Commencez par inscrire votre premier élève." actionLabel="Nouvel élève" onAction={openCreate} />
           ) : (
@@ -551,6 +573,7 @@ function ElevesPage() {
                   <TableHead>Date naissance</TableHead>
                   <TableHead>Téléphone parent</TableHead>
                   <TableHead>Statut</TableHead>
+                  <TableHead>Inscription</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -601,6 +624,7 @@ function ElevesPage() {
                       })()}
                     </TableCell>
                     <TableCell>{statusBadge(s.status)}</TableCell>
+                    <TableCell>{enrollmentBadge(s.enrollmentStatus)}</TableCell>
                     <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
                       <Button variant="ghost" size="icon" onClick={() => setParentAccountFor(s)} aria-label="Créer compte parent" title="Créer compte parent">
                         <UserPlus className="h-4 w-4" />
@@ -693,6 +717,16 @@ function ElevesPage() {
                 <SelectContent>
                   {STUDENT_STATUSES.map((s) => (
                     <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Statut d'inscription *" error={errors.enrollmentStatus}>
+              <Select value={form.enrollmentStatus} onValueChange={(v) => set("enrollmentStatus", v as EnrollmentStatus)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ENROLLMENT_STATUSES.map((e) => (
+                    <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

@@ -1,0 +1,1 @@
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS enrollment_status text NOT NULL DEFAULT 'nouveau' CHECK (enrollment_status IN ('nouveau','ancien'));

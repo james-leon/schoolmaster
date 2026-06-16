@@ -103,7 +103,7 @@ function rowToClasse(r: { id: string; name: string; level: string | null; capaci
   };
 }
 
-function rowToStudent(r: { id: string; class_id: string | null; first_name: string; last_name: string; gender: string | null; birth_date: string | null; enrollment_date: string | null; student_code: string | null; status: string | null; photo_url: string | null; consent_given?: boolean | null; consent_date?: string | null }): Student {
+function rowToStudent(r: { id: string; class_id: string | null; first_name: string; last_name: string; gender: string | null; birth_date: string | null; enrollment_date: string | null; student_code: string | null; status: string | null; photo_url: string | null; consent_given?: boolean | null; consent_date?: string | null; enrollment_status?: string | null }): Student {
   const statusMap: Record<string, Student["status"]> = { active: "actif", inactive: "inactif", transferred: "transfere" };
   return {
     id: r.id,
@@ -115,6 +115,7 @@ function rowToStudent(r: { id: string; class_id: string | null; first_name: stri
     enrolledAt: r.enrollment_date ?? "",
     code: r.student_code ?? undefined,
     status: statusMap[r.status ?? "active"] ?? "actif",
+    enrollmentStatus: (r.enrollment_status === "ancien" ? "ancien" : "nouveau"),
     photo: r.photo_url ?? undefined,
     parentName: "",
     parentPhone: "",
@@ -441,6 +442,7 @@ async function pushDiffs(): Promise<void> {
       birth_date: s.birthDate || null, enrollment_date: s.enrolledAt || null,
       student_code: s.code ?? null, status: studentStatusMap[s.status ?? "actif"], photo_url: s.photo ?? null,
       consent_given: s.consentGiven ?? false, consent_date: s.consentDate ?? null,
+      enrollment_status: s.enrollmentStatus ?? "nouveau",
     } as any);
     if (error) throw error;
   }
@@ -450,6 +452,7 @@ async function pushDiffs(): Promise<void> {
       gender: s.gender, birth_date: s.birthDate || null, enrollment_date: s.enrolledAt || null,
       student_code: s.code ?? null, status: studentStatusMap[s.status ?? "actif"], photo_url: s.photo ?? null,
       consent_given: s.consentGiven ?? false, consent_date: s.consentDate ?? null,
+      enrollment_status: s.enrollmentStatus ?? "nouveau",
     } as any).eq("id", s.id);
     if (error) throw error;
   }
