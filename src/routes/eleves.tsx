@@ -721,6 +721,16 @@ function ElevesPage() {
                 </SelectContent>
               </Select>
             </Field>
+            <Field label="Statut d'inscription *" error={errors.enrollmentStatus}>
+              <Select value={form.enrollmentStatus} onValueChange={(v) => set("enrollmentStatus", v as EnrollmentStatus)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ENROLLMENT_STATUSES.map((e) => (
+                    <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
           </div>
 
           <div className="mt-2 border-t pt-4">
