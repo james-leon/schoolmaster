@@ -442,6 +442,7 @@ async function pushDiffs(): Promise<void> {
       birth_date: s.birthDate || null, enrollment_date: s.enrolledAt || null,
       student_code: s.code ?? null, status: studentStatusMap[s.status ?? "actif"], photo_url: s.photo ?? null,
       consent_given: s.consentGiven ?? false, consent_date: s.consentDate ?? null,
+      enrollment_status: s.enrollmentStatus ?? "nouveau",
     } as any);
     if (error) throw error;
   }
@@ -451,6 +452,7 @@ async function pushDiffs(): Promise<void> {
       gender: s.gender, birth_date: s.birthDate || null, enrollment_date: s.enrolledAt || null,
       student_code: s.code ?? null, status: studentStatusMap[s.status ?? "actif"], photo_url: s.photo ?? null,
       consent_given: s.consentGiven ?? false, consent_date: s.consentDate ?? null,
+      enrollment_status: s.enrollmentStatus ?? "nouveau",
     } as any).eq("id", s.id);
     if (error) throw error;
   }
