@@ -409,6 +409,7 @@ function ElevesPage() {
       classId: s.classId,
       code: s.code ?? nextCode(),
       status: s.status ?? "actif",
+      enrollmentStatus: s.enrollmentStatus ?? "nouveau",
       photo: s.photo,
       parentName: s.parentName,
       parentPhone: s.parentPhone,
