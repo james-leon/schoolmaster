@@ -534,6 +534,15 @@ function ElevesPage() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={enrollFilter} onValueChange={setEnrollFilter}>
+            <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Inscription" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous (Nouveaux + Anciens)</SelectItem>
+              {ENROLLMENT_STATUSES.map((e) => (
+                <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex gap-2">
           {user?.role === "school_admin" && (
