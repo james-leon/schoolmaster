@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ImportDialog, type ImportConfig, type ParsedRow, type RowStatus } from "@/components/ImportDialog";
 import { z } from "zod";
 import { toast } from "sonner";
-import { STUDENT_STATUSES, PARENT_RELATIONS, type Student, type StudentStatus, type ParentRelation, type DB } from "@/lib/types";
+import { STUDENT_STATUSES, ENROLLMENT_STATUSES, PARENT_RELATIONS, type Student, type StudentStatus, type EnrollmentStatus, type ParentRelation, type DB } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
