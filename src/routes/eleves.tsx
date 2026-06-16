@@ -66,6 +66,7 @@ const schema = z.object({
   gender: z.enum(["M", "F"]),
   classId: z.string().min(1, "Classe requise"),
   status: z.enum(["actif", "inactif", "transfere"]),
+  enrollmentStatus: z.enum(["nouveau", "ancien"]),
   parentName: z.string().trim().min(2, "Nom du parent requis"),
   parentPhone: z.string().trim().min(6, "Téléphone invalide"),
   parentEmail: z.string().email("Email invalide").or(z.literal("")).optional(),
