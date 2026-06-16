@@ -73,6 +73,7 @@ export interface Classe {
 }
 
 export type StudentStatus = "actif" | "inactif" | "transfere";
+export type EnrollmentStatus = "nouveau" | "ancien";
 export type ParentRelation = "Père" | "Mère" | "Tuteur";
 
 export interface Student {
@@ -89,6 +90,7 @@ export interface Student {
   parentRelation?: ParentRelation;
   parentWhatsapp?: string;
   status?: StudentStatus;
+  enrollmentStatus?: EnrollmentStatus;
   photo?: string;
   enrolledAt: string;
   consentGiven?: boolean;
@@ -99,6 +101,10 @@ export const STUDENT_STATUSES: { value: StudentStatus; label: string }[] = [
   { value: "actif", label: "Actif" },
   { value: "inactif", label: "Inactif" },
   { value: "transfere", label: "Transféré" },
+];
+export const ENROLLMENT_STATUSES: { value: EnrollmentStatus; label: string }[] = [
+  { value: "nouveau", label: "Nouveau" },
+  { value: "ancien", label: "Ancien" },
 ];
 export const PARENT_RELATIONS: ParentRelation[] = ["Père", "Mère", "Tuteur"];
 
