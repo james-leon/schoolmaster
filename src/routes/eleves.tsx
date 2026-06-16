@@ -624,6 +624,7 @@ function ElevesPage() {
                       })()}
                     </TableCell>
                     <TableCell>{statusBadge(s.status)}</TableCell>
+                    <TableCell>{enrollmentBadge(s.enrollmentStatus)}</TableCell>
                     <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
                       <Button variant="ghost" size="icon" onClick={() => setParentAccountFor(s)} aria-label="Créer compte parent" title="Créer compte parent">
                         <UserPlus className="h-4 w-4" />
