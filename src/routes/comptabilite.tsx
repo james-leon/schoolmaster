@@ -187,6 +187,7 @@ function ComptabilitePage() {
 
   async function save() {
     if (!schoolId) return;
+    if (saving) return;
     const amount = Number(form.amount);
     if (!form.category) return toast.error("Catégorie requise");
     if (!Number.isFinite(amount) || amount <= 0) return toast.error("Montant invalide");
@@ -202,18 +203,24 @@ function ComptabilitePage() {
       reference: form.reference || null,
       recorded_by: user?.id ?? null,
     };
-    if (editing) {
-      const { error } = await supabase.from("transactions").update(payload).eq("id", editing.id);
-      if (error) return toast.error("Échec de la mise à jour");
-      toast.success("Transaction mise à jour");
-    } else {
-      const { error } = await supabase.from("transactions").insert(payload);
-      if (error) return toast.error("Échec de l'enregistrement");
-      toast.success("Transaction enregistrée");
+    setSaving(true);
+    try {
+      if (editing) {
+        const { error } = await supabase.from("transactions").update(payload).eq("id", editing.id);
+        if (error) return toast.error("Échec de la mise à jour");
+        toast.success("Transaction mise à jour");
+      } else {
+        const { error } = await supabase.from("transactions").insert(payload);
+        if (error) return toast.error("Échec de l'enregistrement");
+        toast.success("Transaction enregistrée");
+      }
+      setOpen(false);
+      await fetchAll();
+    } finally {
+      setSaving(false);
     }
-    setOpen(false);
-    fetchAll();
   }
+
 
   async function confirmDelete() {
     if (!deleting) return;
