@@ -79,6 +79,7 @@ function ComptabilitePage() {
     type: "depense", category: "", amount: "", date: todayISO(), payment_method: "Espèces", description: "", reference: "",
   });
   const [deleting, setDeleting] = useState<TxRow | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const fetchAll = useCallback(async () => {
     if (!schoolId) return;
@@ -186,6 +187,7 @@ function ComptabilitePage() {
 
   async function save() {
     if (!schoolId) return;
+    if (saving) return;
     const amount = Number(form.amount);
     if (!form.category) return toast.error("Catégorie requise");
     if (!Number.isFinite(amount) || amount <= 0) return toast.error("Montant invalide");
@@ -201,18 +203,24 @@ function ComptabilitePage() {
       reference: form.reference || null,
       recorded_by: user?.id ?? null,
     };
-    if (editing) {
-      const { error } = await supabase.from("transactions").update(payload).eq("id", editing.id);
-      if (error) return toast.error("Échec de la mise à jour");
-      toast.success("Transaction mise à jour");
-    } else {
-      const { error } = await supabase.from("transactions").insert(payload);
-      if (error) return toast.error("Échec de l'enregistrement");
-      toast.success("Transaction enregistrée");
+    setSaving(true);
+    try {
+      if (editing) {
+        const { error } = await supabase.from("transactions").update(payload).eq("id", editing.id);
+        if (error) return toast.error("Échec de la mise à jour");
+        toast.success("Transaction mise à jour");
+      } else {
+        const { error } = await supabase.from("transactions").insert(payload);
+        if (error) return toast.error("Échec de l'enregistrement");
+        toast.success("Transaction enregistrée");
+      }
+      setOpen(false);
+      await fetchAll();
+    } finally {
+      setSaving(false);
     }
-    setOpen(false);
-    fetchAll();
   }
+
 
   async function confirmDelete() {
     if (!deleting) return;
@@ -484,8 +492,8 @@ function ComptabilitePage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button onClick={save}>{editing ? "Enregistrer" : "Créer"}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Annuler</Button>
+            <Button onClick={save} disabled={saving}>{saving ? "Enregistrement…" : (editing ? "Enregistrer" : "Créer")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
