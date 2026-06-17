@@ -79,6 +79,7 @@ function ComptabilitePage() {
     type: "depense", category: "", amount: "", date: todayISO(), payment_method: "Espèces", description: "", reference: "",
   });
   const [deleting, setDeleting] = useState<TxRow | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const fetchAll = useCallback(async () => {
     if (!schoolId) return;
