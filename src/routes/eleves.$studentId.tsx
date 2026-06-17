@@ -17,6 +17,7 @@ import { MedicalTab } from "@/components/MedicalTab";
 import { DisciplineTab } from "@/components/DisciplineTab";
 import { useMedicalInfo } from "@/lib/student-extras";
 import { useAuth } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 
 export const Route = createFileRoute("/eleves/$studentId")({
   component: StudentDetailPage,
