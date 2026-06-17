@@ -25,6 +25,8 @@ import { cn } from "@/lib/utils";
 import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
 import { useAuth } from "@/lib/auth";
+import { can, isTeacher as isTeacherRole } from "@/lib/permissions";
+import { resolveTeacherClassIds } from "@/lib/teacher-scope";
 import { usePlan } from "@/lib/usePlan";
 import { UpgradeModal } from "@/components/UpgradePrompt";
 import { ParentsListView } from "@/components/ParentsListView";
@@ -371,16 +373,22 @@ function ElevesPage() {
     return m;
   }, [db.parents]);
 
+  const teacherClassIds = useMemo(
+    () => (isTeacherRole(user) ? new Set(resolveTeacherClassIds(user, db)) : null),
+    [user, db],
+  );
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return db.students.filter((s) => {
+      if (teacherClassIds && !teacherClassIds.has(s.classId)) return false;
       if (classFilter !== "all" && s.classId !== classFilter) return false;
       if (statusFilter !== "all" && (s.status ?? "actif") !== statusFilter) return false;
       if (enrollFilter !== "all" && (s.enrollmentStatus ?? "nouveau") !== enrollFilter) return false;
       if (!q) return true;
       return `${s.firstName} ${s.lastName} ${className(s.classId)} ${s.code ?? ""}`.toLowerCase().includes(q);
     });
-  }, [db.students, db.classes, search, classFilter, statusFilter, enrollFilter]);
+  }, [db.students, db.classes, search, classFilter, statusFilter, enrollFilter, teacherClassIds]);
 
   if (pathname !== "/eleves") {
     return <Outlet />;
@@ -502,12 +510,19 @@ function ElevesPage() {
     setConfirmDelete(null);
   };
 
+  const canCreateStudents = can(user, "createStudent");
+  const canEditStudents = can(user, "editStudent");
+  const canDeleteStudents = can(user, "deleteStudent");
+  const canCreateAccounts = can(user, "createParentAccount");
+  const canImport = can(user, "importStudents");
+  const canViewParentsTab = can(user, "viewParentsList");
+
   return (
     <AppLayout title="Élèves">
       <Tabs defaultValue="eleves" className="space-y-4">
         <TabsList>
           <TabsTrigger value="eleves">Élèves</TabsTrigger>
-          <TabsTrigger value="parents">Parents</TabsTrigger>
+          {canViewParentsTab && <TabsTrigger value="parents">Parents</TabsTrigger>}
         </TabsList>
         <TabsContent value="eleves" className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -545,14 +560,16 @@ function ElevesPage() {
           </Select>
         </div>
         <div className="flex gap-2">
-          {user?.role === "school_admin" && (
+          {canImport && (
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <FileUp className="mr-1.5 h-4 w-4" /> Importer
             </Button>
           )}
-          <Button onClick={openCreate}>
-            <Plus className="mr-1.5 h-4 w-4" /> Nouvel élève
-          </Button>
+          {canCreateStudents && (
+            <Button onClick={openCreate}>
+              <Plus className="mr-1.5 h-4 w-4" /> Nouvel élève
+            </Button>
+          )}
         </div>
       </div>
 
@@ -561,7 +578,7 @@ function ElevesPage() {
           {!loaded ? (
             <TableSkeleton cols={9} />
           ) : filtered.length === 0 ? (
-            <EmptyState icon={Users} title="Aucun élève trouvé" description="Commencez par inscrire votre premier élève." actionLabel="Nouvel élève" onAction={openCreate} />
+            <EmptyState icon={Users} title="Aucun élève trouvé" description={canCreateStudents ? "Commencez par inscrire votre premier élève." : "Aucun élève dans vos classes."} actionLabel={canCreateStudents ? "Nouvel élève" : undefined} onAction={canCreateStudents ? openCreate : undefined} />
           ) : (
             <Table>
               <TableHeader>
@@ -626,15 +643,21 @@ function ElevesPage() {
                     <TableCell>{statusBadge(s.status)}</TableCell>
                     <TableCell>{enrollmentBadge(s.enrollmentStatus)}</TableCell>
                     <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
-                      <Button variant="ghost" size="icon" onClick={() => setParentAccountFor(s)} aria-label="Créer compte parent" title="Créer compte parent">
-                        <UserPlus className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(s)} aria-label="Modifier">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setConfirmDelete(s)} aria-label="Supprimer">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      {canCreateAccounts && (
+                        <Button variant="ghost" size="icon" onClick={() => setParentAccountFor(s)} aria-label="Créer compte parent" title="Créer compte parent">
+                          <UserPlus className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canEditStudents && (
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(s)} aria-label="Modifier">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canDeleteStudents && (
+                        <Button variant="ghost" size="icon" onClick={() => setConfirmDelete(s)} aria-label="Supprimer">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

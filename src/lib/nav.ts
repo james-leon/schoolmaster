@@ -11,6 +11,17 @@ export interface NavItem {
   feature?: FeatureId;
 }
 
+/**
+ * NAV_ITEMS — visibility per role.
+ *
+ * Teacher role: only allow Dashboard, Élèves, Classes, Notes, Présences,
+ * Emploi du temps, Calendrier, Annonces. NEVER add a teacher to Scolarité,
+ * Comptabilité, Parents, Enseignants, Personnel, or Paramètres — that
+ * violates the teacher permission contract in `src/lib/permissions.ts`.
+ *
+ * The full teacher capability matrix lives in `src/lib/permissions.ts`
+ * and is mirrored by RLS policies on the corresponding tables.
+ */
 export const NAV_ITEMS: NavItem[] = [
   { to: "/dashboard", label: "Tableau de bord", icon: BarChart3, roles: ["super_admin", "school_admin", "teacher"] },
   { to: "/eleves", label: "Élèves", icon: Users, roles: ["super_admin", "school_admin", "teacher"] },
