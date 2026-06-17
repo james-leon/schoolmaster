@@ -160,7 +160,7 @@ function StudentDetailPage() {
           <TabsTrigger value="info">Informations</TabsTrigger>
           <TabsTrigger value="parents">Parents &amp; Tuteurs</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
-          <TabsTrigger value="paiements">Paiements</TabsTrigger>
+          {can(user, "viewPayments") && <TabsTrigger value="paiements">Paiements</TabsTrigger>}
           <TabsTrigger value="presences">Présences</TabsTrigger>
           <TabsTrigger value="medical">Médical</TabsTrigger>
           <TabsTrigger value="discipline">Discipline &amp; Comportement</TabsTrigger>
