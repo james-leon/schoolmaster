@@ -510,12 +510,19 @@ function ElevesPage() {
     setConfirmDelete(null);
   };
 
+  const canCreateStudents = can(user, "createStudent");
+  const canEditStudents = can(user, "editStudent");
+  const canDeleteStudents = can(user, "deleteStudent");
+  const canCreateAccounts = can(user, "createParentAccount");
+  const canImport = can(user, "importStudents");
+  const canViewParentsTab = can(user, "viewParentsList");
+
   return (
     <AppLayout title="Élèves">
       <Tabs defaultValue="eleves" className="space-y-4">
         <TabsList>
           <TabsTrigger value="eleves">Élèves</TabsTrigger>
-          <TabsTrigger value="parents">Parents</TabsTrigger>
+          {canViewParentsTab && <TabsTrigger value="parents">Parents</TabsTrigger>}
         </TabsList>
         <TabsContent value="eleves" className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
