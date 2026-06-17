@@ -492,8 +492,8 @@ function ComptabilitePage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button onClick={save}>{editing ? "Enregistrer" : "Créer"}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Annuler</Button>
+            <Button onClick={save} disabled={saving}>{saving ? "Enregistrement…" : (editing ? "Enregistrer" : "Créer")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
