@@ -25,6 +25,8 @@ import { cn } from "@/lib/utils";
 import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
 import { useAuth } from "@/lib/auth";
+import { can, isTeacher as isTeacherRole } from "@/lib/permissions";
+import { resolveTeacherClassIds } from "@/lib/teacher-scope";
 import { usePlan } from "@/lib/usePlan";
 import { UpgradeModal } from "@/components/UpgradePrompt";
 import { ParentsListView } from "@/components/ParentsListView";
