@@ -643,15 +643,21 @@ function ElevesPage() {
                     <TableCell>{statusBadge(s.status)}</TableCell>
                     <TableCell>{enrollmentBadge(s.enrollmentStatus)}</TableCell>
                     <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
-                      <Button variant="ghost" size="icon" onClick={() => setParentAccountFor(s)} aria-label="Créer compte parent" title="Créer compte parent">
-                        <UserPlus className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(s)} aria-label="Modifier">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setConfirmDelete(s)} aria-label="Supprimer">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      {canCreateAccounts && (
+                        <Button variant="ghost" size="icon" onClick={() => setParentAccountFor(s)} aria-label="Créer compte parent" title="Créer compte parent">
+                          <UserPlus className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canEditStudents && (
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(s)} aria-label="Modifier">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canDeleteStudents && (
+                        <Button variant="ghost" size="icon" onClick={() => setConfirmDelete(s)} aria-label="Supprimer">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
