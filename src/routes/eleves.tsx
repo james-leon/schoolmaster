@@ -373,16 +373,22 @@ function ElevesPage() {
     return m;
   }, [db.parents]);
 
+  const teacherClassIds = useMemo(
+    () => (isTeacherRole(user) ? new Set(resolveTeacherClassIds(user, db)) : null),
+    [user, db],
+  );
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return db.students.filter((s) => {
+      if (teacherClassIds && !teacherClassIds.has(s.classId)) return false;
       if (classFilter !== "all" && s.classId !== classFilter) return false;
       if (statusFilter !== "all" && (s.status ?? "actif") !== statusFilter) return false;
       if (enrollFilter !== "all" && (s.enrollmentStatus ?? "nouveau") !== enrollFilter) return false;
       if (!q) return true;
       return `${s.firstName} ${s.lastName} ${className(s.classId)} ${s.code ?? ""}`.toLowerCase().includes(q);
     });
-  }, [db.students, db.classes, search, classFilter, statusFilter, enrollFilter]);
+  }, [db.students, db.classes, search, classFilter, statusFilter, enrollFilter, teacherClassIds]);
 
   if (pathname !== "/eleves") {
     return <Outlet />;
