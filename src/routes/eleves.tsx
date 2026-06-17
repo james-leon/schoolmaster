@@ -578,7 +578,7 @@ function ElevesPage() {
           {!loaded ? (
             <TableSkeleton cols={9} />
           ) : filtered.length === 0 ? (
-            <EmptyState icon={Users} title="Aucun élève trouvé" description="Commencez par inscrire votre premier élève." actionLabel="Nouvel élève" onAction={openCreate} />
+            <EmptyState icon={Users} title="Aucun élève trouvé" description={canCreateStudents ? "Commencez par inscrire votre premier élève." : "Aucun élève dans vos classes."} actionLabel={canCreateStudents ? "Nouvel élève" : undefined} onAction={canCreateStudents ? openCreate : undefined} />
           ) : (
             <Table>
               <TableHeader>
