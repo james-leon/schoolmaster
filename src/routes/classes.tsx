@@ -171,7 +171,7 @@ function ClassesPage() {
               <Select value={form.level} onValueChange={(v) => set("level", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                  {LEVELS.map((l) => <SelectItem key={l} value={l}>{l} — {LEVEL_LABELS[l]}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
