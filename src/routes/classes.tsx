@@ -4,7 +4,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { useLoaded, TableSkeleton, EmptyState } from "@/components/shared";
 import { useDB, updateDB } from "@/lib/store";
 import { fcfa } from "@/lib/format";
-import { LEVELS, type Level, type Classe, type ClassSubject } from "@/lib/types";
+import { LEVELS, LEVEL_LABELS, LEVEL_ORDER, type Level, type Classe, type ClassSubject } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,7 +89,12 @@ function ClassesPage() {
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
 
   // Teachers see all classes they're linked to via any assignment source.
-  const visibleClasses = isTeacher ? resolveTeacherClasses(user, db) : db.classes;
+  const baseClasses = isTeacher ? resolveTeacherClasses(user, db) : db.classes;
+  const visibleClasses = [...baseClasses].sort((a, b) => {
+    const oa = LEVEL_ORDER[a.level as Level] ?? 999;
+    const ob = LEVEL_ORDER[b.level as Level] ?? 999;
+    return oa - ob || a.name.localeCompare(b.name);
+  });
 
   return (
     <AppLayout title="Classes">
@@ -166,7 +171,7 @@ function ClassesPage() {
               <Select value={form.level} onValueChange={(v) => set("level", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                  {LEVELS.map((l) => <SelectItem key={l} value={l}>{l} — {LEVEL_LABELS[l]}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
