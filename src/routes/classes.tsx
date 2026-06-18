@@ -89,7 +89,12 @@ function ClassesPage() {
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
 
   // Teachers see all classes they're linked to via any assignment source.
-  const visibleClasses = isTeacher ? resolveTeacherClasses(user, db) : db.classes;
+  const baseClasses = isTeacher ? resolveTeacherClasses(user, db) : db.classes;
+  const visibleClasses = [...baseClasses].sort((a, b) => {
+    const oa = LEVEL_ORDER[a.level as Level] ?? 999;
+    const ob = LEVEL_ORDER[b.level as Level] ?? 999;
+    return oa - ob || a.name.localeCompare(b.name);
+  });
 
   return (
     <AppLayout title="Classes">
