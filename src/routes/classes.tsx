@@ -4,7 +4,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { useLoaded, TableSkeleton, EmptyState } from "@/components/shared";
 import { useDB, updateDB } from "@/lib/store";
 import { fcfa } from "@/lib/format";
-import { LEVELS, type Level, type Classe, type ClassSubject } from "@/lib/types";
+import { LEVELS, LEVEL_LABELS, LEVEL_ORDER, type Level, type Classe, type ClassSubject } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
