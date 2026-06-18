@@ -578,7 +578,7 @@ function ElevesPage() {
       <Card>
         <CardContent className="p-4">
           {!loaded ? (
-            <TableSkeleton cols={9} />
+            <TableSkeleton cols={showActions ? 9 : 8} />
           ) : filtered.length === 0 ? (
             <EmptyState icon={Users} title="Aucun élève trouvé" description={canCreateStudents ? "Commencez par inscrire votre premier élève." : "Aucun élève dans vos classes."} actionLabel={canCreateStudents ? "Nouvel élève" : undefined} onAction={canCreateStudents ? openCreate : undefined} />
           ) : (
@@ -593,7 +593,7 @@ function ElevesPage() {
                   <TableHead>Téléphone parent</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Inscription</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  {showActions && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -644,23 +644,25 @@ function ElevesPage() {
                     </TableCell>
                     <TableCell>{statusBadge(s.status)}</TableCell>
                     <TableCell>{enrollmentBadge(s.enrollmentStatus)}</TableCell>
-                    <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
-                      {canCreateAccounts && (
-                        <Button variant="ghost" size="icon" onClick={() => setParentAccountFor(s)} aria-label="Créer compte parent" title="Créer compte parent">
-                          <UserPlus className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {canEditStudents && (
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(s)} aria-label="Modifier">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {canDeleteStudents && (
-                        <Button variant="ghost" size="icon" onClick={() => setConfirmDelete(s)} aria-label="Supprimer">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      )}
-                    </TableCell>
+                    {showActions && (
+                      <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
+                        {canCreateAccounts && (
+                          <Button variant="ghost" size="icon" onClick={() => setParentAccountFor(s)} aria-label="Créer compte parent" title="Créer compte parent">
+                            <UserPlus className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canEditStudents && (
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(s)} aria-label="Modifier">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDeleteStudents && (
+                          <Button variant="ghost" size="icon" onClick={() => setConfirmDelete(s)} aria-label="Supprimer">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
