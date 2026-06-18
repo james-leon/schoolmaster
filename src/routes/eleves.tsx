@@ -516,6 +516,8 @@ function ElevesPage() {
   const canCreateAccounts = can(user, "createParentAccount");
   const canImport = can(user, "importStudents");
   const canViewParentsTab = can(user, "viewParentsList");
+  const showActions = canCreateStudents || canEditStudents || canDeleteStudents || canCreateAccounts;
+
 
   return (
     <AppLayout title="Élèves">

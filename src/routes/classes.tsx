@@ -107,7 +107,7 @@ function ClassesPage() {
       <Card>
         <CardContent className="p-4">
           {!loaded ? (
-            <TableSkeleton rows={5} cols={5} />
+            <TableSkeleton rows={5} cols={isAdmin ? 6 : 4} />
           ) : visibleClasses.length === 0 ? (
             <EmptyState
               icon={BookOpen}
