@@ -61,7 +61,7 @@ export interface AcademicYear {
   isCurrent: boolean;
 }
 
-export type Level = "PS" | "MS" | "CP" | "CE1" | "CE2" | "CM1" | "CM2";
+export type Level = "PS" | "MS" | "GS" | "SIL" | "CP" | "CE1" | "CE2" | "CM1" | "CM2";
 
 export interface Classe {
   id: string;
