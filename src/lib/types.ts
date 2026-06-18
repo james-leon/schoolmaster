@@ -270,7 +270,22 @@ export const DEFAULT_FEE_TYPES: Omit<FeeType, "id">[] = [
 
 export const SUBJECTS = ["Mathématiques", "Français", "Anglais", "Sciences", "Histoire-Géo", "Éveil"] as const;
 export const TERMS = ["1er trimestre", "2e trimestre", "3e trimestre"] as const;
-export const LEVELS: Level[] = ["PS", "MS", "CP", "CE1", "CE2", "CM1", "CM2"];
+export const LEVELS: Level[] = ["PS", "MS", "GS", "SIL", "CP", "CE1", "CE2", "CM1", "CM2"];
+export const LEVEL_LABELS: Record<Level, string> = {
+  PS: "Petite Section",
+  MS: "Moyenne Section",
+  GS: "Grande Section",
+  SIL: "Section d'Initiation au Langage",
+  CP: "Cours Préparatoire",
+  CE1: "Cours Élémentaire 1",
+  CE2: "Cours Élémentaire 2",
+  CM1: "Cours Moyen 1",
+  CM2: "Cours Moyen 2",
+};
+export const LEVEL_ORDER: Record<Level, number> = LEVELS.reduce(
+  (acc, l, i) => ({ ...acc, [l]: i }),
+  {} as Record<Level, number>
+);
 export const PAYMENT_MODES: PaymentMode[] = ["Espèces", "MTN Mobile Money", "Orange Money", "Virement bancaire", "Chèque"];
 export const FEE_SCOPES: FeeLevelScope[] = ["Tous", "Maternelle", "Primaire"];
 
