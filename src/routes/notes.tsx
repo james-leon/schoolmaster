@@ -937,20 +937,20 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
           <tr className="bg-gray-100">
             <th className="border border-gray-400 p-1 text-left">Matière</th>
             <th className="border border-gray-400 p-1">Coef</th>
-            <th className="border border-gray-400 p-1">Dev 1</th>
-            <th className="border border-gray-400 p-1">Dev 2</th>
-            <th className="border border-gray-400 p-1">Comp</th>
+            {termSequences.map((seqName, i) => (
+              <th key={seqName} className="border border-gray-400 p-1">Séq {i + 1 + (term === "2e trimestre" ? 2 : term === "3e trimestre" ? 4 : 0)}</th>
+            ))}
             <th className="border border-gray-400 p-1">Moy</th>
           </tr>
         </thead>
         <tbody>
-          {rowsData.map(({ sub, d1, d2, comp, moy }) => (
+          {rowsData.map(({ sub, seqs, moy }) => (
             <tr key={sub.id}>
               <td className="border border-gray-400 p-1">{sub.name}</td>
               <td className="border border-gray-400 p-1 text-center">{sub.coefficient}</td>
-              <td className="border border-gray-400 p-1 text-center">{d1 != null ? d1.toFixed(2) : "—"}</td>
-              <td className="border border-gray-400 p-1 text-center">{d2 != null ? d2.toFixed(2) : "—"}</td>
-              <td className="border border-gray-400 p-1 text-center">{comp != null ? comp.toFixed(2) : "—"}</td>
+              {seqs.map((v, i) => (
+                <td key={i} className="border border-gray-400 p-1 text-center">{v != null ? v.toFixed(2) : "—"}</td>
+              ))}
               <td className="border border-gray-400 p-1 text-center font-bold">{moy != null ? moy.toFixed(2) : "—"}</td>
             </tr>
           ))}
