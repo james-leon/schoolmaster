@@ -334,28 +334,28 @@ function NotesTab({ studentId, grades, classId }: { studentId: string; grades: G
                     <TableRow>
                       <TableHead>Matière</TableHead>
                       <TableHead className="text-center">Coef</TableHead>
-                      <TableHead className="text-center">Dev 1</TableHead>
-                      <TableHead className="text-center">Dev 2</TableHead>
-                      <TableHead className="text-center">Comp</TableHead>
-                      <TableHead className="text-center">Oral</TableHead>
+                      {(SEQUENCES_BY_TERM[td.term] ?? []).map((seqName) => (
+                        <TableHead key={seqName} className="text-center">{seqName}</TableHead>
+                      ))}
                       <TableHead className="text-right">Moyenne</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {td.subjAvgs.map(({ sub, avg, entries }) => {
-                      const find = (et: string) => entries.find((e) => e.evaluationType === et)?.grade;
-                      const d1 = find("Devoir 1") ?? entries.find((e) => !e.evaluationType)?.devoir1;
-                      const d2 = find("Devoir 2") ?? entries.find((e) => !e.evaluationType)?.devoir2;
-                      const comp = find("Composition") ?? entries.find((e) => !e.evaluationType)?.composition;
-                      const oral = find("Oral");
+                      const seqs = SEQUENCES_BY_TERM[td.term] ?? [];
+                      const seqVal = (seqName: string) => {
+                        const f = entries.find((e) => legacyToSequence(e.evaluationType, td.term) === seqName);
+                        const v = f?.grade ?? (f as Grade | undefined)?.value;
+                        return v != null && !Number.isNaN(Number(v)) ? Number(v) : undefined;
+                      };
                       return (
                         <TableRow key={sub.id}>
                           <TableCell className="font-medium">{sub.name}</TableCell>
                           <TableCell className="text-center">{sub.coefficient}</TableCell>
-                          <TableCell className="text-center">{d1 ?? "—"}</TableCell>
-                          <TableCell className="text-center">{d2 ?? "—"}</TableCell>
-                          <TableCell className="text-center">{comp ?? "—"}</TableCell>
-                          <TableCell className="text-center">{oral ?? "—"}</TableCell>
+                          {seqs.map((seqName) => {
+                            const v = seqVal(seqName);
+                            return <TableCell key={seqName} className="text-center">{v != null ? v.toFixed(2) : "—"}</TableCell>;
+                          })}
                           <TableCell className="text-right font-semibold">{avg != null ? avg.toFixed(2) : "—"}</TableCell>
                         </TableRow>
                       );
