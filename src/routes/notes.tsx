@@ -5,11 +5,13 @@ import { useLoaded, TableSkeleton, EmptyState } from "@/components/shared";
 import { useDB, updateDB, getDB } from "@/lib/store";
 import {
   TERMS,
-  EVALUATION_TYPES,
-  type EvaluationType,
+  SEQUENCES_BY_TERM,
+  type Sequence,
   appreciationFor,
   mentionFor,
   gradeValue,
+  legacyToSequence,
+  getSequenceCoefficients,
   type Grade,
 } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
