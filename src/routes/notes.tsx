@@ -873,17 +873,19 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
 
   if (!student || !cls) return null;
 
+  const termSequences: Sequence[] = SEQUENCES_BY_TERM[term] ?? [];
   const rowsData = subjects.map((sub) => {
     const list = db.grades.filter(
       (g) => g.studentId === studentId && matchSubject(g, sub.name, sub.id) && norm(g.term) === norm(term)
     );
-    const get = (et: string) => {
-      const f = list.find((g) => norm(g.evaluationType) === norm(et));
+    const seqVal = (seqName: Sequence): number | undefined => {
+      const f = list.find((g) => legacyToSequence(g.evaluationType, term) === seqName);
       const v = f?.grade ?? (f as Grade | undefined)?.value;
       return v != null && !Number.isNaN(Number(v)) ? Number(v) : undefined;
     };
     const moy = subjectAverage(db.grades, studentId, sub.name, term, sub.id);
-    return { sub, d1: get("Devoir 1"), d2: get("Devoir 2"), comp: get("Composition"), moy };
+    const seqs = termSequences.map(seqVal);
+    return { sub, seqs, moy };
   });
 
   const gen = weightedAverage(db.grades, studentId, subjects.map((x) => ({ name: x.name, coefficient: x.coefficient })), term);
