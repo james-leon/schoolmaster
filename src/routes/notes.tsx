@@ -80,8 +80,16 @@ function matchSubject(g: Grade, subjectName: string, subjectId?: string): boolea
 function subjectAverage(grades: Grade[], studentId: string, subject: string, term: string, subjectId?: string): number | null {
   const list = grades.filter((g) => g.studentId === studentId && matchSubject(g, subject, subjectId) && norm(g.term) === norm(term));
   if (!list.length) return null;
-  const vals = list.map(gradeValue);
-  return Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 100) / 100;
+  const coefs = getSequenceCoefficients();
+  let sumW = 0, sumC = 0;
+  list.forEach((g) => {
+    const v = gradeValue(g);
+    const seq = legacyToSequence(g.evaluationType, term);
+    const c = seq ? (coefs[seq] ?? 1) : 1;
+    sumW += v * c; sumC += c;
+  });
+  if (!sumC) return null;
+  return Math.round((sumW / sumC) * 100) / 100;
 }
 
 function weightedAverage(
