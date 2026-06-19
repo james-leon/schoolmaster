@@ -18,6 +18,7 @@ import { Trash2, Upload, Image as ImageIcon, KeyRound, UserX, UserCheck } from "
 import { toast } from "sonner";
 import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
+import { SEQUENCES, SEQUENCE_TERM, getSequenceCoefficients, setSequenceCoefficients, type Sequence } from "@/lib/types";
 
 export const Route = createFileRoute("/parametres")({
   component: ParametresPage,
@@ -116,6 +117,7 @@ function ParametresPage() {
         <TabsList>
           <TabsTrigger value="ecole">École</TabsTrigger>
           <TabsTrigger value="objectifs">Objectifs</TabsTrigger>
+          <TabsTrigger value="evaluations">Évaluations</TabsTrigger>
           <TabsTrigger value="utilisateurs">Utilisateurs</TabsTrigger>
           <TabsTrigger value="confidentialite">Confidentialité</TabsTrigger>
           <TabsTrigger value="compte">Compte</TabsTrigger>
@@ -195,6 +197,10 @@ function ParametresPage() {
           <EnrollmentTargetsPanel schoolId={school?.id} />
         </TabsContent>
 
+        <TabsContent value="evaluations" className="mt-4">
+          <SequenceCoefficientsPanel />
+        </TabsContent>
+
 
         <TabsContent value="utilisateurs" className="mt-4">
           <UsersPanel schoolId={school?.id} schoolName={school?.name} currentUserId={user?.id} />
@@ -219,6 +225,53 @@ function ParametresPage() {
         </TabsContent>
       </Tabs>
     </AppLayout>
+  );
+}
+
+function SequenceCoefficientsPanel() {
+  const [coefs, setCoefs] = useState<Record<string, number>>(() => getSequenceCoefficients());
+
+  const set = (seq: Sequence, v: string) => {
+    const n = Math.max(0, Number(v) || 0);
+    setCoefs((p) => ({ ...p, [seq]: n }));
+  };
+  const save = () => {
+    setSequenceCoefficients(coefs as Record<Sequence, number>);
+    toast.success("Coefficients enregistrés");
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Types d'évaluation — Séquences</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Le système camerounais comporte 6 séquences réparties sur 3 trimestres. Les coefficients par défaut sont à 1 mais restent modifiables ci-dessous.
+        </p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {SEQUENCES.map((seq) => (
+            <div key={seq} className="flex items-center justify-between rounded-md border border-border p-3">
+              <div>
+                <p className="text-sm font-medium">{seq}</p>
+                <p className="text-xs text-muted-foreground">{SEQUENCE_TERM[seq]}</p>
+              </div>
+              <div className="w-24">
+                <Label className="text-xs">Coef.</Label>
+                <Input
+                  type="number" min={0} step={0.5}
+                  value={coefs[seq] ?? 1}
+                  onChange={(e) => set(seq, e.target.value)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-end">
+          <Button onClick={save}>Enregistrer</Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
