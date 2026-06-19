@@ -197,6 +197,10 @@ function ParametresPage() {
           <EnrollmentTargetsPanel schoolId={school?.id} />
         </TabsContent>
 
+        <TabsContent value="evaluations" className="mt-4">
+          <SequenceCoefficientsPanel />
+        </TabsContent>
+
 
         <TabsContent value="utilisateurs" className="mt-4">
           <UsersPanel schoolId={school?.id} schoolName={school?.name} currentUserId={user?.id} />
