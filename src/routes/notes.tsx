@@ -111,7 +111,8 @@ function cellTone(n: number | null): string {
 
 /* ───────────────────────── Saisie ───────────────────────── */
 
-type Cell = { grade: string; comment: string };
+type SeqCell = { grade: string };
+type RowCells = { seq: Record<string, SeqCell>; comment: string };
 
 function SaisieTab() {
   const db = useDB();
@@ -120,8 +121,7 @@ function SaisieTab() {
   const [classId, setClassId] = useState("");
   const [subject, setSubject] = useState("");
   const [term, setTerm] = useState("");
-  const [evalType, setEvalType] = useState<EvaluationType | "">("");
-  const [cells, setCells] = useState<Record<string, Cell>>({});
+  const [rows, setRows] = useState<Record<string, RowCells>>({});
   const [confirmReplace, setConfirmReplace] = useState(false);
 
   const visibleClasses = useMemo(
@@ -141,25 +141,41 @@ function SaisieTab() {
     [db.students, classId]
   );
 
-  const ready = classId && subject && term && evalType;
+  const termSequences: Sequence[] = useMemo(() => SEQUENCES_BY_TERM[term] ?? [], [term]);
+  const ready = !!(classId && subject && term);
 
-  // load existing
+  const [coefs, setCoefs] = useState<Record<string, number>>(() => getSequenceCoefficients());
+  useEffect(() => {
+    const onUpd = () => setCoefs(getSequenceCoefficients());
+    if (typeof window !== "undefined") {
+      window.addEventListener("sequence-coefs:updated", onUpd);
+      return () => window.removeEventListener("sequence-coefs:updated", onUpd);
+    }
+  }, []);
+
+  // load existing grades for all sequences of this term
   useEffect(() => {
     if (!ready) return;
-    const next: Record<string, Cell> = {};
+    const next: Record<string, RowCells> = {};
     students.forEach((s) => {
-      const g = db.grades.find(
-        (x) =>
-          x.studentId === s.id &&
-          x.subject === subject &&
-          x.term === term &&
-          x.evaluationType === evalType
-      );
-      next[s.id] = { grade: g?.grade != null ? String(g.grade) : "", comment: g?.comment ?? "" };
+      const seq: Record<string, SeqCell> = {};
+      let comment = "";
+      termSequences.forEach((seqName) => {
+        const g = db.grades.find(
+          (x) =>
+            x.studentId === s.id &&
+            norm(x.subject) === norm(subject) &&
+            norm(x.term) === norm(term) &&
+            legacyToSequence(x.evaluationType, term) === seqName
+        );
+        seq[seqName] = { grade: g?.grade != null ? String(g.grade) : "" };
+        if (!comment && g?.comment) comment = g.comment;
+      });
+      next[s.id] = { seq, comment };
     });
-    setCells(next);
+    setRows(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classId, subject, term, evalType, db.grades.length, students.length]);
+  }, [classId, subject, term, db.grades.length, students.length]);
 
   const parsed = (v: string): number | null => {
     if (v === "") return null;
@@ -168,71 +184,91 @@ function SaisieTab() {
     return n;
   };
 
-  const noteValues = students
-    .map((s) => parsed(cells[s.id]?.grade ?? ""))
-    .filter((v): v is number => v != null);
-  const avg = noteValues.length ? Math.round((noteValues.reduce((a, b) => a + b, 0) / noteValues.length) * 100) / 100 : 0;
-  const hi = noteValues.length ? Math.max(...noteValues) : 0;
-  const lo = noteValues.length ? Math.min(...noteValues) : 0;
+  const studentAvg = (sid: string): number | null => {
+    const row = rows[sid];
+    if (!row) return null;
+    let sumW = 0, sumC = 0;
+    termSequences.forEach((seqName) => {
+      const v = parsed(row.seq[seqName]?.grade ?? "");
+      if (v == null) return;
+      const c = coefs[seqName] ?? 1;
+      sumW += v * c; sumC += c;
+    });
+    if (!sumC) return null;
+    return Math.round((sumW / sumC) * 100) / 100;
+  };
 
-  const setCell = (sid: string, k: keyof Cell, v: string) =>
-    setCells((p) => ({ ...p, [sid]: { ...(p[sid] ?? { grade: "", comment: "" }), [k]: v } }));
+  const avgs = students.map((s) => studentAvg(s.id)).filter((v): v is number => v != null);
+  const avg = avgs.length ? Math.round((avgs.reduce((a, b) => a + b, 0) / avgs.length) * 100) / 100 : 0;
+  const hi = avgs.length ? Math.max(...avgs) : 0;
+  const lo = avgs.length ? Math.min(...avgs) : 0;
+
+  const setSeqCell = (sid: string, seqName: string, v: string) =>
+    setRows((p) => ({
+      ...p,
+      [sid]: {
+        comment: p[sid]?.comment ?? "",
+        seq: { ...(p[sid]?.seq ?? {}), [seqName]: { grade: v } },
+      },
+    }));
+  const setComment = (sid: string, v: string) =>
+    setRows((p) => ({ ...p, [sid]: { seq: p[sid]?.seq ?? {}, comment: v } }));
 
   const existsAny = () => {
     if (!ready) return false;
     return db.grades.some(
       (g) =>
         g.classId === classId &&
-        g.subject === subject &&
-        g.term === term &&
-        g.evaluationType === evalType
+        norm(g.subject) === norm(subject) &&
+        norm(g.term) === norm(term) &&
+        legacyToSequence(g.evaluationType, term) != null
     );
   };
 
   const trySave = () => {
     if (!ready) return;
-    if (existsAny()) {
-      setConfirmReplace(true);
-      return;
-    }
+    if (existsAny()) { setConfirmReplace(true); return; }
     doSave();
   };
 
   const doSave = () => {
     updateDB((d) => {
-      // remove old entries for this combo
+      // remove existing entries belonging to this class/subject/term/sequences
       d.grades = d.grades.filter(
         (g) =>
           !(
             g.classId === classId &&
-            g.subject === subject &&
-            g.term === term &&
-            g.evaluationType === evalType
+            norm(g.subject) === norm(subject) &&
+            norm(g.term) === norm(term) &&
+            legacyToSequence(g.evaluationType, term) != null
           )
       );
       const subjEntity = getDB().classSubjects.find((s) => s.classId === classId && s.name === subject);
       students.forEach((s) => {
-        const c = cells[s.id];
-        const n = parsed(c?.grade ?? "");
-        if (n == null) return;
-        d.grades.push({
-          id: crypto.randomUUID(),
-          studentId: s.id,
-          classId,
-          subject,
-          subjectId: subjEntity?.id,
-          term,
-          evaluationType: evalType as EvaluationType,
-          grade: n,
-          comment: c?.comment || undefined,
-          createdAt: new Date().toISOString(),
-          value: n,
+        const row = rows[s.id];
+        if (!row) return;
+        termSequences.forEach((seqName) => {
+          const n = parsed(row.seq[seqName]?.grade ?? "");
+          if (n == null) return;
+          d.grades.push({
+            id: crypto.randomUUID(),
+            studentId: s.id,
+            classId,
+            subject,
+            subjectId: subjEntity?.id,
+            term,
+            evaluationType: seqName,
+            grade: n,
+            comment: row.comment || undefined,
+            createdAt: new Date().toISOString(),
+            value: n,
+          });
         });
       });
       d.activities.unshift({
         id: crypto.randomUUID(),
         type: "grade",
-        text: `Notes ${subject} (${evalType}) enregistrées — ${term}`,
+        text: `Notes ${subject} enregistrées — ${term}`,
         date: new Date().toISOString(),
       });
     });
@@ -243,7 +279,7 @@ function SaisieTab() {
   return (
     <div className="space-y-4">
       <Card>
-        <CardContent className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-4">
+        <CardContent className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
           <Select value={classId} onValueChange={(v) => { setClassId(v); setSubject(""); }}>
             <SelectTrigger><SelectValue placeholder="Classe" /></SelectTrigger>
             <SelectContent>{visibleClasses.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
@@ -256,16 +292,12 @@ function SaisieTab() {
             <SelectTrigger><SelectValue placeholder="Trimestre" /></SelectTrigger>
             <SelectContent>{TERMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
           </Select>
-          <Select value={evalType} onValueChange={(v) => setEvalType(v as EvaluationType)}>
-            <SelectTrigger><SelectValue placeholder="Type d'évaluation" /></SelectTrigger>
-            <SelectContent>{EVALUATION_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-          </Select>
         </CardContent>
       </Card>
 
       {!ready ? (
         <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">
-          Sélectionnez classe, matière, trimestre et type d'évaluation pour saisir les notes.
+          Sélectionnez classe, matière et trimestre pour saisir les notes des séquences correspondantes.
         </CardContent></Card>
       ) : !loaded ? (
         <Card><CardContent className="p-4"><TableSkeleton /></CardContent></Card>
@@ -278,52 +310,54 @@ function SaisieTab() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12">N°</TableHead>
-                  <TableHead className="w-12"></TableHead>
                   <TableHead>Nom complet</TableHead>
-                  <TableHead className="w-28">Note /20</TableHead>
+                  {termSequences.map((seqName) => (
+                    <TableHead key={seqName} className="w-32 text-center">
+                      {seqName}
+                      <div className="text-xs font-normal text-muted-foreground">coef {coefs[seqName] ?? 1}</div>
+                    </TableHead>
+                  ))}
+                  <TableHead className="w-28 text-center">Moyenne</TableHead>
                   <TableHead className="w-36">Appréciation</TableHead>
                   <TableHead>Commentaire</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {students.map((s, i) => {
-                  const c = cells[s.id] ?? { grade: "", comment: "" };
-                  const n = parsed(c.grade);
-                  const over = c.grade !== "" && (Number(c.grade) > 20 || Number(c.grade) < 0 || Number.isNaN(Number(c.grade)));
-                  const initials = (s.firstName[0] ?? "") + (s.lastName[0] ?? "");
-                  const app = n != null ? appreciationFor(n) : null;
+                  const row = rows[s.id] ?? { seq: {}, comment: "" };
+                  const ma = studentAvg(s.id);
+                  const app = ma != null ? appreciationFor(ma) : null;
                   return (
                     <TableRow key={s.id}>
                       <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                      <TableCell>
-                        {s.photo ? (
-                          <img src={s.photo} alt="" className="h-8 w-8 rounded-full object-cover" />
-                        ) : (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{initials.toUpperCase()}</div>
-                        )}
-                      </TableCell>
                       <TableCell className="font-medium">{s.firstName} {s.lastName}</TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={20}
-                          step={0.25}
-                          value={c.grade}
-                          onChange={(e) => setCell(s.id, "grade", e.target.value)}
-                          className={cn(
-                            over && "border-destructive focus-visible:ring-destructive",
-                            !over && n != null && n >= 10 && "border-success focus-visible:ring-success",
-                            !over && n != null && n < 10 && "border-destructive focus-visible:ring-destructive"
-                          )}
-                        />
-                        {over && <p className="mt-1 text-xs text-destructive">Note entre 0 et 20</p>}
+                      {termSequences.map((seqName) => {
+                        const c = row.seq[seqName] ?? { grade: "" };
+                        const n = parsed(c.grade);
+                        const over = c.grade !== "" && (Number(c.grade) > 20 || Number(c.grade) < 0 || Number.isNaN(Number(c.grade)));
+                        return (
+                          <TableCell key={seqName}>
+                            <Input
+                              type="number" min={0} max={20} step={0.25}
+                              value={c.grade}
+                              onChange={(e) => setSeqCell(s.id, seqName, e.target.value)}
+                              className={cn(
+                                over && "border-destructive focus-visible:ring-destructive",
+                                !over && n != null && n >= 10 && "border-success focus-visible:ring-success",
+                                !over && n != null && n < 10 && "border-destructive focus-visible:ring-destructive"
+                              )}
+                            />
+                          </TableCell>
+                        );
+                      })}
+                      <TableCell className="text-center font-semibold">
+                        {ma != null ? ma.toFixed(2) : "—"}
                       </TableCell>
                       <TableCell>
                         {app ? <Badge className={app.cls + " border-0"}>{app.label}</Badge> : <span className="text-muted-foreground text-sm">—</span>}
                       </TableCell>
                       <TableCell>
-                        <Input placeholder="Optionnel" value={c.comment} onChange={(e) => setCell(s.id, "comment", e.target.value)} />
+                        <Input placeholder="Optionnel" value={row.comment} onChange={(e) => setComment(s.id, e.target.value)} />
                       </TableCell>
                     </TableRow>
                   );
@@ -347,7 +381,7 @@ function SaisieTab() {
           <AlertDialogHeader>
             <AlertDialogTitle>Notes existantes</AlertDialogTitle>
             <AlertDialogDescription>
-              Des notes existent déjà pour cette matière, ce trimestre et ce type d'évaluation. Voulez-vous les remplacer ?
+              Des notes existent déjà pour cette matière et ce trimestre. Voulez-vous les remplacer ?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
