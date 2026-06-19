@@ -158,7 +158,9 @@ export interface PaymentRecord {
   notes?: string;
 }
 
-export type EvaluationType = "Devoir 1" | "Devoir 2" | "Composition" | "Oral" | "Examen";
+// Sequence-based evaluation system (Cameroon).
+// Legacy values ("Devoir 1", "Devoir 2", "Composition", "Oral", "Examen") are still accepted for backward compatibility with existing grades.
+export type EvaluationType = string;
 
 export interface Grade {
   id: string;
@@ -177,7 +179,59 @@ export interface Grade {
   value: number;
 }
 
-export const EVALUATION_TYPES: EvaluationType[] = ["Devoir 1", "Devoir 2", "Composition", "Oral", "Examen"];
+export const SEQUENCES = [
+  "Séquence 1", "Séquence 2", "Séquence 3", "Séquence 4", "Séquence 5", "Séquence 6",
+] as const;
+export type Sequence = (typeof SEQUENCES)[number];
+
+export const SEQUENCES_BY_TERM: Record<string, Sequence[]> = {
+  "1er trimestre": ["Séquence 1", "Séquence 2"],
+  "2e trimestre": ["Séquence 3", "Séquence 4"],
+  "3e trimestre": ["Séquence 5", "Séquence 6"],
+};
+
+export const SEQUENCE_TERM: Record<Sequence, string> = {
+  "Séquence 1": "1er trimestre",
+  "Séquence 2": "1er trimestre",
+  "Séquence 3": "2e trimestre",
+  "Séquence 4": "2e trimestre",
+  "Séquence 5": "3e trimestre",
+  "Séquence 6": "3e trimestre",
+};
+
+export const DEFAULT_SEQUENCE_COEFFICIENTS: Record<Sequence, number> = {
+  "Séquence 1": 1, "Séquence 2": 1, "Séquence 3": 1,
+  "Séquence 4": 1, "Séquence 5": 1, "Séquence 6": 1,
+};
+
+const SEQ_COEF_KEY = "sequence_coefficients_v1";
+export function getSequenceCoefficients(): Record<Sequence, number> {
+  if (typeof window === "undefined") return { ...DEFAULT_SEQUENCE_COEFFICIENTS };
+  try {
+    const raw = localStorage.getItem(SEQ_COEF_KEY);
+    if (!raw) return { ...DEFAULT_SEQUENCE_COEFFICIENTS };
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_SEQUENCE_COEFFICIENTS, ...parsed };
+  } catch { return { ...DEFAULT_SEQUENCE_COEFFICIENTS }; }
+}
+export function setSequenceCoefficients(c: Record<Sequence, number>) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(SEQ_COEF_KEY, JSON.stringify(c));
+  window.dispatchEvent(new Event("sequence-coefs:updated"));
+}
+
+/** Map a (possibly legacy) evaluation type to a sequence within the given term. */
+export function legacyToSequence(et: string | undefined, term: string): Sequence | undefined {
+  if (!et) return undefined;
+  if ((SEQUENCES as readonly string[]).includes(et)) return et as Sequence;
+  const [a, b] = SEQUENCES_BY_TERM[term] ?? [];
+  if (et === "Devoir 1") return a;
+  if (et === "Devoir 2" || et === "Composition") return b;
+  return undefined;
+}
+
+// Kept for backward-compat imports.
+export const EVALUATION_TYPES: EvaluationType[] = [...SEQUENCES];
 
 export function gradeValue(g: Grade): number {
   if (g.evaluationType != null) return g.grade ?? 0;
