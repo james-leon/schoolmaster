@@ -228,6 +228,53 @@ function ParametresPage() {
   );
 }
 
+function SequenceCoefficientsPanel() {
+  const [coefs, setCoefs] = useState<Record<string, number>>(() => getSequenceCoefficients());
+
+  const set = (seq: Sequence, v: string) => {
+    const n = Math.max(0, Number(v) || 0);
+    setCoefs((p) => ({ ...p, [seq]: n }));
+  };
+  const save = () => {
+    setSequenceCoefficients(coefs as Record<Sequence, number>);
+    toast.success("Coefficients enregistrés");
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Types d'évaluation — Séquences</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Le système camerounais comporte 6 séquences réparties sur 3 trimestres. Les coefficients par défaut sont à 1 mais restent modifiables ci-dessous.
+        </p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {SEQUENCES.map((seq) => (
+            <div key={seq} className="flex items-center justify-between rounded-md border border-border p-3">
+              <div>
+                <p className="text-sm font-medium">{seq}</p>
+                <p className="text-xs text-muted-foreground">{SEQUENCE_TERM[seq]}</p>
+              </div>
+              <div className="w-24">
+                <Label className="text-xs">Coef.</Label>
+                <Input
+                  type="number" min={0} step={0.5}
+                  value={coefs[seq] ?? 1}
+                  onChange={(e) => set(seq, e.target.value)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-end">
+          <Button onClick={save}>Enregistrer</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 const MONTHS_FR = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
