@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, Download, ShieldCheck, AlertTriangle } from "lucide-react";
 import { fcfa } from "@/lib/format";
-import { TERMS, gradeValue, type StudentStatus, type Grade } from "@/lib/types";
+import { TERMS, SEQUENCES_BY_TERM, legacyToSequence, gradeValue, type StudentStatus, type Grade } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { ParentsTuteursTab } from "@/components/ParentsTuteursTab";
