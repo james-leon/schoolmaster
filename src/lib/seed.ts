@@ -31,6 +31,7 @@ export function buildSeed(): DB {
     attendance: [],
     activities: [],
     classSubjects: [],
+    classTeachers: [],
     feeTypes: DEFAULT_FEE_TYPES.map((f) => ({ id: uid(), ...f })) as FeeType[],
     paymentRecords: [] as PaymentRecord[],
     parents: [],

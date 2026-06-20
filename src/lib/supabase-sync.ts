@@ -11,6 +11,7 @@ import type {
   Teacher,
   School,
   ClassSubject,
+  ClassTeacher,
   Level,
   Grade,
   Attendance,
@@ -32,6 +33,7 @@ type Snapshot = {
   students: Student[];
   teachers: Teacher[];
   classSubjects: ClassSubject[];
+  classTeachers: ClassTeacher[];
   grades: Grade[];
   attendance: Attendance[];
   feeTypes: FeeType[];
@@ -55,6 +57,7 @@ function snapshot(): Snapshot {
     students: clone(db.students),
     teachers: clone(db.teachers),
     classSubjects: clone(db.classSubjects),
+    classTeachers: clone(db.classTeachers ?? []),
     grades: clone(db.grades),
     attendance: clone(db.attendance),
     feeTypes: clone(db.feeTypes),
@@ -143,6 +146,16 @@ function rowToClassSubject(r: { id: string; class_id: string; name: string; coef
     name: r.name,
     coefficient: r.coefficient,
     teacherId: r.teacher_id ?? undefined,
+  };
+}
+
+function rowToClassTeacher(r: { id: string; class_id: string; teacher_id: string; is_principal: boolean | null; subject_id: string | null }): ClassTeacher {
+  return {
+    id: r.id,
+    classId: r.class_id,
+    teacherId: r.teacher_id,
+    isPrincipal: r.is_principal ?? false,
+    subjectId: r.subject_id ?? undefined,
   };
 }
 
@@ -282,7 +295,7 @@ export async function hydrateAll(schoolId: string): Promise<void> {
   const [
     schoolsRes, classesRes, studentsRes, teachersRes, subjectsRes,
     gradesRes, attendanceRes, feeTypesRes, invoicesRes, paymentRecordsRes,
-    parentsRes, announcementsRes, academicYearsRes,
+    parentsRes, announcementsRes, academicYearsRes, classTeachersRes,
   ] = await Promise.all([
     supabase.from("schools").select("*").eq("id", schoolId),
     supabase.from("classes").select("*").eq("school_id", schoolId),
@@ -297,6 +310,7 @@ export async function hydrateAll(schoolId: string): Promise<void> {
     supabase.from("parents").select("*").eq("school_id", schoolId),
     supabase.from("announcements").select("*").eq("school_id", schoolId).order("created_at", { ascending: false }),
     supabase.from("academic_years").select("*").eq("school_id", schoolId),
+    (supabase.from as any)("class_teachers").select("*").eq("school_id", schoolId),
   ]);
 
   const schools = (schoolsRes.data ?? []).map(rowToSchool);
@@ -312,6 +326,7 @@ export async function hydrateAll(schoolId: string): Promise<void> {
   const parents = (parentsRes.data ?? []).map(rowToParent);
   const announcements = (announcementsRes.data ?? []).map(rowToAnnouncement);
   const academicYears = (academicYearsRes.data ?? []).map(rowToAcademicYear);
+  const classTeachers = ((classTeachersRes as any)?.data ?? []).map(rowToClassTeacher);
 
   // Backfill student.parentName/Phone/etc from the parents table for legacy UI.
   const parentByStudent = new Map<string, Parent>();
@@ -347,6 +362,7 @@ export async function hydrateAll(schoolId: string): Promise<void> {
       db.parents = parents;
       db.announcements = announcements;
       db.academicYears = academicYears;
+      db.classTeachers = classTeachers;
     });
   } finally {
     syncing = false;
@@ -661,6 +677,28 @@ async function pushDiffs(): Promise<void> {
   }
   for (const id of ayDiff.deletedIds) {
     const { error } = await supabase.from("academic_years").delete().eq("id", id);
+    if (error) throw error;
+  }
+
+  // Class teachers (many-to-many)
+  const ctDiff = diff(lastSnapshot.classTeachers, current.classTeachers);
+  const ctTable = (supabase.from as any)("class_teachers");
+  for (const ct of ctDiff.inserted) {
+    const { error } = await ctTable.insert({
+      id: ct.id, school_id: schoolId, class_id: ct.classId, teacher_id: ct.teacherId,
+      is_principal: ct.isPrincipal ?? false, subject_id: ct.subjectId ?? null,
+    });
+    if (error) throw error;
+  }
+  for (const ct of ctDiff.updated) {
+    const { error } = await ctTable.update({
+      class_id: ct.classId, teacher_id: ct.teacherId,
+      is_principal: ct.isPrincipal ?? false, subject_id: ct.subjectId ?? null,
+    }).eq("id", ct.id);
+    if (error) throw error;
+  }
+  for (const id of ctDiff.deletedIds) {
+    const { error } = await ctTable.delete().eq("id", id);
     if (error) throw error;
   }
 

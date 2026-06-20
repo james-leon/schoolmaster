@@ -27,7 +27,7 @@ const schema = z.object({
   name: z.string().trim().min(1, "Nom requis").max(40),
   level: z.enum(LEVELS as [Level, ...Level[]], { message: "Niveau requis" }),
   capacity: z.coerce.number().int().positive("Capacité invalide").max(200),
-  teacherId: z.string().min(1, "Enseignant requis"),
+  teacherId: z.string(),
   fees: z.coerce.number().nonnegative("Frais invalides"),
 });
 
@@ -45,15 +45,46 @@ function ClassesPage() {
   const [toDelete, setToDelete] = useState<Classe | null>(null);
   const [subjectsFor, setSubjectsFor] = useState<Classe | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>([]);
 
   const set = (k: keyof FormState, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
-  const openNew = () => { setEditing(null); setForm(empty); setErrors({}); setOpen(true); };
+  const teachersOfClass = (classId: string): string[] => {
+    const ids = new Set<string>();
+    for (const ct of db.classTeachers ?? []) {
+      if (ct.classId === classId) ids.add(ct.teacherId);
+    }
+    const c = db.classes.find((x) => x.id === classId);
+    if (c?.teacherId) ids.add(c.teacherId);
+    return Array.from(ids);
+  };
+
+  const openNew = () => {
+    setEditing(null);
+    setForm(empty);
+    setSelectedTeacherIds([]);
+    setErrors({});
+    setOpen(true);
+  };
   const openEdit = (c: Classe) => {
     setEditing(c);
     setForm({ name: c.name, level: c.level, capacity: String(c.capacity), teacherId: c.teacherId, fees: String(c.fees) });
+    setSelectedTeacherIds(teachersOfClass(c.id));
     setErrors({});
     setOpen(true);
+  };
+
+  const toggleTeacher = (teacherId: string) => {
+    setSelectedTeacherIds((prev) => {
+      if (prev.includes(teacherId)) {
+        const next = prev.filter((id) => id !== teacherId);
+        if (form.teacherId === teacherId) set("teacherId", next[0] ?? "");
+        return next;
+      }
+      const next = [...prev, teacherId];
+      if (!form.teacherId) set("teacherId", teacherId);
+      return next;
+    });
   };
 
   const submit = () => {
@@ -65,12 +96,31 @@ function ClassesPage() {
       return;
     }
     const data = parsed.data;
+    const principalId = selectedTeacherIds.includes(data.teacherId) ? data.teacherId : (selectedTeacherIds[0] ?? "");
     updateDB((d) => {
+      let classId: string;
       if (editing) {
         const c = d.classes.find((x) => x.id === editing.id);
-        if (c) Object.assign(c, data);
+        if (c) {
+          c.name = data.name; c.level = data.level as Level;
+          c.capacity = data.capacity; c.fees = data.fees;
+          c.teacherId = principalId;
+        }
+        classId = editing.id;
       } else {
-        d.classes.push({ id: crypto.randomUUID(), ...data });
+        classId = crypto.randomUUID();
+        d.classes.push({ id: classId, name: data.name, level: data.level as Level, capacity: data.capacity, fees: data.fees, teacherId: principalId });
+      }
+      // Reconcile class_teachers
+      if (!d.classTeachers) d.classTeachers = [];
+      d.classTeachers = d.classTeachers.filter((ct) => ct.classId !== classId);
+      for (const tid of selectedTeacherIds) {
+        d.classTeachers.push({
+          id: crypto.randomUUID(),
+          classId,
+          teacherId: tid,
+          isPrincipal: tid === principalId,
+        });
       }
     });
     toast.success(editing ? "Classe modifiée" : "Classe créée");
@@ -80,7 +130,10 @@ function ClassesPage() {
   const confirmDelete = () => {
     if (!toDelete) return;
     const id = toDelete.id;
-    updateDB((d) => { d.classes = d.classes.filter((c) => c.id !== id); });
+    updateDB((d) => {
+      d.classes = d.classes.filter((c) => c.id !== id);
+      d.classTeachers = (d.classTeachers ?? []).filter((ct) => ct.classId !== id);
+    });
     toast.success("Classe supprimée");
     setToDelete(null);
   };
@@ -136,12 +189,31 @@ function ClassesPage() {
               <TableBody>
                 {visibleClasses.map((c) => {
                   const count = db.students.filter((s) => s.classId === c.id).length;
-                  const teacher = db.teachers.find((t) => t.id === c.teacherId);
+                  const teacherIds = teachersOfClass(c.id);
+                  const teacherList = teacherIds
+                    .map((tid) => db.teachers.find((t) => t.id === tid))
+                    .filter((t): t is NonNullable<typeof t> => !!t);
+                  const principalId = c.teacherId;
                   return (
                     <TableRow key={c.id}>
                       <TableCell className="font-medium">{c.name}</TableCell>
                       <TableCell><Badge variant="outline">{c.level}</Badge></TableCell>
-                      <TableCell>{teacher ? `${teacher.firstName} ${teacher.lastName}` : "—"}</TableCell>
+                      <TableCell>
+                        {teacherList.length === 0 ? "—" : (
+                          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                            {teacherList.slice(0, 2).map((t, i) => (
+                              <span key={t.id} className="text-sm">
+                                {i > 0 && <span className="text-muted-foreground mr-1">,</span>}
+                                {t.firstName} {t.lastName}
+                                {t.id === principalId && <Badge variant="secondary" className="ml-1 text-[10px]">Principal</Badge>}
+                              </span>
+                            ))}
+                            {teacherList.length > 2 && (
+                              <Badge variant="outline">+{teacherList.length - 2}</Badge>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="text-muted-foreground"><Users className="mr-1 inline h-4 w-4" />{count} / {c.capacity}</TableCell>
                       {isAdmin && <TableCell className="font-semibold">{fcfa(c.fees)}</TableCell>}
                       {isAdmin && (
@@ -181,15 +253,43 @@ function ClassesPage() {
             <Field label="Frais (FCFA)" error={errors.fees}>
               <Input type="number" value={form.fees} onChange={(e) => set("fees", e.target.value)} />
             </Field>
-            <div className="sm:col-span-2">
-              <Field label="Enseignant" error={errors.teacherId}>
-                <Select value={form.teacherId} onValueChange={(v) => set("teacherId", v)}>
-                  <SelectTrigger><SelectValue placeholder="Choisir un enseignant" /></SelectTrigger>
-                  <SelectContent>
-                    {db.teachers.map((t) => <SelectItem key={t.id} value={t.id}>{t.firstName} {t.lastName}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </Field>
+            <div className="sm:col-span-2 space-y-2">
+              <Label>Enseignants</Label>
+              <div className="rounded-md border border-border divide-y divide-border max-h-64 overflow-auto">
+                {db.teachers.length === 0 ? (
+                  <div className="p-3 text-sm text-muted-foreground">Aucun enseignant. Créez-en d'abord dans « Enseignants ».</div>
+                ) : db.teachers.map((t) => {
+                  const checked = selectedTeacherIds.includes(t.id);
+                  const isPrincipal = form.teacherId === t.id;
+                  return (
+                    <div key={t.id} className="flex items-center justify-between gap-3 p-2">
+                      <label className="flex items-center gap-2 flex-1 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4"
+                          checked={checked}
+                          onChange={() => toggleTeacher(t.id)}
+                        />
+                        <span className="text-sm">{t.firstName} {t.lastName}</span>
+                      </label>
+                      {checked && (
+                        <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                          <input
+                            type="radio"
+                            name="principal"
+                            checked={isPrincipal}
+                            onChange={() => set("teacherId", t.id)}
+                          />
+                          Principal
+                        </label>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Cochez un ou plusieurs enseignants. Marquez-en un comme « Principal » (titulaire). Associez un enseignant à une matière via « Matières ».
+              </p>
             </div>
           </div>
           <DialogFooter>

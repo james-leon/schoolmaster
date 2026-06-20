@@ -5,6 +5,7 @@ import type { User, Classe, DB } from "./types";
  *   1. profiles.assigned_classes (string[] of class names or levels)
  *   2. classes.teacherId — linked via the teachers row whose email matches the user
  *   3. class_subjects.teacherId — same email link
+ *   4. class_teachers (many-to-many) — same email link
  *
  * For non-teachers, returns all classes.
  */
@@ -23,11 +24,17 @@ export function resolveTeacherClasses(user: User | null | undefined, db: DB): Cl
       ? db.classSubjects.filter((cs) => cs.teacherId === myTeacherId).map((cs) => cs.classId)
       : [],
   );
+  const linkClassIds = new Set(
+    myTeacherId
+      ? (db.classTeachers ?? []).filter((ct) => ct.teacherId === myTeacherId).map((ct) => ct.classId)
+      : [],
+  );
 
   return db.classes.filter((c) => {
     if (assigned.some((a) => c.name === a || c.level === a)) return true;
     if (myTeacherId && c.teacherId === myTeacherId) return true;
     if (subjectClassIds.has(c.id)) return true;
+    if (linkClassIds.has(c.id)) return true;
     return false;
   });
 }
