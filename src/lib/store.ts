@@ -25,6 +25,7 @@ function load(): DB {
     try {
       const parsed = JSON.parse(raw) as DB;
       if (!parsed.classSubjects) parsed.classSubjects = [];
+      if (!parsed.classTeachers) parsed.classTeachers = [];
       if (!parsed.feeTypes) parsed.feeTypes = [];
       if (!parsed.paymentRecords) parsed.paymentRecords = [];
       if (!parsed.parents) parsed.parents = [];

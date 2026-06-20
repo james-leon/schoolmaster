@@ -11,6 +11,7 @@ import type {
   Teacher,
   School,
   ClassSubject,
+  ClassTeacher,
   Level,
   Grade,
   Attendance,
@@ -32,6 +33,7 @@ type Snapshot = {
   students: Student[];
   teachers: Teacher[];
   classSubjects: ClassSubject[];
+  classTeachers: ClassTeacher[];
   grades: Grade[];
   attendance: Attendance[];
   feeTypes: FeeType[];
@@ -55,6 +57,7 @@ function snapshot(): Snapshot {
     students: clone(db.students),
     teachers: clone(db.teachers),
     classSubjects: clone(db.classSubjects),
+    classTeachers: clone(db.classTeachers ?? []),
     grades: clone(db.grades),
     attendance: clone(db.attendance),
     feeTypes: clone(db.feeTypes),
@@ -143,6 +146,16 @@ function rowToClassSubject(r: { id: string; class_id: string; name: string; coef
     name: r.name,
     coefficient: r.coefficient,
     teacherId: r.teacher_id ?? undefined,
+  };
+}
+
+function rowToClassTeacher(r: { id: string; class_id: string; teacher_id: string; is_principal: boolean | null; subject_id: string | null }): ClassTeacher {
+  return {
+    id: r.id,
+    classId: r.class_id,
+    teacherId: r.teacher_id,
+    isPrincipal: r.is_principal ?? false,
+    subjectId: r.subject_id ?? undefined,
   };
 }
 
