@@ -189,12 +189,30 @@ function ClassesPage() {
               <TableBody>
                 {visibleClasses.map((c) => {
                   const count = db.students.filter((s) => s.classId === c.id).length;
-                  const teacher = db.teachers.find((t) => t.id === c.teacherId);
+                  const teacherIds = teachersOfClass(c.id);
+                  const teacherList = teacherIds
+                    .map((tid) => db.teachers.find((t) => t.id === tid))
+                    .filter((t): t is NonNullable<typeof t> => !!t);
+                  const principalId = c.teacherId;
                   return (
                     <TableRow key={c.id}>
                       <TableCell className="font-medium">{c.name}</TableCell>
                       <TableCell><Badge variant="outline">{c.level}</Badge></TableCell>
-                      <TableCell>{teacher ? `${teacher.firstName} ${teacher.lastName}` : "—"}</TableCell>
+                      <TableCell>
+                        {teacherList.length === 0 ? "—" : (
+                          <div className="flex flex-wrap items-center gap-1">
+                            {teacherList.slice(0, 2).map((t) => (
+                              <span key={t.id} className="text-sm">
+                                {t.firstName} {t.lastName}
+                                {t.id === principalId && <Badge variant="secondary" className="ml-1 text-[10px]">Principal</Badge>}
+                              </span>
+                            )).reduce<React.ReactNode[]>((acc, el, i) => i === 0 ? [el] : [...acc, <span key={`s${i}`} className="text-muted-foreground">,</span>, el], [])}
+                            {teacherList.length > 2 && (
+                              <Badge variant="outline" className="ml-1">+{teacherList.length - 2}</Badge>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="text-muted-foreground"><Users className="mr-1 inline h-4 w-4" />{count} / {c.capacity}</TableCell>
                       {isAdmin && <TableCell className="font-semibold">{fcfa(c.fees)}</TableCell>}
                       {isAdmin && (
