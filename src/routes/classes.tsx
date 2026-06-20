@@ -45,15 +45,46 @@ function ClassesPage() {
   const [toDelete, setToDelete] = useState<Classe | null>(null);
   const [subjectsFor, setSubjectsFor] = useState<Classe | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>([]);
 
   const set = (k: keyof FormState, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
-  const openNew = () => { setEditing(null); setForm(empty); setErrors({}); setOpen(true); };
+  const teachersOfClass = (classId: string): string[] => {
+    const ids = new Set<string>();
+    for (const ct of db.classTeachers ?? []) {
+      if (ct.classId === classId) ids.add(ct.teacherId);
+    }
+    const c = db.classes.find((x) => x.id === classId);
+    if (c?.teacherId) ids.add(c.teacherId);
+    return Array.from(ids);
+  };
+
+  const openNew = () => {
+    setEditing(null);
+    setForm(empty);
+    setSelectedTeacherIds([]);
+    setErrors({});
+    setOpen(true);
+  };
   const openEdit = (c: Classe) => {
     setEditing(c);
     setForm({ name: c.name, level: c.level, capacity: String(c.capacity), teacherId: c.teacherId, fees: String(c.fees) });
+    setSelectedTeacherIds(teachersOfClass(c.id));
     setErrors({});
     setOpen(true);
+  };
+
+  const toggleTeacher = (teacherId: string) => {
+    setSelectedTeacherIds((prev) => {
+      if (prev.includes(teacherId)) {
+        const next = prev.filter((id) => id !== teacherId);
+        if (form.teacherId === teacherId) set("teacherId", next[0] ?? "");
+        return next;
+      }
+      const next = [...prev, teacherId];
+      if (!form.teacherId) set("teacherId", teacherId);
+      return next;
+    });
   };
 
   const submit = () => {
@@ -65,12 +96,31 @@ function ClassesPage() {
       return;
     }
     const data = parsed.data;
+    const principalId = selectedTeacherIds.includes(data.teacherId) ? data.teacherId : (selectedTeacherIds[0] ?? "");
     updateDB((d) => {
+      let classId: string;
       if (editing) {
         const c = d.classes.find((x) => x.id === editing.id);
-        if (c) Object.assign(c, data);
+        if (c) {
+          c.name = data.name; c.level = data.level as Level;
+          c.capacity = data.capacity; c.fees = data.fees;
+          c.teacherId = principalId;
+        }
+        classId = editing.id;
       } else {
-        d.classes.push({ id: crypto.randomUUID(), ...data });
+        classId = crypto.randomUUID();
+        d.classes.push({ id: classId, name: data.name, level: data.level as Level, capacity: data.capacity, fees: data.fees, teacherId: principalId });
+      }
+      // Reconcile class_teachers
+      if (!d.classTeachers) d.classTeachers = [];
+      d.classTeachers = d.classTeachers.filter((ct) => ct.classId !== classId);
+      for (const tid of selectedTeacherIds) {
+        d.classTeachers.push({
+          id: crypto.randomUUID(),
+          classId,
+          teacherId: tid,
+          isPrincipal: tid === principalId,
+        });
       }
     });
     toast.success(editing ? "Classe modifiée" : "Classe créée");
@@ -80,7 +130,10 @@ function ClassesPage() {
   const confirmDelete = () => {
     if (!toDelete) return;
     const id = toDelete.id;
-    updateDB((d) => { d.classes = d.classes.filter((c) => c.id !== id); });
+    updateDB((d) => {
+      d.classes = d.classes.filter((c) => c.id !== id);
+      d.classTeachers = (d.classTeachers ?? []).filter((ct) => ct.classId !== id);
+    });
     toast.success("Classe supprimée");
     setToDelete(null);
   };
