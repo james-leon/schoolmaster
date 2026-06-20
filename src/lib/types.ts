@@ -276,6 +276,14 @@ export interface ClassSubject {
   teacherId?: string;
 }
 
+export interface ClassTeacher {
+  id: string;
+  classId: string;
+  teacherId: string;
+  isPrincipal?: boolean;
+  subjectId?: string;
+}
+
 export interface DB {
   users: User[];
   schools: School[];
