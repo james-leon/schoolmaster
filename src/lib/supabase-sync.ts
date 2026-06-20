@@ -680,6 +680,28 @@ async function pushDiffs(): Promise<void> {
     if (error) throw error;
   }
 
+  // Class teachers (many-to-many)
+  const ctDiff = diff(lastSnapshot.classTeachers, current.classTeachers);
+  const ctTable = (supabase.from as any)("class_teachers");
+  for (const ct of ctDiff.inserted) {
+    const { error } = await ctTable.insert({
+      id: ct.id, school_id: schoolId, class_id: ct.classId, teacher_id: ct.teacherId,
+      is_principal: ct.isPrincipal ?? false, subject_id: ct.subjectId ?? null,
+    });
+    if (error) throw error;
+  }
+  for (const ct of ctDiff.updated) {
+    const { error } = await ctTable.update({
+      class_id: ct.classId, teacher_id: ct.teacherId,
+      is_principal: ct.isPrincipal ?? false, subject_id: ct.subjectId ?? null,
+    }).eq("id", ct.id);
+    if (error) throw error;
+  }
+  for (const id of ctDiff.deletedIds) {
+    const { error } = await ctTable.delete().eq("id", id);
+    if (error) throw error;
+  }
+
   lastSnapshot = current;
 }
 
