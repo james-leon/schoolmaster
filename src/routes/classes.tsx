@@ -27,7 +27,7 @@ const schema = z.object({
   name: z.string().trim().min(1, "Nom requis").max(40),
   level: z.enum(LEVELS as [Level, ...Level[]], { message: "Niveau requis" }),
   capacity: z.coerce.number().int().positive("Capacité invalide").max(200),
-  teacherId: z.string().min(1, "Enseignant requis"),
+  teacherId: z.string(),
   fees: z.coerce.number().nonnegative("Frais invalides"),
 });
 
