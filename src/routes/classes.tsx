@@ -200,15 +200,16 @@ function ClassesPage() {
                       <TableCell><Badge variant="outline">{c.level}</Badge></TableCell>
                       <TableCell>
                         {teacherList.length === 0 ? "—" : (
-                          <div className="flex flex-wrap items-center gap-1">
-                            {teacherList.slice(0, 2).map((t) => (
+                          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                            {teacherList.slice(0, 2).map((t, i) => (
                               <span key={t.id} className="text-sm">
+                                {i > 0 && <span className="text-muted-foreground mr-1">,</span>}
                                 {t.firstName} {t.lastName}
                                 {t.id === principalId && <Badge variant="secondary" className="ml-1 text-[10px]">Principal</Badge>}
                               </span>
-                            )).reduce<React.ReactNode[]>((acc, el, i) => i === 0 ? [el] : [...acc, <span key={`s${i}`} className="text-muted-foreground">,</span>, el], [])}
+                            ))}
                             {teacherList.length > 2 && (
-                              <Badge variant="outline" className="ml-1">+{teacherList.length - 2}</Badge>
+                              <Badge variant="outline">+{teacherList.length - 2}</Badge>
                             )}
                           </div>
                         )}
