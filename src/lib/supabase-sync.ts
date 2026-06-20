@@ -295,7 +295,7 @@ export async function hydrateAll(schoolId: string): Promise<void> {
   const [
     schoolsRes, classesRes, studentsRes, teachersRes, subjectsRes,
     gradesRes, attendanceRes, feeTypesRes, invoicesRes, paymentRecordsRes,
-    parentsRes, announcementsRes, academicYearsRes,
+    parentsRes, announcementsRes, academicYearsRes, classTeachersRes,
   ] = await Promise.all([
     supabase.from("schools").select("*").eq("id", schoolId),
     supabase.from("classes").select("*").eq("school_id", schoolId),
@@ -310,6 +310,7 @@ export async function hydrateAll(schoolId: string): Promise<void> {
     supabase.from("parents").select("*").eq("school_id", schoolId),
     supabase.from("announcements").select("*").eq("school_id", schoolId).order("created_at", { ascending: false }),
     supabase.from("academic_years").select("*").eq("school_id", schoolId),
+    (supabase.from as any)("class_teachers").select("*").eq("school_id", schoolId),
   ]);
 
   const schools = (schoolsRes.data ?? []).map(rowToSchool);
@@ -325,6 +326,7 @@ export async function hydrateAll(schoolId: string): Promise<void> {
   const parents = (parentsRes.data ?? []).map(rowToParent);
   const announcements = (announcementsRes.data ?? []).map(rowToAnnouncement);
   const academicYears = (academicYearsRes.data ?? []).map(rowToAcademicYear);
+  const classTeachers = ((classTeachersRes as any)?.data ?? []).map(rowToClassTeacher);
 
   // Backfill student.parentName/Phone/etc from the parents table for legacy UI.
   const parentByStudent = new Map<string, Parent>();
@@ -360,6 +362,7 @@ export async function hydrateAll(schoolId: string): Promise<void> {
       db.parents = parents;
       db.announcements = announcements;
       db.academicYears = academicYears;
+      db.classTeachers = classTeachers;
     });
   } finally {
     syncing = false;
