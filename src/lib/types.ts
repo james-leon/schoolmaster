@@ -295,6 +295,7 @@ export interface DB {
   attendance: Attendance[];
   activities: Activity[];
   classSubjects: ClassSubject[];
+  classTeachers: ClassTeacher[];
   feeTypes: FeeType[];
   paymentRecords: PaymentRecord[];
   parents: Parent[];
