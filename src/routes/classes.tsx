@@ -252,15 +252,43 @@ function ClassesPage() {
             <Field label="Frais (FCFA)" error={errors.fees}>
               <Input type="number" value={form.fees} onChange={(e) => set("fees", e.target.value)} />
             </Field>
-            <div className="sm:col-span-2">
-              <Field label="Enseignant" error={errors.teacherId}>
-                <Select value={form.teacherId} onValueChange={(v) => set("teacherId", v)}>
-                  <SelectTrigger><SelectValue placeholder="Choisir un enseignant" /></SelectTrigger>
-                  <SelectContent>
-                    {db.teachers.map((t) => <SelectItem key={t.id} value={t.id}>{t.firstName} {t.lastName}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </Field>
+            <div className="sm:col-span-2 space-y-2">
+              <Label>Enseignants</Label>
+              <div className="rounded-md border border-border divide-y divide-border max-h-64 overflow-auto">
+                {db.teachers.length === 0 ? (
+                  <div className="p-3 text-sm text-muted-foreground">Aucun enseignant. Créez-en d'abord dans « Enseignants ».</div>
+                ) : db.teachers.map((t) => {
+                  const checked = selectedTeacherIds.includes(t.id);
+                  const isPrincipal = form.teacherId === t.id;
+                  return (
+                    <div key={t.id} className="flex items-center justify-between gap-3 p-2">
+                      <label className="flex items-center gap-2 flex-1 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4"
+                          checked={checked}
+                          onChange={() => toggleTeacher(t.id)}
+                        />
+                        <span className="text-sm">{t.firstName} {t.lastName}</span>
+                      </label>
+                      {checked && (
+                        <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                          <input
+                            type="radio"
+                            name="principal"
+                            checked={isPrincipal}
+                            onChange={() => set("teacherId", t.id)}
+                          />
+                          Principal
+                        </label>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Cochez un ou plusieurs enseignants. Marquez-en un comme « Principal » (titulaire). Associez un enseignant à une matière via « Matières ».
+              </p>
             </div>
           </div>
           <DialogFooter>
