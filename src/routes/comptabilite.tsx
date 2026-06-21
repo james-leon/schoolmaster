@@ -94,10 +94,13 @@ function ComptabilitePage() {
   const fetchAll = useCallback(async () => {
     if (!schoolId) return;
     setLoading(true);
-    const [{ data: tdata, error: terr }, { data: pdata, error: perr }] = await Promise.all([
+    const [{ data: tdata, error: terr }, { data: pdata, error: perr }, { data: cdata, error: cerr }] = await Promise.all([
       supabase.from("transactions").select("*").eq("school_id", schoolId).order("date", { ascending: false }),
       supabase.from("payment_records").select("id,school_id,amount,date,mode,reference,receipt_number,notes").eq("school_id", schoolId),
+      supabase.from("transaction_categories").select("*").eq("school_id", schoolId).order("name"),
     ]);
+    if (cerr) toast.error("Impossible de charger les catégories");
+    setCategories(((cdata ?? []) as unknown) as CategoryRow[]);
     if (terr) toast.error("Impossible de charger les transactions");
     if (perr) toast.error("Impossible de charger les paiements");
     setTxs(((tdata ?? []) as unknown) as TxRow[]);
