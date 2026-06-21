@@ -71,6 +71,8 @@ function ComptabilitePage() {
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
 
   const [txs, setTxs] = useState<TxRow[]>([]);
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [catManagerOpen, setCatManagerOpen] = useState(false);
   const [feeIncome, setFeeIncome] = useState<TxRow[]>([]);
   const [loading, setLoading] = useState(true);
 
