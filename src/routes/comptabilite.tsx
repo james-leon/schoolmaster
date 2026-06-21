@@ -29,8 +29,16 @@ export const Route = createFileRoute("/comptabilite")({ component: ComptabiliteP
 
 type TxType = "recette" | "depense";
 const PAYMENT_METHODS = ["Espèces", "MTN Mobile Money", "Orange Money", "Virement bancaire", "Chèque"] as const;
-const CAT_RECETTES = ["Scolarité", "Inscription", "Subvention", "Don", "Activité", "Autre"];
-const CAT_DEPENSES = ["Salaires", "Loyer", "Fournitures", "Électricité", "Eau", "Maintenance", "Transport", "Matériel", "Autre"];
+const FALLBACK_RECETTE = "Autres recettes";
+const FALLBACK_DEPENSE = "Divers";
+
+interface CategoryRow {
+  id: string;
+  school_id: string;
+  name: string;
+  type: TxType;
+  color: string | null;
+}
 
 interface TxRow {
   id: string;
@@ -63,6 +71,8 @@ function ComptabilitePage() {
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
 
   const [txs, setTxs] = useState<TxRow[]>([]);
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [catManagerOpen, setCatManagerOpen] = useState(false);
   const [feeIncome, setFeeIncome] = useState<TxRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -84,10 +94,13 @@ function ComptabilitePage() {
   const fetchAll = useCallback(async () => {
     if (!schoolId) return;
     setLoading(true);
-    const [{ data: tdata, error: terr }, { data: pdata, error: perr }] = await Promise.all([
+    const [{ data: tdata, error: terr }, { data: pdata, error: perr }, { data: cdata, error: cerr }] = await Promise.all([
       supabase.from("transactions").select("*").eq("school_id", schoolId).order("date", { ascending: false }),
       supabase.from("payment_records").select("id,school_id,amount,date,mode,reference,receipt_number,notes").eq("school_id", schoolId),
+      supabase.from("transaction_categories").select("*").eq("school_id", schoolId).order("name"),
     ]);
+    if (cerr) toast.error("Impossible de charger les catégories");
+    setCategories(((cdata ?? []) as unknown) as CategoryRow[]);
     if (terr) toast.error("Impossible de charger les transactions");
     if (perr) toast.error("Impossible de charger les paiements");
     setTxs(((tdata ?? []) as unknown) as TxRow[]);
@@ -168,7 +181,9 @@ function ComptabilitePage() {
     }).sort((a,b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at));
   }, [periodItems, filterType, filterCategory]);
 
-  const allCategories = useMemo(() => Array.from(new Set([...CAT_RECETTES, ...CAT_DEPENSES, ...allItems.map(t => t.category)])).sort(), [allItems]);
+  const recetteCats = useMemo(() => categories.filter(c => c.type === "recette").map(c => c.name), [categories]);
+  const depenseCats = useMemo(() => categories.filter(c => c.type === "depense").map(c => c.name), [categories]);
+  const allCategories = useMemo(() => Array.from(new Set([...recetteCats, ...depenseCats, ...allItems.map(t => t.category)])).sort(), [recetteCats, depenseCats, allItems]);
 
   function openCreate() {
     setEditing(null);
@@ -262,7 +277,7 @@ function ComptabilitePage() {
     );
   }
 
-  const catOptions = form.type === "recette" ? CAT_RECETTES : CAT_DEPENSES;
+  const catOptions = form.type === "recette" ? recetteCats : depenseCats;
 
   return (
     <AppLayout title="Comptabilité">
@@ -278,7 +293,8 @@ function ComptabilitePage() {
               <Label className="text-xs">Au</Label>
               <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-[160px]" />
             </div>
-            <div className="ml-auto flex gap-2">
+            <div className="ml-auto flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => setCatManagerOpen(true)}>Gérer les catégories</Button>
               <Button variant="outline" onClick={exportCSV}><Download className="mr-2 h-4 w-4" />Exporter CSV</Button>
               <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Nouvelle transaction</Button>
             </div>
@@ -458,7 +474,7 @@ function ComptabilitePage() {
                 <Select value={form.category} onValueChange={(v) => setForm(f => ({ ...f, category: v }))}>
                   <SelectTrigger><SelectValue placeholder="Choisir…" /></SelectTrigger>
                   <SelectContent>
-                    {catOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {catOptions.map((c: string) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -510,6 +526,15 @@ function ComptabilitePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CategoryManagerDialog
+        open={catManagerOpen}
+        onOpenChange={setCatManagerOpen}
+        schoolId={schoolId ?? ""}
+        categories={categories}
+        usageCount={(name, type) => allItems.filter(t => t.category === name && t.type === type).length}
+        onChanged={fetchAll}
+      />
     </AppLayout>
   );
 }
@@ -586,5 +611,152 @@ function CategoryTable({ title, data, total }: { title: string; data: { name: st
         </Table>
       )}
     </div>
+  );
+}
+
+function CategoryManagerDialog({
+  open, onOpenChange, schoolId, categories, usageCount, onChanged,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  schoolId: string;
+  categories: CategoryRow[];
+  usageCount: (name: string, type: TxType) => number;
+  onChanged: () => void | Promise<void>;
+}) {
+  const [newName, setNewName] = useState<{ recette: string; depense: string }>({ recette: "", depense: "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const recettes = useMemo(() => categories.filter(c => c.type === "recette"), [categories]);
+  const depenses = useMemo(() => categories.filter(c => c.type === "depense"), [categories]);
+
+  async function addCategory(type: TxType) {
+    const name = newName[type].trim();
+    if (!schoolId || !name) return;
+    if (categories.some(c => c.type === type && c.name.toLowerCase() === name.toLowerCase())) {
+      toast.error("Cette catégorie existe déjà");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("transaction_categories").insert({ school_id: schoolId, type, name });
+      if (error) return toast.error("Échec de la création");
+      setNewName(n => ({ ...n, [type]: "" }));
+      toast.success("Catégorie ajoutée");
+      await onChanged();
+    } finally { setBusy(false); }
+  }
+
+  async function saveEdit() {
+    if (!editingId || !editingName.trim()) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("transaction_categories").update({ name: editingName.trim() }).eq("id", editingId);
+      if (error) return toast.error("Échec de la mise à jour");
+      setEditingId(null); setEditingName("");
+      toast.success("Catégorie renommée");
+      await onChanged();
+    } finally { setBusy(false); }
+  }
+
+  async function removeCategory(cat: CategoryRow) {
+    const fallback = cat.type === "recette" ? FALLBACK_RECETTE : FALLBACK_DEPENSE;
+    if (cat.name === fallback) { toast.error(`"${fallback}" ne peut pas être supprimée.`); return; }
+    const used = usageCount(cat.name, cat.type);
+    if (used > 0) {
+      const ok = window.confirm(`${used} transaction(s) utilisent "${cat.name}". Elles seront réassignées à "${fallback}". Continuer ?`);
+      if (!ok) return;
+    } else {
+      const ok = window.confirm(`Supprimer la catégorie "${cat.name}" ?`);
+      if (!ok) return;
+    }
+    setBusy(true);
+    try {
+      if (used > 0) {
+        const { error: uerr } = await supabase.from("transactions")
+          .update({ category: fallback })
+          .eq("school_id", schoolId).eq("type", cat.type).eq("category", cat.name);
+        if (uerr) return toast.error("Échec de la réassignation");
+      }
+      const { error } = await supabase.from("transaction_categories").delete().eq("id", cat.id);
+      if (error) return toast.error("Échec de la suppression");
+      toast.success("Catégorie supprimée");
+      await onChanged();
+    } finally { setBusy(false); }
+  }
+
+  function renderList(type: TxType, list: CategoryRow[]) {
+    return (
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <Input
+            placeholder="Nouvelle catégorie"
+            value={newName[type]}
+            onChange={(e) => setNewName(n => ({ ...n, [type]: e.target.value }))}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCategory(type); } }}
+          />
+          <Button onClick={() => addCategory(type)} disabled={busy || !newName[type].trim()}>
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="max-h-64 overflow-auto rounded-md border border-border">
+          {list.length === 0 ? (
+            <div className="p-3 text-xs text-muted-foreground">Aucune catégorie</div>
+          ) : list.map(c => (
+            <div key={c.id} className="flex items-center justify-between gap-2 border-b border-border px-3 py-2 last:border-0">
+              {editingId === c.id ? (
+                <>
+                  <Input value={editingName} onChange={(e) => setEditingName(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") saveEdit(); }} className="h-8" />
+                  <div className="flex gap-1">
+                    <Button size="sm" onClick={saveEdit} disabled={busy}>OK</Button>
+                    <Button size="sm" variant="ghost" onClick={() => { setEditingId(null); setEditingName(""); }}>Annuler</Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm">{c.name}
+                    <span className="ml-2 text-xs text-muted-foreground">({usageCount(c.name, type)})</span>
+                  </span>
+                  <div className="flex gap-1">
+                    <Button size="icon" variant="ghost" onClick={() => { setEditingId(c.id); setEditingName(c.name); }}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => removeCategory(c)} disabled={busy}>
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Gérer les catégories</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <h3 className="mb-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400">Catégories de recettes</h3>
+            {renderList("recette", recettes)}
+          </div>
+          <div>
+            <h3 className="mb-2 text-sm font-semibold text-red-600 dark:text-red-400">Catégories de dépenses</h3>
+            {renderList("depense", depenses)}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
