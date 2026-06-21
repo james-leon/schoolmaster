@@ -526,6 +526,15 @@ function ComptabilitePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CategoryManagerDialog
+        open={catManagerOpen}
+        onOpenChange={setCatManagerOpen}
+        schoolId={schoolId ?? ""}
+        categories={categories}
+        usageCount={(name, type) => allItems.filter(t => t.category === name && t.type === type).length}
+        onChanged={fetchAll}
+      />
     </AppLayout>
   );
 }
