@@ -29,8 +29,16 @@ export const Route = createFileRoute("/comptabilite")({ component: ComptabiliteP
 
 type TxType = "recette" | "depense";
 const PAYMENT_METHODS = ["Espèces", "MTN Mobile Money", "Orange Money", "Virement bancaire", "Chèque"] as const;
-const CAT_RECETTES = ["Scolarité", "Inscription", "Subvention", "Don", "Activité", "Autre"];
-const CAT_DEPENSES = ["Salaires", "Loyer", "Fournitures", "Électricité", "Eau", "Maintenance", "Transport", "Matériel", "Autre"];
+const FALLBACK_RECETTE = "Autres recettes";
+const FALLBACK_DEPENSE = "Divers";
+
+interface CategoryRow {
+  id: string;
+  school_id: string;
+  name: string;
+  type: TxType;
+  color: string | null;
+}
 
 interface TxRow {
   id: string;
