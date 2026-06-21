@@ -344,11 +344,29 @@ const invoiceSchema = z.object({
   notes: z.string().max(300).optional(),
 });
 
-function CreateInvoiceModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function CreateInvoiceModal({
+  open,
+  onClose,
+  onPaid,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onPaid: (rec: PaymentRecord) => void;
+}) {
   const db = useDB();
   const [form, setForm] = useState({ studentId: "", feeTypeId: "", amount: "", dueDate: "", notes: "" });
   const [studentSearch, setStudentSearch] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  // Pay-now state
+  const [payNow, setPayNow] = useState(false);
+  const [payForm, setPayForm] = useState({
+    amount: "",
+    mode: "Espèces" as PaymentMode,
+    reference: "",
+    date: new Date().toISOString().slice(0, 10),
+  });
 
   const filteredStudents = useMemo(() => {
     const q = studentSearch.toLowerCase().trim();
@@ -358,6 +376,7 @@ function CreateInvoiceModal({ open, onClose }: { open: boolean; onClose: () => v
   }, [db.students, studentSearch]);
 
   const submit = () => {
+    if (submitting) return;
     const parsed = invoiceSchema.safeParse(form);
     if (!parsed.success) {
       const errs: Record<string, string> = {};
@@ -368,34 +387,103 @@ function CreateInvoiceModal({ open, onClose }: { open: boolean; onClose: () => v
     const data = parsed.data;
     const fee = db.feeTypes.find((f) => f.id === data.feeTypeId);
     const num = nextInvoiceNumber();
-    updateDB((d) => {
-      d.payments.push({
+    const invoiceId = crypto.randomUUID();
+
+    let payAmount = 0;
+    let payMode: PaymentMode = "Espèces";
+    let payReference = "";
+    let payDate = new Date().toISOString().slice(0, 10);
+    let newRecord: PaymentRecord | null = null;
+
+    if (payNow) {
+      const paySchema = z
+        .object({
+          amount: z.coerce.number().positive("Montant invalide").max(data.amount, `Maximum ${fcfa(data.amount)}`),
+          mode: z.enum(PAYMENT_MODES as [PaymentMode, ...PaymentMode[]], { message: "Mode requis" }),
+          reference: z.string().max(60).optional(),
+          date: z.string().min(1, "Date requise"),
+        })
+        .superRefine((v, ctx) => {
+          const needsRef = v.mode === "MTN Mobile Money" || v.mode === "Orange Money";
+          if (needsRef && (!v.reference || v.reference.trim().length === 0)) {
+            ctx.addIssue({ code: "custom", path: ["payReference"], message: "Référence requise pour Mobile Money" });
+          }
+        });
+      const payParsed = paySchema.safeParse({
+        amount: payForm.amount || String(data.amount),
+        mode: payForm.mode,
+        reference: payForm.reference,
+        date: payForm.date,
+      });
+      if (!payParsed.success) {
+        const errs: Record<string, string> = {};
+        payParsed.error.issues.forEach((i) => {
+          const k = i.path[0] as string;
+          errs["pay_" + k] = i.message;
+        });
+        setErrors(errs);
+        return;
+      }
+      payAmount = payParsed.data.amount;
+      payMode = payParsed.data.mode;
+      payReference = payParsed.data.reference || "";
+      payDate = payParsed.data.date;
+      newRecord = {
         id: crypto.randomUUID(),
+        receiptNumber: nextReceiptNumber(),
+        invoiceId,
+        studentId: data.studentId,
+        amount: payAmount,
+        mode: payMode,
+        reference: payReference,
+        date: payDate,
+      };
+    }
+
+    setSubmitting(true);
+    const student = db.students.find((s) => s.id === data.studentId);
+    updateDB((d) => {
+      const newInvoice: Payment = {
+        id: invoiceId,
         invoiceNumber: num,
         studentId: data.studentId,
         feeTypeId: data.feeTypeId,
         amount: data.amount,
-        amountPaid: 0,
-        date: new Date().toISOString().slice(0, 10),
+        amountPaid: payAmount,
+        date: payNow ? payDate : new Date().toISOString().slice(0, 10),
         dueDate: data.dueDate,
         type: fee?.name || "Frais",
-        status: "impaye",
+        status: deriveInvoiceStatus(data.amount, payAmount, data.dueDate),
         notes: data.notes,
-      });
+        ...(payNow ? { mode: payMode, reference: payReference } : {}),
+      };
+      d.payments.push(newInvoice);
       d.activities.unshift({
         id: crypto.randomUUID(),
         type: "payment",
         text: `Facture ${num} créée`,
         date: new Date().toISOString(),
       });
+      if (newRecord) {
+        d.paymentRecords.unshift(newRecord);
+        d.activities.unshift({
+          id: crypto.randomUUID(),
+          type: "payment",
+          text: `Paiement de ${fcfa(payAmount)} (${payMode})${student ? " — " + student.firstName + " " + student.lastName : ""}`,
+          date: new Date().toISOString(),
+        });
+      }
     });
-    toast.success("Facture créée avec succès");
+    toast.success(newRecord ? `Facture créée et paiement enregistré — Reçu N° ${newRecord.receiptNumber}` : "Facture créée avec succès");
     onClose();
+    if (newRecord) onPaid(newRecord);
   };
+
+  const invoiceAmount = Number(form.amount) || 0;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Nouvelle facture</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <Field label="Élève" error={errors.studentId}>
@@ -449,15 +537,70 @@ function CreateInvoiceModal({ open, onClose }: { open: boolean; onClose: () => v
           <Field label="Notes (optionnel)" error={errors.notes}>
             <Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} rows={2} />
           </Field>
+
+          <div className="rounded-lg border bg-muted/40 p-3">
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={payNow}
+                onChange={(e) => {
+                  const on = e.target.checked;
+                  setPayNow(on);
+                  if (on && !payForm.amount && invoiceAmount > 0) {
+                    setPayForm((p) => ({ ...p, amount: String(invoiceAmount) }));
+                  }
+                }}
+                className="h-4 w-4"
+              />
+              Enregistrer un paiement maintenant
+            </label>
+            {payNow && (
+              <div className="mt-3 space-y-3">
+                <Field label="Montant payé (FCFA)" error={errors.pay_amount}>
+                  <Input
+                    type="number"
+                    value={payForm.amount}
+                    placeholder={String(invoiceAmount)}
+                    onChange={(e) => setPayForm((p) => ({ ...p, amount: e.target.value }))}
+                  />
+                </Field>
+                <Field label="Mode de paiement" error={errors.pay_mode}>
+                  <Select value={payForm.mode} onValueChange={(v) => setPayForm((p) => ({ ...p, mode: v as PaymentMode }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_MODES.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Référence / N° transaction" error={errors.pay_reference}>
+                  <Input
+                    value={payForm.reference}
+                    onChange={(e) => setPayForm((p) => ({ ...p, reference: e.target.value }))}
+                    placeholder={payForm.mode === "Espèces" ? "Optionnel" : "Obligatoire"}
+                  />
+                </Field>
+                <Field label="Date du paiement" error={errors.pay_date}>
+                  <Input
+                    type="date"
+                    value={payForm.date}
+                    onChange={(e) => setPayForm((p) => ({ ...p, date: e.target.value }))}
+                  />
+                </Field>
+              </div>
+            )}
+          </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Annuler</Button>
-          <Button onClick={submit}>Créer la facture</Button>
+          <Button variant="outline" onClick={onClose} disabled={submitting}>Annuler</Button>
+          <Button onClick={submit} disabled={submitting}>
+            {payNow ? "Créer et encaisser" : "Créer la facture"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
 
 /* ============================ PAYMENT MODAL ============================ */
 
