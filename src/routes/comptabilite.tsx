@@ -473,7 +473,7 @@ function ComptabilitePage() {
                 <Select value={form.category} onValueChange={(v) => setForm(f => ({ ...f, category: v }))}>
                   <SelectTrigger><SelectValue placeholder="Choisir…" /></SelectTrigger>
                   <SelectContent>
-                    {catOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {catOptions.map((c: string) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
