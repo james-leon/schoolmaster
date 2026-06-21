@@ -181,7 +181,9 @@ function ComptabilitePage() {
     }).sort((a,b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at));
   }, [periodItems, filterType, filterCategory]);
 
-  const allCategories = useMemo(() => Array.from(new Set([...CAT_RECETTES, ...CAT_DEPENSES, ...allItems.map(t => t.category)])).sort(), [allItems]);
+  const recetteCats = useMemo(() => categories.filter(c => c.type === "recette").map(c => c.name), [categories]);
+  const depenseCats = useMemo(() => categories.filter(c => c.type === "depense").map(c => c.name), [categories]);
+  const allCategories = useMemo(() => Array.from(new Set([...recetteCats, ...depenseCats, ...allItems.map(t => t.category)])).sort(), [recetteCats, depenseCats, allItems]);
 
   function openCreate() {
     setEditing(null);
