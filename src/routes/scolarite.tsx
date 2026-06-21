@@ -284,7 +284,13 @@ function InvoicesTab({ loaded }: { loaded: boolean }) {
         </CardContent>
       </Card>
 
-      {createOpen && <CreateInvoiceModal open={createOpen} onClose={() => setCreateOpen(false)} />}
+      {createOpen && (
+        <CreateInvoiceModal
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          onPaid={(rec) => setReceipt(rec)}
+        />
+      )}
       {payInvoice && (
         <PaymentModal
           invoice={payInvoice}
