@@ -277,7 +277,7 @@ function ComptabilitePage() {
     );
   }
 
-  const catOptions = form.type === "recette" ? CAT_RECETTES : CAT_DEPENSES;
+  const catOptions = form.type === "recette" ? recetteCats : depenseCats;
 
   return (
     <AppLayout title="Comptabilité">
