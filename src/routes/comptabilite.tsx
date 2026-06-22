@@ -40,6 +40,16 @@ interface CategoryRow {
   color: string | null;
 }
 
+interface SupplierRow {
+  id: string;
+  school_id: string;
+  name: string;
+  type: string | null;
+  phone: string | null;
+  email: string | null;
+  notes: string | null;
+}
+
 interface TxRow {
   id: string;
   school_id: string;
@@ -51,9 +61,12 @@ interface TxRow {
   payment_method: string | null;
   reference: string | null;
   recorded_by: string | null;
+  supplier_id: string | null;
   created_at: string;
   _auto?: boolean;
 }
+
+const SUPPLIER_TYPES = ["Fournisseur", "Partenaire", "Prestataire"] as const;
 
 const MONTHS_FR = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
 
@@ -72,7 +85,10 @@ function ComptabilitePage() {
 
   const [txs, setTxs] = useState<TxRow[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
   const [catManagerOpen, setCatManagerOpen] = useState(false);
+  const [supplierManagerOpen, setSupplierManagerOpen] = useState(false);
+  const [supplierDetail, setSupplierDetail] = useState<SupplierRow | null>(null);
   const [feeIncome, setFeeIncome] = useState<TxRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -85,8 +101,8 @@ function ComptabilitePage() {
   // Dialog
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<TxRow | null>(null);
-  const [form, setForm] = useState<{ type: TxType; category: string; amount: string; date: string; payment_method: string; description: string; reference: string }>({
-    type: "depense", category: "", amount: "", date: todayISO(), payment_method: "Espèces", description: "", reference: "",
+  const [form, setForm] = useState<{ type: TxType; category: string; amount: string; date: string; payment_method: string; description: string; reference: string; supplier_id: string }>({
+    type: "depense", category: "", amount: "", date: todayISO(), payment_method: "Espèces", description: "", reference: "", supplier_id: "",
   });
   const [deleting, setDeleting] = useState<TxRow | null>(null);
   const [saving, setSaving] = useState(false);
@@ -94,13 +110,16 @@ function ComptabilitePage() {
   const fetchAll = useCallback(async () => {
     if (!schoolId) return;
     setLoading(true);
-    const [{ data: tdata, error: terr }, { data: pdata, error: perr }, { data: cdata, error: cerr }] = await Promise.all([
+    const [{ data: tdata, error: terr }, { data: pdata, error: perr }, { data: cdata, error: cerr }, { data: sdata, error: serr }] = await Promise.all([
       supabase.from("transactions").select("*").eq("school_id", schoolId).order("date", { ascending: false }),
       supabase.from("payment_records").select("id,school_id,amount,date,mode,reference,receipt_number,notes").eq("school_id", schoolId),
       supabase.from("transaction_categories").select("*").eq("school_id", schoolId).order("name"),
+      supabase.from("suppliers").select("*").eq("school_id", schoolId).order("name"),
     ]);
     if (cerr) toast.error("Impossible de charger les catégories");
+    if (serr) toast.error("Impossible de charger les fournisseurs");
     setCategories(((cdata ?? []) as unknown) as CategoryRow[]);
+    setSuppliers(((sdata ?? []) as unknown) as SupplierRow[]);
     if (terr) toast.error("Impossible de charger les transactions");
     if (perr) toast.error("Impossible de charger les paiements");
     setTxs(((tdata ?? []) as unknown) as TxRow[]);
@@ -116,6 +135,7 @@ function ComptabilitePage() {
       reference: p.reference,
       recorded_by: null,
       created_at: p.date,
+      supplier_id: null,
       _auto: true,
     }));
     setFeeIncome(auto);
@@ -187,7 +207,7 @@ function ComptabilitePage() {
 
   function openCreate() {
     setEditing(null);
-    setForm({ type: "depense", category: "", amount: "", date: todayISO(), payment_method: "Espèces", description: "", reference: "" });
+    setForm({ type: "depense", category: "", amount: "", date: todayISO(), payment_method: "Espèces", description: "", reference: "", supplier_id: "" });
     setOpen(true);
   }
   function openEdit(t: TxRow) {
@@ -196,6 +216,7 @@ function ComptabilitePage() {
     setForm({
       type: t.type, category: t.category, amount: String(t.amount), date: t.date,
       payment_method: t.payment_method ?? "Espèces", description: t.description ?? "", reference: t.reference ?? "",
+      supplier_id: t.supplier_id ?? "",
     });
     setOpen(true);
   }
@@ -217,6 +238,7 @@ function ComptabilitePage() {
       description: form.description || null,
       reference: form.reference || null,
       recorded_by: user?.id ?? null,
+      supplier_id: form.type === "depense" ? (form.supplier_id || null) : null,
     };
     setSaving(true);
     try {
@@ -246,10 +268,16 @@ function ComptabilitePage() {
     fetchAll();
   }
 
+  const supplierName = useCallback((id: string | null | undefined) => {
+    if (!id) return "";
+    return suppliers.find(s => s.id === id)?.name ?? "";
+  }, [suppliers]);
+
   function exportCSV() {
-    const rows = [["Date","Type","Catégorie","Description","Montant","Méthode","Référence"]];
+    const rows = [["Date","Type","Catégorie","Description","Bénéficiaire","Montant","Méthode","Référence"]];
     filteredList.forEach(t => rows.push([
       t.date, t.type, t.category, (t.description ?? "").replace(/[\r\n,;]/g, " "),
+      supplierName(t.supplier_id),
       String(t.amount), t.payment_method ?? "", t.reference ?? "",
     ]));
     const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
@@ -294,6 +322,7 @@ function ComptabilitePage() {
               <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-[160px]" />
             </div>
             <div className="ml-auto flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => setSupplierManagerOpen(true)}>Fournisseurs / Partenaires</Button>
               <Button variant="outline" onClick={() => setCatManagerOpen(true)}>Gérer les catégories</Button>
               <Button variant="outline" onClick={exportCSV}><Download className="mr-2 h-4 w-4" />Exporter CSV</Button>
               <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Nouvelle transaction</Button>
@@ -383,6 +412,7 @@ function ComptabilitePage() {
                         <TableHead>Type</TableHead>
                         <TableHead>Catégorie</TableHead>
                         <TableHead>Description</TableHead>
+                        <TableHead>Bénéficiaire</TableHead>
                         <TableHead>Méthode</TableHead>
                         <TableHead className="text-right">Montant</TableHead>
                         <TableHead className="w-24"></TableHead>
@@ -404,6 +434,13 @@ function ComptabilitePage() {
                             {t._auto && <Badge variant="outline" className="ml-2 text-[10px]">Auto · Scolarité</Badge>}
                           </TableCell>
                           <TableCell className="max-w-[280px] truncate text-muted-foreground">{t.description}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {t.supplier_id ? (
+                              <button className="text-left hover:underline" onClick={() => { const s = suppliers.find(s => s.id === t.supplier_id); if (s) setSupplierDetail(s); }}>
+                                {supplierName(t.supplier_id)}
+                              </button>
+                            ) : <span className="text-xs">—</span>}
+                          </TableCell>
                           <TableCell className="text-muted-foreground">{t.payment_method}</TableCell>
                           <TableCell className={`text-right font-medium ${t.type === "recette" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                             {t.type === "recette" ? "+" : "−"} {fcfa(Number(t.amount))}
@@ -506,6 +543,18 @@ function ComptabilitePage() {
               <Label>Référence (optionnel)</Label>
               <Input value={form.reference} onChange={(e) => setForm(f => ({ ...f, reference: e.target.value }))} />
             </div>
+            {form.type === "depense" && (
+              <div>
+                <Label>Bénéficiaire / Fournisseur (optionnel)</Label>
+                <SupplierPicker
+                  value={form.supplier_id}
+                  suppliers={suppliers}
+                  onChange={(id) => setForm(f => ({ ...f, supplier_id: id }))}
+                  onCreated={async (s) => { setSuppliers(prev => [...prev, s].sort((a,b) => a.name.localeCompare(b.name))); setForm(f => ({ ...f, supplier_id: s.id })); }}
+                  schoolId={schoolId ?? ""}
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Annuler</Button>
@@ -534,6 +583,22 @@ function ComptabilitePage() {
         categories={categories}
         usageCount={(name, type) => allItems.filter(t => t.category === name && t.type === type).length}
         onChanged={fetchAll}
+      />
+
+      <SupplierManagerDialog
+        open={supplierManagerOpen}
+        onOpenChange={setSupplierManagerOpen}
+        schoolId={schoolId ?? ""}
+        suppliers={suppliers}
+        usageCount={(id) => allItems.filter(t => t.supplier_id === id).length}
+        onChanged={fetchAll}
+        onOpenDetail={(s) => setSupplierDetail(s)}
+      />
+
+      <SupplierDetailDialog
+        supplier={supplierDetail}
+        onOpenChange={(o) => !o && setSupplierDetail(null)}
+        expenses={allItems.filter(t => t.type === "depense" && t.supplier_id === supplierDetail?.id)}
       />
     </AppLayout>
   );
@@ -753,6 +818,269 @@ function CategoryManagerDialog({
             {renderList("depense", depenses)}
           </div>
         </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SupplierPicker({ value, suppliers, onChange, onCreated, schoolId }: {
+  value: string;
+  suppliers: SupplierRow[];
+  onChange: (id: string) => void;
+  onCreated: (s: SupplierRow) => void | Promise<void>;
+  schoolId: string;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newType, setNewType] = useState<string>("Fournisseur");
+  const [busy, setBusy] = useState(false);
+
+  async function quickAdd() {
+    const name = newName.trim();
+    if (!schoolId || !name) return;
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.from("suppliers").insert({ school_id: schoolId, name, type: newType }).select().single();
+      if (error || !data) { toast.error("Échec de la création"); return; }
+      await onCreated(data as unknown as SupplierRow);
+      toast.success("Bénéficiaire ajouté");
+      setNewName(""); setAdding(false);
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <Select value={value || "__none"} onValueChange={(v) => onChange(v === "__none" ? "" : v)}>
+          <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none">— Aucun —</SelectItem>
+            {suppliers.map(s => (
+              <SelectItem key={s.id} value={s.id}>{s.name}{s.type ? ` · ${s.type}` : ""}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button type="button" variant="outline" onClick={() => setAdding(a => !a)}>
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+      {adding && (
+        <div className="grid grid-cols-[1fr_140px_auto] gap-2 rounded-md border border-border bg-muted/30 p-2">
+          <Input placeholder="Nom du bénéficiaire" value={newName} onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); quickAdd(); } }} />
+          <Select value={newType} onValueChange={setNewType}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {SUPPLIER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button type="button" onClick={quickAdd} disabled={busy || !newName.trim()}>Ajouter</Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SupplierManagerDialog({
+  open, onOpenChange, schoolId, suppliers, usageCount, onChanged, onOpenDetail,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  schoolId: string;
+  suppliers: SupplierRow[];
+  usageCount: (id: string) => number;
+  onChanged: () => void | Promise<void>;
+  onOpenDetail: (s: SupplierRow) => void;
+}) {
+  const empty = { name: "", type: "Fournisseur", phone: "", email: "", notes: "" };
+  const [editing, setEditing] = useState<SupplierRow | null>(null);
+  const [form, setForm] = useState<typeof empty>(empty);
+  const [busy, setBusy] = useState(false);
+
+  function startEdit(s: SupplierRow) {
+    setEditing(s);
+    setForm({ name: s.name, type: s.type ?? "Fournisseur", phone: s.phone ?? "", email: s.email ?? "", notes: s.notes ?? "" });
+  }
+  function startCreate() { setEditing(null); setForm(empty); }
+
+  async function save() {
+    if (!schoolId || !form.name.trim()) { toast.error("Nom requis"); return; }
+    setBusy(true);
+    try {
+      const payload = { school_id: schoolId, name: form.name.trim(), type: form.type || null, phone: form.phone || null, email: form.email || null, notes: form.notes || null };
+      if (editing) {
+        const { error } = await supabase.from("suppliers").update(payload).eq("id", editing.id);
+        if (error) return toast.error("Échec de la mise à jour");
+        toast.success("Bénéficiaire mis à jour");
+      } else {
+        const { error } = await supabase.from("suppliers").insert(payload);
+        if (error) return toast.error("Échec de la création");
+        toast.success("Bénéficiaire ajouté");
+      }
+      setEditing(null); setForm(empty);
+      await onChanged();
+    } finally { setBusy(false); }
+  }
+
+  async function remove(s: SupplierRow) {
+    const used = usageCount(s.id);
+    if (used > 0) {
+      const ok = window.confirm(`${used} dépense(s) référencent "${s.name}". Si vous supprimez, le lien sera retiré (les dépenses resteront). Continuer ?`);
+      if (!ok) return;
+    } else {
+      const ok = window.confirm(`Supprimer "${s.name}" ?`);
+      if (!ok) return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("suppliers").delete().eq("id", s.id);
+      if (error) return toast.error("Échec de la suppression");
+      toast.success("Bénéficiaire supprimé");
+      if (editing?.id === s.id) { setEditing(null); setForm(empty); }
+      await onChanged();
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Fournisseurs / Partenaires</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 md:grid-cols-[1fr_320px]">
+          <div className="max-h-[60vh] overflow-auto rounded-md border border-border">
+            {suppliers.length === 0 ? (
+              <div className="p-4 text-sm text-muted-foreground">Aucun bénéficiaire pour le moment.</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Téléphone</TableHead>
+                    <TableHead className="text-right">Dépenses</TableHead>
+                    <TableHead className="w-28"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {suppliers.map(s => (
+                    <TableRow key={s.id}>
+                      <TableCell>
+                        <button className="text-left font-medium hover:underline" onClick={() => onOpenDetail(s)}>{s.name}</button>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{s.type ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{s.phone ?? "—"}</TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">{usageCount(s.id)}</TableCell>
+                      <TableCell>
+                        <div className="flex justify-end gap-1">
+                          <Button size="icon" variant="ghost" onClick={() => startEdit(s)}><Pencil className="h-4 w-4" /></Button>
+                          <Button size="icon" variant="ghost" onClick={() => remove(s)} disabled={busy}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+          <div className="space-y-3 rounded-md border border-border p-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">{editing ? "Modifier" : "Nouveau bénéficiaire"}</h3>
+              {editing && <Button size="sm" variant="ghost" onClick={startCreate}>Nouveau</Button>}
+            </div>
+            <div>
+              <Label>Nom *</Label>
+              <Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Type</Label>
+              <Select value={form.type} onValueChange={(v) => setForm(f => ({ ...f, type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SUPPLIER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Téléphone</Label>
+              <Input value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Email</Label>
+              <Input type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Notes</Label>
+              <Textarea rows={2} value={form.notes} onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))} />
+            </div>
+            <Button onClick={save} disabled={busy || !form.name.trim()} className="w-full">
+              {editing ? "Enregistrer" : "Ajouter"}
+            </Button>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SupplierDetailDialog({ supplier, onOpenChange, expenses }: {
+  supplier: SupplierRow | null;
+  onOpenChange: (o: boolean) => void;
+  expenses: TxRow[];
+}) {
+  const total = expenses.reduce((s, t) => s + Number(t.amount), 0);
+  return (
+    <Dialog open={!!supplier} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{supplier?.name}</DialogTitle>
+        </DialogHeader>
+        {supplier && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div><span className="text-muted-foreground">Type :</span> {supplier.type ?? "—"}</div>
+              <div><span className="text-muted-foreground">Téléphone :</span> {supplier.phone ?? "—"}</div>
+              <div><span className="text-muted-foreground">Email :</span> {supplier.email ?? "—"}</div>
+              <div><span className="text-muted-foreground">Total payé :</span> <span className="font-semibold">{fcfa(total)}</span></div>
+            </div>
+            {supplier.notes && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{supplier.notes}</p>}
+            <div>
+              <h3 className="mb-2 text-sm font-semibold">Historique des dépenses ({expenses.length})</h3>
+              {expenses.length === 0 ? (
+                <div className="rounded-md border border-border p-4 text-sm text-muted-foreground">Aucune dépense enregistrée.</div>
+              ) : (
+                <div className="max-h-72 overflow-auto rounded-md border border-border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Catégorie</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead className="text-right">Montant</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {expenses.slice().sort((a,b) => b.date.localeCompare(a.date)).map(t => (
+                        <TableRow key={t.id}>
+                          <TableCell className="whitespace-nowrap">{t.date}</TableCell>
+                          <TableCell>{t.category}</TableCell>
+                          <TableCell className="max-w-[240px] truncate text-muted-foreground">{t.description}</TableCell>
+                          <TableCell className="text-right font-medium text-red-600 dark:text-red-400">{fcfa(Number(t.amount))}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
         </DialogFooter>
