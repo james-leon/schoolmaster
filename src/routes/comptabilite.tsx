@@ -412,6 +412,7 @@ function ComptabilitePage() {
                         <TableHead>Type</TableHead>
                         <TableHead>Catégorie</TableHead>
                         <TableHead>Description</TableHead>
+                        <TableHead>Bénéficiaire</TableHead>
                         <TableHead>Méthode</TableHead>
                         <TableHead className="text-right">Montant</TableHead>
                         <TableHead className="w-24"></TableHead>
