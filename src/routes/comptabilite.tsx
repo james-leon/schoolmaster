@@ -584,6 +584,22 @@ function ComptabilitePage() {
         usageCount={(name, type) => allItems.filter(t => t.category === name && t.type === type).length}
         onChanged={fetchAll}
       />
+
+      <SupplierManagerDialog
+        open={supplierManagerOpen}
+        onOpenChange={setSupplierManagerOpen}
+        schoolId={schoolId ?? ""}
+        suppliers={suppliers}
+        usageCount={(id) => allItems.filter(t => t.supplier_id === id).length}
+        onChanged={fetchAll}
+        onOpenDetail={(s) => setSupplierDetail(s)}
+      />
+
+      <SupplierDetailDialog
+        supplier={supplierDetail}
+        onOpenChange={(o) => !o && setSupplierDetail(null)}
+        expenses={allItems.filter(t => t.type === "depense" && t.supplier_id === supplierDetail?.id)}
+      />
     </AppLayout>
   );
 }
