@@ -40,6 +40,16 @@ interface CategoryRow {
   color: string | null;
 }
 
+interface SupplierRow {
+  id: string;
+  school_id: string;
+  name: string;
+  type: string | null;
+  phone: string | null;
+  email: string | null;
+  notes: string | null;
+}
+
 interface TxRow {
   id: string;
   school_id: string;
@@ -51,9 +61,12 @@ interface TxRow {
   payment_method: string | null;
   reference: string | null;
   recorded_by: string | null;
+  supplier_id: string | null;
   created_at: string;
   _auto?: boolean;
 }
+
+const SUPPLIER_TYPES = ["Fournisseur", "Partenaire", "Prestataire"] as const;
 
 const MONTHS_FR = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
 
