@@ -825,3 +825,266 @@ function CategoryManagerDialog({
     </Dialog>
   );
 }
+
+function SupplierPicker({ value, suppliers, onChange, onCreated, schoolId }: {
+  value: string;
+  suppliers: SupplierRow[];
+  onChange: (id: string) => void;
+  onCreated: (s: SupplierRow) => void | Promise<void>;
+  schoolId: string;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newType, setNewType] = useState<string>("Fournisseur");
+  const [busy, setBusy] = useState(false);
+
+  async function quickAdd() {
+    const name = newName.trim();
+    if (!schoolId || !name) return;
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.from("suppliers").insert({ school_id: schoolId, name, type: newType }).select().single();
+      if (error || !data) { toast.error("Échec de la création"); return; }
+      await onCreated(data as unknown as SupplierRow);
+      toast.success("Bénéficiaire ajouté");
+      setNewName(""); setAdding(false);
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <Select value={value || "__none"} onValueChange={(v) => onChange(v === "__none" ? "" : v)}>
+          <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none">— Aucun —</SelectItem>
+            {suppliers.map(s => (
+              <SelectItem key={s.id} value={s.id}>{s.name}{s.type ? ` · ${s.type}` : ""}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button type="button" variant="outline" onClick={() => setAdding(a => !a)}>
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+      {adding && (
+        <div className="grid grid-cols-[1fr_140px_auto] gap-2 rounded-md border border-border bg-muted/30 p-2">
+          <Input placeholder="Nom du bénéficiaire" value={newName} onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); quickAdd(); } }} />
+          <Select value={newType} onValueChange={setNewType}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {SUPPLIER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button type="button" onClick={quickAdd} disabled={busy || !newName.trim()}>Ajouter</Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SupplierManagerDialog({
+  open, onOpenChange, schoolId, suppliers, usageCount, onChanged, onOpenDetail,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  schoolId: string;
+  suppliers: SupplierRow[];
+  usageCount: (id: string) => number;
+  onChanged: () => void | Promise<void>;
+  onOpenDetail: (s: SupplierRow) => void;
+}) {
+  const empty = { name: "", type: "Fournisseur", phone: "", email: "", notes: "" };
+  const [editing, setEditing] = useState<SupplierRow | null>(null);
+  const [form, setForm] = useState<typeof empty>(empty);
+  const [busy, setBusy] = useState(false);
+
+  function startEdit(s: SupplierRow) {
+    setEditing(s);
+    setForm({ name: s.name, type: s.type ?? "Fournisseur", phone: s.phone ?? "", email: s.email ?? "", notes: s.notes ?? "" });
+  }
+  function startCreate() { setEditing(null); setForm(empty); }
+
+  async function save() {
+    if (!schoolId || !form.name.trim()) { toast.error("Nom requis"); return; }
+    setBusy(true);
+    try {
+      const payload = { school_id: schoolId, name: form.name.trim(), type: form.type || null, phone: form.phone || null, email: form.email || null, notes: form.notes || null };
+      if (editing) {
+        const { error } = await supabase.from("suppliers").update(payload).eq("id", editing.id);
+        if (error) return toast.error("Échec de la mise à jour");
+        toast.success("Bénéficiaire mis à jour");
+      } else {
+        const { error } = await supabase.from("suppliers").insert(payload);
+        if (error) return toast.error("Échec de la création");
+        toast.success("Bénéficiaire ajouté");
+      }
+      setEditing(null); setForm(empty);
+      await onChanged();
+    } finally { setBusy(false); }
+  }
+
+  async function remove(s: SupplierRow) {
+    const used = usageCount(s.id);
+    if (used > 0) {
+      const ok = window.confirm(`${used} dépense(s) référencent "${s.name}". Si vous supprimez, le lien sera retiré (les dépenses resteront). Continuer ?`);
+      if (!ok) return;
+    } else {
+      const ok = window.confirm(`Supprimer "${s.name}" ?`);
+      if (!ok) return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("suppliers").delete().eq("id", s.id);
+      if (error) return toast.error("Échec de la suppression");
+      toast.success("Bénéficiaire supprimé");
+      if (editing?.id === s.id) { setEditing(null); setForm(empty); }
+      await onChanged();
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Fournisseurs / Partenaires</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 md:grid-cols-[1fr_320px]">
+          <div className="max-h-[60vh] overflow-auto rounded-md border border-border">
+            {suppliers.length === 0 ? (
+              <div className="p-4 text-sm text-muted-foreground">Aucun bénéficiaire pour le moment.</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Téléphone</TableHead>
+                    <TableHead className="text-right">Dépenses</TableHead>
+                    <TableHead className="w-28"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {suppliers.map(s => (
+                    <TableRow key={s.id}>
+                      <TableCell>
+                        <button className="text-left font-medium hover:underline" onClick={() => onOpenDetail(s)}>{s.name}</button>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{s.type ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{s.phone ?? "—"}</TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">{usageCount(s.id)}</TableCell>
+                      <TableCell>
+                        <div className="flex justify-end gap-1">
+                          <Button size="icon" variant="ghost" onClick={() => startEdit(s)}><Pencil className="h-4 w-4" /></Button>
+                          <Button size="icon" variant="ghost" onClick={() => remove(s)} disabled={busy}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+          <div className="space-y-3 rounded-md border border-border p-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">{editing ? "Modifier" : "Nouveau bénéficiaire"}</h3>
+              {editing && <Button size="sm" variant="ghost" onClick={startCreate}>Nouveau</Button>}
+            </div>
+            <div>
+              <Label>Nom *</Label>
+              <Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Type</Label>
+              <Select value={form.type} onValueChange={(v) => setForm(f => ({ ...f, type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SUPPLIER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Téléphone</Label>
+              <Input value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Email</Label>
+              <Input type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Notes</Label>
+              <Textarea rows={2} value={form.notes} onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))} />
+            </div>
+            <Button onClick={save} disabled={busy || !form.name.trim()} className="w-full">
+              {editing ? "Enregistrer" : "Ajouter"}
+            </Button>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SupplierDetailDialog({ supplier, onOpenChange, expenses }: {
+  supplier: SupplierRow | null;
+  onOpenChange: (o: boolean) => void;
+  expenses: TxRow[];
+}) {
+  const total = expenses.reduce((s, t) => s + Number(t.amount), 0);
+  return (
+    <Dialog open={!!supplier} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{supplier?.name}</DialogTitle>
+        </DialogHeader>
+        {supplier && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div><span className="text-muted-foreground">Type :</span> {supplier.type ?? "—"}</div>
+              <div><span className="text-muted-foreground">Téléphone :</span> {supplier.phone ?? "—"}</div>
+              <div><span className="text-muted-foreground">Email :</span> {supplier.email ?? "—"}</div>
+              <div><span className="text-muted-foreground">Total payé :</span> <span className="font-semibold">{fcfa(total)}</span></div>
+            </div>
+            {supplier.notes && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{supplier.notes}</p>}
+            <div>
+              <h3 className="mb-2 text-sm font-semibold">Historique des dépenses ({expenses.length})</h3>
+              {expenses.length === 0 ? (
+                <div className="rounded-md border border-border p-4 text-sm text-muted-foreground">Aucune dépense enregistrée.</div>
+              ) : (
+                <div className="max-h-72 overflow-auto rounded-md border border-border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Catégorie</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead className="text-right">Montant</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {expenses.slice().sort((a,b) => b.date.localeCompare(a.date)).map(t => (
+                        <TableRow key={t.id}>
+                          <TableCell className="whitespace-nowrap">{t.date}</TableCell>
+                          <TableCell>{t.category}</TableCell>
+                          <TableCell className="max-w-[240px] truncate text-muted-foreground">{t.description}</TableCell>
+                          <TableCell className="text-right font-medium text-red-600 dark:text-red-400">{fcfa(Number(t.amount))}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
