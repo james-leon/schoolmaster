@@ -543,6 +543,18 @@ function ComptabilitePage() {
               <Label>Référence (optionnel)</Label>
               <Input value={form.reference} onChange={(e) => setForm(f => ({ ...f, reference: e.target.value }))} />
             </div>
+            {form.type === "depense" && (
+              <div>
+                <Label>Bénéficiaire / Fournisseur (optionnel)</Label>
+                <SupplierPicker
+                  value={form.supplier_id}
+                  suppliers={suppliers}
+                  onChange={(id) => setForm(f => ({ ...f, supplier_id: id }))}
+                  onCreated={async (s) => { setSuppliers(prev => [...prev, s].sort((a,b) => a.name.localeCompare(b.name))); setForm(f => ({ ...f, supplier_id: s.id })); }}
+                  schoolId={schoolId ?? ""}
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Annuler</Button>
