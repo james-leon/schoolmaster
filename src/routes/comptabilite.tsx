@@ -85,7 +85,10 @@ function ComptabilitePage() {
 
   const [txs, setTxs] = useState<TxRow[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
   const [catManagerOpen, setCatManagerOpen] = useState(false);
+  const [supplierManagerOpen, setSupplierManagerOpen] = useState(false);
+  const [supplierDetail, setSupplierDetail] = useState<SupplierRow | null>(null);
   const [feeIncome, setFeeIncome] = useState<TxRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -98,8 +101,8 @@ function ComptabilitePage() {
   // Dialog
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<TxRow | null>(null);
-  const [form, setForm] = useState<{ type: TxType; category: string; amount: string; date: string; payment_method: string; description: string; reference: string }>({
-    type: "depense", category: "", amount: "", date: todayISO(), payment_method: "Espèces", description: "", reference: "",
+  const [form, setForm] = useState<{ type: TxType; category: string; amount: string; date: string; payment_method: string; description: string; reference: string; supplier_id: string }>({
+    type: "depense", category: "", amount: "", date: todayISO(), payment_method: "Espèces", description: "", reference: "", supplier_id: "",
   });
   const [deleting, setDeleting] = useState<TxRow | null>(null);
   const [saving, setSaving] = useState(false);
@@ -107,13 +110,16 @@ function ComptabilitePage() {
   const fetchAll = useCallback(async () => {
     if (!schoolId) return;
     setLoading(true);
-    const [{ data: tdata, error: terr }, { data: pdata, error: perr }, { data: cdata, error: cerr }] = await Promise.all([
+    const [{ data: tdata, error: terr }, { data: pdata, error: perr }, { data: cdata, error: cerr }, { data: sdata, error: serr }] = await Promise.all([
       supabase.from("transactions").select("*").eq("school_id", schoolId).order("date", { ascending: false }),
       supabase.from("payment_records").select("id,school_id,amount,date,mode,reference,receipt_number,notes").eq("school_id", schoolId),
       supabase.from("transaction_categories").select("*").eq("school_id", schoolId).order("name"),
+      supabase.from("suppliers").select("*").eq("school_id", schoolId).order("name"),
     ]);
     if (cerr) toast.error("Impossible de charger les catégories");
+    if (serr) toast.error("Impossible de charger les fournisseurs");
     setCategories(((cdata ?? []) as unknown) as CategoryRow[]);
+    setSuppliers(((sdata ?? []) as unknown) as SupplierRow[]);
     if (terr) toast.error("Impossible de charger les transactions");
     if (perr) toast.error("Impossible de charger les paiements");
     setTxs(((tdata ?? []) as unknown) as TxRow[]);
