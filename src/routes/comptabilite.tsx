@@ -434,6 +434,13 @@ function ComptabilitePage() {
                             {t._auto && <Badge variant="outline" className="ml-2 text-[10px]">Auto · Scolarité</Badge>}
                           </TableCell>
                           <TableCell className="max-w-[280px] truncate text-muted-foreground">{t.description}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {t.supplier_id ? (
+                              <button className="text-left hover:underline" onClick={() => { const s = suppliers.find(s => s.id === t.supplier_id); if (s) setSupplierDetail(s); }}>
+                                {supplierName(t.supplier_id)}
+                              </button>
+                            ) : <span className="text-xs">—</span>}
+                          </TableCell>
                           <TableCell className="text-muted-foreground">{t.payment_method}</TableCell>
                           <TableCell className={`text-right font-medium ${t.type === "recette" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                             {t.type === "recette" ? "+" : "−"} {fcfa(Number(t.amount))}
