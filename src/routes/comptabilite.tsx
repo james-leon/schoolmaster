@@ -129,6 +129,7 @@ function ComptabilitePage() {
       reference: p.reference,
       recorded_by: null,
       created_at: p.date,
+      supplier_id: null,
       _auto: true,
     }));
     setFeeIncome(auto);
