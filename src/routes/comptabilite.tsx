@@ -322,6 +322,7 @@ function ComptabilitePage() {
               <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-[160px]" />
             </div>
             <div className="ml-auto flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => setSupplierManagerOpen(true)}>Fournisseurs / Partenaires</Button>
               <Button variant="outline" onClick={() => setCatManagerOpen(true)}>Gérer les catégories</Button>
               <Button variant="outline" onClick={exportCSV}><Download className="mr-2 h-4 w-4" />Exporter CSV</Button>
               <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Nouvelle transaction</Button>
