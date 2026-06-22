@@ -1289,6 +1289,50 @@ export type Database = {
           },
         ]
       }
+      suppliers: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          school_id: string
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          school_id: string
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          school_id?: string
+          type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teachers: {
         Row: {
           created_at: string
@@ -1428,6 +1472,7 @@ export type Database = {
           recorded_by: string | null
           reference: string | null
           school_id: string
+          supplier_id: string | null
           type: string
           updated_at: string
         }
@@ -1442,6 +1487,7 @@ export type Database = {
           recorded_by?: string | null
           reference?: string | null
           school_id: string
+          supplier_id?: string | null
           type: string
           updated_at?: string
         }
@@ -1456,6 +1502,7 @@ export type Database = {
           recorded_by?: string | null
           reference?: string | null
           school_id?: string
+          supplier_id?: string | null
           type?: string
           updated_at?: string
         }
@@ -1472,6 +1519,13 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
