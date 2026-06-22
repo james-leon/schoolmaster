@@ -207,7 +207,7 @@ function ComptabilitePage() {
 
   function openCreate() {
     setEditing(null);
-    setForm({ type: "depense", category: "", amount: "", date: todayISO(), payment_method: "Espèces", description: "", reference: "" });
+    setForm({ type: "depense", category: "", amount: "", date: todayISO(), payment_method: "Espèces", description: "", reference: "", supplier_id: "" });
     setOpen(true);
   }
   function openEdit(t: TxRow) {
@@ -216,6 +216,7 @@ function ComptabilitePage() {
     setForm({
       type: t.type, category: t.category, amount: String(t.amount), date: t.date,
       payment_method: t.payment_method ?? "Espèces", description: t.description ?? "", reference: t.reference ?? "",
+      supplier_id: t.supplier_id ?? "",
     });
     setOpen(true);
   }
@@ -237,6 +238,7 @@ function ComptabilitePage() {
       description: form.description || null,
       reference: form.reference || null,
       recorded_by: user?.id ?? null,
+      supplier_id: form.type === "depense" ? (form.supplier_id || null) : null,
     };
     setSaving(true);
     try {
