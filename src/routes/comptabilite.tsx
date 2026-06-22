@@ -268,10 +268,16 @@ function ComptabilitePage() {
     fetchAll();
   }
 
+  const supplierName = useCallback((id: string | null | undefined) => {
+    if (!id) return "";
+    return suppliers.find(s => s.id === id)?.name ?? "";
+  }, [suppliers]);
+
   function exportCSV() {
-    const rows = [["Date","Type","Catégorie","Description","Montant","Méthode","Référence"]];
+    const rows = [["Date","Type","Catégorie","Description","Bénéficiaire","Montant","Méthode","Référence"]];
     filteredList.forEach(t => rows.push([
       t.date, t.type, t.category, (t.description ?? "").replace(/[\r\n,;]/g, " "),
+      supplierName(t.supplier_id),
       String(t.amount), t.payment_method ?? "", t.reference ?? "",
     ]));
     const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
