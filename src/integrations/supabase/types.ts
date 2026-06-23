@@ -367,6 +367,63 @@ export type Database = {
           },
         ]
       }
+      drivers: {
+        Row: {
+          assigned_vehicle_id: string | null
+          created_at: string
+          id: string
+          license_expiry: string | null
+          license_number: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          school_id: string
+          staff_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_vehicle_id?: string | null
+          created_at?: string
+          id?: string
+          license_expiry?: string | null
+          license_number?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          school_id: string
+          staff_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_vehicle_id?: string | null
+          created_at?: string
+          id?: string
+          license_expiry?: string | null
+          license_number?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          school_id?: string
+          staff_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drivers_assigned_vehicle_id_fkey"
+            columns: ["assigned_vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drivers_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string
@@ -1475,6 +1532,7 @@ export type Database = {
           supplier_id: string | null
           type: string
           updated_at: string
+          vehicle_id: string | null
         }
         Insert: {
           amount: number
@@ -1490,6 +1548,7 @@ export type Database = {
           supplier_id?: string | null
           type: string
           updated_at?: string
+          vehicle_id?: string | null
         }
         Update: {
           amount?: number
@@ -1505,6 +1564,7 @@ export type Database = {
           supplier_id?: string | null
           type?: string
           updated_at?: string
+          vehicle_id?: string | null
         }
         Relationships: [
           {
@@ -1526,6 +1586,13 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
         ]
@@ -1550,6 +1617,119 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vehicle_documents: {
+        Row: {
+          amount: number | null
+          created_at: string
+          doc_type: string
+          expiry_date: string | null
+          id: string
+          notes: string | null
+          provider: string | null
+          school_id: string
+          start_date: string | null
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          doc_type: string
+          expiry_date?: string | null
+          id?: string
+          notes?: string | null
+          provider?: string | null
+          school_id: string
+          start_date?: string | null
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          doc_type?: string
+          expiry_date?: string | null
+          id?: string
+          notes?: string | null
+          provider?: string | null
+          school_id?: string
+          start_date?: string | null
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_documents_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_documents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          brand: string | null
+          bus_number: string | null
+          capacity: number | null
+          created_at: string
+          id: string
+          model: string | null
+          notes: string | null
+          photo_url: string | null
+          registration_number: string
+          school_id: string
+          status: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          brand?: string | null
+          bus_number?: string | null
+          capacity?: number | null
+          created_at?: string
+          id?: string
+          model?: string | null
+          notes?: string | null
+          photo_url?: string | null
+          registration_number: string
+          school_id: string
+          status?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          brand?: string | null
+          bus_number?: string | null
+          capacity?: number | null
+          created_at?: string
+          id?: string
+          model?: string | null
+          notes?: string | null
+          photo_url?: string | null
+          registration_number?: string
+          school_id?: string
+          status?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
