@@ -15,10 +15,38 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Bus, User, FileText, Wallet, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, Bus, User, FileText, Wallet, AlertTriangle, Route as RouteIcon, Users, ArrowUp, ArrowDown, Receipt } from "lucide-react";
 import { toast } from "sonner";
+import { useDB, updateDB, getDB } from "@/lib/store";
+import { deriveInvoiceStatus, type Payment } from "@/lib/types";
 
 export const Route = createFileRoute("/transport")({ component: TransportPage });
+
+// ----- Part 2 types -----
+interface TRoute {
+  id: string; school_id: string; name: string; description: string | null;
+  assigned_vehicle_id: string | null; assigned_driver_id: string | null;
+  fee_amount: number; notes: string | null;
+}
+interface RouteStop {
+  id: string; school_id: string; route_id: string;
+  stop_name: string; order_index: number; pickup_time: string | null;
+}
+type Direction = "aller" | "retour" | "les_deux";
+interface StudentTransport {
+  id: string; school_id: string; student_id: string; route_id: string;
+  stop_id: string | null; direction: Direction; fee_amount: number; active: boolean;
+}
+const DIRECTION_LABEL: Record<Direction, string> = { aller: "Aller", retour: "Retour", les_deux: "Aller-retour" };
+
+function nextTransportInvoiceNumber(): string {
+  const prefix = "FAC-2026-";
+  const max = getDB().payments.reduce((m, p) => {
+    const n = parseInt(p.invoiceNumber?.slice(prefix.length) || "0", 10);
+    return n > m ? n : m;
+  }, 0);
+  return `${prefix}${(max + 1).toString().padStart(3, "0")}`;
+}
 
 // ----- types -----
 type VehicleStatus = "en_service" | "en_panne" | "maintenance";
