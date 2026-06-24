@@ -180,8 +180,10 @@ function StudentDetailPage() {
                 <Row label="Inscrit le" value={student.enrolledAt} />
               </CardContent>
             </Card>
+            <TransportInfoCard studentId={studentId} />
           </div>
         </TabsContent>
+
 
         <TabsContent value="parents" className="mt-4">
           <ParentsTuteursTab studentId={studentId} schoolName={school?.name} />
