@@ -116,24 +116,33 @@ function TransportPage() {
   const [docs, setDocs] = useState<VDoc[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [expenses, setExpenses] = useState<Tx[]>([]);
+  const [routes, setRoutes] = useState<TRoute[]>([]);
+  const [stops, setStops] = useState<RouteStop[]>([]);
+  const [assignments, setAssignments] = useState<StudentTransport[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
     if (!schoolId) return;
     setLoading(true);
-    const [v, d, doc, sup, tx] = await Promise.all([
+    const [v, d, doc, sup, tx, rt, st, sa] = await Promise.all([
       supabase.from("vehicles").select("*").eq("school_id", schoolId).order("registration_number"),
       supabase.from("drivers").select("*").eq("school_id", schoolId).order("name"),
       supabase.from("vehicle_documents").select("*").eq("school_id", schoolId).order("expiry_date"),
       supabase.from("suppliers").select("id,school_id,name,type").eq("school_id", schoolId).order("name"),
       supabase.from("transactions").select("*").eq("school_id", schoolId).eq("type","depense").not("vehicle_id","is",null).order("date",{ascending:false}),
+      supabase.from("transport_routes").select("*").eq("school_id", schoolId).order("name"),
+      supabase.from("route_stops").select("*").eq("school_id", schoolId).order("order_index"),
+      supabase.from("student_transport").select("*").eq("school_id", schoolId),
     ]);
-    if (v.error || d.error || doc.error || tx.error) toast.error("Erreur de chargement Transport");
+    if (v.error || d.error || doc.error || tx.error || rt.error || st.error || sa.error) toast.error("Erreur de chargement Transport");
     setVehicles(((v.data ?? []) as unknown) as Vehicle[]);
     setDrivers(((d.data ?? []) as unknown) as Driver[]);
     setDocs(((doc.data ?? []) as unknown) as VDoc[]);
     setSuppliers(((sup.data ?? []) as unknown) as Supplier[]);
     setExpenses(((tx.data ?? []) as unknown) as Tx[]);
+    setRoutes(((rt.data ?? []) as unknown) as TRoute[]);
+    setStops(((st.data ?? []) as unknown) as RouteStop[]);
+    setAssignments(((sa.data ?? []) as unknown) as StudentTransport[]);
     setLoading(false);
   }, [schoolId]);
 
@@ -164,6 +173,7 @@ function TransportPage() {
     return expenses.filter((e)=>e.date.startsWith(m)).reduce((s,e)=>s+Number(e.amount||0),0);
   }, [expenses]);
   const allTotal = useMemo(() => expenses.reduce((s,e)=>s+Number(e.amount||0),0), [expenses]);
+  const activeAssignments = useMemo(() => assignments.filter((a)=>a.active), [assignments]);
 
   if (!user) return <Navigate to="/login" />;
   if (!isAdmin) return <Navigate to="/dashboard" />;
@@ -172,9 +182,11 @@ function TransportPage() {
     <AppLayout title="Transport">
       <div className="space-y-6">
         {/* Dashboard cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <StatCard icon={<Bus className="h-5 w-5" />} label="Bus" value={`${vehicles.length}`} hint={`${vehicles.filter(v=>v.status==="en_service").length} en service`} />
           <StatCard icon={<User className="h-5 w-5" />} label="Chauffeurs" value={`${drivers.length}`} />
+          <StatCard icon={<RouteIcon className="h-5 w-5" />} label="Circuits" value={`${routes.length}`} />
+          <StatCard icon={<Users className="h-5 w-5" />} label="Élèves transportés" value={`${activeAssignments.length}`} />
           <StatCard icon={<AlertTriangle className="h-5 w-5" />} label="Alertes" value={`${alerts.length}`} hint={`${alerts.filter(a=>a.severity==="expired").length} expirés`} />
           <StatCard icon={<Wallet className="h-5 w-5" />} label="Dépenses (mois)" value={fcfa(monthTotal)} hint={`Total: ${fcfa(allTotal)}`} />
         </div>
@@ -196,6 +208,8 @@ function TransportPage() {
           <TabsList>
             <TabsTrigger value="vehicles">Bus</TabsTrigger>
             <TabsTrigger value="drivers">Chauffeurs</TabsTrigger>
+            <TabsTrigger value="routes">Circuits</TabsTrigger>
+            <TabsTrigger value="students">Élèves transportés</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="expenses">Dépenses</TabsTrigger>
           </TabsList>
@@ -205,6 +219,12 @@ function TransportPage() {
           </TabsContent>
           <TabsContent value="drivers" className="mt-4">
             <DriversTab schoolId={schoolId!} drivers={drivers} vehicles={vehicles} reload={fetchAll} />
+          </TabsContent>
+          <TabsContent value="routes" className="mt-4">
+            <RoutesTab schoolId={schoolId!} routes={routes} stops={stops} assignments={assignments} vehicles={vehicles} drivers={drivers} reload={fetchAll} />
+          </TabsContent>
+          <TabsContent value="students" className="mt-4">
+            <TransportedStudentsTab schoolId={schoolId!} routes={routes} stops={stops} assignments={assignments} vehicles={vehicles} reload={fetchAll} />
           </TabsContent>
           <TabsContent value="documents" className="mt-4">
             <DocumentsTab schoolId={schoolId!} docs={docs} vehicles={vehicles} reload={fetchAll} />
@@ -217,6 +237,8 @@ function TransportPage() {
     </AppLayout>
   );
 }
+
+
 
 function StatCard({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: string; hint?: string }) {
   return (
