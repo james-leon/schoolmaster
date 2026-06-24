@@ -393,3 +393,43 @@ function NotesTab({ studentId, grades, classId }: { studentId: string; grades: G
     </>
   );
 }
+
+function TransportInfoCard({ studentId }: { studentId: string }) {
+  const [info, setInfo] = useState<{ route_name: string; stop_name: string | null; direction: string; fee_amount: number; active: boolean } | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabaseTx
+        .from("student_transport")
+        .select("direction, fee_amount, active, transport_routes(name), route_stops(stop_name)")
+        .eq("student_id", studentId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (data) {
+        const d = data as unknown as { direction: string; fee_amount: number; active: boolean; transport_routes: { name: string } | null; route_stops: { stop_name: string } | null };
+        setInfo({
+          route_name: d.transport_routes?.name ?? "—",
+          stop_name: d.route_stops?.stop_name ?? null,
+          direction: d.direction, fee_amount: Number(d.fee_amount || 0), active: d.active,
+        });
+      }
+      setLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [studentId]);
+  if (!loaded || !info) return null;
+  const dirLabel = info.direction === "aller" ? "Aller" : info.direction === "retour" ? "Retour" : "Aller-retour";
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-base">Transport</CardTitle></CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        <Row label="Circuit" value={info.route_name} />
+        <Row label="Arrêt" value={info.stop_name ?? "—"} />
+        <Row label="Direction" value={dirLabel} />
+        <Row label="Tarif" value={fcfa(info.fee_amount)} />
+        <Row label="Statut" value={info.active ? "Actif" : "Inactif"} />
+      </CardContent>
+    </Card>
+  );
+}
