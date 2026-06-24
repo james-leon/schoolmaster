@@ -785,3 +785,506 @@ function ExpensesTab({ schoolId, expenses, vehicles, suppliers, reload, userId }
     </div>
   );
 }
+
+// ---------------- ROUTES (Circuits) ----------------
+function RoutesTab({ schoolId, routes, stops, assignments, vehicles, drivers, reload }: { schoolId: string; routes: TRoute[]; stops: RouteStop[]; assignments: StudentTransport[]; vehicles: Vehicle[]; drivers: Driver[]; reload: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [edit, setEdit] = useState<TRoute | null>(null);
+  const [del, setDel] = useState<TRoute | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [detail, setDetail] = useState<TRoute | null>(null);
+  const empty = { name: "", description: "", assigned_vehicle_id: "", assigned_driver_id: "", fee_amount: "", notes: "" };
+  const [form, setForm] = useState(empty);
+
+  function openNew() { setEdit(null); setForm(empty); setOpen(true); }
+  function openEdit(r: TRoute) {
+    setEdit(r);
+    setForm({
+      name: r.name, description: r.description ?? "",
+      assigned_vehicle_id: r.assigned_vehicle_id ?? "",
+      assigned_driver_id: r.assigned_driver_id ?? "",
+      fee_amount: r.fee_amount ? String(r.fee_amount) : "",
+      notes: r.notes ?? "",
+    });
+    setOpen(true);
+  }
+  async function save() {
+    if (saving) return;
+    if (!form.name.trim()) { toast.error("Nom requis"); return; }
+    setSaving(true);
+    const payload = {
+      school_id: schoolId, name: form.name.trim(),
+      description: form.description || null,
+      assigned_vehicle_id: form.assigned_vehicle_id || null,
+      assigned_driver_id: form.assigned_driver_id || null,
+      fee_amount: form.fee_amount ? Number(form.fee_amount) : 0,
+      notes: form.notes || null,
+    };
+    const res = edit
+      ? await supabase.from("transport_routes").update(payload).eq("id", edit.id)
+      : await supabase.from("transport_routes").insert(payload);
+    setSaving(false);
+    if (res.error) { toast.error(res.error.message); return; }
+    toast.success(edit ? "Circuit mis à jour" : "Circuit créé");
+    setOpen(false); reload();
+  }
+  async function doDelete() {
+    if (!del) return;
+    const { error } = await supabase.from("transport_routes").delete().eq("id", del.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Circuit supprimé"); setDel(null); reload();
+  }
+  const studentsOf = (rid: string) => assignments.filter((a)=>a.route_id===rid && a.active).length;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end"><Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Nouveau circuit</Button></div>
+      {routes.length === 0 ? <Card><CardContent className="p-6 text-center text-muted-foreground">Aucun circuit</CardContent></Card> : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {routes.map((r) => {
+            const v = vehicles.find((x) => x.id === r.assigned_vehicle_id);
+            const dr = drivers.find((x) => x.id === r.assigned_driver_id);
+            const nbStops = stops.filter((s)=>s.route_id===r.id).length;
+            const nbStudents = studentsOf(r.id);
+            const cap = v?.capacity ?? 0;
+            const over = cap > 0 && nbStudents > cap;
+            return (
+              <Card key={r.id}>
+                <CardContent className="p-4 space-y-2">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <RouteIcon className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold">{r.name}</h3>
+                      </div>
+                      {r.description && <p className="text-xs text-muted-foreground mt-1">{r.description}</p>}
+                    </div>
+                    {over && <Badge variant="destructive">Capacité dépassée</Badge>}
+                  </div>
+                  <div className="text-sm">Bus : {v ? (v.bus_number || v.registration_number) : "—"} {cap > 0 ? `(${cap} pl.)` : ""}</div>
+                  <div className="text-sm">Chauffeur : {dr?.name || "—"}</div>
+                  <div className="text-sm">Arrêts : {nbStops} · Élèves : {nbStudents}{cap>0?` / ${cap}`:""}</div>
+                  <div className="text-sm">Tarif : {fcfa(Number(r.fee_amount||0))}</div>
+                  <div className="flex gap-2 pt-2 flex-wrap">
+                    <Button size="sm" variant="outline" onClick={()=>setDetail(r)}>Détails / arrêts</Button>
+                    <Button size="sm" variant="outline" onClick={()=>openEdit(r)}><Pencil className="h-3 w-3 mr-1" />Modifier</Button>
+                    <Button size="sm" variant="ghost" onClick={()=>setDel(r)}><Trash2 className="h-3 w-3" /></Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>{edit ? "Modifier le circuit" : "Nouveau circuit"}</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2"><Label>Nom *</Label><Input value={form.name} onChange={(e)=>setForm({...form, name:e.target.value})} placeholder="Ex: Bonapriso - Akwa" /></div>
+            <div className="col-span-2"><Label>Description</Label><Textarea value={form.description} onChange={(e)=>setForm({...form, description:e.target.value})} /></div>
+            <div><Label>Bus assigné</Label>
+              <Select value={form.assigned_vehicle_id || "none"} onValueChange={(v)=>setForm({...form, assigned_vehicle_id: v==="none"?"":v})}>
+                <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Aucun</SelectItem>
+                  {vehicles.map(v=><SelectItem key={v.id} value={v.id}>{v.bus_number || v.registration_number}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Chauffeur assigné</Label>
+              <Select value={form.assigned_driver_id || "none"} onValueChange={(v)=>setForm({...form, assigned_driver_id: v==="none"?"":v})}>
+                <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Aucun</SelectItem>
+                  {drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2"><Label>Tarif mensuel par défaut (FCFA)</Label><Input type="number" value={form.fee_amount} onChange={(e)=>setForm({...form, fee_amount:e.target.value})} /></div>
+            <div className="col-span-2"><Label>Notes</Label><Textarea value={form.notes} onChange={(e)=>setForm({...form, notes:e.target.value})} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={()=>setOpen(false)}>Annuler</Button>
+            <Button onClick={save} disabled={saving}>{saving ? "…" : "Enregistrer"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!del} onOpenChange={(o)=>!o && setDel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Supprimer ce circuit ?</AlertDialogTitle>
+            <AlertDialogDescription>Les arrêts et assignations d'élèves seront aussi supprimés.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel>Annuler</AlertDialogCancel><AlertDialogAction onClick={doDelete}>Supprimer</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {detail && (
+        <RouteDetailDialog
+          route={detail}
+          stops={stops.filter((s)=>s.route_id===detail.id)}
+          assignments={assignments.filter((a)=>a.route_id===detail.id)}
+          vehicles={vehicles}
+          onClose={()=>setDetail(null)}
+          reload={reload}
+          schoolId={schoolId}
+        />
+      )}
+    </div>
+  );
+}
+
+function RouteDetailDialog({ route, stops, assignments, vehicles, onClose, reload, schoolId }: { route: TRoute; stops: RouteStop[]; assignments: StudentTransport[]; vehicles: Vehicle[]; onClose: () => void; reload: () => void; schoolId: string }) {
+  const db = useDB();
+  const [stopName, setStopName] = useState("");
+  const [pickup, setPickup] = useState("");
+  const v = vehicles.find((x) => x.id === route.assigned_vehicle_id);
+  const cap = v?.capacity ?? 0;
+  const activeCount = assignments.filter((a)=>a.active).length;
+
+  async function addStop() {
+    if (!stopName.trim()) { toast.error("Nom arrêt requis"); return; }
+    const order = stops.length;
+    const { error } = await supabase.from("route_stops").insert({
+      school_id: schoolId, route_id: route.id,
+      stop_name: stopName.trim(), order_index: order,
+      pickup_time: pickup || null,
+    });
+    if (error) { toast.error(error.message); return; }
+    setStopName(""); setPickup(""); reload();
+  }
+  async function delStop(id: string) {
+    const { error } = await supabase.from("route_stops").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    reload();
+  }
+  async function moveStop(s: RouteStop, dir: -1 | 1) {
+    const sorted = [...stops].sort((a,b)=>a.order_index - b.order_index);
+    const idx = sorted.findIndex((x)=>x.id===s.id);
+    const swap = sorted[idx + dir];
+    if (!swap) return;
+    await supabase.from("route_stops").update({ order_index: swap.order_index }).eq("id", s.id);
+    await supabase.from("route_stops").update({ order_index: s.order_index }).eq("id", swap.id);
+    reload();
+  }
+
+  return (
+    <Dialog open onOpenChange={(o)=>!o && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader><DialogTitle>{route.name}</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div className="text-sm text-muted-foreground">
+            Bus : {v ? (v.bus_number || v.registration_number) : "—"} · Capacité : {cap || "—"} · Élèves actifs : {activeCount}
+            {cap > 0 && activeCount > cap && <span className="text-destructive font-medium"> · Dépassement !</span>}
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-2">Arrêts (ordonnés)</h4>
+            <Table>
+              <TableHeader><TableRow><TableHead className="w-12">#</TableHead><TableHead>Arrêt</TableHead><TableHead>Horaire</TableHead><TableHead></TableHead></TableRow></TableHeader>
+              <TableBody>
+                {stops.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-4">Aucun arrêt</TableCell></TableRow> :
+                [...stops].sort((a,b)=>a.order_index-b.order_index).map((s, i) => (
+                  <TableRow key={s.id}>
+                    <TableCell>{i+1}</TableCell>
+                    <TableCell>{s.stop_name}</TableCell>
+                    <TableCell>{s.pickup_time || "—"}</TableCell>
+                    <TableCell className="text-right space-x-1">
+                      <Button size="sm" variant="ghost" onClick={()=>moveStop(s,-1)} disabled={i===0}><ArrowUp className="h-3 w-3" /></Button>
+                      <Button size="sm" variant="ghost" onClick={()=>moveStop(s,1)} disabled={i===stops.length-1}><ArrowDown className="h-3 w-3" /></Button>
+                      <Button size="sm" variant="ghost" onClick={()=>delStop(s.id)}><Trash2 className="h-3 w-3" /></Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="flex gap-2 mt-2">
+              <Input placeholder="Nom de l'arrêt" value={stopName} onChange={(e)=>setStopName(e.target.value)} />
+              <Input type="time" value={pickup} onChange={(e)=>setPickup(e.target.value)} className="w-32" />
+              <Button onClick={addStop}><Plus className="h-4 w-4" /></Button>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-2">Élèves assignés ({assignments.length})</h4>
+            <Table>
+              <TableHeader><TableRow><TableHead>Élève</TableHead><TableHead>Arrêt</TableHead><TableHead>Direction</TableHead><TableHead>Tarif</TableHead><TableHead>Actif</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {assignments.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-4">Aucun élève</TableCell></TableRow> :
+                assignments.map((a) => {
+                  const st = db.students.find((s)=>s.id===a.student_id);
+                  const stop = stops.find((s)=>s.id===a.stop_id);
+                  return (
+                    <TableRow key={a.id}>
+                      <TableCell>{st ? `${st.firstName} ${st.lastName}` : "—"}</TableCell>
+                      <TableCell>{stop?.stop_name || "—"}</TableCell>
+                      <TableCell>{DIRECTION_LABEL[a.direction]}</TableCell>
+                      <TableCell>{fcfa(Number(a.fee_amount||0))}</TableCell>
+                      <TableCell>{a.active ? <Badge>Oui</Badge> : <Badge variant="secondary">Non</Badge>}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+        <DialogFooter><Button onClick={onClose}>Fermer</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------- TRANSPORTED STUDENTS ----------------
+function TransportedStudentsTab({ schoolId, routes, stops, assignments, vehicles, reload }: { schoolId: string; routes: TRoute[]; stops: RouteStop[]; assignments: StudentTransport[]; vehicles: Vehicle[]; reload: () => void }) {
+  const db = useDB();
+  const [open, setOpen] = useState(false);
+  const [edit, setEdit] = useState<StudentTransport | null>(null);
+  const [del, setDel] = useState<StudentTransport | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [billOpen, setBillOpen] = useState(false);
+  const empty = { student_id: "", route_id: "", stop_id: "", direction: "les_deux" as Direction, fee_amount: "", active: true };
+  const [form, setForm] = useState(empty);
+
+  function openNew() { setEdit(null); setForm(empty); setOpen(true); }
+  function openEdit(a: StudentTransport) {
+    setEdit(a);
+    setForm({
+      student_id: a.student_id, route_id: a.route_id,
+      stop_id: a.stop_id ?? "", direction: a.direction,
+      fee_amount: a.fee_amount ? String(a.fee_amount) : "",
+      active: a.active,
+    });
+    setOpen(true);
+  }
+  async function save() {
+    if (saving) return;
+    if (!form.student_id) { toast.error("Élève requis"); return; }
+    if (!form.route_id) { toast.error("Circuit requis"); return; }
+    // capacity warning
+    const route = routes.find((r)=>r.id===form.route_id);
+    const veh = vehicles.find((v)=>v.id===route?.assigned_vehicle_id);
+    const cap = veh?.capacity ?? 0;
+    const currentCount = assignments.filter((a)=>a.route_id===form.route_id && a.active && a.id !== edit?.id).length;
+    if (cap > 0 && form.active && currentCount + 1 > cap) {
+      if (!confirm(`La capacité du bus (${cap}) est dépassée. Continuer ?`)) return;
+    }
+    setSaving(true);
+    const payload = {
+      school_id: schoolId, student_id: form.student_id, route_id: form.route_id,
+      stop_id: form.stop_id || null, direction: form.direction,
+      fee_amount: form.fee_amount ? Number(form.fee_amount) : Number(route?.fee_amount || 0),
+      active: form.active,
+    };
+    const res = edit
+      ? await supabase.from("student_transport").update(payload).eq("id", edit.id)
+      : await supabase.from("student_transport").insert(payload);
+    setSaving(false);
+    if (res.error) { toast.error(res.error.message); return; }
+    toast.success(edit ? "Assignation mise à jour" : "Élève assigné");
+    setOpen(false); reload();
+  }
+  async function doDelete() {
+    if (!del) return;
+    const { error } = await supabase.from("student_transport").delete().eq("id", del.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Assignation supprimée"); setDel(null); reload();
+  }
+
+  // Group rows
+  const rows = assignments.map((a) => {
+    const st = db.students.find((s)=>s.id===a.student_id);
+    const r = routes.find((x)=>x.id===a.route_id);
+    const stop = stops.find((s)=>s.id===a.stop_id);
+    return { a, st, r, stop };
+  });
+
+  // Available students = exclude those already assigned (when creating)
+  const assignedIds = new Set(assignments.map((a)=>a.student_id));
+  const studentOptions = db.students.filter((s) => edit?.student_id === s.id || !assignedIds.has(s.id));
+  const stopOptions = stops.filter((s)=>s.route_id===form.route_id).sort((a,b)=>a.order_index-b.order_index);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={()=>setBillOpen(true)}><Receipt className="h-4 w-4 mr-2" />Facturer le transport</Button>
+        <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Assigner un élève</Button>
+      </div>
+
+      <Card><CardContent className="p-0">
+        <Table>
+          <TableHeader><TableRow>
+            <TableHead>Élève</TableHead><TableHead>Circuit</TableHead>
+            <TableHead>Arrêt</TableHead><TableHead>Direction</TableHead>
+            <TableHead className="text-right">Tarif</TableHead><TableHead>Actif</TableHead><TableHead></TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {rows.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Aucun élève assigné</TableCell></TableRow> :
+            rows.map(({a, st, r, stop}) => (
+              <TableRow key={a.id}>
+                <TableCell>{st ? `${st.firstName} ${st.lastName}` : "—"}</TableCell>
+                <TableCell>{r?.name || "—"}</TableCell>
+                <TableCell>{stop?.stop_name || "—"}</TableCell>
+                <TableCell>{DIRECTION_LABEL[a.direction]}</TableCell>
+                <TableCell className="text-right">{fcfa(Number(a.fee_amount||0))}</TableCell>
+                <TableCell>{a.active ? <Badge>Oui</Badge> : <Badge variant="secondary">Non</Badge>}</TableCell>
+                <TableCell className="text-right">
+                  <Button size="sm" variant="ghost" onClick={()=>openEdit(a)}><Pencil className="h-3 w-3" /></Button>
+                  <Button size="sm" variant="ghost" onClick={()=>setDel(a)}><Trash2 className="h-3 w-3" /></Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent></Card>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{edit ? "Modifier l'assignation" : "Assigner un élève au transport"}</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2"><Label>Élève *</Label>
+              <Select value={form.student_id} onValueChange={(v)=>setForm({...form, student_id:v})}>
+                <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
+                <SelectContent>{studentOptions.map(s=><SelectItem key={s.id} value={s.id}>{s.firstName} {s.lastName}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2"><Label>Circuit *</Label>
+              <Select value={form.route_id} onValueChange={(v)=>setForm({...form, route_id:v, stop_id:""})}>
+                <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
+                <SelectContent>{routes.map(r=><SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><Label>Arrêt</Label>
+              <Select value={form.stop_id || "none"} onValueChange={(v)=>setForm({...form, stop_id: v==="none"?"":v})}>
+                <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Aucun</SelectItem>
+                  {stopOptions.map(s=><SelectItem key={s.id} value={s.id}>{s.stop_name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Direction</Label>
+              <Select value={form.direction} onValueChange={(v)=>setForm({...form, direction: v as Direction})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{(Object.keys(DIRECTION_LABEL) as Direction[]).map(d=><SelectItem key={d} value={d}>{DIRECTION_LABEL[d]}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><Label>Tarif (FCFA)</Label><Input type="number" value={form.fee_amount} onChange={(e)=>setForm({...form, fee_amount:e.target.value})} placeholder="Défaut circuit" /></div>
+            <div className="flex items-center gap-2 mt-6">
+              <input id="active" type="checkbox" checked={form.active} onChange={(e)=>setForm({...form, active:e.target.checked})} />
+              <Label htmlFor="active">Actif</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={()=>setOpen(false)}>Annuler</Button>
+            <Button onClick={save} disabled={saving}>{saving ? "…" : "Enregistrer"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!del} onOpenChange={(o)=>!o && setDel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Retirer cet élève du transport ?</AlertDialogTitle></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel>Annuler</AlertDialogCancel><AlertDialogAction onClick={doDelete}>Retirer</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {billOpen && (
+        <BillTransportDialog
+          assignments={assignments}
+          routes={routes}
+          onClose={()=>setBillOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------- BILLING ----------------
+function BillTransportDialog({ assignments, routes, onClose }: { assignments: StudentTransport[]; routes: TRoute[]; onClose: () => void }) {
+  const db = useDB();
+  const [period, setPeriod] = useState(todayISO().slice(0,7));
+  const [dueDate, setDueDate] = useState(todayISO());
+  const [generating, setGenerating] = useState(false);
+
+  const eligible = assignments.filter((a)=>a.active && Number(a.fee_amount||0) > 0);
+
+  function generate() {
+    if (generating) return;
+    if (eligible.length === 0) { toast.error("Aucun élève à facturer"); return; }
+    setGenerating(true);
+    try {
+      updateDB((d) => {
+        // Ensure a "Transport" fee type exists
+        let feeType = d.feeTypes.find((f) => f.name.toLowerCase().startsWith("transport"));
+        if (!feeType) {
+          feeType = { id: crypto.randomUUID(), name: "Transport", amount: 0, scope: "Tous" };
+          d.feeTypes.push(feeType);
+        }
+        const tag = `Transport ${period}`;
+        let created = 0; let skipped = 0;
+        eligible.forEach((a) => {
+          // Single-insert guard: skip if invoice already exists for student+period+transport
+          const exists = d.payments.some((p) => p.studentId === a.student_id && p.type === "Transport" && (p.notes || "").includes(period));
+          if (exists) { skipped++; return; }
+          const prefix = "FAC-2026-";
+          const max = d.payments.reduce((m, p) => {
+            const n = parseInt(p.invoiceNumber?.slice(prefix.length) || "0", 10);
+            return n > m ? n : m;
+          }, 0);
+          const num = `${prefix}${(max + 1 + created).toString().padStart(3, "0")}`;
+          const inv: Payment = {
+            id: crypto.randomUUID(),
+            invoiceNumber: num,
+            studentId: a.student_id,
+            feeTypeId: feeType!.id,
+            amount: Number(a.fee_amount),
+            amountPaid: 0,
+            date: todayISO(),
+            dueDate,
+            type: "Transport",
+            status: deriveInvoiceStatus(Number(a.fee_amount), 0, dueDate),
+            notes: tag,
+          };
+          d.payments.push(inv);
+          created++;
+        });
+        d.activities.unshift({
+          id: crypto.randomUUID(),
+          type: "payment",
+          text: `Facturation Transport ${period} : ${created} facture(s) créée(s)${skipped?`, ${skipped} ignorée(s)`:""}`,
+          date: new Date().toISOString(),
+        });
+        toast.success(`${created} facture(s) créée(s)${skipped?`, ${skipped} déjà existante(s)`:""}`);
+      });
+      onClose();
+    } finally {
+      setGenerating(false);
+    }
+  }
+  // suppress unused warning
+  void routes; void db;
+
+  return (
+    <Dialog open onOpenChange={(o)=>!o && onClose()}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Facturer le transport</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Génère une facture par élève transporté actif, via le système de facturation standard (Scolarité &amp; Paiements, Comptabilité).
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Période (mois)</Label><Input type="month" value={period} onChange={(e)=>setPeriod(e.target.value)} /></div>
+            <div><Label>Échéance</Label><Input type="date" value={dueDate} onChange={(e)=>setDueDate(e.target.value)} /></div>
+          </div>
+          <div className="text-sm">Élèves à facturer : <strong>{eligible.length}</strong></div>
+          <p className="text-xs text-muted-foreground">Les factures déjà créées pour cette période ne seront pas dupliquées.</p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button onClick={generate} disabled={generating || eligible.length===0}>{generating ? "…" : "Générer les factures"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
