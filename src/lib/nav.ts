@@ -1,4 +1,4 @@
-import { BarChart3, Users, UserCheck, BookOpen, CreditCard, GraduationCap, CalendarCheck, Settings, Megaphone, Calendar, CalendarDays, Wallet, Briefcase, Bus, type LucideIcon } from "lucide-react";
+import { BarChart3, Users, UserCheck, BookOpen, CreditCard, GraduationCap, CalendarCheck, Settings, Megaphone, Calendar, CalendarDays, Wallet, Briefcase, Bus, PiggyBank, type LucideIcon } from "lucide-react";
 import type { Role } from "./types";
 import type { FeatureId } from "./plans";
 
