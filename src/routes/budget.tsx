@@ -85,7 +85,7 @@ function BudgetPage() {
   if (!isAdmin) return <Navigate to="/dashboard" />;
 
   return (
-    <AppLayout title="Budget" subtitle="Gestion du budget — Prévu vs Réel">
+    <AppLayout title="Budget">
       <div className="space-y-6">
         <Tabs defaultValue="overview" className="w-full">
           <TabsList>
