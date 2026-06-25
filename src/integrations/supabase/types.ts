@@ -161,6 +161,108 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_lines: {
+        Row: {
+          budget_id: string
+          category_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          planned_amount: number
+          school_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          budget_id: string
+          category_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          planned_amount?: number
+          school_id: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          budget_id?: string
+          category_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          planned_amount?: number
+          school_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_lines_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "transaction_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          period_end: string
+          period_start: string
+          school_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          period_end: string
+          period_start: string
+          school_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          period_end?: string
+          period_start?: string
+          school_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_subjects: {
         Row: {
           class_id: string
