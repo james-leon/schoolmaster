@@ -2012,6 +2012,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      clear_must_change_password: { Args: never; Returns: undefined }
       get_user_school_id: { Args: { _user_id: string }; Returns: string }
       get_user_student_id: { Args: { _user_id: string }; Returns: string }
       has_role: {

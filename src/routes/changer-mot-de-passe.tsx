@@ -43,7 +43,10 @@ function ChangePasswordPage() {
       }
       const { error } = await supabase.auth.updateUser({ password: pwd });
       if (error) throw error;
-      const { error: pErr } = await supabase.from("profiles").update({ must_change_password: false }).eq("id", user!.id);
+      // must_change_password is a protected column at the RLS level — clear it
+      // via the SECURITY DEFINER RPC, which only succeeds when the auth
+      // password was actually changed recently.
+      const { error: pErr } = await supabase.rpc("clear_must_change_password");
       if (pErr) throw pErr;
       await refreshUser();
       toast.success("Mot de passe mis à jour");
