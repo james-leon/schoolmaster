@@ -92,16 +92,19 @@ async function ensureSuperAdmin() {
 
 const SCHOOL_NAME = "Groupe Scolaire Bilingue Queen Mary";
 
+// Demo account passwords come from server-side env vars. If a password is
+// not configured, that demo user is skipped — never fall back to a hardcoded
+// credential committed in source.
 const DEMO_USERS = [
   {
     email: "admin@queenmary.cm",
-    password: "admin123",
+    passwordEnv: "DEMO_ADMIN_PASSWORD",
     full_name: "Pauline Essomba",
     role: "school_admin" as const,
   },
   {
     email: "prof.martin@queenmary.cm",
-    password: "prof123",
+    passwordEnv: "DEMO_TEACHER_PASSWORD",
     full_name: "Georges Mbarga",
     role: "teacher" as const,
     assigned_classes: ["CE1", "CE2"],
@@ -109,7 +112,7 @@ const DEMO_USERS = [
   },
   {
     email: "parent.ekane@gmail.com",
-    password: "parent123",
+    passwordEnv: "DEMO_PARENT_PASSWORD",
     full_name: "Marcel Ekane",
     role: "parent" as const,
   },
@@ -294,6 +297,7 @@ async function runSeed() {
 
   // 6) Auth users + profiles + roles
   for (const u of DEMO_USERS) {
+    const demoPassword = process.env[u.passwordEnv];
     // Try to find existing user
     const { data: list } = await supabaseAdmin.auth.admin.listUsers();
     const existing = list?.users?.find((x) => x.email?.toLowerCase() === u.email);
@@ -301,9 +305,13 @@ async function runSeed() {
     if (existing) {
       userId = existing.id;
     } else {
+      if (!demoPassword) {
+        console.warn(`[seed-demo] ${u.passwordEnv} not set; skipping demo user ${u.email}`);
+        continue;
+      }
       const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
         email: u.email,
-        password: u.password,
+        password: demoPassword,
         email_confirm: true,
         user_metadata: { full_name: u.full_name },
       });
