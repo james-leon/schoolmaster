@@ -92,16 +92,19 @@ async function ensureSuperAdmin() {
 
 const SCHOOL_NAME = "Groupe Scolaire Bilingue Queen Mary";
 
+// Demo account passwords come from server-side env vars. If a password is
+// not configured, that demo user is skipped — never fall back to a hardcoded
+// credential committed in source.
 const DEMO_USERS = [
   {
     email: "admin@queenmary.cm",
-    password: "admin123",
+    passwordEnv: "DEMO_ADMIN_PASSWORD",
     full_name: "Pauline Essomba",
     role: "school_admin" as const,
   },
   {
     email: "prof.martin@queenmary.cm",
-    password: "prof123",
+    passwordEnv: "DEMO_TEACHER_PASSWORD",
     full_name: "Georges Mbarga",
     role: "teacher" as const,
     assigned_classes: ["CE1", "CE2"],
@@ -109,7 +112,7 @@ const DEMO_USERS = [
   },
   {
     email: "parent.ekane@gmail.com",
-    password: "parent123",
+    passwordEnv: "DEMO_PARENT_PASSWORD",
     full_name: "Marcel Ekane",
     role: "parent" as const,
   },
