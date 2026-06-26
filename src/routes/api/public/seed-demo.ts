@@ -297,6 +297,7 @@ async function runSeed() {
 
   // 6) Auth users + profiles + roles
   for (const u of DEMO_USERS) {
+    const demoPassword = process.env[u.passwordEnv];
     // Try to find existing user
     const { data: list } = await supabaseAdmin.auth.admin.listUsers();
     const existing = list?.users?.find((x) => x.email?.toLowerCase() === u.email);
@@ -304,9 +305,13 @@ async function runSeed() {
     if (existing) {
       userId = existing.id;
     } else {
+      if (!demoPassword) {
+        console.warn(`[seed-demo] ${u.passwordEnv} not set; skipping demo user ${u.email}`);
+        continue;
+      }
       const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
         email: u.email,
-        password: u.password,
+        password: demoPassword,
         email_confirm: true,
         user_metadata: { full_name: u.full_name },
       });
