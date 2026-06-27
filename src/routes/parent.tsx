@@ -789,7 +789,7 @@ function ParentCalendarTab() {
   const [loading, setLoading] = useState(true);
   const [cursor, setCursor] = useState(() => { const d = new Date(); d.setDate(1); return d; });
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const { supabase } = require("@/integrations/supabase/client") as typeof import("@/integrations/supabase/client");
+  
 
   useEffect(() => {
     let cancelled = false;
