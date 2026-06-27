@@ -20,12 +20,14 @@ import { useParentChildren, type ParentChild } from "@/lib/useParentChildren";
 import { useNotifications } from "@/lib/notifications";
 import {
   Bell, Calendar, GraduationCap, UserCircle, LogOut, Wallet, MessageSquare,
-  CheckCircle2, Inbox, BookOpen, Users2, HeartPulse, ShieldAlert,
+  CheckCircle2, Inbox, BookOpen, Users2, HeartPulse, ShieldAlert, MoreHorizontal,
+  CalendarDays,
 } from "lucide-react";
 import { MedicalTab } from "@/components/MedicalTab";
 import { DisciplineTab } from "@/components/DisciplineTab";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+
 
 export const Route = createFileRoute("/parent")({
   component: ParentPortal,
