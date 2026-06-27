@@ -751,4 +751,197 @@ function ParentNotificationsSheet({
   );
 }
 
+type ParentEvent = {
+  id: string;
+  title: string;
+  description: string | null;
+  type: "vacances" | "examen" | "reunion" | "evenement" | "sortie" | "ferie";
+  start_date: string;
+  end_date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  location: string | null;
+  target: string;
+};
+
+const PARENT_TYPE_META: Record<ParentEvent["type"], { label: string; bg: string; text: string; dot: string }> = {
+  vacances:  { label: "Vacances",   bg: "bg-emerald-100", text: "text-emerald-900", dot: "bg-emerald-500" },
+  examen:    { label: "Examen",     bg: "bg-red-100",     text: "text-red-900",     dot: "bg-red-500" },
+  reunion:   { label: "Réunion",    bg: "bg-blue-100",    text: "text-blue-900",    dot: "bg-blue-500" },
+  evenement: { label: "Événement",  bg: "bg-orange-100",  text: "text-orange-900",  dot: "bg-orange-500" },
+  sortie:    { label: "Sortie",     bg: "bg-purple-100",  text: "text-purple-900",  dot: "bg-purple-500" },
+  ferie:     { label: "Jour férié", bg: "bg-gray-200",    text: "text-gray-800",    dot: "bg-gray-500" },
+};
+
+function parentFmtISO(d: Date) {
+  const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, "0"), day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function parentFmtFr(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${String(d).padStart(2,"0")}/${String(m).padStart(2,"0")}/${y}`;
+}
+
+function ParentCalendarTab() {
+  const [events, setEvents] = useState<ParentEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [cursor, setCursor] = useState(() => { const d = new Date(); d.setDate(1); return d; });
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const { supabase } = require("@/integrations/supabase/client") as typeof import("@/integrations/supabase/client");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("events")
+        .select("id,title,description,type,start_date,end_date,start_time,end_time,location,target")
+        .order("start_date", { ascending: true });
+      if (cancelled) return;
+      if (!error) setEvents((data ?? []) as ParentEvent[]);
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [supabase]);
+
+  const grid = useMemo(() => {
+    const y = cursor.getFullYear(), m = cursor.getMonth();
+    const first = new Date(y, m, 1);
+    const firstWeekday = (first.getDay() + 6) % 7;
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const cells: { date: Date | null; iso: string | null }[] = [];
+    for (let i = 0; i < firstWeekday; i++) cells.push({ date: null, iso: null });
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dt = new Date(y, m, d);
+      cells.push({ date: dt, iso: parentFmtISO(dt) });
+    }
+    while (cells.length % 7 !== 0) cells.push({ date: null, iso: null });
+    return cells;
+  }, [cursor]);
+
+  const todayIso = parentFmtISO(new Date());
+  const daysEvents = (iso: string) =>
+    events.filter((e) => iso >= e.start_date && iso <= (e.end_date ?? e.start_date));
+
+  const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+  const DAYS = ["L","M","M","J","V","S","D"];
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="p-3">
+          <div className="mb-3 flex items-center justify-between">
+            <Button variant="outline" size="icon" onClick={() => { const d = new Date(cursor); d.setMonth(d.getMonth() - 1); setCursor(d); }} aria-label="Mois précédent">‹</Button>
+            <div className="text-sm font-semibold">{MONTHS[cursor.getMonth()]} {cursor.getFullYear()}</div>
+            <Button variant="outline" size="icon" onClick={() => { const d = new Date(cursor); d.setMonth(d.getMonth() + 1); setCursor(d); }} aria-label="Mois suivant">›</Button>
+          </div>
+          {loading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>
+          ) : (
+            <>
+              <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-muted-foreground">
+                {DAYS.map((d, i) => <div key={i} className="py-1">{d}</div>)}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {grid.map((cell, i) => {
+                  if (!cell.iso || !cell.date) return <div key={i} className="min-h-[56px] rounded-md bg-muted/30" />;
+                  const dayEvs = daysEvents(cell.iso);
+                  const isToday = cell.iso === todayIso;
+                  const isSelected = cell.iso === selectedDay;
+                  const visibleEvs = dayEvs.slice(0, 2);
+                  const extra = dayEvs.length - visibleEvs.length;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setSelectedDay(cell.iso)}
+                      className={cn(
+                        "flex min-h-[56px] min-w-0 flex-col overflow-hidden rounded-md border p-1 text-left transition hover:bg-accent/30",
+                        isToday && "border-primary",
+                        isSelected && "ring-2 ring-primary",
+                      )}
+                    >
+                      <span className={cn("text-[10px] font-semibold leading-none", isToday && "text-primary")}>{cell.date.getDate()}</span>
+                      <div className="mt-1 flex min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
+                        {visibleEvs.map((ev) => {
+                          const meta = PARENT_TYPE_META[ev.type];
+                          return (
+                            <span
+                              key={ev.id}
+                              className={cn("block h-3.5 w-full min-w-0 truncate rounded px-1 text-[9px] font-medium leading-[14px]", meta.bg, meta.text)}
+                              title={ev.title}
+                            >
+                              {ev.title}
+                            </span>
+                          );
+                        })}
+                        {extra > 0 && (
+                          <span className="block h-3.5 w-full truncate rounded bg-muted px-1 text-[9px] font-medium leading-[14px] text-muted-foreground">
+                            +{extra}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {selectedDay && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="font-semibold">{parentFmtFr(selectedDay)}</h3>
+              <button onClick={() => setSelectedDay(null)} className="text-xs text-muted-foreground hover:underline">Fermer</button>
+            </div>
+            {daysEvents(selectedDay).length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucun événement ce jour.</p>
+            ) : (
+              <div className="space-y-2">
+                {daysEvents(selectedDay).map((ev) => {
+                  const meta = PARENT_TYPE_META[ev.type];
+                  return (
+                    <div key={ev.id} className={cn("rounded-md border-l-4 p-3", meta.bg)}>
+                      <div className="flex items-center gap-2">
+                        <span className={cn("h-2 w-2 rounded-full", meta.dot)} />
+                        <span className={cn("text-sm font-semibold", meta.text)}>{ev.title}</span>
+                        <Badge variant="outline" className="ml-auto text-[10px]">{meta.label}</Badge>
+                      </div>
+                      <div className="mt-1 text-[11px] text-muted-foreground">
+                        {parentFmtFr(ev.start_date)}
+                        {ev.end_date && ev.end_date !== ev.start_date && ` → ${parentFmtFr(ev.end_date)}`}
+                        {ev.start_time && ` · ${ev.start_time}${ev.end_time ? `–${ev.end_time}` : ""}`}
+                        {ev.location && ` · ${ev.location}`}
+                      </div>
+                      {ev.description && (
+                        <p className="mt-2 whitespace-pre-wrap text-sm">{ev.description}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardContent className="p-4">
+          <h3 className="mb-3 text-sm font-semibold">Légende</h3>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {(Object.keys(PARENT_TYPE_META) as ParentEvent["type"][]).map((t) => (
+              <div key={t} className="flex items-center gap-2">
+                <span className={cn("h-3 w-3 rounded-full", PARENT_TYPE_META[t].dot)} />
+                <span>{PARENT_TYPE_META[t].label}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
