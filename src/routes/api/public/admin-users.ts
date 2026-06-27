@@ -85,7 +85,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
               .from("students")
               .select("id, school_id")
               .in("id", studentIds as string[]);
-            if (stErr) return Response.json({ error: stErr.message }, { status: 400 });
+            if (stErr) return safeError("admin-users:create-parent:students", 400, stErr);
             const foundIds = new Set((stRows ?? []).map((r: any) => r.id));
             const allInSchool =
               (stRows ?? []).every((r: any) => r.school_id === ctx.schoolId) &&
