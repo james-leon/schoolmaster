@@ -246,7 +246,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
             // Ban / unban via Supabase Auth + flag in profile
             const banDuration = isActive ? "none" : "876000h"; // 100y
             const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, { ban_duration: banDuration });
-            if (error) return Response.json({ error: error.message }, { status: 400 });
+            if (error) return safeError("admin-users:set-active", 400, error);
             await supabaseAdmin.from("profiles").update({ is_active: !!isActive }).eq("id", targetUserId);
             return Response.json({ ok: true });
           }
