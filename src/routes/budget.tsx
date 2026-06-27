@@ -581,7 +581,7 @@ function ComparisonTab({ budget, lines, categories, txs, budgets, onSelect }: {
       ["TOTAL DÉPENSES", "depense", plannedDep, actualDep, actualDep - plannedDep, pct(actualDep, plannedDep)],
       ["RÉSULTAT", "", plannedRec - plannedDep, actualRec - actualDep, (actualRec - actualDep) - (plannedRec - plannedDep), ""],
     ];
-    const csv = [header, ...lines, ...totals].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = [header, ...lines, ...totals].map(csvRow).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
