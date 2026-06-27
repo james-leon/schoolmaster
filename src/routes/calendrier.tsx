@@ -187,44 +187,52 @@ function CalendrierPage() {
                 </div>
                 <div className="grid grid-cols-7 gap-1">
                   {grid.map((cell, i) => {
-                    if (!cell.iso || !cell.date) return <div key={i} className="aspect-square rounded-md bg-muted/30" />;
+                    if (!cell.iso || !cell.date) return <div key={i} className="min-h-[64px] rounded-md bg-muted/30 sm:min-h-[88px]" />;
                     const dayEvs = daysEvents(cell.iso);
                     const isToday = cell.iso === todayIso;
                     const isSelected = cell.iso === selectedDay;
+                    const visibleEvs = dayEvs.slice(0, 2);
+                    const extra = dayEvs.length - visibleEvs.length;
                     return (
                       <button
                         key={i}
                         type="button"
                         onClick={() => setSelectedDay(cell.iso)}
                         className={cn(
-                          "flex aspect-square flex-col rounded-md border p-1 text-left transition hover:bg-accent/30",
+                          "flex min-h-[64px] min-w-0 flex-col overflow-hidden rounded-md border p-1 text-left transition hover:bg-accent/30 sm:min-h-[88px]",
                           isToday && "border-primary",
                           isSelected && "ring-2 ring-primary",
                         )}
                       >
-                        <span className={cn("text-xs font-semibold", isToday && "text-primary")}>{cell.date.getDate()}</span>
-                        <div className="mt-0.5 flex flex-1 flex-col gap-0.5 overflow-hidden">
-                          {dayEvs.slice(0, 3).map((ev) => {
+                        <span className={cn("text-[11px] font-semibold leading-none", isToday && "text-primary")}>{cell.date.getDate()}</span>
+                        <div className="mt-1 flex min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
+                          {visibleEvs.map((ev) => {
                             const meta = TYPE_META[ev.type];
                             return (
                               <span
                                 key={ev.id}
                                 onClick={(e) => { e.stopPropagation(); setViewingEvent(ev); }}
-                                className={cn("truncate rounded px-1 text-[10px] font-medium leading-tight", meta.bg, meta.text)}
+                                className={cn(
+                                  "block h-4 w-full min-w-0 truncate rounded px-1 text-[10px] font-medium leading-4",
+                                  meta.bg, meta.text,
+                                )}
                                 title={ev.title}
                               >
                                 {ev.title}
                               </span>
                             );
                           })}
-                          {dayEvs.length > 3 && (
-                            <span className="text-[10px] text-muted-foreground">+{dayEvs.length - 3}</span>
+                          {extra > 0 && (
+                            <span className="block h-4 w-full truncate rounded bg-muted px-1 text-[10px] font-medium leading-4 text-muted-foreground">
+                              +{extra}
+                            </span>
                           )}
                         </div>
                       </button>
                     );
                   })}
                 </div>
+
               </div>
             ) : (
               <div className="space-y-2">
