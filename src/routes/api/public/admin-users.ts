@@ -199,7 +199,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
               .eq("school_id", ctx.schoolId)
               .eq("role", "teacher")
               .order("full_name", { ascending: true });
-            if (error) return Response.json({ error: error.message }, { status: 400 });
+            if (error) return safeError("admin-users:list-school-teachers", 400, error);
             return Response.json({ teachers: data ?? [] });
           }
 
