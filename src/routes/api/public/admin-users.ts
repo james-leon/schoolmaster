@@ -219,7 +219,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
             if (existing) {
               if (existing.school_id !== ctx.schoolId) return Response.json({ error: "Email déjà utilisé" }, { status: 400 });
               const { error: uErr } = await supabaseAdmin.auth.admin.updateUserById(existing.id, { password: tempPassword });
-              if (uErr) return Response.json({ error: uErr.message }, { status: 400 });
+              if (uErr) return safeError("admin-users:create-teacher-account:reset", 400, uErr);
               await supabaseAdmin.from("profiles").update({ must_change_password: true, is_active: true }).eq("id", existing.id);
               return Response.json({ ok: true, userId: existing.id, tempPassword });
             }
