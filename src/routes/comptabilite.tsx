@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, TrendingUp, TrendingDown, Wallet, Scale, Download } from "lucide-react";
 import { toast } from "sonner";
+import { csvRow } from "@/lib/csv";
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip as RTooltip,
   ResponsiveContainer, Legend, CartesianGrid,
