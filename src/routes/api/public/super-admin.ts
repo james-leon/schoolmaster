@@ -57,7 +57,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
               .from("schools")
               .select("id, name, city, country, email, phone, subscription_plan, status, trial_ends_at, subscription_start, subscription_end, created_at, director_name, last_activity_at, internal_notes")
               .order("created_at", { ascending: false });
-            if (error) return Response.json({ error: error.message }, { status: 500 });
+            if (error) return safeError("super-admin", 500, error);
 
             // Student counts per school
             const { data: students } = await supabaseAdmin.from("students").select("school_id");
@@ -112,7 +112,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
             const { error } = await (supabaseAdmin.from("schools") as any)
               .update({ internal_notes: trimmed })
               .eq("id", schoolId);
-            if (error) return Response.json({ error: error.message }, { status: 500 });
+            if (error) return safeError("super-admin", 500, error);
             return Response.json({ ok: true });
           }
 
@@ -143,7 +143,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
               })
               .select()
               .single();
-            if (sErr) return Response.json({ error: sErr.message }, { status: 500 });
+            if (sErr) return safeError("super-admin", 500, sErr);
 
             // 2) Create the director's auth account
             const tempPassword = genPassword(12);
@@ -156,7 +156,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
             if (cErr || !created.user) {
               // Roll back school creation if user creation fails
               await supabaseAdmin.from("schools").delete().eq("id", school.id);
-              return Response.json({ error: cErr?.message ?? "Création du compte échouée" }, { status: 400 });
+              return safeError("super-admin", 400, cErr);
             }
             const uid = created.user.id;
 
@@ -191,7 +191,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
               return Response.json({ error: "Paramètres invalides" }, { status: 400 });
             }
             const { error } = await supabaseAdmin.from("schools").update({ status }).eq("id", schoolId);
-            if (error) return Response.json({ error: error.message }, { status: 500 });
+            if (error) return safeError("super-admin", 500, error);
             return Response.json({ ok: true });
           }
 
@@ -208,7 +208,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
               trial_ends_at: trialEnd || null,
             };
             const { error } = await (supabaseAdmin.from("schools") as any).update(patch).eq("id", schoolId);
-            if (error) return Response.json({ error: error.message }, { status: 500 });
+            if (error) return safeError("super-admin", 500, error);
             console.log("[super-admin] subscription updated", { schoolId, plan, status, by: ctx.userId });
             return Response.json({ ok: true });
           }
@@ -217,7 +217,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
             const { schoolId, plan } = body;
             if (!schoolId || !plan) return Response.json({ error: "Paramètres invalides" }, { status: 400 });
             const { error } = await supabaseAdmin.from("schools").update({ subscription_plan: plan }).eq("id", schoolId);
-            if (error) return Response.json({ error: error.message }, { status: 500 });
+            if (error) return safeError("super-admin", 500, error);
             return Response.json({ ok: true });
           }
 
@@ -226,7 +226,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
             if (!schoolId || !trialEndsAt) return Response.json({ error: "Paramètres invalides" }, { status: 400 });
             const { error } = await supabaseAdmin
               .from("schools").update({ trial_ends_at: trialEndsAt, status: "trial" }).eq("id", schoolId);
-            if (error) return Response.json({ error: error.message }, { status: 500 });
+            if (error) return safeError("super-admin", 500, error);
             return Response.json({ ok: true });
           }
 
@@ -282,7 +282,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
               subscription_end: periodEnd,
               trial_ends_at: null,
             }).eq("id", schoolId);
-            if (uErr) return Response.json({ error: uErr.message }, { status: 500 });
+            if (uErr) return safeError("super-admin", 500, uErr);
 
             const { error: pErr } = await (supabaseAdmin.from("payment_subscriptions") as any).insert({
               school_id: schoolId, plan,
@@ -293,7 +293,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
               reference: reference ?? null,
               recorded_by: ctx.userId,
             });
-            if (pErr) return Response.json({ error: pErr.message }, { status: 500 });
+            if (pErr) return safeError("super-admin", 500, pErr);
             return Response.json({ ok: true, newEnd: periodEnd });
           }
 
@@ -315,7 +315,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
               subscription_end: periodEnd,
               trial_ends_at: null,
             }).eq("id", schoolId);
-            if (uErr) return Response.json({ error: uErr.message }, { status: 500 });
+            if (uErr) return safeError("super-admin", 500, uErr);
 
             const { error: pErr } = await (supabaseAdmin.from("payment_subscriptions") as any).insert({
               school_id: schoolId, plan,
@@ -326,7 +326,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
               reference: reference ?? null,
               recorded_by: ctx.userId,
             });
-            if (pErr) return Response.json({ error: pErr.message }, { status: 500 });
+            if (pErr) return safeError("super-admin", 500, pErr);
             return Response.json({ ok: true, newEnd: periodEnd });
           }
 
@@ -338,7 +338,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
               .select("id, plan, amount, payment_date, payment_method, status, period_start, period_end, reference")
               .eq("school_id", schoolId)
               .order("payment_date", { ascending: false });
-            if (error) return Response.json({ error: error.message }, { status: 500 });
+            if (error) return safeError("super-admin", 500, error);
             return Response.json({ ok: true, payments: data ?? [] });
           }
 
