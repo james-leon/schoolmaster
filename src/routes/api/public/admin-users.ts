@@ -158,7 +158,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
               .eq("school_id", ctx.schoolId)
               .eq("role", "parent")
               .order("full_name", { ascending: true });
-            if (error) return Response.json({ error: error.message }, { status: 400 });
+            if (error) return safeError("admin-users:list-school-parents", 400, error);
             return Response.json({ parents: data ?? [] });
           }
 
