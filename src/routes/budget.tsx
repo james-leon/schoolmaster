@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, AlertTriangle, PiggyBank, Download, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { csvRow } from "@/lib/csv";
 
 export const Route = createFileRoute("/budget")({ component: BudgetPage });
 
