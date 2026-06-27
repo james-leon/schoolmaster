@@ -59,6 +59,7 @@ import {
 } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { csvRow } from "@/lib/csv";
 
 export const Route = createFileRoute("/scolarite")({ component: ScolaritePage });
 
