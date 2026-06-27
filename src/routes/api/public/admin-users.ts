@@ -187,7 +187,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
             if (!(await ensureTargetInSchool(targetUserId, ctx.schoolId))) return Response.json({ error: "Forbidden" }, { status: 403 });
             const tempPassword = genPassword(10);
             const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, { password: tempPassword });
-            if (error) return Response.json({ error: error.message }, { status: 400 });
+            if (error) return safeError("admin-users:reset-password", 400, error);
             await supabaseAdmin.from("profiles").update({ must_change_password: true }).eq("id", targetUserId);
             return Response.json({ ok: true, tempPassword });
           }
