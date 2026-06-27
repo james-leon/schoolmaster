@@ -147,6 +147,7 @@ function ParentPortal() {
             {tab === "medical" && <MedicalTab studentId={student.id} canEdit={false} />}
             {tab === "suivi" && <DisciplineTab studentId={student.id} schoolId={user?.schoolId} canAdd={false} readOnly />}
             {tab === "messages" && <MessagesTab announcements={db.announcements} classIds={children.map((c) => c.classId).filter((id): id is string => !!id)} userId={user?.id} schoolId={user?.schoolId} />}
+            {tab === "calendrier" && <ParentCalendarTab />}
           </>
         ) : null}
         <div className="mx-auto mt-6 max-w-3xl px-4 pb-20 text-center text-xs text-muted-foreground">
@@ -158,8 +159,8 @@ function ParentPortal() {
 
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card">
-        <div className={cn("mx-auto grid max-w-3xl", `grid-cols-${TABS.length}`)} style={{ gridTemplateColumns: `repeat(${TABS.length}, minmax(0, 1fr))` }}>
-          {TABS.map((t) => {
+        <div className="mx-auto grid max-w-3xl" style={{ gridTemplateColumns: `repeat(${navItems.length + 1}, minmax(0, 1fr))` }}>
+          {navItems.map((t) => {
             const active = tab === t.key;
             return (
               <button
@@ -175,9 +176,46 @@ function ParentPortal() {
               </button>
             );
           })}
+          <button
+            onClick={() => setMoreOpen(true)}
+            className={cn(
+              "flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-muted-foreground transition-colors",
+              moreActive && "text-primary",
+            )}
+          >
+            <MoreHorizontal className="h-5 w-5" />
+            <span className="truncate">Plus</span>
+          </button>
         </div>
       </nav>
+
+      <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl p-0">
+          <SheetHeader className="border-b px-4 py-3 text-left">
+            <SheetTitle>Plus d'options</SheetTitle>
+          </SheetHeader>
+          <div className="grid grid-cols-1 gap-1 p-3">
+            {MORE.map((item) => {
+              const active = tab === item.key;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => { setTab(item.key); setMoreOpen(false); }}
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-4 py-3 text-sm font-medium hover:bg-accent/10",
+                    active && "bg-accent/10 text-accent",
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
+
   );
 }
 
