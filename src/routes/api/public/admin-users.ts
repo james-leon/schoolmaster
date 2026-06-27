@@ -227,7 +227,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
               email: t.email, password: tempPassword, email_confirm: true,
               user_metadata: { full_name: `${t.first_name} ${t.last_name}` },
             });
-            if (cErr || !created.user) return Response.json({ error: cErr?.message ?? "Création échouée" }, { status: 400 });
+            if (cErr || !created.user) return safeError("admin-users:create-teacher-account", 400, cErr);
             const uid = created.user.id;
             await supabaseAdmin.from("user_roles").upsert({ user_id: uid, role: "teacher" }, { onConflict: "user_id,role" });
             await supabaseAdmin.from("profiles").upsert({
