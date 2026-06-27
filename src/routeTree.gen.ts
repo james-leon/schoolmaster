@@ -42,7 +42,6 @@ import { Route as PersonnelIndexRouteImport } from './routes/personnel.index'
 import { Route as PersonnelStaffIdRouteImport } from './routes/personnel.$staffId'
 import { Route as ElevesStudentIdRouteImport } from './routes/eleves.$studentId'
 import { Route as ApiPublicSuperAdminRouteImport } from './routes/api/public/super-admin'
-import { Route as ApiPublicSeedDemoRouteImport } from './routes/api/public/seed-demo'
 import { Route as ApiPublicRegisterSchoolRouteImport } from './routes/api/public/register-school'
 import { Route as ApiPublicAdminUsersRouteImport } from './routes/api/public/admin-users'
 
@@ -211,11 +210,6 @@ const ApiPublicSuperAdminRoute = ApiPublicSuperAdminRouteImport.update({
   path: '/api/public/super-admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicSeedDemoRoute = ApiPublicSeedDemoRouteImport.update({
-  id: '/api/public/seed-demo',
-  path: '/api/public/seed-demo',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicRegisterSchoolRoute = ApiPublicRegisterSchoolRouteImport.update({
   id: '/api/public/register-school',
   path: '/api/public/register-school',
@@ -262,7 +256,6 @@ export interface FileRoutesByFullPath {
   '/personnel/': typeof PersonnelIndexRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
-  '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
   '/api/public/super-admin': typeof ApiPublicSuperAdminRoute
 }
 export interface FileRoutesByTo {
@@ -299,7 +292,6 @@ export interface FileRoutesByTo {
   '/personnel': typeof PersonnelIndexRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
-  '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
   '/api/public/super-admin': typeof ApiPublicSuperAdminRoute
 }
 export interface FileRoutesById {
@@ -338,7 +330,6 @@ export interface FileRoutesById {
   '/personnel/': typeof PersonnelIndexRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
-  '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
   '/api/public/super-admin': typeof ApiPublicSuperAdminRoute
 }
 export interface FileRouteTypes {
@@ -378,7 +369,6 @@ export interface FileRouteTypes {
     | '/personnel/'
     | '/api/public/admin-users'
     | '/api/public/register-school'
-    | '/api/public/seed-demo'
     | '/api/public/super-admin'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -415,7 +405,6 @@ export interface FileRouteTypes {
     | '/personnel'
     | '/api/public/admin-users'
     | '/api/public/register-school'
-    | '/api/public/seed-demo'
     | '/api/public/super-admin'
   id:
     | '__root__'
@@ -453,7 +442,6 @@ export interface FileRouteTypes {
     | '/personnel/'
     | '/api/public/admin-users'
     | '/api/public/register-school'
-    | '/api/public/seed-demo'
     | '/api/public/super-admin'
   fileRoutesById: FileRoutesById
 }
@@ -489,7 +477,6 @@ export interface RootRouteChildren {
   UnauthorizedRoute: typeof UnauthorizedRoute
   ApiPublicAdminUsersRoute: typeof ApiPublicAdminUsersRoute
   ApiPublicRegisterSchoolRoute: typeof ApiPublicRegisterSchoolRoute
-  ApiPublicSeedDemoRoute: typeof ApiPublicSeedDemoRoute
   ApiPublicSuperAdminRoute: typeof ApiPublicSuperAdminRoute
 }
 
@@ -726,13 +713,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSuperAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/seed-demo': {
-      id: '/api/public/seed-demo'
-      path: '/api/public/seed-demo'
-      fullPath: '/api/public/seed-demo'
-      preLoaderRoute: typeof ApiPublicSeedDemoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/register-school': {
       id: '/api/public/register-school'
       path: '/api/public/register-school'
@@ -807,7 +787,6 @@ const rootRouteChildren: RootRouteChildren = {
   UnauthorizedRoute: UnauthorizedRoute,
   ApiPublicAdminUsersRoute: ApiPublicAdminUsersRoute,
   ApiPublicRegisterSchoolRoute: ApiPublicRegisterSchoolRoute,
-  ApiPublicSeedDemoRoute: ApiPublicSeedDemoRoute,
   ApiPublicSuperAdminRoute: ApiPublicSuperAdminRoute,
 }
 export const routeTree = rootRouteImport
