@@ -124,7 +124,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
               .upsert({ parent_profile_id: parentProfileId, student_id: studentId,
                         school_id: ctx.schoolId, relationship: relationship || "Tuteur" },
                       { onConflict: "parent_profile_id,student_id" });
-            if (error) return Response.json({ error: error.message }, { status: 400 });
+            if (error) return safeError("admin-users:link-parent-student", 400, error);
             const { data: links } = await supabaseAdmin.from("parent_students")
               .select("student_id").eq("parent_profile_id", parentProfileId);
             const ids = (links ?? []).map((r: any) => r.student_id);
