@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { safeError } from "@/lib/api-errors";
 
 /**
  * Admin endpoint to manage user accounts in the current school.
@@ -57,7 +58,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
               email, password: tempPassword, email_confirm: true,
               user_metadata: { full_name: `${firstName} ${lastName}` },
             });
-            if (cErr || !created.user) return Response.json({ error: cErr?.message ?? "Création échouée" }, { status: 400 });
+            if (cErr || !created.user) return safeError("admin-users:create-teacher", 400, cErr);
             const uid = created.user.id;
             await supabaseAdmin.from("user_roles").upsert({ user_id: uid, role: "teacher" }, { onConflict: "user_id,role" });
             await supabaseAdmin.from("profiles").upsert({
@@ -84,7 +85,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
               .from("students")
               .select("id, school_id")
               .in("id", studentIds as string[]);
-            if (stErr) return Response.json({ error: stErr.message }, { status: 400 });
+            if (stErr) return safeError("admin-users:create-parent:students", 400, stErr);
             const foundIds = new Set((stRows ?? []).map((r: any) => r.id));
             const allInSchool =
               (stRows ?? []).every((r: any) => r.school_id === ctx.schoolId) &&
@@ -96,7 +97,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
               email, password: tempPassword, email_confirm: true,
               user_metadata: { full_name: `${firstName} ${lastName}` },
             });
-            if (cErr || !created.user) return Response.json({ error: cErr?.message ?? "Création échouée" }, { status: 400 });
+            if (cErr || !created.user) return safeError("admin-users:create-parent", 400, cErr);
             const uid = created.user.id;
             await supabaseAdmin.from("user_roles").upsert({ user_id: uid, role: "parent" }, { onConflict: "user_id,role" });
             await supabaseAdmin.from("profiles").upsert({
@@ -123,7 +124,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
               .upsert({ parent_profile_id: parentProfileId, student_id: studentId,
                         school_id: ctx.schoolId, relationship: relationship || "Tuteur" },
                       { onConflict: "parent_profile_id,student_id" });
-            if (error) return Response.json({ error: error.message }, { status: 400 });
+            if (error) return safeError("admin-users:link-parent-student", 400, error);
             const { data: links } = await supabaseAdmin.from("parent_students")
               .select("student_id").eq("parent_profile_id", parentProfileId);
             const ids = (links ?? []).map((r: any) => r.student_id);
@@ -157,7 +158,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
               .eq("school_id", ctx.schoolId)
               .eq("role", "parent")
               .order("full_name", { ascending: true });
-            if (error) return Response.json({ error: error.message }, { status: 400 });
+            if (error) return safeError("admin-users:list-school-parents", 400, error);
             return Response.json({ parents: data ?? [] });
           }
 
@@ -186,7 +187,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
             if (!(await ensureTargetInSchool(targetUserId, ctx.schoolId))) return Response.json({ error: "Forbidden" }, { status: 403 });
             const tempPassword = genPassword(10);
             const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, { password: tempPassword });
-            if (error) return Response.json({ error: error.message }, { status: 400 });
+            if (error) return safeError("admin-users:reset-password", 400, error);
             await supabaseAdmin.from("profiles").update({ must_change_password: true }).eq("id", targetUserId);
             return Response.json({ ok: true, tempPassword });
           }
@@ -198,7 +199,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
               .eq("school_id", ctx.schoolId)
               .eq("role", "teacher")
               .order("full_name", { ascending: true });
-            if (error) return Response.json({ error: error.message }, { status: 400 });
+            if (error) return safeError("admin-users:list-school-teachers", 400, error);
             return Response.json({ teachers: data ?? [] });
           }
 
@@ -218,7 +219,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
             if (existing) {
               if (existing.school_id !== ctx.schoolId) return Response.json({ error: "Email déjà utilisé" }, { status: 400 });
               const { error: uErr } = await supabaseAdmin.auth.admin.updateUserById(existing.id, { password: tempPassword });
-              if (uErr) return Response.json({ error: uErr.message }, { status: 400 });
+              if (uErr) return safeError("admin-users:create-teacher-account:reset", 400, uErr);
               await supabaseAdmin.from("profiles").update({ must_change_password: true, is_active: true }).eq("id", existing.id);
               return Response.json({ ok: true, userId: existing.id, tempPassword });
             }
@@ -226,7 +227,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
               email: t.email, password: tempPassword, email_confirm: true,
               user_metadata: { full_name: `${t.first_name} ${t.last_name}` },
             });
-            if (cErr || !created.user) return Response.json({ error: cErr?.message ?? "Création échouée" }, { status: 400 });
+            if (cErr || !created.user) return safeError("admin-users:create-teacher-account", 400, cErr);
             const uid = created.user.id;
             await supabaseAdmin.from("user_roles").upsert({ user_id: uid, role: "teacher" }, { onConflict: "user_id,role" });
             await supabaseAdmin.from("profiles").upsert({
@@ -245,7 +246,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
             // Ban / unban via Supabase Auth + flag in profile
             const banDuration = isActive ? "none" : "876000h"; // 100y
             const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, { ban_duration: banDuration });
-            if (error) return Response.json({ error: error.message }, { status: 400 });
+            if (error) return safeError("admin-users:set-active", 400, error);
             await supabaseAdmin.from("profiles").update({ is_active: !!isActive }).eq("id", targetUserId);
             return Response.json({ ok: true });
           }
@@ -256,7 +257,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
             if (targetUserId === ctx.userId) return Response.json({ error: "Vous ne pouvez pas supprimer votre propre compte" }, { status: 400 });
             if (!(await ensureTargetInSchool(targetUserId, ctx.schoolId))) return Response.json({ error: "Forbidden" }, { status: 403 });
             const { error } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
-            if (error) return Response.json({ error: error.message }, { status: 400 });
+            if (error) return safeError("admin-users:delete", 400, error);
             await supabaseAdmin.from("parent_students").delete().eq("parent_profile_id", targetUserId);
             await supabaseAdmin.from("user_roles").delete().eq("user_id", targetUserId);
             await supabaseAdmin.from("profiles").delete().eq("id", targetUserId);
