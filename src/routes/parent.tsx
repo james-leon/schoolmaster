@@ -33,7 +33,7 @@ export const Route = createFileRoute("/parent")({
   component: ParentPortal,
 });
 
-type TabKey = "tous" | "enfant" | "notes" | "presences" | "paiements" | "medical" | "suivi" | "messages";
+type TabKey = "tous" | "enfant" | "notes" | "presences" | "paiements" | "medical" | "suivi" | "messages" | "calendrier";
 
 function ParentPortal() {
   const { user, loading, isAuthenticated, logout } = useAuth();
@@ -41,6 +41,7 @@ function ParentPortal() {
   const db = useDB();
   const { children, loading: childrenLoading, selectedId, setSelectedId, selectedChild } = useParentChildren();
   const [tab, setTab] = useState<TabKey>("enfant");
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -51,16 +52,23 @@ function ParentPortal() {
 
   const hasMultiple = children.length > 1;
 
-  const TABS: { key: TabKey; label: string; icon: typeof UserCircle }[] = [
+  type TabDef = { key: TabKey; label: string; icon: typeof UserCircle };
+  const PRIMARY: TabDef[] = [
     ...(hasMultiple ? [{ key: "tous" as TabKey, label: "Tous", icon: Users2 }] : []),
     { key: "enfant", label: "Enfant", icon: UserCircle },
     { key: "notes", label: "Notes", icon: GraduationCap },
-    { key: "presences", label: "Présences", icon: Calendar },
     { key: "paiements", label: "Paiements", icon: Wallet },
-    { key: "medical", label: "Médical", icon: HeartPulse },
-    { key: "suivi", label: "Suivi", icon: ShieldAlert },
     { key: "messages", label: "Messages", icon: MessageSquare },
   ];
+  const MORE: TabDef[] = [
+    { key: "presences", label: "Présences", icon: Calendar },
+    { key: "medical", label: "Médical", icon: HeartPulse },
+    { key: "suivi", label: "Suivi", icon: ShieldAlert },
+    { key: "calendrier", label: "Calendrier", icon: CalendarDays },
+  ];
+  const moreActive = MORE.some((m) => m.key === tab);
+  const navItems = PRIMARY.length >= 5 ? PRIMARY.slice(0, 5) : PRIMARY;
+
 
   // Resolve a Student-like object from local db (may be missing if not synced) — fall back to hook data
   const student: Student | null = useMemo(() => {
