@@ -1,17 +1,31 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-export type AppreciationInput = {
-  firstName: string;
-  classLevel?: string;
-  term: string;
-  generalAverage: number | null;
-  rank: number | null;
-  totalStudents: number | null;
-  subjects: { name: string; average: number | null }[];
-  absences?: number;
-  retards?: number;
-};
+// Strip control chars and cap length to neutralize prompt-injection attempts.
+const sanitize = (s: string, max: number) =>
+  s.replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+
+const AppreciationSchema = z.object({
+  firstName: z.string().min(1).max(100).transform((s) => sanitize(s, 100)),
+  classLevel: z.string().max(40).optional().transform((s) => (s ? sanitize(s, 40) : s)),
+  term: z.string().min(1).max(50).transform((s) => sanitize(s, 50)),
+  generalAverage: z.number().min(0).max(20).nullable(),
+  rank: z.number().int().min(0).max(10000).nullable(),
+  totalStudents: z.number().int().min(0).max(10000).nullable(),
+  subjects: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(100).transform((s) => sanitize(s, 100)),
+        average: z.number().min(0).max(20).nullable(),
+      }),
+    )
+    .max(40),
+  absences: z.number().int().min(0).max(1000).optional(),
+  retards: z.number().int().min(0).max(1000).optional(),
+});
+
+export type AppreciationInput = z.infer<typeof AppreciationSchema>;
 
 function buildPrompt(d: AppreciationInput): string {
   const moy = d.generalAverage != null ? d.generalAverage.toFixed(2) : "non disponible";
@@ -42,7 +56,15 @@ Rédige UNIQUEMENT l'appréciation (2 à 3 phrases), sans en-tête, sans guillem
 
 export const generateAppreciation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => input as AppreciationInput)
+  .inputValidator((input: unknown) => {
+    const parsed = AppreciationSchema.safeParse(input);
+    if (!parsed.success) {
+      console.error("[ai-appreciation] invalid input", parsed.error.flatten());
+      throw new Response("Requête invalide.", { status: 400 });
+    }
+    return parsed.data;
+  })
+
   .handler(async ({ data, context }) => {
     // Restrict to teachers and school admins
     const { supabase, userId } = context;
