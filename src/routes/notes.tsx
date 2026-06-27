@@ -25,6 +25,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { GraduationCap, Save, Download, Printer, FileText, Eye, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { csvRow } from "@/lib/csv";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { resolveTeacherClasses } from "@/lib/teacher-scope";
