@@ -59,6 +59,7 @@ import {
 } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { csvRow } from "@/lib/csv";
 
 export const Route = createFileRoute("/scolarite")({ component: ScolaritePage });
 
@@ -918,9 +919,9 @@ function HistoryTab({ loaded }: { loaded: boolean }) {
         r.mode,
         r.reference || "",
         r.amount,
-      ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",");
+      ];
     });
-    const csv = [headers.join(","), ...lines].join("\n");
+    const csv = [csvRow(headers), ...lines.map(csvRow)].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, TrendingUp, TrendingDown, Wallet, Scale, Download } from "lucide-react";
 import { toast } from "sonner";
+import { csvRow } from "@/lib/csv";
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip as RTooltip,
   ResponsiveContainer, Legend, CartesianGrid,
@@ -280,7 +281,7 @@ function ComptabilitePage() {
       supplierName(t.supplier_id),
       String(t.amount), t.payment_method ?? "", t.reference ?? "",
     ]));
-    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+    const csv = rows.map(csvRow).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

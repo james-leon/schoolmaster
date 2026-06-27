@@ -25,6 +25,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { GraduationCap, Save, Download, Printer, FileText, Eye, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { csvRow } from "@/lib/csv";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { resolveTeacherClasses } from "@/lib/teacher-scope";
@@ -435,22 +436,15 @@ function OverviewTab() {
   });
 
   const exportCSV = () => {
-    // CSV-safe escaping + formula-injection guard.
-    const esc = (v: unknown) => {
-      let s = v == null ? "" : String(v);
-      if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
-      return `"${s.replace(/"/g, '""')}"`;
-    };
-    const header = ["Élève", ...subjects.map((s) => s.name), "Moy. Générale", "Rang"].map(esc);
-    const lines = [header.join(",")];
+    const header = ["Élève", ...subjects.map((s) => s.name), "Moy. Générale", "Rang"];
+    const lines = [csvRow(header)];
     rows.forEach((r) => {
-      const row = [
-        esc(`${r.student.firstName} ${r.student.lastName}`),
-        ...r.subjAvgs.map((v) => esc(v == null ? "" : v.toFixed(2))),
-        esc(r.gen != null ? r.gen.toFixed(2) : ""),
-        esc(r.rank || ""),
-      ];
-      lines.push(row.join(","));
+      lines.push(csvRow([
+        `${r.student.firstName} ${r.student.lastName}`,
+        ...r.subjAvgs.map((v) => (v == null ? "" : v.toFixed(2))),
+        r.gen != null ? r.gen.toFixed(2) : "",
+        r.rank || "",
+      ]));
     });
     const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);

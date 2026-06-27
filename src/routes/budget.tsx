@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, AlertTriangle, PiggyBank, Download, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { csvRow } from "@/lib/csv";
 
 export const Route = createFileRoute("/budget")({ component: BudgetPage });
 
@@ -580,7 +581,7 @@ function ComparisonTab({ budget, lines, categories, txs, budgets, onSelect }: {
       ["TOTAL DÉPENSES", "depense", plannedDep, actualDep, actualDep - plannedDep, pct(actualDep, plannedDep)],
       ["RÉSULTAT", "", plannedRec - plannedDep, actualRec - actualDep, (actualRec - actualDep) - (plannedRec - plannedDep), ""],
     ];
-    const csv = [header, ...lines, ...totals].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = [header, ...lines, ...totals].map(csvRow).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
