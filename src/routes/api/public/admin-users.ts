@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { safeError } from "@/lib/api-errors";
 
 /**
  * Admin endpoint to manage user accounts in the current school.
