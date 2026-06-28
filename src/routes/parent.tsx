@@ -99,23 +99,32 @@ function ParentPortal() {
   const initials = student ? (student.firstName[0] + student.lastName[0]).toUpperCase() : "?";
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <header className="sticky top-0 z-20 border-b border-border bg-card">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+    <div className="min-h-screen bg-[#EEF2F8] pb-28 font-['Inter']">
+      <header
+        className="sticky top-0 z-20 text-white shadow-[0_8px_24px_-12px_rgba(13,44,84,0.4)]"
+        style={{ background: "linear-gradient(160deg, #0D2C54 0%, #15366B 60%, #1B4080 100%)" }}
+      >
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 pb-4 pt-4">
+          <div className="min-w-0 flex-1">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur">
+              👋 Espace Parent
+            </span>
+            <p className="mt-1.5 truncate font-['Sora'] text-lg font-bold tracking-tight">
+              Bonjour, {user?.name}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <div className="hidden h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white/10 ring-1 ring-white/15 sm:flex">
               <Logo compact />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <Badge className="bg-success text-success-foreground">Parent</Badge>
-              </div>
-              <p className="text-sm font-medium">Bienvenue, {user?.name}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
             <ParentNotificationBell />
-            <Button variant="ghost" size="icon" onClick={() => { logout(); navigate({ to: "/login" }); }} aria-label="Déconnexion">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/10 hover:text-white"
+              onClick={() => { logout(); navigate({ to: "/login" }); }}
+              aria-label="Déconnexion"
+            >
               <LogOut className="h-5 w-5" />
             </Button>
           </div>
