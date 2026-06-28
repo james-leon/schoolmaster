@@ -8,7 +8,7 @@ import { PrivacyConsentGate } from "./PrivacyConsentGate";
 import { useAuth } from "@/lib/auth";
 import { allowedRoutes, NAV_ITEMS } from "@/lib/nav";
 import { usePlan } from "@/lib/usePlan";
-import { ChevronRight, ShieldAlert, AlertOctagon, Clock } from "lucide-react";
+import { ShieldAlert, AlertOctagon, Clock } from "lucide-react";
 import { Button } from "./ui/button";
 import { WINTEK_CONTACT } from "@/lib/plans";
 
@@ -119,14 +119,10 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
       <div className="md:pl-[260px]">
         <Header title={title} />
         <main className="px-4 pb-24 pt-5 md:px-6 md:pb-8">
-          <nav className="mb-4 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span>Accueil</span>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <span className="font-medium text-foreground">{title}</span>
-          </nav>
           {children}
           <AppFooter className="mt-8 border-t border-border" />
         </main>
+
       </div>
       <MobileNav />
       <PrivacyConsentGate />
