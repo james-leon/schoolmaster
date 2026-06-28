@@ -8,7 +8,7 @@ import { PrivacyConsentGate } from "./PrivacyConsentGate";
 import { useAuth } from "@/lib/auth";
 import { allowedRoutes, NAV_ITEMS } from "@/lib/nav";
 import { usePlan } from "@/lib/usePlan";
-import { ChevronRight, ShieldAlert, AlertOctagon, Clock } from "lucide-react";
+import { ShieldAlert, AlertOctagon, Clock } from "lucide-react";
 import { Button } from "./ui/button";
 import { WINTEK_CONTACT } from "@/lib/plans";
 
