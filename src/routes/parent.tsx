@@ -169,7 +169,7 @@ function ParentPortal() {
       </main>
 
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E8EDF4] bg-white shadow-[0_-8px_24px_-12px_rgba(15,23,42,0.08)]">
         <div className="mx-auto grid max-w-3xl" style={{ gridTemplateColumns: `repeat(${navItems.length + 1}, minmax(0, 1fr))` }}>
           {navItems.map((t) => {
             const active = tab === t.key;
@@ -178,10 +178,11 @@ function ParentPortal() {
                 key={t.key}
                 onClick={() => setTab(t.key)}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-muted-foreground transition-colors",
-                  active && "text-primary",
+                  "relative flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors",
+                  active ? "text-[#2563EB]" : "text-[#64748B] hover:text-[#0F172A]",
                 )}
               >
+                {active && <span className="absolute inset-x-6 top-0 h-[3px] rounded-b-full bg-[#2563EB]" />}
                 <t.icon className="h-5 w-5" />
                 <span className="truncate">{t.label}</span>
               </button>
@@ -190,10 +191,11 @@ function ParentPortal() {
           <button
             onClick={() => setMoreOpen(true)}
             className={cn(
-              "flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-muted-foreground transition-colors",
-              moreActive && "text-primary",
+              "relative flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors",
+              moreActive ? "text-[#2563EB]" : "text-[#64748B] hover:text-[#0F172A]",
             )}
           >
+            {moreActive && <span className="absolute inset-x-6 top-0 h-[3px] rounded-b-full bg-[#2563EB]" />}
             <MoreHorizontal className="h-5 w-5" />
             <span className="truncate">Plus</span>
           </button>
