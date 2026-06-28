@@ -63,24 +63,25 @@ export function Header({ title }: { title: string }) {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-card px-4 md:px-6">
-      <div className="flex items-center gap-3">
-        <h1 className="text-lg font-semibold tracking-tight md:text-xl">{title}</h1>
-        {user && (
-          <Badge className={`hidden sm:inline-flex ${ROLE_BADGE[user.role] ?? ""}`}>
-            {ROLE_LABELS[user.role]}
-          </Badge>
-        )}
-      </div>
-      <div className="flex items-center gap-1.5">
-        {user && (
-          <span className="mr-2 hidden text-sm font-medium md:inline">
-            {user.role === "teacher" ? `Prof. ${user.name}` : user.name}
-          </span>
-        )}
-        <Button variant="ghost" size="icon" onClick={toggle} aria-label="Basculer le thème">
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-[#E8EDF4] bg-card px-4 md:px-6">
+      <nav className="flex min-w-0 items-center gap-1.5 text-sm text-[#64748B]">
+        <span className="hidden sm:inline">Accueil</span>
+        <ChevronRight className="hidden h-3.5 w-3.5 sm:inline" />
+        <span className="truncate font-medium text-[#0F172A]">{title}</span>
+      </nav>
+      <div className="flex flex-1 items-center justify-end gap-2 md:gap-3">
+        <div className="relative hidden md:block md:w-[320px] lg:w-[380px]">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#94A3B8]" />
+          <input
+            type="text"
+            placeholder="Rechercher un élève, une facture..."
+            className="h-10 w-full rounded-xl border border-[#E8EDF4] bg-[#F7F9FC] pl-9 pr-3 text-sm text-[#0F172A] outline-none transition focus:border-[#2563EB] focus:bg-card focus:ring-2 focus:ring-[#2563EB]/15"
+          />
+        </div>
+        <Button variant="ghost" size="icon" onClick={toggle} aria-label="Basculer le thème" className="hidden md:inline-flex">
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
+
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
