@@ -71,8 +71,6 @@ function TeacherDashboard() {
   const navigate = useNavigate();
   const today = new Date().toISOString().slice(0, 10);
 
-  // Resolve "my classes" from all assignment sources (profile.assignedClasses,
-  // classes.teacherId via email link, class_subjects.teacherId via email link).
   const myClasses = resolveTeacherClasses(user, db);
   const myClassIds = new Set(myClasses.map((c) => c.id));
   const myStudents = db.students.filter((s) => myClassIds.has(s.classId));
@@ -82,7 +80,6 @@ function TeacherDashboard() {
     (a) => a.date === today && a.status === "absent" && myStudentIds.has(a.studentId),
   ).length;
 
-  // Pending evaluations: subjects×classes assigned to teacher that have no grades yet this term.
   const mySubjectsForClasses = db.classSubjects.filter(
     (cs) => myClassIds.has(cs.classId) && (!cs.teacherId || true),
   );
@@ -93,86 +90,116 @@ function TeacherDashboard() {
     (cs) => !gradedKeys.has(`${cs.classId}|${cs.id}`) && !gradedKeys.has(`${cs.classId}|${cs.name}`),
   ).length;
 
-  // Charts — scoped to teacher's classes
   const perClass = myClasses.map((c) => ({
     name: c.name,
     Élèves: db.students.filter((s) => s.classId === c.id).length,
   }));
 
+  const quickActions = [
+    { label: "Saisir des notes", icon: GraduationCap, to: "/notes" as const, tone: "bg-[#2563EB]/10 text-[#2563EB]" },
+    { label: "Prendre les présences", icon: CalendarCheck, to: "/presences" as const, tone: "bg-[#15A05A]/12 text-[#15A05A]" },
+    { label: "Mes élèves", icon: Users, to: "/eleves" as const, tone: "bg-[#0E9384]/10 text-[#0E9384]" },
+    { label: "Mes classes", icon: BookOpen, to: "/classes" as const, tone: "bg-[#F58B1F]/15 text-[#F58B1F]" },
+  ];
+
   return (
     <AppLayout title="Tableau de bord">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Mes Élèves" value={String(myStudents.length)} icon={Users} tone="blue" />
-        <StatCard label="Mes Classes" value={String(myClasses.length)} icon={BookOpen} tone="green" />
-        <StatCard label="Absences aujourd'hui" value={String(absentToday)} icon={AlertCircle} tone="orange" />
-        <StatCard label="Notes à saisir" value={String(pendingEvals)} icon={ClipboardList} tone="red" />
+      <div className="min-w-0">
+        <h1 className="font-['Sora'] text-2xl font-bold tracking-tight text-[#0F172A] md:text-[28px]">
+          Bonjour, {user?.name?.split(" ")[0] ?? ""} <span aria-hidden>👋</span>
+        </h1>
+        <p className="mt-1 text-sm text-[#64748B]">Voici un aperçu de vos classes et de vos élèves.</p>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard label="Mes classes" value={String(myClasses.length)} icon={BookOpen} tone="blue" sub={myClasses.length === 0 ? "Aucune classe assignée" : "classes assignées"} />
+        <KpiCard label="Mes élèves" value={String(myStudents.length)} icon={Users} tone="green" sub="dans mes classes" />
+        <KpiCard label="Absences aujourd'hui" value={String(absentToday)} icon={AlertCircle} tone="orange" sub={`sur ${myStudents.length} élèves`} />
+        <KpiCard label="Notes à saisir" value={String(pendingEvals)} icon={ClipboardList} tone="red" sub="évaluations en attente" />
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <Card className="rounded-2xl border-[#E8EDF4] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-3">
           <CardHeader>
-            <CardTitle className="text-base">Répartition de mes élèves par classe</CardTitle>
+            <CardTitle className="font-['Sora'] text-base font-semibold text-[#0F172A]">
+              Mes élèves par classe
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {perClass.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">Aucune classe assignée.</p>
+              <p className="py-12 text-center text-sm text-[#64748B]">Aucune classe assignée.</p>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={perClass}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} />
-                  <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip cursor={{ fill: "rgba(0,0,0,0.04)" }} />
-                  <Bar dataKey="Élèves" fill="#1A6BB5" radius={[4, 4, 0, 0]} />
+                <BarChart data={perClass} barCategoryGap={18}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E8EDF4" vertical={false} />
+                  <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} stroke="#64748B" />
+                  <YAxis fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} stroke="#64748B" />
+                  <Tooltip cursor={{ fill: "rgba(37,99,235,0.06)" }} contentStyle={{ borderRadius: 12, border: "1px solid #E8EDF4", boxShadow: "0 8px 24px -12px rgba(15,23,42,0.15)" }} />
+                  <Bar dataKey="Élèves" fill="#2563EB" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
 
-        <AnnoncesWidget />
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
+        <Card className="rounded-2xl border-[#E8EDF4] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Actions rapides</CardTitle>
+            <CardTitle className="font-['Sora'] text-base font-semibold text-[#0F172A]">Actions rapides</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-3">
-            {[
-              { label: "Saisir notes", icon: GraduationCap, to: "/notes" as const },
-              { label: "Prendre présence", icon: CalendarCheck, to: "/presences" as const },
-              { label: "Mes élèves", icon: Users, to: "/eleves" as const },
-              { label: "Mes classes", icon: BookOpen, to: "/classes" as const },
-            ].map((q) => (
+            {quickActions.map((q) => (
               <button
                 key={q.label}
                 onClick={() => navigate({ to: q.to })}
-                className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-muted/40 p-4 text-center text-sm font-medium transition-colors hover:border-accent hover:bg-accent/10"
+                className="flex flex-col items-start gap-2 rounded-xl border border-[#E8EDF4] bg-white p-4 text-left text-sm font-medium text-[#0F172A] transition hover:border-[#2563EB] hover:shadow-[0_8px_24px_-12px_rgba(37,99,235,0.25)]"
               >
-                <q.icon className="h-6 w-6 text-secondary" />
+                <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg", q.tone)}>
+                  <q.icon className="h-[18px] w-[18px]" />
+                </span>
                 {q.label}
               </button>
             ))}
           </CardContent>
         </Card>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Mes classes</CardTitle>
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <Card className="rounded-2xl border-[#E8EDF4] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-3">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="font-['Sora'] text-base font-semibold text-[#0F172A]">Mes classes</CardTitle>
+            <Link to="/classes" className="text-xs font-semibold text-[#2563EB] hover:underline">Voir tout</Link>
           </CardHeader>
           <CardContent className="space-y-2">
-            {myClasses.length === 0 && <p className="text-sm text-muted-foreground">Aucune classe assignée.</p>}
-            {myClasses.map((c) => (
-              <div key={c.id} className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                <span className="font-medium">{c.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {db.students.filter((s) => s.classId === c.id).length} élèves
-                </span>
-              </div>
-            ))}
+            {myClasses.length === 0 && <p className="text-sm text-[#64748B]">Aucune classe assignée.</p>}
+            {myClasses.map((c) => {
+              const count = db.students.filter((s) => s.classId === c.id).length;
+              return (
+                <Link
+                  key={c.id}
+                  to="/classes"
+                  className="flex items-center justify-between rounded-xl border border-[#E8EDF4] bg-white px-4 py-3 text-sm transition hover:border-[#2563EB] hover:shadow-[0_8px_24px_-12px_rgba(37,99,235,0.2)]"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-[#2563EB]">
+                      <BookOpen className="h-[18px] w-[18px]" />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="truncate font-semibold text-[#0F172A]">{c.name}</div>
+                      <div className="text-xs text-[#64748B]">{c.level ?? "—"}</div>
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-[#F1F5F9] px-2.5 py-1 text-xs font-semibold text-[#0F172A]">
+                    {count} élèves
+                  </span>
+                </Link>
+              );
+            })}
           </CardContent>
         </Card>
+
+        <div className="lg:col-span-2">
+          <AnnoncesWidget />
+        </div>
       </div>
     </AppLayout>
   );
