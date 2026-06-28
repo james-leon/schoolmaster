@@ -99,23 +99,32 @@ function ParentPortal() {
   const initials = student ? (student.firstName[0] + student.lastName[0]).toUpperCase() : "?";
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <header className="sticky top-0 z-20 border-b border-border bg-card">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+    <div className="min-h-screen bg-[#EEF2F8] pb-28 font-['Inter']">
+      <header
+        className="sticky top-0 z-20 text-white shadow-[0_8px_24px_-12px_rgba(13,44,84,0.4)]"
+        style={{ background: "linear-gradient(160deg, #0D2C54 0%, #15366B 60%, #1B4080 100%)" }}
+      >
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 pb-4 pt-4">
+          <div className="min-w-0 flex-1">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur">
+              👋 Espace Parent
+            </span>
+            <p className="mt-1.5 truncate font-['Sora'] text-lg font-bold tracking-tight">
+              Bonjour, {user?.name}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <div className="hidden h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white/10 ring-1 ring-white/15 sm:flex">
               <Logo compact />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <Badge className="bg-success text-success-foreground">Parent</Badge>
-              </div>
-              <p className="text-sm font-medium">Bienvenue, {user?.name}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
             <ParentNotificationBell />
-            <Button variant="ghost" size="icon" onClick={() => { logout(); navigate({ to: "/login" }); }} aria-label="Déconnexion">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/10 hover:text-white"
+              onClick={() => { logout(); navigate({ to: "/login" }); }}
+              aria-label="Déconnexion"
+            >
               <LogOut className="h-5 w-5" />
             </Button>
           </div>
@@ -160,7 +169,7 @@ function ParentPortal() {
       </main>
 
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E8EDF4] bg-white shadow-[0_-8px_24px_-12px_rgba(15,23,42,0.08)]">
         <div className="mx-auto grid max-w-3xl" style={{ gridTemplateColumns: `repeat(${navItems.length + 1}, minmax(0, 1fr))` }}>
           {navItems.map((t) => {
             const active = tab === t.key;
@@ -169,10 +178,11 @@ function ParentPortal() {
                 key={t.key}
                 onClick={() => setTab(t.key)}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-muted-foreground transition-colors",
-                  active && "text-primary",
+                  "relative flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors",
+                  active ? "text-[#2563EB]" : "text-[#64748B] hover:text-[#0F172A]",
                 )}
               >
+                {active && <span className="absolute inset-x-6 top-0 h-[3px] rounded-b-full bg-[#2563EB]" />}
                 <t.icon className="h-5 w-5" />
                 <span className="truncate">{t.label}</span>
               </button>
@@ -181,10 +191,11 @@ function ParentPortal() {
           <button
             onClick={() => setMoreOpen(true)}
             className={cn(
-              "flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-muted-foreground transition-colors",
-              moreActive && "text-primary",
+              "relative flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors",
+              moreActive ? "text-[#2563EB]" : "text-[#64748B] hover:text-[#0F172A]",
             )}
           >
+            {moreActive && <span className="absolute inset-x-6 top-0 h-[3px] rounded-b-full bg-[#2563EB]" />}
             <MoreHorizontal className="h-5 w-5" />
             <span className="truncate">Plus</span>
           </button>
@@ -351,73 +362,113 @@ function EnfantTab({ student, klass, initials, grades, payments, paymentRecords,
   const studentInvoices = payments.filter((p) => p.studentId === student.id);
   const due = studentInvoices.reduce((s, p) => s + Math.max(0, p.amount - paidFor(p, paymentRecords)), 0);
 
+  const recent = [...studentGrades]
+    .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
+    .slice(0, 4);
+
   return (
     <div className="space-y-4">
-      <Card>
-        <CardContent className="flex flex-col items-center gap-3 pt-6 text-center">
-          {student.photo ? (
-            <img src={student.photo} alt="" className="h-20 w-20 rounded-full object-cover" />
-          ) : (
-            <Avatar className="h-20 w-20">
-              <AvatarFallback className="bg-primary text-primary-foreground text-xl font-bold">{initials}</AvatarFallback>
-            </Avatar>
-          )}
-          <div>
-            <h2 className="text-xl font-bold">{student.firstName} {student.lastName}</h2>
-            <div className="mt-1 flex items-center justify-center gap-2">
-              <Badge variant="outline">{klass?.name ?? "—"}</Badge>
-              <span className="text-xs text-muted-foreground">{student.code ?? "—"}</span>
-            </div>
+      {/* Child card */}
+      <div className="relative overflow-hidden rounded-[22px] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_28px_-12px_rgba(15,23,42,0.12)]">
+        <div className="h-16 bg-gradient-to-r from-[#2563EB]/15 via-[#7C5CFC]/15 to-[#0E9384]/15" />
+        <div className="flex flex-col items-center px-5 pb-5 text-center">
+          <div className="-mt-10 mb-3 rounded-full bg-white p-1.5 shadow-md ring-1 ring-[#E8EDF4]">
+            {student.photo ? (
+              <img src={student.photo} alt="" className="h-20 w-20 rounded-full object-cover" />
+            ) : (
+              <Avatar className="h-20 w-20">
+                <AvatarFallback className="bg-gradient-to-br from-[#2563EB] to-[#7C5CFC] text-xl font-bold text-white">{initials}</AvatarFallback>
+              </Avatar>
+            )}
           </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-2 gap-3">
-        <SummaryCard label="Moyenne générale" value={moy != null ? `${moy}/20` : "—"} icon={GraduationCap} tone="bg-secondary/10 text-secondary" />
-        <SummaryCard label="Absences ce mois" value={String(absencesMois)} icon={Calendar} tone="bg-accent/10 text-accent" />
-        <SummaryCard
-          label="Frais impayés"
-          value={fcfa(due)}
-          icon={Wallet}
-          tone={due > 0 ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}
-        />
-        <SummaryCard label="Prochain cours" value="Lundi 08h00" icon={Bell} tone="bg-primary/10 text-primary" />
+          <h2 className="font-['Sora'] text-xl font-bold tracking-tight text-[#0F172A]">
+            {student.firstName} {student.lastName}
+          </h2>
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">
+            <span className="rounded-full bg-[#2563EB]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#2563EB]">
+              {klass?.name ?? "—"}
+            </span>
+            {student.code && (
+              <span className="rounded-full bg-[#EEF2F8] px-2.5 py-0.5 text-[11px] font-medium text-[#64748B]">
+                {student.code}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Activité récente</CardTitle></CardHeader>
-        <CardContent>
-          {studentGrades.length === 0 ? (
-            <EmptyState icon={Inbox} message="Aucune activité récente" />
-          ) : (
-            <div className="space-y-3">
-              {studentGrades.slice(0, 3).map((g) => (
-                <div key={g.id} className="flex items-center justify-between text-sm">
-                  <span>{g.subject} — {g.term}</span>
-                  <Badge variant="secondary">{gradeValue(g)}/20</Badge>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* 2x2 stat cards */}
+      <div className="grid grid-cols-2 gap-3">
+        <SummaryCard label="Moyenne générale" value={moy != null ? `${moy}/20` : "—"} icon={GraduationCap} iconBg="#2563EB" />
+        <SummaryCard label="Absences ce mois" value={String(absencesMois)} icon={Calendar} iconBg="#F58B1F" />
+        <SummaryCard label="Frais impayés" value={fcfa(due)} icon={Wallet} iconBg={due > 0 ? "#E11D48" : "#15A05A"} />
+        <SummaryCard label="Prochain cours" value="Lun. 08h00" icon={Bell} iconBg="#7C5CFC" />
+      </div>
+
+      {/* Dernières notes */}
+      <div className="rounded-[18px] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.1)]">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-['Sora'] text-base font-semibold text-[#0F172A]">Dernières notes</h3>
+          <span className="text-[11px] font-medium text-[#64748B]">{recent.length} récente{recent.length > 1 ? "s" : ""}</span>
+        </div>
+        {recent.length === 0 ? (
+          <EmptyState icon={Inbox} message="Aucune note enregistrée" />
+        ) : (
+          <ul className="space-y-2.5">
+            {recent.map((g) => {
+              const v = gradeValue(g);
+              const gradeColor =
+                v >= 14 ? { bg: "#15A05A", soft: "rgba(21,160,90,0.12)" } :
+                v >= 10 ? { bg: "#2563EB", soft: "rgba(37,99,235,0.12)" } :
+                { bg: "#F58B1F", soft: "rgba(245,139,31,0.14)" };
+              const subjColor = subjectColor(g.subject);
+              return (
+                <li key={g.id} className="flex items-center gap-3 rounded-xl border border-[#EEF2F8] px-3 py-2.5">
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold uppercase text-white"
+                    style={{ background: subjColor }}
+                  >
+                    {g.subject.slice(0, 2)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-[#0F172A]">{g.subject}</p>
+                    <p className="truncate text-[11px] text-[#64748B]">{g.evaluationType ?? "—"} · {g.term}</p>
+                  </div>
+                  <span
+                    className="shrink-0 rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums"
+                    style={{ background: gradeColor.soft, color: gradeColor.bg }}
+                  >
+                    {v}/20
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
 
-function SummaryCard({ label, value, icon: Icon, tone }: any) {
+const SUBJECT_PALETTE = ["#2563EB", "#15A05A", "#F58B1F", "#7C5CFC", "#0E9384", "#E11D48", "#0D2C54"];
+function subjectColor(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return SUBJECT_PALETTE[h % SUBJECT_PALETTE.length];
+}
+
+function SummaryCard({ label, value, icon: Icon, iconBg }: { label: string; value: string; icon: any; iconBg: string }) {
   return (
-    <Card>
-      <CardContent className="flex items-center gap-3 pt-4">
-        <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg", tone)}>
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="truncate text-sm font-bold">{value}</p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="rounded-[18px] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.1)]">
+      <div
+        className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl text-white"
+        style={{ background: iconBg }}
+      >
+        <Icon className="h-5 w-5" />
+      </div>
+      <p className="text-[11px] font-medium text-[#64748B]">{label}</p>
+      <p className="mt-0.5 truncate font-['Sora'] text-lg font-bold tracking-tight text-[#0F172A]">{value}</p>
+    </div>
   );
 }
 
