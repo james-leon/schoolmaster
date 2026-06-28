@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { StatCard } from "@/components/shared";
 import { useDB } from "@/lib/store";
@@ -11,19 +11,21 @@ import { resolveTeacherClasses } from "@/lib/teacher-scope";
 import {
   Users, TrendingUp, AlertCircle, AlertTriangle, UserPlus, CreditCard,
   GraduationCap, CalendarCheck, FileText, BookOpen, ClipboardList, Megaphone,
-  PieChart as PieChartIcon,
+  PieChart as PieChartIcon, Plus, ArrowUp, ArrowDown, Minus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  PieChart, Pie, Cell,
 } from "recharts";
 
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
 });
+
 
 
 
