@@ -432,7 +432,7 @@ function EnfantTab({ student, klass, initials, grades, payments, paymentRecords,
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-[#0F172A]">{g.subject}</p>
-                    <p className="truncate text-[11px] text-[#64748B]">{g.type ?? "—"} · {g.term}</p>
+                    <p className="truncate text-[11px] text-[#64748B]">{g.evaluationType ?? "—"} · {g.term}</p>
                   </div>
                   <span
                     className="shrink-0 rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums"
