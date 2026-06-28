@@ -400,11 +400,11 @@ function AdminDashboard() {
             {donutTotal === 0 ? (
               <p className="py-12 text-center text-sm text-[#64748B]">Aucun paiement enregistré.</p>
             ) : (
-              <div className="flex flex-col items-center gap-4 sm:flex-row">
-                <div className="relative h-[220px] w-[220px] shrink-0">
+              <div className="flex w-full flex-col items-center gap-4 md:flex-row">
+                <div className="relative h-[200px] w-[200px] shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={paymentBreakdown} dataKey="value" innerRadius={62} outerRadius={92} paddingAngle={2} stroke="none">
+                      <Pie data={paymentBreakdown} dataKey="value" innerRadius={56} outerRadius={84} paddingAngle={2} stroke="none">
                         {paymentBreakdown.map((_, i) => (
                           <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />
                         ))}
@@ -417,14 +417,14 @@ function AdminDashboard() {
                     <div className="text-[11px] text-[#64748B]">recouvré</div>
                   </div>
                 </div>
-                <ul className="flex-1 space-y-2 text-sm">
+                <ul className="w-full min-w-0 flex-1 space-y-2 text-sm">
                   {paymentBreakdown.map((d, i) => {
                     const pct = donutTotal ? Math.round((d.value / donutTotal) * 100) : 0;
                     return (
-                      <li key={d.name} className="flex items-center gap-2">
+                      <li key={d.name} className="flex min-w-0 items-center gap-2">
                         <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: DONUT_COLORS[i % DONUT_COLORS.length] }} />
-                        <span className="flex-1 truncate text-[#0F172A]">{d.name}</span>
-                        <span className="text-[#64748B]">{pct}%</span>
+                        <span className="min-w-0 flex-1 truncate text-[#0F172A]" title={d.name}>{d.name}</span>
+                        <span className="shrink-0 pl-2 text-right tabular-nums text-[#64748B]">{pct}%</span>
                       </li>
                     );
                   })}
