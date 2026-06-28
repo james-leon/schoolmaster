@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
-import { StatCard } from "@/components/shared";
+
 import { useDB } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { fcfa, timeAgo } from "@/lib/format";
