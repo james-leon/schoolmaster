@@ -1,4 +1,4 @@
-import { Bell, Moon, Sun, User as UserIcon, LogOut, Settings, CreditCard, Shield, Megaphone, AlertCircle, Calendar, Check, Trash2 } from "lucide-react";
+import { Bell, Moon, Sun, User as UserIcon, LogOut, Settings, CreditCard, Shield, Megaphone, AlertCircle, Calendar, Check, Trash2, Search, ChevronRight } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
