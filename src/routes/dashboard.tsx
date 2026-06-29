@@ -105,10 +105,10 @@ function TeacherDashboard() {
   return (
     <AppLayout title="Tableau de bord">
       <div className="min-w-0">
-        <h1 className="font-['Sora'] text-2xl font-bold tracking-tight text-[#0F172A] md:text-[28px]">
-          Bonjour, {user?.name?.split(" ")[0] ?? ""} <span aria-hidden>👋</span>
+        <h1 className="font-['Sora'] text-2xl font-bold tracking-tight text-foreground md:text-[28px]">
+          Bonjour, {user?.name?.split(" ")[0] ?? ""}
         </h1>
-        <p className="mt-1 text-sm text-[#64748B]">Voici un aperçu de vos classes et de vos élèves.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Voici un aperçu de vos classes et de vos élèves.</p>
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -119,15 +119,15 @@ function TeacherDashboard() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <Card className="rounded-2xl border-[#E8EDF4] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-3">
+        <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-3">
           <CardHeader>
-            <CardTitle className="font-['Sora'] text-base font-semibold text-[#0F172A]">
+            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">
               Mes élèves par classe
             </CardTitle>
           </CardHeader>
           <CardContent>
             {perClass.length === 0 ? (
-              <p className="py-12 text-center text-sm text-[#64748B]">Aucune classe assignée.</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">Aucune classe assignée.</p>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={perClass} barCategoryGap={18}>
@@ -142,16 +142,16 @@ function TeacherDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-[#E8EDF4] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-2">
+        <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-2">
           <CardHeader>
-            <CardTitle className="font-['Sora'] text-base font-semibold text-[#0F172A]">Actions rapides</CardTitle>
+            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">Actions rapides</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-3">
             {quickActions.map((q) => (
               <button
                 key={q.label}
                 onClick={() => navigate({ to: q.to })}
-                className="flex flex-col items-start gap-2 rounded-xl border border-[#E8EDF4] bg-white p-4 text-left text-sm font-medium text-[#0F172A] transition hover:border-[#2563EB] hover:shadow-[0_8px_24px_-12px_rgba(37,99,235,0.25)]"
+                className="flex flex-col items-start gap-2 rounded-xl border border-border bg-card p-4 text-left text-sm font-medium text-foreground transition hover:border-[#2563EB] hover:shadow-[0_8px_24px_-12px_rgba(37,99,235,0.25)]"
               >
                 <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg", q.tone)}>
                   <q.icon className="h-[18px] w-[18px]" />
@@ -164,31 +164,31 @@ function TeacherDashboard() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <Card className="rounded-2xl border-[#E8EDF4] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-3">
+        <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-3">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="font-['Sora'] text-base font-semibold text-[#0F172A]">Mes classes</CardTitle>
+            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">Mes classes</CardTitle>
             <Link to="/classes" className="text-xs font-semibold text-[#2563EB] hover:underline">Voir tout</Link>
           </CardHeader>
           <CardContent className="space-y-2">
-            {myClasses.length === 0 && <p className="text-sm text-[#64748B]">Aucune classe assignée.</p>}
+            {myClasses.length === 0 && <p className="text-sm text-muted-foreground">Aucune classe assignée.</p>}
             {myClasses.map((c) => {
               const count = db.students.filter((s) => s.classId === c.id).length;
               return (
                 <Link
                   key={c.id}
                   to="/classes"
-                  className="flex items-center justify-between rounded-xl border border-[#E8EDF4] bg-white px-4 py-3 text-sm transition hover:border-[#2563EB] hover:shadow-[0_8px_24px_-12px_rgba(37,99,235,0.2)]"
+                  className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-sm transition hover:border-[#2563EB] hover:shadow-[0_8px_24px_-12px_rgba(37,99,235,0.2)]"
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-[#2563EB]">
                       <BookOpen className="h-[18px] w-[18px]" />
                     </span>
                     <div className="min-w-0">
-                      <div className="truncate font-semibold text-[#0F172A]">{c.name}</div>
-                      <div className="text-xs text-[#64748B]">{c.level ?? "—"}</div>
+                      <div className="truncate font-semibold text-foreground">{c.name}</div>
+                      <div className="text-xs text-muted-foreground">{c.level ?? "—"}</div>
                     </div>
                   </div>
-                  <span className="shrink-0 rounded-full bg-[#F1F5F9] px-2.5 py-1 text-xs font-semibold text-[#0F172A]">
+                  <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-foreground">
                     {count} élèves
                   </span>
                 </Link>
@@ -345,10 +345,10 @@ function AdminDashboard() {
     <AppLayout title="Tableau de bord">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="font-['Sora'] text-2xl font-bold tracking-tight text-[#0F172A] md:text-[28px]">
-            Bonjour, {user?.name?.split(" ")[0] ?? ""} <span aria-hidden>👋</span>
+          <h1 className="font-['Sora'] text-2xl font-bold tracking-tight text-foreground md:text-[28px]">
+            Bonjour, {user?.name?.split(" ")[0] ?? ""}
           </h1>
-          <p className="mt-1 text-sm text-[#64748B]">
+          <p className="mt-1 text-sm text-muted-foreground">
             Voici l'activité de votre établissement.
           </p>
         </div>
@@ -398,9 +398,9 @@ function AdminDashboard() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <Card className="rounded-2xl border-[#E8EDF4] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-3">
+        <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-3">
           <CardHeader>
-            <CardTitle className="font-['Sora'] text-base font-semibold text-[#0F172A]">Recettes par mois</CardTitle>
+            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">Recettes par mois</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -419,13 +419,13 @@ function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-[#E8EDF4] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-2">
+        <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-2">
           <CardHeader>
-            <CardTitle className="font-['Sora'] text-base font-semibold text-[#0F172A]">Répartition des paiements</CardTitle>
+            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">Répartition des paiements</CardTitle>
           </CardHeader>
           <CardContent>
             {donutTotal === 0 ? (
-              <p className="py-12 text-center text-sm text-[#64748B]">Aucun paiement enregistré.</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">Aucun paiement enregistré.</p>
             ) : (
               <div className="flex w-full flex-col items-center gap-4 md:flex-row">
                 <div className="relative h-[200px] w-[200px] shrink-0">
@@ -440,8 +440,8 @@ function AdminDashboard() {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                    <div className="font-['Sora'] text-2xl font-bold text-[#0F172A]">{recoveryRate}%</div>
-                    <div className="text-[11px] text-[#64748B]">recouvré</div>
+                    <div className="font-['Sora'] text-2xl font-bold text-foreground">{recoveryRate}%</div>
+                    <div className="text-[11px] text-muted-foreground">recouvré</div>
                   </div>
                 </div>
                 <ul className="w-full min-w-0 flex-1 space-y-2 text-sm">
@@ -450,8 +450,8 @@ function AdminDashboard() {
                     return (
                       <li key={d.name} className="flex min-w-0 items-center gap-2">
                         <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: DONUT_COLORS[i % DONUT_COLORS.length] }} />
-                        <span className="min-w-0 flex-1 truncate text-[#0F172A]" title={d.name}>{d.name}</span>
-                        <span className="shrink-0 pl-2 text-right tabular-nums text-[#64748B]">{pct}%</span>
+                        <span className="min-w-0 flex-1 truncate text-foreground" title={d.name}>{d.name}</span>
+                        <span className="shrink-0 pl-2 text-right tabular-nums text-muted-foreground">{pct}%</span>
                       </li>
                     );
                   })}
@@ -463,14 +463,14 @@ function AdminDashboard() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <Card className="rounded-2xl border-[#E8EDF4] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-3">
+        <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-3">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="font-['Sora'] text-base font-semibold text-[#0F172A]">Activité récente</CardTitle>
+            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">Activité récente</CardTitle>
             <Link to="/notifications" className="text-xs font-semibold text-[#2563EB] hover:underline">Tout voir</Link>
           </CardHeader>
           <CardContent className="space-y-3">
             {db.activities.length === 0 ? (
-              <p className="py-6 text-center text-sm text-[#64748B]">Aucune activité récente</p>
+              <p className="py-6 text-center text-sm text-muted-foreground">Aucune activité récente</p>
             ) : (
               db.activities.slice(0, 6).map((a) => {
                 const Icon = activityIcons[a.type];
@@ -484,8 +484,8 @@ function AdminDashboard() {
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm leading-snug text-[#0F172A]">{a.text}</p>
-                      <p className="text-xs text-[#64748B]">{timeAgo(a.date)}</p>
+                      <p className="text-sm leading-snug text-foreground">{a.text}</p>
+                      <p className="text-xs text-muted-foreground">{timeAgo(a.date)}</p>
                     </div>
                   </div>
                 );
@@ -494,9 +494,9 @@ function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-[#E8EDF4] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-2">
+        <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-2">
           <CardHeader>
-            <CardTitle className="font-['Sora'] text-base font-semibold text-[#0F172A]">Actions rapides</CardTitle>
+            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">Actions rapides</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-3">
             {[
@@ -508,7 +508,7 @@ function AdminDashboard() {
               <button
                 key={q.label}
                 onClick={() => navigate({ to: q.to })}
-                className="flex flex-col items-start gap-2 rounded-xl border border-[#E8EDF4] bg-white p-4 text-left text-sm font-medium text-[#0F172A] transition hover:border-[#2563EB] hover:shadow-[0_8px_24px_-12px_rgba(37,99,235,0.25)]"
+                className="flex flex-col items-start gap-2 rounded-xl border border-border bg-card p-4 text-left text-sm font-medium text-foreground transition hover:border-[#2563EB] hover:shadow-[0_8px_24px_-12px_rgba(37,99,235,0.25)]"
               >
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2563EB]/10 text-[#2563EB]">
                   <q.icon className="h-[18px] w-[18px]" />
@@ -521,14 +521,14 @@ function AdminDashboard() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="rounded-2xl border-[#E8EDF4] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)]">
+        <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)]">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-['Sora'] text-base font-semibold text-[#0F172A]">
+            <CardTitle className="flex items-center gap-2 font-['Sora'] text-base font-semibold text-foreground">
               <AlertTriangle className="h-4 w-4 text-destructive" /> Alertes
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {overdueStudents.length === 0 && <p className="text-sm text-[#64748B]">Aucune alerte.</p>}
+            {overdueStudents.length === 0 && <p className="text-sm text-muted-foreground">Aucune alerte.</p>}
             {overdueStudents.map((s) => (
               <div key={s!.id} className="flex items-center gap-3 rounded-xl bg-destructive/5 p-3">
                 <FileText className="h-4 w-4 text-destructive" />
@@ -562,7 +562,7 @@ function TrendPill({ value, invert = false }: { value: number | null; invert?: b
   // For metrics where down is good (e.g. absences), invert color logic.
   const positive = isFlat ? false : invert ? !isUp : isUp;
   const cls = isFlat
-    ? "bg-[#F1F5F9] text-[#64748B]"
+    ? "bg-muted text-muted-foreground"
     : positive
     ? "bg-[#15A05A]/12 text-[#15A05A]"
     : "bg-destructive/10 text-destructive";
@@ -595,7 +595,7 @@ function KpiCard({
     red: "bg-destructive/10 text-destructive",
   };
   return (
-    <Card className="rounded-2xl border-[#E8EDF4] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)]">
+    <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)]">
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl", tones[tone])}>
@@ -604,11 +604,11 @@ function KpiCard({
           {trend !== undefined && <TrendPill value={trend ?? null} invert={trendInvert} />}
         </div>
         <div className="mt-4">
-          <div className="text-sm text-[#64748B]">{label}</div>
-          <div className={cn("mt-1 truncate font-['Sora'] text-[28px] font-bold tracking-tight text-[#0F172A]", valueClass)}>{value}</div>
-          {sub && <div className="mt-1 truncate text-xs text-[#64748B]">{sub}</div>}
+          <div className="text-sm text-muted-foreground">{label}</div>
+          <div className={cn("mt-1 truncate font-['Sora'] text-[28px] font-bold tracking-tight text-foreground", valueClass)}>{value}</div>
+          {sub && <div className="mt-1 truncate text-xs text-muted-foreground">{sub}</div>}
           {typeof progress === "number" && (
-            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#F1F5F9]">
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
               <div className="h-full rounded-full bg-[#2563EB]" style={{ width: `${progress}%` }} />
             </div>
           )}
