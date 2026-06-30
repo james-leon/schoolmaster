@@ -60,7 +60,9 @@ export function ImportDialog<T>({ open, onOpenChange, config, onDone }: Props<T>
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [rows, setRows] = useState<ParsedRow<T>[]>([]);
   const [fileName, setFileName] = useState("");
-  const [autoCreateClasses, setAutoCreateClasses] = useState(false);
+  // Pre-enabled so imports succeed even when the school hasn't created
+  // every class yet — missing classes are created on the fly.
+  const [autoCreateClasses, setAutoCreateClasses] = useState(true);
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const fileRef = useRef<HTMLInputElement>(null);
@@ -76,7 +78,7 @@ export function ImportDialog<T>({ open, onOpenChange, config, onDone }: Props<T>
     setStep(1);
     setRows([]);
     setFileName("");
-    setAutoCreateClasses(false);
+    setAutoCreateClasses(true);
     setImporting(false);
     setProgress({ done: 0, total: 0 });
     if (fileRef.current) fileRef.current.value = "";
