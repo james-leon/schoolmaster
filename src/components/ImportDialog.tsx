@@ -78,7 +78,7 @@ export function ImportDialog<T>({ open, onOpenChange, config, onDone }: Props<T>
     setStep(1);
     setRows([]);
     setFileName("");
-    setAutoCreateClasses(false);
+    setAutoCreateClasses(true);
     setImporting(false);
     setProgress({ done: 0, total: 0 });
     if (fileRef.current) fileRef.current.value = "";
