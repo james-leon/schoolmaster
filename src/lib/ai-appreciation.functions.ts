@@ -128,3 +128,95 @@ export const generateAppreciation = createServerFn({ method: "POST" })
     if (!text) throw new Response("Réponse IA vide", { status: 500 });
     return { text };
   });
+
+// ─────────────────────────────────────────────────────────────────────
+// Bulk endpoint — generates appreciations for a whole batch (e.g. an
+// entire class) in ONE server call, so rate limits scale with teacher
+// usage, not class size. Each student is still a separate AI call, but
+// they share ONE rate-limit slot.
+// ─────────────────────────────────────────────────────────────────────
+
+const BulkSchema = z.object({
+  items: z.array(AppreciationSchema.extend({
+    studentId: z.string().min(1).max(100),
+  })).min(1).max(80),
+});
+
+export const generateAppreciationBulk = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => {
+    const parsed = BulkSchema.safeParse(input);
+    if (!parsed.success) {
+      console.error("[ai-appreciation-bulk] invalid input", parsed.error.flatten());
+      throw new Response("Requête invalide.", { status: 400 });
+    }
+    return parsed.data;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: profile } = await supabase
+      .from("profiles").select("role").eq("id", userId).maybeSingle();
+    const { data: roleRow } = await supabase
+      .from("user_roles").select("role").eq("user_id", userId).maybeSingle();
+    const role = profile?.role ?? roleRow?.role;
+    if (role !== "school_admin" && role !== "teacher" && role !== "super_admin") {
+      throw new Response("Forbidden", { status: 403 });
+    }
+
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) throw new Response("AI not configured", { status: 500 });
+
+    // ONE rate-limit slot per bulk call.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const rl = await checkRateLimit(supabaseAdmin, userId, RATE_LIMITS.aiAppreciationBulk);
+    if (!rl.allowed) {
+      throw new Response(
+        `Trop de générations groupées. Réessayez dans ${rl.retryAfter}s.`,
+        { status: 429, headers: { "retry-after": String(rl.retryAfter) } },
+      );
+    }
+
+    const system = `Tu es un enseignant expérimenté d'une école primaire en Afrique francophone. Rédige une appréciation scolaire personnalisée, bienveillante et constructive pour cet élève, en français, en 2-3 phrases. Base-toi sur ses résultats. Sois encourageant tout en restant honnête. Adapte le ton à un enfant de primaire. Ne mentionne pas de chiffres précis. N'utilise jamais le nom de famille.`;
+
+    const results: { studentId: string; text: string | null; error?: string }[] = [];
+    // Sequential with small delay to stay under IA gateway per-second cap.
+    for (const item of data.items) {
+      const { studentId, ...appreciationData } = item;
+      try {
+        const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Lovable-API-Key": apiKey,
+            "X-Lovable-AIG-SDK": "raw",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-3-flash-preview",
+            messages: [
+              { role: "system", content: system },
+              { role: "user", content: buildPrompt(appreciationData) },
+            ],
+          }),
+        });
+        if (!res.ok) {
+          const t = await res.text().catch(() => "");
+          console.error("[ai-appreciation-bulk]", studentId, res.status, t);
+          if (res.status === 402) {
+            throw new Response("Crédits IA épuisés.", { status: 402 });
+          }
+          results.push({ studentId, text: null, error: `IA ${res.status}` });
+          continue;
+        }
+        const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+        const text = json.choices?.[0]?.message?.content?.trim() ?? "";
+        results.push({ studentId, text: text || null, error: text ? undefined : "empty" });
+      } catch (e) {
+        if (e instanceof Response) throw e;
+        console.error("[ai-appreciation-bulk] threw", studentId, e);
+        results.push({ studentId, text: null, error: "exception" });
+      }
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    return { results };
+  });
+
