@@ -781,48 +781,63 @@ function BulkGenerateButton({
   const cls = db.classes.find((c) => c.id === classId);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0, errors: 0 });
-  const callAi = useServerFn(generateAppreciation);
+  const callAiBulk = useServerFn(generateAppreciationBulk);
 
   const run = async () => {
     if (!students.length || !cls) return;
     setRunning(true);
     setProgress({ done: 0, total: students.length, errors: 0 });
+
+    // Precompute per-student payload on the client.
+    const allRanks = students.map((st) => ({
+      id: st.id,
+      g: weightedAverage(db.grades, st.id, subjects.map((x) => ({ name: x.name, coefficient: x.coefficient })), term),
+    })).sort((a, b) => (b.g ?? -1) - (a.g ?? -1));
+
+    const items = students.map((s) => {
+      const subjData = subjects.map((sub) => ({
+        name: sub.name,
+        average: subjectAverage(db.grades, s.id, sub.name, term, sub.id),
+      }));
+      const gen = weightedAverage(db.grades, s.id, subjects.map((x) => ({ name: x.name, coefficient: x.coefficient })), term);
+      const rank = allRanks.findIndex((r) => r.id === s.id) + 1;
+      const stAtt = db.attendance.filter((a) => a.studentId === s.id);
+      return {
+        studentId: s.id,
+        firstName: s.firstName,
+        classLevel: cls.level,
+        term,
+        generalAverage: gen,
+        rank: rank > 0 ? rank : null,
+        totalStudents: students.length,
+        subjects: subjData,
+        absences: stAtt.filter((a) => a.status === "absent").length,
+        retards: stAtt.filter((a) => a.status === "retard").length,
+      };
+    });
+
+    // Chunk to stay under the bulk validator cap (80) and keep individual
+    // failures scoped. Each chunk = 1 rate-limit slot.
+    const chunks: typeof items[] = [];
+    for (let i = 0; i < items.length; i += 60) chunks.push(items.slice(i, i + 60));
+
+    let done = 0;
     let errors = 0;
-    for (let i = 0; i < students.length; i++) {
-      const s = students[i];
+    for (const chunk of chunks) {
       try {
-        const subjData = subjects.map((sub) => ({
-          name: sub.name,
-          average: subjectAverage(db.grades, s.id, sub.name, term, sub.id),
-        }));
-        const gen = weightedAverage(db.grades, s.id, subjects.map((x) => ({ name: x.name, coefficient: x.coefficient })), term);
-        const allRanks = students.map((st) => ({
-          id: st.id,
-          g: weightedAverage(db.grades, st.id, subjects.map((x) => ({ name: x.name, coefficient: x.coefficient })), term),
-        })).sort((a, b) => (b.g ?? -1) - (a.g ?? -1));
-        const rank = allRanks.findIndex((r) => r.id === s.id) + 1;
-        const stAtt = db.attendance.filter((a) => a.studentId === s.id);
-        const res = await callAi({
-          data: {
-            firstName: s.firstName,
-            classLevel: cls.level,
-            term,
-            generalAverage: gen,
-            rank: rank > 0 ? rank : null,
-            totalStudents: students.length,
-            subjects: subjData,
-            absences: stAtt.filter((a) => a.status === "absent").length,
-            retards: stAtt.filter((a) => a.status === "retard").length,
-          },
-        });
-        saveAppreciation(appreciationKey(s.id, term), res.text);
+        const { results } = await callAiBulk({ data: { items: chunk } });
+        for (const r of results) {
+          if (r.text) saveAppreciation(appreciationKey(r.studentId, term), r.text);
+          else errors++;
+          done++;
+          setProgress({ done, total: students.length, errors });
+        }
       } catch (e) {
-        errors++;
-        console.error("[bulk-appreciation]", s.id, e);
+        errors += chunk.length;
+        done += chunk.length;
+        setProgress({ done, total: students.length, errors });
+        console.error("[bulk-appreciation]", e);
       }
-      setProgress({ done: i + 1, total: students.length, errors });
-      // small delay to avoid burst rate limits
-      await new Promise((r) => setTimeout(r, 300));
     }
     setRunning(false);
     if (errors === 0) toast.success(`${students.length} appréciations générées`);
