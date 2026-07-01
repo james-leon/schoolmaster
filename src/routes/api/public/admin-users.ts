@@ -60,6 +60,18 @@ export const Route = createFileRoute("/api/public/admin-users")({
           const body = await request.json();
           const action = String(body?.action ?? "");
 
+          if (WRITE_ACTIONS.has(action)) {
+            const gate = await rateLimitOr429(
+              supabaseAdmin, `${ctx.userId}`, RATE_LIMITS.accountWrite,
+            );
+            if (gate) return gate;
+          } else if (RESET_ACTIONS.has(action)) {
+            const gate = await rateLimitOr429(
+              supabaseAdmin, `${ctx.userId}`, RATE_LIMITS.passwordReset,
+            );
+            if (gate) return gate;
+          }
+
           if (action === "create-teacher") {
             const { firstName, lastName, email, phone, subjects, assignedClasses } = body;
             if (!firstName || !lastName || !email) return Response.json({ error: "Champs requis manquants" }, { status: 400 });
