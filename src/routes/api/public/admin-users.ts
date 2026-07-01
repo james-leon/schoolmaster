@@ -263,6 +263,11 @@ export const Route = createFileRoute("/api/public/admin-users")({
             const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, { ban_duration: banDuration });
             if (error) return safeError("admin-users:set-active", 400, error);
             await supabaseAdmin.from("profiles").update({ is_active: !!isActive }).eq("id", targetUserId);
+            await logAuditServer(supabaseAdmin, {
+              schoolId: ctx.schoolId, userId: ctx.userId,
+              action: "account_status_changed", targetType: "user", targetId: targetUserId,
+              details: { isActive: !!isActive },
+            });
             return Response.json({ ok: true });
           }
 
