@@ -276,11 +276,18 @@ export const Route = createFileRoute("/api/public/admin-users")({
             if (!targetUserId) return Response.json({ error: "Utilisateur requis" }, { status: 400 });
             if (targetUserId === ctx.userId) return Response.json({ error: "Vous ne pouvez pas supprimer votre propre compte" }, { status: 400 });
             if (!(await ensureTargetInSchool(targetUserId, ctx.schoolId))) return Response.json({ error: "Forbidden" }, { status: 403 });
+            const { data: victim } = await supabaseAdmin
+              .from("profiles").select("full_name, email, role").eq("id", targetUserId).maybeSingle();
             const { error } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
             if (error) return safeError("admin-users:delete", 400, error);
             await supabaseAdmin.from("parent_students").delete().eq("parent_profile_id", targetUserId);
             await supabaseAdmin.from("user_roles").delete().eq("user_id", targetUserId);
             await supabaseAdmin.from("profiles").delete().eq("id", targetUserId);
+            await logAuditServer(supabaseAdmin, {
+              schoolId: ctx.schoolId, userId: ctx.userId,
+              action: "account_deleted", targetType: "user", targetId: targetUserId,
+              details: { name: victim?.full_name, email: victim?.email, role: victim?.role },
+            });
             return Response.json({ ok: true });
           }
 
