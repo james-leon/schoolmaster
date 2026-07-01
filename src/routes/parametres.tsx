@@ -214,6 +214,13 @@ function ParametresPage() {
           <PrivacyPanel schoolId={school?.id} />
         </TabsContent>
 
+        {isAdmin && (
+          <TabsContent value="journal" className="mt-4">
+            <AuditLogPanel schoolId={school?.id} />
+          </TabsContent>
+        )}
+
+
 
         <TabsContent value="compte" className="mt-4">
           <Card>
