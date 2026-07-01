@@ -596,6 +596,9 @@ async function pushDiffs(): Promise<void> {
       mode: p.mode ?? null, reference: p.reference ?? null, notes: p.notes ?? null,
     });
     if (error) throw error;
+    logAudit({ action: "invoice_created", targetType: "invoice", targetId: p.id,
+      details: { invoiceNumber: p.invoiceNumber, studentId: p.studentId,
+        type: p.type, amount: p.amount } });
   }
   for (const p of invDiff.updated) {
     const { error } = await supabase.from("invoices").update({
@@ -607,8 +610,12 @@ async function pushDiffs(): Promise<void> {
     if (error) throw error;
   }
   for (const id of invDiff.deletedIds) {
+    const prev = lastSnapshot.payments.find((x) => x.id === id);
     const { error } = await supabase.from("invoices").delete().eq("id", id);
     if (error) throw error;
+    logAudit({ action: "invoice_deleted", targetType: "invoice", targetId: id,
+      details: prev ? { invoiceNumber: prev.invoiceNumber, studentId: prev.studentId,
+        type: prev.type, amount: prev.amount } : {} });
   }
 
   // Payment records
@@ -620,6 +627,9 @@ async function pushDiffs(): Promise<void> {
       mode: r.mode, reference: r.reference ?? null, date: r.date, notes: r.notes ?? null,
     });
     if (error) throw error;
+    logAudit({ action: "payment_recorded", targetType: "payment", targetId: r.id,
+      details: { receiptNumber: r.receiptNumber, invoiceId: r.invoiceId,
+        studentId: r.studentId, amount: r.amount, mode: r.mode } });
   }
   for (const r of prDiff.updated) {
     const { error } = await supabase.from("payment_records").update({
@@ -630,8 +640,12 @@ async function pushDiffs(): Promise<void> {
     if (error) throw error;
   }
   for (const id of prDiff.deletedIds) {
+    const prev = lastSnapshot.paymentRecords.find((x) => x.id === id);
     const { error } = await supabase.from("payment_records").delete().eq("id", id);
     if (error) throw error;
+    logAudit({ action: "payment_deleted", targetType: "payment", targetId: id,
+      details: prev ? { receiptNumber: prev.receiptNumber, studentId: prev.studentId,
+        amount: prev.amount, mode: prev.mode } : {} });
   }
 
 
