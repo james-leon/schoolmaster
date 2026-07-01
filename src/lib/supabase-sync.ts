@@ -462,6 +462,8 @@ async function pushDiffs(): Promise<void> {
       enrollment_status: s.enrollmentStatus ?? "nouveau",
     } as any);
     if (error) throw error;
+    logAudit({ action: "student_created", targetType: "student", targetId: s.id,
+      details: { name: `${s.firstName} ${s.lastName}`.trim(), classId: s.classId } });
   }
   for (const s of studentDiff.updated) {
     const { error } = await supabase.from("students").update({
@@ -472,10 +474,15 @@ async function pushDiffs(): Promise<void> {
       enrollment_status: s.enrollmentStatus ?? "nouveau",
     } as any).eq("id", s.id);
     if (error) throw error;
+    logAudit({ action: "student_updated", targetType: "student", targetId: s.id,
+      details: { name: `${s.firstName} ${s.lastName}`.trim() } });
   }
   for (const id of studentDiff.deletedIds) {
+    const prev = lastSnapshot.students.find((x) => x.id === id);
     const { error } = await supabase.from("students").delete().eq("id", id);
     if (error) throw error;
+    logAudit({ action: "student_deleted", targetType: "student", targetId: id,
+      details: prev ? { name: `${prev.firstName} ${prev.lastName}`.trim() } : {} });
   }
 
   // Class subjects
