@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit.server";
 
 // Strip control chars and cap length to neutralize prompt-injection attempts.
 const sanitize = (s: string, max: number) =>
