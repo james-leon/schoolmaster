@@ -3,6 +3,15 @@ import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { safeError } from "@/lib/api-errors";
 import { logAuditServer } from "@/lib/audit-server";
+import { rateLimitOr429, RATE_LIMITS } from "@/lib/rate-limit.server";
+
+// Actions that create/modify accounts or user state — gated by rate limit.
+const WRITE_ACTIONS = new Set([
+  "create-teacher", "create-parent", "create-teacher-account",
+  "link-parent-student", "unlink-parent-student",
+  "set-active", "delete",
+]);
+const RESET_ACTIONS = new Set(["reset-password"]);
 
 /**
  * Admin endpoint to manage user accounts in the current school.
@@ -50,6 +59,18 @@ export const Route = createFileRoute("/api/public/admin-users")({
           if (ctx instanceof Response) return ctx;
           const body = await request.json();
           const action = String(body?.action ?? "");
+
+          if (WRITE_ACTIONS.has(action)) {
+            const gate = await rateLimitOr429(
+              supabaseAdmin, `${ctx.userId}`, RATE_LIMITS.accountWrite,
+            );
+            if (gate) return gate;
+          } else if (RESET_ACTIONS.has(action)) {
+            const gate = await rateLimitOr429(
+              supabaseAdmin, `${ctx.userId}`, RATE_LIMITS.passwordReset,
+            );
+            if (gate) return gate;
+          }
 
           if (action === "create-teacher") {
             const { firstName, lastName, email, phone, subjects, assignedClasses } = body;

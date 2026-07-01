@@ -3,6 +3,15 @@ import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { safeError } from "@/lib/api-errors";
 import { logAuditServer } from "@/lib/audit-server";
+import { rateLimitOr429, RATE_LIMITS } from "@/lib/rate-limit.server";
+
+// Any state-changing action.
+const WRITE_ACTIONS = new Set([
+  "update-notes", "create-school", "update-status", "update-subscription",
+  "update-plan", "extend-trial", "renew-subscription", "convert-trial",
+]);
+// Destructive actions — much tighter budget.
+const DESTRUCTIVE_ACTIONS = new Set(["delete-school"]);
 
 /**
  * Super admin (Wintek) endpoint. Manages every school on the platform.
@@ -41,6 +50,18 @@ export const Route = createFileRoute("/api/public/super-admin")({
           if (ctx instanceof Response) return ctx;
           const body = await request.json();
           const action = String(body?.action ?? "");
+
+          if (DESTRUCTIVE_ACTIONS.has(action)) {
+            const gate = await rateLimitOr429(
+              supabaseAdmin, ctx.userId, RATE_LIMITS.superAdminDestructive,
+            );
+            if (gate) return gate;
+          } else if (WRITE_ACTIONS.has(action)) {
+            const gate = await rateLimitOr429(
+              supabaseAdmin, ctx.userId, RATE_LIMITS.superAdminWrite,
+            );
+            if (gate) return gate;
+          }
 
           if (action === "list-schools") {
             // Auto-expire schools whose subscription_end or trial_ends_at has passed.
