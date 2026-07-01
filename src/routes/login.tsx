@@ -48,6 +48,7 @@ function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [lockoutMessage, setLockoutMessage] = useState<string | null>(null);
 
   useEffect(() => {
     try {
