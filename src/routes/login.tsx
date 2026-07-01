@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,15 @@ function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("inactivity_logout_flag") === "1") {
+        sessionStorage.removeItem("inactivity_logout_flag");
+        toast.info("Vous avez été déconnecté après une période d'inactivité, pour protéger vos données.", { duration: 8000 });
+      }
+    } catch {}
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
