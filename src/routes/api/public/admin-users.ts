@@ -117,6 +117,11 @@ export const Route = createFileRoute("/api/public/admin-users")({
               school_id: ctx.schoolId, relationship: relationship || "Tuteur",
             }));
             await supabaseAdmin.from("parent_students").upsert(links, { onConflict: "parent_profile_id,student_id" });
+            await logAuditServer(supabaseAdmin, {
+              schoolId: ctx.schoolId, userId: ctx.userId,
+              action: "account_created", targetType: "user", targetId: uid,
+              details: { role: "parent", email, name: `${firstName} ${lastName}`, studentIds },
+            });
             return Response.json({ ok: true, userId: uid, tempPassword });
           }
 
