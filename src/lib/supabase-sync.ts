@@ -516,8 +516,12 @@ async function pushDiffs(): Promise<void> {
       composition: g.composition ?? null, value: g.value ?? 0, comment: g.comment ?? null,
     });
     if (error) throw error;
+    logAudit({ action: "grade_created", targetType: "grade", targetId: g.id,
+      details: { studentId: g.studentId, subject: g.subject, term: g.term,
+        evaluationType: g.evaluationType, value: g.grade ?? g.value } });
   }
   for (const g of gradeDiff.updated) {
+    const prev = lastSnapshot.grades.find((x) => x.id === g.id);
     const { error } = await supabase.from("grades").update({
       student_id: g.studentId, class_id: g.classId || null, subject_id: g.subjectId || null,
       subject: g.subject, term: g.term, evaluation_type: g.evaluationType ?? null,
@@ -525,10 +529,21 @@ async function pushDiffs(): Promise<void> {
       composition: g.composition ?? null, value: g.value ?? 0, comment: g.comment ?? null,
     }).eq("id", g.id);
     if (error) throw error;
+    logAudit({ action: "grade_updated", targetType: "grade", targetId: g.id,
+      details: {
+        studentId: g.studentId, subject: g.subject, term: g.term,
+        evaluationType: g.evaluationType,
+        oldValue: prev?.grade ?? prev?.value ?? null,
+        newValue: g.grade ?? g.value ?? null,
+      } });
   }
   for (const id of gradeDiff.deletedIds) {
+    const prev = lastSnapshot.grades.find((x) => x.id === id);
     const { error } = await supabase.from("grades").delete().eq("id", id);
     if (error) throw error;
+    logAudit({ action: "grade_deleted", targetType: "grade", targetId: id,
+      details: prev ? { studentId: prev.studentId, subject: prev.subject, term: prev.term,
+        value: prev.grade ?? prev.value } : {} });
   }
 
   // Attendance
