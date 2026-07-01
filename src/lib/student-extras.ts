@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logAudit } from "./audit";
 
 export interface MedicalInfo {
   blood_group: string | null;
