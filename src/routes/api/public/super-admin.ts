@@ -3,6 +3,15 @@ import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { safeError } from "@/lib/api-errors";
 import { logAuditServer } from "@/lib/audit-server";
+import { rateLimitOr429, RATE_LIMITS } from "@/lib/rate-limit.server";
+
+// Any state-changing action.
+const WRITE_ACTIONS = new Set([
+  "update-notes", "create-school", "update-status", "update-subscription",
+  "update-plan", "extend-trial", "renew-subscription", "convert-trial",
+]);
+// Destructive actions — much tighter budget.
+const DESTRUCTIVE_ACTIONS = new Set(["delete-school"]);
 
 /**
  * Super admin (Wintek) endpoint. Manages every school on the platform.
