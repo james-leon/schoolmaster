@@ -30,6 +30,8 @@ function ParametresPage() {
   const { user } = useAuth();
   const { theme, toggle } = useTheme();
   const school = db.schools.find((s) => s.id === user?.schoolId) ?? db.schools[0];
+  const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
+
 
   const [form, setForm] = useState({
     name: "", director: "", email: "", phone: "",
