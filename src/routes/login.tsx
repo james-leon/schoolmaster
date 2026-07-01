@@ -257,6 +257,21 @@ function LoginPage() {
               {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
             </div>
 
+            {lockoutMessage && (
+              <div
+                role="alert"
+                className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
+              >
+                <div className="font-medium">{lockoutMessage}</div>
+                <Link
+                  to="/forgot-password"
+                  className="mt-1 inline-block text-sm font-semibold text-amber-900 underline"
+                >
+                  Mot de passe oublié ?
+                </Link>
+              </div>
+            )}
+
             <div className="flex items-center justify-between pt-1">
               <label className="flex cursor-pointer items-center gap-2 text-sm text-[#0F172A]">
                 <Checkbox
