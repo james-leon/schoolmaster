@@ -1,9 +1,14 @@
 import { Link } from "@tanstack/react-router";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, FileText } from "lucide-react";
 
 export function AppFooter({ className = "" }: { className?: string }) {
   return (
     <footer className={"flex flex-wrap items-center justify-center gap-x-4 gap-y-1 py-4 text-xs text-muted-foreground " + className}>
+      <Link to="/cgu" className="inline-flex items-center gap-1 hover:text-foreground">
+        <FileText className="h-3.5 w-3.5" />
+        CGU
+      </Link>
+      <span className="hidden sm:inline">•</span>
       <Link to="/confidentialite" className="inline-flex items-center gap-1 hover:text-foreground">
         <ShieldCheck className="h-3.5 w-3.5" />
         Politique de confidentialité
