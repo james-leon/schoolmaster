@@ -1196,6 +1196,27 @@ export type Database = {
           },
         ]
       }
+      rate_limit_events: {
+        Row: {
+          action: string
+          id: number
+          key: string
+          occurred_at: string
+        }
+        Insert: {
+          action: string
+          id?: number
+          key: string
+          occurred_at?: string
+        }
+        Update: {
+          action?: string
+          id?: number
+          key?: string
+          occurred_at?: string
+        }
+        Relationships: []
+      }
       route_stops: {
         Row: {
           created_at: string
@@ -2069,6 +2090,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_and_record_rate_limit: {
+        Args: {
+          _action: string
+          _key: string
+          _max: number
+          _window_seconds: number
+        }
+        Returns: {
+          allowed: boolean
+          retry_after: number
+        }[]
+      }
       check_login_lockout: {
         Args: { _email: string }
         Returns: {
