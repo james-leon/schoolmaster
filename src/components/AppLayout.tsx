@@ -127,6 +127,7 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
       </div>
       <MobileNav />
       <PrivacyConsentGate />
+      <InactivityGuard />
     </div>
   );
 }
