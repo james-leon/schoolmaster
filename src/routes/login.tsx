@@ -48,6 +48,7 @@ function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [lockoutMessage, setLockoutMessage] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -68,6 +69,7 @@ function LoginPage() {
       return;
     }
     setErrors({});
+    setLockoutMessage(null);
     setLoading(true);
     try {
       const u = await login(email, password);
@@ -79,9 +81,13 @@ function LoginPage() {
       }
     } catch (err) {
       const raw = (err as Error).message ?? "";
-      const friendly = friendlyConnectionMessage(raw);
-      if (friendly) toast.warning(friendly, { duration: 6000 });
-      else toast.error(raw);
+      if (raw.startsWith("Trop de tentatives")) {
+        setLockoutMessage(raw);
+      } else {
+        const friendly = friendlyConnectionMessage(raw);
+        if (friendly) toast.warning(friendly, { duration: 6000 });
+        else toast.error(raw);
+      }
     } finally {
       setLoading(false);
     }
@@ -250,6 +256,21 @@ function LoginPage() {
               </div>
               {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
             </div>
+
+            {lockoutMessage && (
+              <div
+                role="alert"
+                className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
+              >
+                <div className="font-medium">{lockoutMessage}</div>
+                <Link
+                  to="/forgot-password"
+                  className="mt-1 inline-block text-sm font-semibold text-amber-900 underline"
+                >
+                  Mot de passe oublié ?
+                </Link>
+              </div>
+            )}
 
             <div className="flex items-center justify-between pt-1">
               <label className="flex cursor-pointer items-center gap-2 text-sm text-[#0F172A]">

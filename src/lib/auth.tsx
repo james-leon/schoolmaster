@@ -171,18 +171,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<User> => {
-    // Demo seeding is no longer triggered from the client (security).
-
     const { withTimeoutRetry } = await import("@/lib/connection-friendly");
 
-    const { data, error } = await withTimeoutRetry(
-      () => supabase.auth.signInWithPassword({ email, password }),
+    // Server-enforced rate-limited login endpoint.
+    const res = await withTimeoutRetry(
+      () =>
+        fetch("/api/public/login", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        }),
       { timeoutMs: 25000, retries: 1 },
     );
-    if (error) throw new Error(error.message === "Invalid login credentials" ? "Email ou mot de passe incorrect" : error.message);
-    if (!data.user) throw new Error("Connexion échouée");
+    const payload = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      access_token?: string;
+      refresh_token?: string;
+    };
+    if (!res.ok || !payload.access_token || !payload.refresh_token) {
+      throw new Error(payload.error || "Email ou mot de passe incorrect");
+    }
 
-    const u = await withTimeoutRetry(() => loadProfile(data.user.id), { timeoutMs: 20000, retries: 1 });
+    const { data: setData, error: setErr } = await supabase.auth.setSession({
+      access_token: payload.access_token,
+      refresh_token: payload.refresh_token,
+    });
+    if (setErr || !setData.user) throw new Error("Connexion échouée");
+
+    const u = await withTimeoutRetry(() => loadProfile(setData.user!.id), { timeoutMs: 20000, retries: 1 });
     if (!u) throw new Error("Profil introuvable");
 
     // Block suspended schools (for school members, not super admin)

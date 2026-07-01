@@ -43,6 +43,7 @@ import { Route as PersonnelStaffIdRouteImport } from './routes/personnel.$staffI
 import { Route as ElevesStudentIdRouteImport } from './routes/eleves.$studentId'
 import { Route as ApiPublicSuperAdminRouteImport } from './routes/api/public/super-admin'
 import { Route as ApiPublicRegisterSchoolRouteImport } from './routes/api/public/register-school'
+import { Route as ApiPublicLoginRouteImport } from './routes/api/public/login'
 import { Route as ApiPublicAdminUsersRouteImport } from './routes/api/public/admin-users'
 
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
@@ -215,6 +216,11 @@ const ApiPublicRegisterSchoolRoute = ApiPublicRegisterSchoolRouteImport.update({
   path: '/api/public/register-school',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicLoginRoute = ApiPublicLoginRouteImport.update({
+  id: '/api/public/login',
+  path: '/api/public/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAdminUsersRoute = ApiPublicAdminUsersRouteImport.update({
   id: '/api/public/admin-users',
   path: '/api/public/admin-users',
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/personnel/$staffId': typeof PersonnelStaffIdRoute
   '/personnel/': typeof PersonnelIndexRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
+  '/api/public/login': typeof ApiPublicLoginRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/super-admin': typeof ApiPublicSuperAdminRoute
 }
@@ -291,6 +298,7 @@ export interface FileRoutesByTo {
   '/personnel/$staffId': typeof PersonnelStaffIdRoute
   '/personnel': typeof PersonnelIndexRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
+  '/api/public/login': typeof ApiPublicLoginRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/super-admin': typeof ApiPublicSuperAdminRoute
 }
@@ -329,6 +337,7 @@ export interface FileRoutesById {
   '/personnel/$staffId': typeof PersonnelStaffIdRoute
   '/personnel/': typeof PersonnelIndexRoute
   '/api/public/admin-users': typeof ApiPublicAdminUsersRoute
+  '/api/public/login': typeof ApiPublicLoginRoute
   '/api/public/register-school': typeof ApiPublicRegisterSchoolRoute
   '/api/public/super-admin': typeof ApiPublicSuperAdminRoute
 }
@@ -368,6 +377,7 @@ export interface FileRouteTypes {
     | '/personnel/$staffId'
     | '/personnel/'
     | '/api/public/admin-users'
+    | '/api/public/login'
     | '/api/public/register-school'
     | '/api/public/super-admin'
   fileRoutesByTo: FileRoutesByTo
@@ -404,6 +414,7 @@ export interface FileRouteTypes {
     | '/personnel/$staffId'
     | '/personnel'
     | '/api/public/admin-users'
+    | '/api/public/login'
     | '/api/public/register-school'
     | '/api/public/super-admin'
   id:
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/personnel/$staffId'
     | '/personnel/'
     | '/api/public/admin-users'
+    | '/api/public/login'
     | '/api/public/register-school'
     | '/api/public/super-admin'
   fileRoutesById: FileRoutesById
@@ -476,6 +488,7 @@ export interface RootRouteChildren {
   TransportRoute: typeof TransportRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
   ApiPublicAdminUsersRoute: typeof ApiPublicAdminUsersRoute
+  ApiPublicLoginRoute: typeof ApiPublicLoginRoute
   ApiPublicRegisterSchoolRoute: typeof ApiPublicRegisterSchoolRoute
   ApiPublicSuperAdminRoute: typeof ApiPublicSuperAdminRoute
 }
@@ -720,6 +733,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRegisterSchoolRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/login': {
+      id: '/api/public/login'
+      path: '/api/public/login'
+      fullPath: '/api/public/login'
+      preLoaderRoute: typeof ApiPublicLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/admin-users': {
       id: '/api/public/admin-users'
       path: '/api/public/admin-users'
@@ -786,6 +806,7 @@ const rootRouteChildren: RootRouteChildren = {
   TransportRoute: TransportRoute,
   UnauthorizedRoute: UnauthorizedRoute,
   ApiPublicAdminUsersRoute: ApiPublicAdminUsersRoute,
+  ApiPublicLoginRoute: ApiPublicLoginRoute,
   ApiPublicRegisterSchoolRoute: ApiPublicRegisterSchoolRoute,
   ApiPublicSuperAdminRoute: ApiPublicSuperAdminRoute,
 }

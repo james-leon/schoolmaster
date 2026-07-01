@@ -733,6 +733,27 @@ export type Database = {
         }
         Relationships: []
       }
+      login_attempts: {
+        Row: {
+          attempted_at: string
+          email: string
+          id: number
+          success: boolean
+        }
+        Insert: {
+          attempted_at?: string
+          email: string
+          id?: number
+          success?: boolean
+        }
+        Update: {
+          attempted_at?: string
+          email?: string
+          id?: number
+          success?: boolean
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -2012,6 +2033,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_login_lockout: {
+        Args: { _email: string }
+        Returns: {
+          locked: boolean
+          seconds_remaining: number
+        }[]
+      }
       clear_must_change_password: { Args: never; Returns: undefined }
       get_user_school_id: { Args: { _user_id: string }; Returns: string }
       get_user_student_id: { Args: { _user_id: string }; Returns: string }
@@ -2024,6 +2052,10 @@ export type Database = {
       }
       is_parent_of_student: { Args: { _student_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      record_login_attempt: {
+        Args: { _email: string; _success: boolean }
+        Returns: undefined
+      }
       teacher_handles_class: { Args: { _class_id: string }; Returns: boolean }
       teacher_handles_student: {
         Args: { _student_id: string }
