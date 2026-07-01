@@ -5,6 +5,7 @@ import { Sidebar, MobileNav } from "./Sidebar";
 import { Header } from "./Header";
 import { AppFooter } from "./AppFooter";
 import { PrivacyConsentGate } from "./PrivacyConsentGate";
+import { InactivityGuard } from "./InactivityGuard";
 import { useAuth } from "@/lib/auth";
 import { allowedRoutes, NAV_ITEMS } from "@/lib/nav";
 import { usePlan } from "@/lib/usePlan";
