@@ -200,6 +200,10 @@ export const Route = createFileRoute("/api/public/admin-users")({
             const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, { password: tempPassword });
             if (error) return safeError("admin-users:reset-password", 400, error);
             await supabaseAdmin.from("profiles").update({ must_change_password: true }).eq("id", targetUserId);
+            await logAuditServer(supabaseAdmin, {
+              schoolId: ctx.schoolId, userId: ctx.userId,
+              action: "password_reset", targetType: "user", targetId: targetUserId,
+            });
             return Response.json({ ok: true, tempPassword });
           }
 
