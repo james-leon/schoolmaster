@@ -69,6 +69,7 @@ function LoginPage() {
       return;
     }
     setErrors({});
+    setLockoutMessage(null);
     setLoading(true);
     try {
       const u = await login(email, password);
@@ -80,9 +81,13 @@ function LoginPage() {
       }
     } catch (err) {
       const raw = (err as Error).message ?? "";
-      const friendly = friendlyConnectionMessage(raw);
-      if (friendly) toast.warning(friendly, { duration: 6000 });
-      else toast.error(raw);
+      if (raw.startsWith("Trop de tentatives")) {
+        setLockoutMessage(raw);
+      } else {
+        const friendly = friendlyConnectionMessage(raw);
+        if (friendly) toast.warning(friendly, { duration: 6000 });
+        else toast.error(raw);
+      }
     } finally {
       setLoading(false);
     }
