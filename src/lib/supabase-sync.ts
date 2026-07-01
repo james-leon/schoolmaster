@@ -5,6 +5,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getDB, updateDB } from "./store";
 import { toast } from "sonner";
+import { logAudit } from "./audit";
 import type {
   Classe,
   Student,
