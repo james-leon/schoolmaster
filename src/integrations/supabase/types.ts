@@ -161,6 +161,42 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          details: Json
+          id: string
+          school_id: string
+          target_id: string | null
+          target_type: string | null
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          details?: Json
+          id?: string
+          school_id: string
+          target_id?: string | null
+          target_type?: string | null
+          user_id?: string | null
+          user_name?: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          school_id?: string
+          target_id?: string | null
+          target_type?: string | null
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: []
+      }
       budget_lines: {
         Row: {
           budget_id: string
