@@ -3,6 +3,15 @@ import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { safeError } from "@/lib/api-errors";
 import { logAuditServer } from "@/lib/audit-server";
+import { rateLimitOr429, RATE_LIMITS } from "@/lib/rate-limit.server";
+
+// Actions that create/modify accounts or user state — gated by rate limit.
+const WRITE_ACTIONS = new Set([
+  "create-teacher", "create-parent", "create-teacher-account",
+  "link-parent-student", "unlink-parent-student",
+  "set-active", "delete",
+]);
+const RESET_ACTIONS = new Set(["reset-password"]);
 
 /**
  * Admin endpoint to manage user accounts in the current school.
