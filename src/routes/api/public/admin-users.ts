@@ -72,6 +72,11 @@ export const Route = createFileRoute("/api/public/admin-users")({
               school_id: ctx.schoolId, first_name: firstName, last_name: lastName,
               email, phone: phone ?? null, subjects: subjects ?? [],
             }).select().single();
+            await logAuditServer(supabaseAdmin, {
+              schoolId: ctx.schoolId, userId: ctx.userId,
+              action: "account_created", targetType: "user", targetId: uid,
+              details: { role: "teacher", email, name: `${firstName} ${lastName}` },
+            });
             return Response.json({ ok: true, userId: uid, tempPassword, teacherId: teacher?.id });
           }
 
