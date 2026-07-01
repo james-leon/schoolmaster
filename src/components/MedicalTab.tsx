@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Pencil, Save, X, HeartPulse, Phone, AlertTriangle } from "lucide-react";
 import { useMedicalInfo, type MedicalInfo } from "@/lib/student-extras";
 import { toast } from "sonner";
+import { logAudit } from "@/lib/audit";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -22,13 +23,28 @@ export function MedicalTab({ studentId, canEdit }: Props) {
   const [form, setForm] = useState<MedicalInfo>(data);
   const [saving, setSaving] = useState(false);
 
+  // Log medical record view once per student mount (only when loaded).
+  const loggedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (loading) return;
+    if (loggedRef.current === studentId) return;
+    loggedRef.current = studentId;
+    logAudit({ action: "medical_record_viewed", targetType: "student", targetId: studentId });
+  }, [studentId, loading]);
+
   const start = () => { setForm(data); setEditing(true); };
   const cancel = () => { setEditing(false); };
   const submit = async () => {
     setSaving(true);
     const { error } = await save(form);
     setSaving(false);
-    if (error) toast.error("Échec de l'enregistrement"); else { toast.success("Informations médicales enregistrées"); setEditing(false); }
+    if (error) {
+      toast.error("Échec de l'enregistrement");
+    } else {
+      toast.success("Informations médicales enregistrées");
+      logAudit({ action: "medical_record_updated", targetType: "student", targetId: studentId });
+      setEditing(false);
+    }
   };
 
   if (loading) return <Card><CardContent className="p-8 text-center text-muted-foreground">Chargement…</CardContent></Card>;
