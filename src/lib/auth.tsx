@@ -223,6 +223,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setOriginalUser(null);
     clearHydration();
     clearLocalDB();
+    // Reset cached identity used by audit logging so the next signed-in
+    // user doesn't inherit the previous user's name.
+    import("./audit").then((m) => m.invalidateAuditIdentity()).catch(() => {});
   };
 
   const startImpersonating = async (schoolId: string) => {
