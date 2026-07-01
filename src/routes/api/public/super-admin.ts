@@ -51,6 +51,18 @@ export const Route = createFileRoute("/api/public/super-admin")({
           const body = await request.json();
           const action = String(body?.action ?? "");
 
+          if (DESTRUCTIVE_ACTIONS.has(action)) {
+            const gate = await rateLimitOr429(
+              supabaseAdmin, ctx.userId, RATE_LIMITS.superAdminDestructive,
+            );
+            if (gate) return gate;
+          } else if (WRITE_ACTIONS.has(action)) {
+            const gate = await rateLimitOr429(
+              supabaseAdmin, ctx.userId, RATE_LIMITS.superAdminWrite,
+            );
+            if (gate) return gate;
+          }
+
           if (action === "list-schools") {
             // Auto-expire schools whose subscription_end or trial_ends_at has passed.
             const today = new Date().toISOString().slice(0, 10);
