@@ -84,6 +84,17 @@ export const generateAppreciation = createServerFn({ method: "POST" })
       throw new Response("Forbidden", { status: 403 });
     }
 
+    // Rate limit — per user, per 5 minutes.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const rl = await checkRateLimit(supabaseAdmin, userId, RATE_LIMITS.aiAppreciation);
+    if (!rl.allowed) {
+      throw new Response(
+        `Trop de requêtes IA. Réessayez dans ${rl.retryAfter}s.`,
+        { status: 429, headers: { "retry-after": String(rl.retryAfter) } },
+      );
+    }
+
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Response("AI not configured", { status: 500 });
 
