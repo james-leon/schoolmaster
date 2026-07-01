@@ -18,6 +18,7 @@ import { Trash2, Upload, Image as ImageIcon, KeyRound, UserX, UserCheck } from "
 import { toast } from "sonner";
 import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
+import { AuditLogPanel } from "@/components/AuditLogPanel";
 import { SEQUENCES, SEQUENCE_TERM, getSequenceCoefficients, setSequenceCoefficients, type Sequence } from "@/lib/types";
 
 export const Route = createFileRoute("/parametres")({
@@ -29,6 +30,8 @@ function ParametresPage() {
   const { user } = useAuth();
   const { theme, toggle } = useTheme();
   const school = db.schools.find((s) => s.id === user?.schoolId) ?? db.schools[0];
+  const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
+
 
   const [form, setForm] = useState({
     name: "", director: "", email: "", phone: "",
@@ -120,6 +123,7 @@ function ParametresPage() {
           <TabsTrigger value="evaluations">Évaluations</TabsTrigger>
           <TabsTrigger value="utilisateurs">Utilisateurs</TabsTrigger>
           <TabsTrigger value="confidentialite">Confidentialité</TabsTrigger>
+          {isAdmin && <TabsTrigger value="journal">Journal d'activité</TabsTrigger>}
           <TabsTrigger value="compte">Compte</TabsTrigger>
         </TabsList>
 
@@ -209,6 +213,13 @@ function ParametresPage() {
         <TabsContent value="confidentialite" className="mt-4">
           <PrivacyPanel schoolId={school?.id} />
         </TabsContent>
+
+        {isAdmin && (
+          <TabsContent value="journal" className="mt-4">
+            <AuditLogPanel schoolId={school?.id} />
+          </TabsContent>
+        )}
+
 
 
         <TabsContent value="compte" className="mt-4">

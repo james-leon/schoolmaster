@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { safeError } from "@/lib/api-errors";
+import { logAuditServer } from "@/lib/audit-server";
 
 /**
  * Super admin (Wintek) endpoint. Manages every school on the platform.
@@ -256,6 +257,11 @@ export const Route = createFileRoute("/api/public/super-admin")({
               await supabaseAdmin.auth.admin.deleteUser(uid).catch(() => {});
             }
             await supabaseAdmin.from("schools").delete().eq("id", schoolId);
+            await logAuditServer(supabaseAdmin, {
+              schoolId, userId: ctx.userId, userName: "Super Admin",
+              action: "data_reset", targetType: "school", targetId: schoolId,
+              details: { operation: "delete-school" },
+            });
             return Response.json({ ok: true });
           }
 

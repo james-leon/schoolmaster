@@ -21,6 +21,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Pencil, Trash2, TrendingUp, TrendingDown, Wallet, Scale, Download } from "lucide-react";
 import { toast } from "sonner";
 import { csvRow } from "@/lib/csv";
+import { logAudit } from "@/lib/audit";
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip as RTooltip,
   ResponsiveContainer, Legend, CartesianGrid,
@@ -247,10 +248,21 @@ function ComptabilitePage() {
         const { error } = await supabase.from("transactions").update(payload).eq("id", editing.id);
         if (error) return toast.error("Échec de la mise à jour");
         toast.success("Transaction mise à jour");
+        logAudit({
+          action: form.type === "depense" ? "expense_updated" : "transaction_updated",
+          targetType: "transaction", targetId: editing.id,
+          details: { type: form.type, category: form.category, amount,
+            oldAmount: editing.amount, oldCategory: editing.category },
+        });
       } else {
-        const { error } = await supabase.from("transactions").insert(payload);
+        const { data: inserted, error } = await supabase.from("transactions").insert(payload).select("id").maybeSingle();
         if (error) return toast.error("Échec de l'enregistrement");
         toast.success("Transaction enregistrée");
+        logAudit({
+          action: form.type === "depense" ? "expense_created" : "transaction_created",
+          targetType: "transaction", targetId: inserted?.id ?? null,
+          details: { type: form.type, category: form.category, amount, date: form.date },
+        });
       }
       setOpen(false);
       await fetchAll();
@@ -265,6 +277,11 @@ function ComptabilitePage() {
     const { error } = await supabase.from("transactions").delete().eq("id", deleting.id);
     if (error) { toast.error("Échec de la suppression"); return; }
     toast.success("Transaction supprimée");
+    logAudit({
+      action: deleting.type === "depense" ? "expense_deleted" : "transaction_deleted",
+      targetType: "transaction", targetId: deleting.id,
+      details: { type: deleting.type, category: deleting.category, amount: deleting.amount, date: deleting.date },
+    });
     setDeleting(null);
     fetchAll();
   }

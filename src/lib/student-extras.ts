@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logAudit } from "./audit";
 
 export interface MedicalInfo {
   blood_group: string | null;
@@ -113,7 +114,13 @@ export function useDisciplineRecords(studentId: string | undefined) {
       severity: input.type === "incident" ? (input.severity ?? null) : null,
       recorded_by: uid,
     });
-    if (!error) await load();
+    if (!error) {
+      logAudit({
+        action: "discipline_record_created", targetType: "student", targetId: studentId,
+        details: { type: input.type, title: input.title, severity: input.severity ?? null, date: input.date },
+      });
+      await load();
+    }
     return { error: error?.message };
   }, [studentId, load]);
 

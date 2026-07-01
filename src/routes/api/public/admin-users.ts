@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { safeError } from "@/lib/api-errors";
+import { logAuditServer } from "@/lib/audit-server";
 
 /**
  * Admin endpoint to manage user accounts in the current school.
@@ -71,6 +72,11 @@ export const Route = createFileRoute("/api/public/admin-users")({
               school_id: ctx.schoolId, first_name: firstName, last_name: lastName,
               email, phone: phone ?? null, subjects: subjects ?? [],
             }).select().single();
+            await logAuditServer(supabaseAdmin, {
+              schoolId: ctx.schoolId, userId: ctx.userId,
+              action: "account_created", targetType: "user", targetId: uid,
+              details: { role: "teacher", email, name: `${firstName} ${lastName}` },
+            });
             return Response.json({ ok: true, userId: uid, tempPassword, teacherId: teacher?.id });
           }
 
@@ -111,6 +117,11 @@ export const Route = createFileRoute("/api/public/admin-users")({
               school_id: ctx.schoolId, relationship: relationship || "Tuteur",
             }));
             await supabaseAdmin.from("parent_students").upsert(links, { onConflict: "parent_profile_id,student_id" });
+            await logAuditServer(supabaseAdmin, {
+              schoolId: ctx.schoolId, userId: ctx.userId,
+              action: "account_created", targetType: "user", targetId: uid,
+              details: { role: "parent", email, name: `${firstName} ${lastName}`, studentIds },
+            });
             return Response.json({ ok: true, userId: uid, tempPassword });
           }
 
@@ -189,6 +200,10 @@ export const Route = createFileRoute("/api/public/admin-users")({
             const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, { password: tempPassword });
             if (error) return safeError("admin-users:reset-password", 400, error);
             await supabaseAdmin.from("profiles").update({ must_change_password: true }).eq("id", targetUserId);
+            await logAuditServer(supabaseAdmin, {
+              schoolId: ctx.schoolId, userId: ctx.userId,
+              action: "password_reset", targetType: "user", targetId: targetUserId,
+            });
             return Response.json({ ok: true, tempPassword });
           }
 
@@ -248,6 +263,11 @@ export const Route = createFileRoute("/api/public/admin-users")({
             const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, { ban_duration: banDuration });
             if (error) return safeError("admin-users:set-active", 400, error);
             await supabaseAdmin.from("profiles").update({ is_active: !!isActive }).eq("id", targetUserId);
+            await logAuditServer(supabaseAdmin, {
+              schoolId: ctx.schoolId, userId: ctx.userId,
+              action: "account_status_changed", targetType: "user", targetId: targetUserId,
+              details: { isActive: !!isActive },
+            });
             return Response.json({ ok: true });
           }
 
@@ -256,11 +276,18 @@ export const Route = createFileRoute("/api/public/admin-users")({
             if (!targetUserId) return Response.json({ error: "Utilisateur requis" }, { status: 400 });
             if (targetUserId === ctx.userId) return Response.json({ error: "Vous ne pouvez pas supprimer votre propre compte" }, { status: 400 });
             if (!(await ensureTargetInSchool(targetUserId, ctx.schoolId))) return Response.json({ error: "Forbidden" }, { status: 403 });
+            const { data: victim } = await supabaseAdmin
+              .from("profiles").select("full_name, email, role").eq("id", targetUserId).maybeSingle();
             const { error } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
             if (error) return safeError("admin-users:delete", 400, error);
             await supabaseAdmin.from("parent_students").delete().eq("parent_profile_id", targetUserId);
             await supabaseAdmin.from("user_roles").delete().eq("user_id", targetUserId);
             await supabaseAdmin.from("profiles").delete().eq("id", targetUserId);
+            await logAuditServer(supabaseAdmin, {
+              schoolId: ctx.schoolId, userId: ctx.userId,
+              action: "account_deleted", targetType: "user", targetId: targetUserId,
+              details: { name: victim?.full_name, email: victim?.email, role: victim?.role },
+            });
             return Response.json({ ok: true });
           }
 

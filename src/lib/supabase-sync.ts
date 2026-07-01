@@ -5,6 +5,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getDB, updateDB } from "./store";
 import { toast } from "sonner";
+import { logAudit } from "./audit";
 import type {
   Classe,
   Student,
@@ -461,6 +462,8 @@ async function pushDiffs(): Promise<void> {
       enrollment_status: s.enrollmentStatus ?? "nouveau",
     } as any);
     if (error) throw error;
+    logAudit({ action: "student_created", targetType: "student", targetId: s.id,
+      details: { name: `${s.firstName} ${s.lastName}`.trim(), classId: s.classId } });
   }
   for (const s of studentDiff.updated) {
     const { error } = await supabase.from("students").update({
@@ -471,10 +474,15 @@ async function pushDiffs(): Promise<void> {
       enrollment_status: s.enrollmentStatus ?? "nouveau",
     } as any).eq("id", s.id);
     if (error) throw error;
+    logAudit({ action: "student_updated", targetType: "student", targetId: s.id,
+      details: { name: `${s.firstName} ${s.lastName}`.trim() } });
   }
   for (const id of studentDiff.deletedIds) {
+    const prev = lastSnapshot.students.find((x) => x.id === id);
     const { error } = await supabase.from("students").delete().eq("id", id);
     if (error) throw error;
+    logAudit({ action: "student_deleted", targetType: "student", targetId: id,
+      details: prev ? { name: `${prev.firstName} ${prev.lastName}`.trim() } : {} });
   }
 
   // Class subjects
@@ -508,8 +516,12 @@ async function pushDiffs(): Promise<void> {
       composition: g.composition ?? null, value: g.value ?? 0, comment: g.comment ?? null,
     });
     if (error) throw error;
+    logAudit({ action: "grade_created", targetType: "grade", targetId: g.id,
+      details: { studentId: g.studentId, subject: g.subject, term: g.term,
+        evaluationType: g.evaluationType, value: g.grade ?? g.value } });
   }
   for (const g of gradeDiff.updated) {
+    const prev = lastSnapshot.grades.find((x) => x.id === g.id);
     const { error } = await supabase.from("grades").update({
       student_id: g.studentId, class_id: g.classId || null, subject_id: g.subjectId || null,
       subject: g.subject, term: g.term, evaluation_type: g.evaluationType ?? null,
@@ -517,10 +529,21 @@ async function pushDiffs(): Promise<void> {
       composition: g.composition ?? null, value: g.value ?? 0, comment: g.comment ?? null,
     }).eq("id", g.id);
     if (error) throw error;
+    logAudit({ action: "grade_updated", targetType: "grade", targetId: g.id,
+      details: {
+        studentId: g.studentId, subject: g.subject, term: g.term,
+        evaluationType: g.evaluationType,
+        oldValue: prev?.grade ?? prev?.value ?? null,
+        newValue: g.grade ?? g.value ?? null,
+      } });
   }
   for (const id of gradeDiff.deletedIds) {
+    const prev = lastSnapshot.grades.find((x) => x.id === id);
     const { error } = await supabase.from("grades").delete().eq("id", id);
     if (error) throw error;
+    logAudit({ action: "grade_deleted", targetType: "grade", targetId: id,
+      details: prev ? { studentId: prev.studentId, subject: prev.subject, term: prev.term,
+        value: prev.grade ?? prev.value } : {} });
   }
 
   // Attendance
@@ -573,6 +596,9 @@ async function pushDiffs(): Promise<void> {
       mode: p.mode ?? null, reference: p.reference ?? null, notes: p.notes ?? null,
     });
     if (error) throw error;
+    logAudit({ action: "invoice_created", targetType: "invoice", targetId: p.id,
+      details: { invoiceNumber: p.invoiceNumber, studentId: p.studentId,
+        type: p.type, amount: p.amount } });
   }
   for (const p of invDiff.updated) {
     const { error } = await supabase.from("invoices").update({
@@ -584,8 +610,12 @@ async function pushDiffs(): Promise<void> {
     if (error) throw error;
   }
   for (const id of invDiff.deletedIds) {
+    const prev = lastSnapshot.payments.find((x) => x.id === id);
     const { error } = await supabase.from("invoices").delete().eq("id", id);
     if (error) throw error;
+    logAudit({ action: "invoice_deleted", targetType: "invoice", targetId: id,
+      details: prev ? { invoiceNumber: prev.invoiceNumber, studentId: prev.studentId,
+        type: prev.type, amount: prev.amount } : {} });
   }
 
   // Payment records
@@ -597,6 +627,9 @@ async function pushDiffs(): Promise<void> {
       mode: r.mode, reference: r.reference ?? null, date: r.date, notes: r.notes ?? null,
     });
     if (error) throw error;
+    logAudit({ action: "payment_recorded", targetType: "payment", targetId: r.id,
+      details: { receiptNumber: r.receiptNumber, invoiceId: r.invoiceId,
+        studentId: r.studentId, amount: r.amount, mode: r.mode } });
   }
   for (const r of prDiff.updated) {
     const { error } = await supabase.from("payment_records").update({
@@ -607,8 +640,12 @@ async function pushDiffs(): Promise<void> {
     if (error) throw error;
   }
   for (const id of prDiff.deletedIds) {
+    const prev = lastSnapshot.paymentRecords.find((x) => x.id === id);
     const { error } = await supabase.from("payment_records").delete().eq("id", id);
     if (error) throw error;
+    logAudit({ action: "payment_deleted", targetType: "payment", targetId: id,
+      details: prev ? { receiptNumber: prev.receiptNumber, studentId: prev.studentId,
+        amount: prev.amount, mode: prev.mode } : {} });
   }
 
 
