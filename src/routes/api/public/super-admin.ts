@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { safeError } from "@/lib/api-errors";
+import { logAuditServer } from "@/lib/audit-server";
 
 /**
  * Super admin (Wintek) endpoint. Manages every school on the platform.
