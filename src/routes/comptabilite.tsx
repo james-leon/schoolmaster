@@ -21,6 +21,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Pencil, Trash2, TrendingUp, TrendingDown, Wallet, Scale, Download } from "lucide-react";
 import { toast } from "sonner";
 import { csvRow } from "@/lib/csv";
+import { logAudit } from "@/lib/audit";
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip as RTooltip,
   ResponsiveContainer, Legend, CartesianGrid,
