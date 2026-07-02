@@ -46,6 +46,13 @@ export const isParent = (u: User | null | undefined): boolean =>
 export const isSuperAdmin = (u: User | null | undefined): boolean =>
   u?.role === "super_admin";
 
+export const isSecretary = (u: User | null | undefined): boolean =>
+  u?.role === "secretary";
+
+/** School operational staff: school_admin OR secretary (both work in one school). */
+export const isSchoolStaff = (u: User | null | undefined): boolean =>
+  u?.role === "school_admin" || u?.role === "secretary";
+
 /**
  * The complete teacher capability matrix. Default = false.
  * Anything not listed here is denied for teachers.
