@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Upload, Image as ImageIcon, KeyRound, UserX, UserCheck } from "lucide-react";
+import { Trash2, Upload, Image as ImageIcon, KeyRound, UserX, UserCheck, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
