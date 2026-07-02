@@ -511,6 +511,28 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
             </DialogContent>
           </Dialog>
         )}
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Nouvelle secrétaire</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Prénom</Label><Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} /></div>
+                <div><Label>Nom</Label><Input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} /></div>
+              </div>
+              <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+              <div><Label>Téléphone (optionnel)</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+              <p className="text-xs text-muted-foreground">
+                La secrétaire aura accès à : élèves, parents, facturation, paiements (création uniquement),
+                annonces, calendrier, présences, transport. Elle ne pourra pas accéder à la comptabilité,
+                au budget, au personnel ni aux paramètres.
+              </p>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setCreateOpen(false)}>Annuler</Button>
+                <Button onClick={createSecretary} disabled={creating}>{creating ? "Création..." : "Créer"}</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
