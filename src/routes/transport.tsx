@@ -110,6 +110,8 @@ function TransportPage() {
   const { user } = useAuth();
   const schoolId = user?.schoolId;
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
+  const isSecretary = user?.role === "secretary";
+  const canAccess = isAdmin || isSecretary;
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
