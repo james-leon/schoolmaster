@@ -2133,7 +2133,12 @@ export type Database = {
       touch_school_activity: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "school_admin" | "teacher" | "parent" | "super_admin"
+      app_role:
+        | "school_admin"
+        | "teacher"
+        | "parent"
+        | "super_admin"
+        | "secretary"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2261,7 +2266,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["school_admin", "teacher", "parent", "super_admin"],
+      app_role: [
+        "school_admin",
+        "teacher",
+        "parent",
+        "super_admin",
+        "secretary",
+      ],
     },
   },
 } as const
