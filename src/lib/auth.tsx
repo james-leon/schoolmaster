@@ -69,7 +69,7 @@ async function loadProfile(userId: string): Promise<User | null> {
   //    school-scoped profile row when first created).
   if (data) {
     const user = profileToUser(data as ProfileRow);
-    if (user.role && user.role !== "school_admin" && user.role !== "teacher" && user.role !== "parent" && user.role !== "super_admin") {
+    if (user.role && user.role !== "school_admin" && user.role !== "teacher" && user.role !== "parent" && user.role !== "super_admin" && user.role !== "secretary") {
       // unknown role — fall through to role lookup
     } else {
       return user;
