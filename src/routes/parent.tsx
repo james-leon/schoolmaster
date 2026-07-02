@@ -228,6 +228,7 @@ function ParentPortal() {
           </div>
         </SheetContent>
       </Sheet>
+      <InactivityGuard />
     </div>
 
   );
