@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { useTheme } from "@/lib/theme";
 import { superAdminApi, type PlatformSchool, type PlatformKpis } from "@/lib/super-admin-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import { CredentialsModal, type CredentialsInfo } from "@/components/Credentials
 import {
   Building2, Users, TrendingUp, AlertOctagon, Plus, MoreVertical, Eye, Ban,
   Play, LogIn, Trash2, CalendarPlus, CreditCard, LogOut, AlertTriangle, Clock, History, RefreshCw, Rocket,
+  Sun, Moon,
 } from "lucide-react";
 import { fcfa } from "@/lib/format";
 import { Logo } from "@/components/Logo";
@@ -55,6 +57,7 @@ type SubFilter = "all" | "soon" | "expired" | "trial" | "active";
 
 function SuperAdminPage() {
   const { originalUser, loading, logout, startImpersonating } = useAuth();
+  const { theme, toggle } = useTheme();
   const navigate = useNavigate();
   const [schools, setSchools] = useState<PlatformSchool[]>([]);
   const [kpis, setKpis] = useState<PlatformKpis | null>(null);
@@ -181,6 +184,9 @@ function SuperAdminPage() {
         <div className="flex items-center gap-2">
           <Badge className="bg-primary text-primary-foreground">Super Admin</Badge>
           <span className="hidden text-sm font-medium md:inline">{originalUser.name}</span>
+          <Button variant="ghost" size="icon" onClick={toggle} aria-label={theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"}>
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
           <Button variant="ghost" size="icon" onClick={logout} aria-label="Déconnexion">
             <LogOut className="h-4 w-4" />
           </Button>
