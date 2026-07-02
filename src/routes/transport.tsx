@@ -206,34 +206,44 @@ function TransportPage() {
           </Card>
         )}
 
-        <Tabs defaultValue="vehicles">
+        <Tabs defaultValue={isSecretary ? "students" : "vehicles"}>
           <TabsList>
-            <TabsTrigger value="vehicles">Bus</TabsTrigger>
-            <TabsTrigger value="drivers">Chauffeurs</TabsTrigger>
-            <TabsTrigger value="routes">Circuits</TabsTrigger>
+            {isAdmin && <TabsTrigger value="vehicles">Bus</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="drivers">Chauffeurs</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="routes">Circuits</TabsTrigger>}
             <TabsTrigger value="students">Élèves transportés</TabsTrigger>
-            <TabsTrigger value="documents">Documents</TabsTrigger>
-            <TabsTrigger value="expenses">Dépenses</TabsTrigger>
+            {isAdmin && <TabsTrigger value="documents">Documents</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="expenses">Dépenses</TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="vehicles" className="mt-4">
-            <VehiclesTab schoolId={schoolId!} vehicles={vehicles} reload={fetchAll} loading={loading} expenses={expenses} />
-          </TabsContent>
-          <TabsContent value="drivers" className="mt-4">
-            <DriversTab schoolId={schoolId!} drivers={drivers} vehicles={vehicles} reload={fetchAll} />
-          </TabsContent>
-          <TabsContent value="routes" className="mt-4">
-            <RoutesTab schoolId={schoolId!} routes={routes} stops={stops} assignments={assignments} vehicles={vehicles} drivers={drivers} reload={fetchAll} />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="vehicles" className="mt-4">
+              <VehiclesTab schoolId={schoolId!} vehicles={vehicles} reload={fetchAll} loading={loading} expenses={expenses} />
+            </TabsContent>
+          )}
+          {isAdmin && (
+            <TabsContent value="drivers" className="mt-4">
+              <DriversTab schoolId={schoolId!} drivers={drivers} vehicles={vehicles} reload={fetchAll} />
+            </TabsContent>
+          )}
+          {isAdmin && (
+            <TabsContent value="routes" className="mt-4">
+              <RoutesTab schoolId={schoolId!} routes={routes} stops={stops} assignments={assignments} vehicles={vehicles} drivers={drivers} reload={fetchAll} />
+            </TabsContent>
+          )}
           <TabsContent value="students" className="mt-4">
             <TransportedStudentsTab schoolId={schoolId!} routes={routes} stops={stops} assignments={assignments} vehicles={vehicles} reload={fetchAll} />
           </TabsContent>
-          <TabsContent value="documents" className="mt-4">
-            <DocumentsTab schoolId={schoolId!} docs={docs} vehicles={vehicles} reload={fetchAll} />
-          </TabsContent>
-          <TabsContent value="expenses" className="mt-4">
-            <ExpensesTab schoolId={schoolId!} expenses={expenses} vehicles={vehicles} suppliers={suppliers} reload={fetchAll} userId={user.id} />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="documents" className="mt-4">
+              <DocumentsTab schoolId={schoolId!} docs={docs} vehicles={vehicles} reload={fetchAll} />
+            </TabsContent>
+          )}
+          {isAdmin && (
+            <TabsContent value="expenses" className="mt-4">
+              <ExpensesTab schoolId={schoolId!} expenses={expenses} vehicles={vehicles} suppliers={suppliers} reload={fetchAll} userId={user.id} />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </AppLayout>
