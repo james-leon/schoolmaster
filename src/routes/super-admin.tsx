@@ -184,6 +184,9 @@ function SuperAdminPage() {
         <div className="flex items-center gap-2">
           <Badge className="bg-primary text-primary-foreground">Super Admin</Badge>
           <span className="hidden text-sm font-medium md:inline">{originalUser.name}</span>
+          <Button variant="ghost" size="icon" onClick={toggle} aria-label={theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"}>
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
           <Button variant="ghost" size="icon" onClick={logout} aria-label="Déconnexion">
             <LogOut className="h-4 w-4" />
           </Button>
