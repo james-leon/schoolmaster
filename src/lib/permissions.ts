@@ -107,17 +107,60 @@ export const TEACHER_CAN = {
 export type TeacherCapability = keyof typeof TEACHER_CAN;
 
 /**
+ * SECRETARY capability matrix — segregation of duties.
+ * Allowed: day-to-day operational admin (students, parents, invoicing,
+ * payments, communications, transport affectations, attendance, printing
+ * bulletins). Blocked: accounting/budget, personnel/payroll, settings,
+ * teacher/secretary management, deletions of financial records.
+ */
+export const SECRETARY_CAN: Record<TeacherCapability, boolean> = {
+  viewAssignedStudents: true,
+  createStudent: true,
+  editStudent: true,
+  deleteStudent: false,
+  importStudents: true,
+  createStudentAccount: true,
+  createParentAccount: true,
+  viewParentsList: true,
+  manageParents: true,
+
+  viewAssignedClasses: true,
+  createClass: false,
+  editClass: false,
+  deleteClass: false,
+  manageSubjects: false,
+  assignTeachers: false,
+
+  enterGrades: false,
+  takeAttendance: true,
+  addDisciplineNote: false,
+
+  viewFinance: true,
+  viewInvoices: true,
+  viewPayments: true,
+  viewAccounting: false,
+  viewFeeAmounts: true,
+
+  viewTeachersAdmin: false,
+  viewPersonnel: false,
+  viewPayroll: false,
+  viewSettings: false,
+  viewSuperAdmin: false,
+  manageSubscription: false,
+
+  editOwnProfile: true,
+  changeOwnPassword: true,
+};
+
+/**
  * Single permission check. For non-teachers, defaults to true for admin
  * roles and false for parents (since this map is teacher-centric).
- *
- * For non-teacher role gating, use `isAdmin(u)` / `isSchoolAdmin(u)` /
- * `isParent(u)` directly.
  */
 export function can(user: User | null | undefined, cap: TeacherCapability): boolean {
   if (!user) return false;
   if (isSuperAdmin(user) || isSchoolAdmin(user)) return true;
   if (isTeacher(user)) return TEACHER_CAN[cap];
-  // parent: only self-edit caps apply
+  if (isSecretary(user)) return SECRETARY_CAN[cap];
   if (isParent(user)) return cap === "editOwnProfile" || cap === "changeOwnPassword";
   return false;
 }
