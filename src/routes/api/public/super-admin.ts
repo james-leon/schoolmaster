@@ -262,11 +262,33 @@ export const Route = createFileRoute("/api/public/super-admin")({
               .from("profiles").select("id").eq("school_id", schoolId);
             const memberIds = (members ?? []).map((m) => m.id);
 
-            // Cascade: clear per-school data then the school itself
+            // Cascade: clear ALL per-school data then the school itself.
+            // Order matters: delete children before parents to satisfy FKs.
             const tables = [
-              "grades","attendance","payment_records","invoices","fee_types",
-              "class_subjects","students","teachers","classes","parents",
-              "announcements","academic_years",
+              // Grading / attendance / discipline
+              "grades","attendance","discipline_records",
+              // Announcements (reads reference announcements)
+              "announcement_reads","announcements",
+              // Notifications
+              "notifications",
+              // Finance — child rows first
+              "payment_records","invoices","fee_types",
+              "budget_lines","budgets",
+              "transactions","transaction_categories","suppliers",
+              "payment_subscriptions",
+              // Payroll / staff
+              "payroll_history","payroll","staff_leave","staff",
+              // Transport — children first
+              "student_transport","route_stops","transport_routes",
+              "vehicle_documents","vehicles","drivers",
+              // Timetable / class links
+              "timetable","class_subjects","class_teachers",
+              // Core entities
+              "parent_students","students","parents","teachers","classes",
+              // Calendar & academic
+              "events","academic_years",
+              // Audit last
+              "audit_logs",
             ] as const;
             for (const t of tables) {
               await (supabaseAdmin.from(t) as any).delete().eq("school_id", schoolId);
