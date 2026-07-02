@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/lib/auth";
+import { isSchoolAdmin, isSuperAdmin, isSecretary } from "@/lib/permissions";
 import { useDB } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -73,7 +74,7 @@ function eventCoversDate(ev: EventRow, iso: string) {
 function CalendrierPage() {
   const { user } = useAuth();
   const db = useDB();
-  const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
+  const isAdmin = isSchoolAdmin(user) || isSuperAdmin(user) || isSecretary(user);
 
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
