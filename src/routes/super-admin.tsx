@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { useTheme } from "@/lib/theme";
 import { superAdminApi, type PlatformSchool, type PlatformKpis } from "@/lib/super-admin-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import { CredentialsModal, type CredentialsInfo } from "@/components/Credentials
 import {
   Building2, Users, TrendingUp, AlertOctagon, Plus, MoreVertical, Eye, Ban,
   Play, LogIn, Trash2, CalendarPlus, CreditCard, LogOut, AlertTriangle, Clock, History, RefreshCw, Rocket,
+  Sun, Moon,
 } from "lucide-react";
 import { fcfa } from "@/lib/format";
 import { Logo } from "@/components/Logo";
