@@ -74,7 +74,7 @@ function eventCoversDate(ev: EventRow, iso: string) {
 function CalendrierPage() {
   const { user } = useAuth();
   const db = useDB();
-  const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
+  const isAdmin = isSchoolAdmin(user) || isSuperAdmin(user) || isSecretary(user);
 
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
