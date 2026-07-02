@@ -1,4 +1,5 @@
 import { Bell, Moon, Sun, User as UserIcon, LogOut, Settings, CreditCard, Shield, Megaphone, AlertCircle, Calendar, Check, Trash2, Search, ChevronRight } from "lucide-react";
+import { GlobalSearch } from "./GlobalSearch";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
@@ -70,14 +71,7 @@ export function Header({ title }: { title: string }) {
         <span className="truncate font-medium text-[#0F172A]">{title}</span>
       </nav>
       <div className="flex flex-1 items-center justify-end gap-2 md:gap-3">
-        <div className="relative hidden md:block md:w-[320px] lg:w-[380px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#94A3B8]" />
-          <input
-            type="text"
-            placeholder="Rechercher un élève, une facture..."
-            className="h-10 w-full rounded-xl border border-[#E8EDF4] bg-[#F7F9FC] pl-9 pr-3 text-sm text-[#0F172A] outline-none transition focus:border-[#2563EB] focus:bg-card focus:ring-2 focus:ring-[#2563EB]/15"
-          />
-        </div>
+        <GlobalSearch />
         <Button variant="ghost" size="icon" onClick={toggle} aria-label="Basculer le thème" className="hidden md:inline-flex">
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
