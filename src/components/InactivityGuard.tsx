@@ -15,6 +15,7 @@ import { Clock } from "lucide-react";
 const TIMEOUTS_MIN: Record<string, number> = {
   school_admin: 15,
   super_admin: 15,
+  secretary: 20,
   teacher: 30,
   parent: 60,
 };
