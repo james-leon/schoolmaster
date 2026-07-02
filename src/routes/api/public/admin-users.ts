@@ -240,6 +240,45 @@ export const Route = createFileRoute("/api/public/admin-users")({
             return Response.json({ teachers: data ?? [] });
           }
 
+          if (action === "list-school-secretaries") {
+            const { data, error } = await supabaseAdmin
+              .from("profiles")
+              .select("id, full_name, email, phone, is_active, created_at")
+              .eq("school_id", ctx.schoolId)
+              .eq("role", "secretary")
+              .order("full_name", { ascending: true });
+            if (error) return safeError("admin-users:list-school-secretaries", 400, error);
+            return Response.json({ secretaries: data ?? [] });
+          }
+
+          if (action === "create-secretary") {
+            const { firstName, lastName, email, phone } = body;
+            if (!firstName || !lastName || !email) {
+              return Response.json({ error: "Champs requis manquants" }, { status: 400 });
+            }
+            const tempPassword = genPassword(10);
+            const { data: created, error: cErr } = await supabaseAdmin.auth.admin.createUser({
+              email, password: tempPassword, email_confirm: true,
+              user_metadata: { full_name: `${firstName} ${lastName}` },
+            });
+            if (cErr || !created.user) return safeError("admin-users:create-secretary", 400, cErr);
+            const uid = created.user.id;
+            await supabaseAdmin.from("user_roles").upsert(
+              { user_id: uid, role: "secretary" }, { onConflict: "user_id,role" },
+            );
+            await supabaseAdmin.from("profiles").upsert({
+              id: uid, email, full_name: `${firstName} ${lastName}`, role: "secretary",
+              school_id: ctx.schoolId, phone: phone ?? null,
+              must_change_password: true, is_active: true,
+            }, { onConflict: "id" });
+            await logAuditServer(supabaseAdmin, {
+              schoolId: ctx.schoolId, userId: ctx.userId,
+              action: "account_created", targetType: "user", targetId: uid,
+              details: { role: "secretary", email, name: `${firstName} ${lastName}` },
+            });
+            return Response.json({ ok: true, userId: uid, tempPassword });
+          }
+
           if (action === "create-teacher-account") {
             const { teacherId } = body;
             if (!teacherId) return Response.json({ error: "Enseignant requis" }, { status: 400 });
