@@ -8,6 +8,7 @@ import { rateLimitOr429, RATE_LIMITS } from "@/lib/rate-limit.server";
 // Actions that create/modify accounts or user state — gated by rate limit.
 const WRITE_ACTIONS = new Set([
   "create-teacher", "create-parent", "create-teacher-account",
+  "create-secretary",
   "link-parent-student", "unlink-parent-student",
   "set-active", "delete",
 ]);
