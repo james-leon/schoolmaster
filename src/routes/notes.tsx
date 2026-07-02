@@ -551,11 +551,60 @@ function BulletinsTab() {
   }, [db.grades, students, subjects, term]);
 
   const printAll = () => {
-    document.body.classList.add("print-all-bulletins");
-    setTimeout(() => {
-      window.print();
-      document.body.classList.remove("print-all-bulletins");
-    }, 200);
+    const container = document.querySelector(".print-all-only");
+    if (!container) {
+      toast.error("Aucun bulletin à imprimer");
+      return;
+    }
+    const clone = container.cloneNode(true) as HTMLElement;
+    // Strip editable controls so the printed copy stays clean
+    clone.querySelectorAll("textarea").forEach((ta) => {
+      const p = document.createElement("div");
+      p.style.minHeight = "60px";
+      p.style.borderBottom = "1px solid #999";
+      p.style.whiteSpace = "pre-wrap";
+      p.textContent = (ta as HTMLTextAreaElement).value || "";
+      ta.replaceWith(p);
+    });
+    clone.querySelectorAll("button, [role='tooltip']").forEach((el) => el.remove());
+    const sheets = Array.from(clone.querySelectorAll(".bulletin-sheet"))
+      .map((s) => `<section class="bulletin-page">${(s as HTMLElement).outerHTML}</section>`)
+      .join("");
+    if (!sheets) {
+      toast.error("Aucun bulletin à imprimer");
+      return;
+    }
+    const win = window.open("", "_blank", "width=900,height=700");
+    if (!win) {
+      toast.error("Bloqueur de pop-up détecté");
+      return;
+    }
+    win.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Bulletins — SchoolMaster</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; font-size: 12px; color: #000; background: #fff; }
+  h1, h2, h3 { font-weight: bold; }
+  .bulletin-page { padding: 15mm; page-break-after: always; break-after: page; }
+  .bulletin-page:last-child { page-break-after: auto; break-after: auto; }
+  .bulletin-sheet { box-shadow: none !important; border: none !important; padding: 0 !important; max-width: 100% !important; background: #fff !important; color: #000 !important; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 11px; }
+  thead tr { background: #0D2C54 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  thead th { color: #fff !important; }
+  th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: center; }
+  td:first-child, th:first-child { text-align: left; }
+  tbody tr:nth-child(even) { background: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  img { max-width: 80px; max-height: 80px; }
+  .no-print, button, [role="tooltip"] { display: none !important; }
+  @page { size: A4 portrait; margin: 0; }
+</style></head><body>${sheets}</body></html>`);
+    win.document.close();
+    const doPrint = () => {
+      win.focus();
+      win.print();
+      setTimeout(() => { try { win.close(); } catch { /* noop */ } }, 300);
+    };
+    win.onload = doPrint;
+    setTimeout(() => { if (!win.closed) doPrint(); }, 800);
   };
 
   const handlePrintBulletin = () => {
