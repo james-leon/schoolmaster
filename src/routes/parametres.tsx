@@ -437,9 +437,39 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(null); }
   };
 
+  const [createOpen, setCreateOpen] = useState(false);
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
+  const [creating, setCreating] = useState(false);
+
+  const createSecretary = async () => {
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim()) {
+      toast.error("Prénom, nom et email requis"); return;
+    }
+    setCreating(true);
+    try {
+      const res = await adminApi.createSecretary({
+        firstName: form.firstName.trim(), lastName: form.lastName.trim(),
+        email: form.email.trim(), phone: form.phone.trim() || undefined,
+      });
+      setCredentials({
+        name: `${form.firstName} ${form.lastName}`, email: form.email,
+        tempPassword: res.tempPassword, role: "teacher", schoolName,
+      });
+      setForm({ firstName: "", lastName: "", email: "", phone: "" });
+      setCreateOpen(false);
+      await load();
+      toast.success("Secrétaire créée");
+    } catch (e) { toast.error((e as Error).message); } finally { setCreating(false); }
+  };
+
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">Gestion des utilisateurs</CardTitle></CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-base">Gestion des utilisateurs</CardTitle>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <UserPlus className="h-4 w-4 mr-2" />Ajouter une secrétaire
+        </Button>
+      </CardHeader>
       <CardContent>
         {loading ? <p className="py-6 text-center text-sm text-muted-foreground">Chargement...</p> : (
           <div className="overflow-x-auto">
