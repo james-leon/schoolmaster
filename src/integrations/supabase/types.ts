@@ -2120,6 +2120,7 @@ export type Database = {
         Returns: boolean
       }
       is_parent_of_student: { Args: { _student_id: string }; Returns: boolean }
+      is_school_secretary: { Args: { _school_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       record_login_attempt: {
         Args: { _email: string; _success: boolean }
