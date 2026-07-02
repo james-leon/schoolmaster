@@ -11,15 +11,84 @@ import { resolveTeacherClasses } from "@/lib/teacher-scope";
 import {
   Users, TrendingUp, AlertCircle, AlertTriangle, UserPlus, CreditCard,
   GraduationCap, CalendarCheck, FileText, BookOpen, ClipboardList, Megaphone,
-  PieChart as PieChartIcon, Plus, ArrowUp, ArrowDown, Minus,
+  PieChart as PieChartIcon, Plus, ArrowUp, ArrowDown, Minus, Receipt,
+  Wallet, Briefcase, Shield, ChevronRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
 } from "recharts";
+
+const ADMIN_ACTIONS = [
+  { label: "Inscrire un élève", to: "/eleves", icon: UserPlus, description: "Ajouter un nouvel élève à l'établissement" },
+  { label: "Créer une facture", to: "/scolarite", icon: Receipt, description: "Éditer une facture de scolarité" },
+  { label: "Enregistrer un paiement", to: "/scolarite", icon: CreditCard, description: "Saisir un paiement reçu" },
+  { label: "Nouvelle dépense", to: "/comptabilite", icon: Wallet, description: "Enregistrer une dépense" },
+  { label: "Publier une annonce", to: "/annonces", icon: Megaphone, description: "Communiquer avec les parents et enseignants" },
+  { label: "Ajouter un personnel", to: "/personnel", icon: Briefcase, description: "Enregistrer un enseignant ou membre du personnel" },
+];
+
+const SUPER_ADMIN_ACTIONS = [
+  { label: "Console plateforme", to: "/super-admin", icon: Shield, description: "Vue d'ensemble des écoles et abonnements" },
+];
+
+const TEACHER_ACTIONS = [
+  { label: "Saisir des notes", to: "/notes", icon: GraduationCap, description: "Enregistrer des évaluations" },
+  { label: "Prendre les présences", to: "/presences", icon: CalendarCheck, description: "Faire l'appel du jour" },
+  { label: "Mes classes", to: "/classes", icon: BookOpen, description: "Voir mes classes" },
+  { label: "Mes élèves", to: "/eleves", icon: Users, description: "Voir la liste de mes élèves" },
+];
+
+function QuickActionsDropdown({ role }: { role?: string }) {
+  const actions = role === "teacher" ? TEACHER_ACTIONS : role === "super_admin" ? [...ADMIN_ACTIONS, ...SUPER_ADMIN_ACTIONS] : ADMIN_ACTIONS;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          className="h-11 rounded-xl bg-[#0D2C54] px-4 text-sm font-semibold text-white shadow-[0_8px_24px_-12px_rgba(13,44,84,0.5)] hover:bg-[#0A2447]"
+        >
+          <Plus className="mr-1.5 h-4 w-4" /> Nouvelle action
+          <ChevronRight className="ml-1.5 h-4 w-4 rotate-90 transition-transform" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80">
+        <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          Actions rapides
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {actions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <DropdownMenuItem key={action.label} asChild className="cursor-pointer py-2.5">
+              <Link to={action.to} className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-[#2563EB]">
+                  <Icon className="h-[18px] w-[18px]" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-foreground">{action.label}</div>
+                  <div className="line-clamp-1 text-xs text-muted-foreground">{action.description}</div>
+                </div>
+              </Link>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 
 
 export const Route = createFileRoute("/dashboard")({
