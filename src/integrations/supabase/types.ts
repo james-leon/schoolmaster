@@ -2120,6 +2120,7 @@ export type Database = {
         Returns: boolean
       }
       is_parent_of_student: { Args: { _student_id: string }; Returns: boolean }
+      is_school_secretary: { Args: { _school_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       record_login_attempt: {
         Args: { _email: string; _success: boolean }
@@ -2133,7 +2134,12 @@ export type Database = {
       touch_school_activity: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "school_admin" | "teacher" | "parent" | "super_admin"
+      app_role:
+        | "school_admin"
+        | "teacher"
+        | "parent"
+        | "super_admin"
+        | "secretary"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2261,7 +2267,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["school_admin", "teacher", "parent", "super_admin"],
+      app_role: [
+        "school_admin",
+        "teacher",
+        "parent",
+        "super_admin",
+        "secretary",
+      ],
     },
   },
 } as const

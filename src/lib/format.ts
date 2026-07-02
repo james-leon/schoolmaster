@@ -18,4 +18,5 @@ export const ROLE_LABELS: Record<string, string> = {
   school_admin: "Administrateur",
   teacher: "Enseignant",
   parent: "Parent",
+  secretary: "Secrétaire",
 };

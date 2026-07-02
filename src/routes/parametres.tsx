@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Upload, Image as ImageIcon, KeyRound, UserX, UserCheck } from "lucide-react";
+import { Trash2, Upload, Image as ImageIcon, KeyRound, UserX, UserCheck, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
@@ -437,9 +437,39 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(null); }
   };
 
+  const [createOpen, setCreateOpen] = useState(false);
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
+  const [creating, setCreating] = useState(false);
+
+  const createSecretary = async () => {
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim()) {
+      toast.error("Prénom, nom et email requis"); return;
+    }
+    setCreating(true);
+    try {
+      const res = await adminApi.createSecretary({
+        firstName: form.firstName.trim(), lastName: form.lastName.trim(),
+        email: form.email.trim(), phone: form.phone.trim() || undefined,
+      });
+      setCredentials({
+        name: `${form.firstName} ${form.lastName}`, email: form.email,
+        tempPassword: res.tempPassword, role: "teacher", schoolName,
+      });
+      setForm({ firstName: "", lastName: "", email: "", phone: "" });
+      setCreateOpen(false);
+      await load();
+      toast.success("Secrétaire créée");
+    } catch (e) { toast.error((e as Error).message); } finally { setCreating(false); }
+  };
+
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">Gestion des utilisateurs</CardTitle></CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-base">Gestion des utilisateurs</CardTitle>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <UserPlus className="h-4 w-4 mr-2" />Ajouter une secrétaire
+        </Button>
+      </CardHeader>
       <CardContent>
         {loading ? <p className="py-6 text-center text-sm text-muted-foreground">Chargement...</p> : (
           <div className="overflow-x-auto">
@@ -481,6 +511,28 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
             </DialogContent>
           </Dialog>
         )}
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Nouvelle secrétaire</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Prénom</Label><Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} /></div>
+                <div><Label>Nom</Label><Input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} /></div>
+              </div>
+              <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+              <div><Label>Téléphone (optionnel)</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+              <p className="text-xs text-muted-foreground">
+                La secrétaire aura accès à : élèves, parents, facturation, paiements (création uniquement),
+                annonces, calendrier, présences, transport. Elle ne pourra pas accéder à la comptabilité,
+                au budget, au personnel ni aux paramètres.
+              </p>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setCreateOpen(false)}>Annuler</Button>
+                <Button onClick={createSecretary} disabled={creating}>{creating ? "Création..." : "Créer"}</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

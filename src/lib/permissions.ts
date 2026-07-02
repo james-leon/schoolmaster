@@ -46,6 +46,13 @@ export const isParent = (u: User | null | undefined): boolean =>
 export const isSuperAdmin = (u: User | null | undefined): boolean =>
   u?.role === "super_admin";
 
+export const isSecretary = (u: User | null | undefined): boolean =>
+  u?.role === "secretary";
+
+/** School operational staff: school_admin OR secretary (both work in one school). */
+export const isSchoolStaff = (u: User | null | undefined): boolean =>
+  u?.role === "school_admin" || u?.role === "secretary";
+
 /**
  * The complete teacher capability matrix. Default = false.
  * Anything not listed here is denied for teachers.
@@ -133,9 +140,41 @@ export const TEACHER_ALLOWED_ROUTES: readonly string[] = [
   "/notifications",
 ] as const;
 
+/**
+ * SECRETARY_ALLOWED_ROUTES — routes a secretary can visit.
+ *
+ * International segregation-of-duties model: secretary handles day-to-day
+ * operational admin (students, parents, invoicing, communications,
+ * transport affectations, calendar, attendance corrections, printing
+ * bulletins) but is BLOCKED from accounting, budget, payroll/personnel,
+ * teacher management, school parameters, subscription, audit log.
+ *
+ * Keep in sync with NAV_ITEMS in nav.ts and RLS policies in the DB
+ * (see migration adding is_school_secretary).
+ */
+export const SECRETARY_ALLOWED_ROUTES: readonly string[] = [
+  "/dashboard",
+  "/eleves",
+  "/parents",
+  "/classes",           // read only
+  "/scolarite",         // invoices + payments (no delete via RLS)
+  "/notes",             // read + print bulletins
+  "/presences",
+  "/emploi-du-temps",   // read
+  "/calendrier",
+  "/annonces",
+  "/transport",         // student affectations only (writes to accounting blocked by RLS)
+  "/notifications",
+  "/mon-profil",
+  "/changer-mot-de-passe",
+] as const;
+
 export function roleCanVisit(role: Role, path: string): boolean {
   if (role === "teacher") {
     return TEACHER_ALLOWED_ROUTES.some((r) => path === r || path.startsWith(`${r}/`));
+  }
+  if (role === "secretary") {
+    return SECRETARY_ALLOWED_ROUTES.some((r) => path === r || path.startsWith(`${r}/`));
   }
   return true;
 }
