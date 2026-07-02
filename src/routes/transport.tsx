@@ -178,7 +178,7 @@ function TransportPage() {
   const activeAssignments = useMemo(() => assignments.filter((a)=>a.active), [assignments]);
 
   if (!user) return <Navigate to="/login" />;
-  if (!isAdmin) return <Navigate to="/dashboard" />;
+  if (!canAccess) return <Navigate to="/dashboard" />;
 
   return (
     <AppLayout title="Transport">
