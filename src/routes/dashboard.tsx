@@ -173,11 +173,14 @@ function TeacherDashboard() {
 
   return (
     <AppLayout title="Tableau de bord">
-      <div className="min-w-0">
-        <h1 className="font-['Sora'] text-2xl font-bold tracking-tight text-foreground md:text-[28px]">
-          Bonjour, {user?.name?.split(" ")[0] ?? ""}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">Voici un aperçu de vos classes et de vos élèves.</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-['Sora'] text-2xl font-bold tracking-tight text-foreground md:text-[28px]">
+            Bonjour, {user?.name?.split(" ")[0] ?? ""}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">Voici un aperçu de vos classes et de vos élèves.</p>
+        </div>
+        <QuickActionsDropdown role={user?.role} />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
