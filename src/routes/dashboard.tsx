@@ -43,6 +43,13 @@ const SUPER_ADMIN_ACTIONS = [
   { label: "Console plateforme", to: "/super-admin", icon: Shield, description: "Vue d'ensemble des écoles et abonnements" },
 ];
 
+const SECRETARY_ACTIONS = [
+  { label: "Inscrire un élève", to: "/eleves", icon: UserPlus, description: "Ajouter un nouvel élève à l'établissement" },
+  { label: "Créer une facture", to: "/scolarite", icon: Receipt, description: "Éditer une facture de scolarité" },
+  { label: "Enregistrer un paiement", to: "/scolarite", icon: CreditCard, description: "Saisir un paiement reçu" },
+  { label: "Publier une annonce", to: "/annonces", icon: Megaphone, description: "Communiquer avec les parents et enseignants" },
+];
+
 const TEACHER_ACTIONS = [
   { label: "Saisir des notes", to: "/notes", icon: GraduationCap, description: "Enregistrer des évaluations" },
   { label: "Prendre les présences", to: "/presences", icon: CalendarCheck, description: "Faire l'appel du jour" },
@@ -51,7 +58,12 @@ const TEACHER_ACTIONS = [
 ];
 
 function QuickActionsDropdown({ role }: { role?: string }) {
-  const actions = role === "teacher" ? TEACHER_ACTIONS : role === "super_admin" ? [...ADMIN_ACTIONS, ...SUPER_ADMIN_ACTIONS] : ADMIN_ACTIONS;
+  const actions =
+    role === "teacher" ? TEACHER_ACTIONS
+    : role === "secretary" ? SECRETARY_ACTIONS
+    : role === "super_admin" ? [...ADMIN_ACTIONS, ...SUPER_ADMIN_ACTIONS]
+    : ADMIN_ACTIONS;
+
 
   return (
     <DropdownMenu>
