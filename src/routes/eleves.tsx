@@ -278,26 +278,18 @@ function buildStudentImportConfig(
       };
     },
 
-    importRows: async (rows, { autoCreateClasses, onProgress }) => {
+    importRows: async (rows, { onProgress }) => {
       const valid = rows.filter((r) => r.data) as Required<ParsedRow<StudentImport>>[];
       let imported = 0;
       const skipped = rows.length - valid.length;
 
       updateDB((d) => {
-        const classByName = new Map(d.classes.map((c) => [c.name.toLowerCase(), c]));
+        const classByName = new Map(d.classes.map((c) => [c.name.trim().toLowerCase(), c]));
         for (const r of valid) {
           const data = r.data!;
-          let cls = classByName.get(data.className.toLowerCase());
-          if (!cls && autoCreateClasses && data.className) {
-            const newCls = {
-              id: crypto.randomUUID(), name: data.className, level: "CP" as const,
-              teacherId: "", fees: 0, capacity: 30,
-            };
-            d.classes.push(newCls);
-            classByName.set(data.className.toLowerCase(), newCls);
-            cls = newCls;
-          }
-          if (!cls) continue; // skip unresolved class
+          const cls = classByName.get(data.className.trim().toLowerCase());
+          if (!cls) continue; // strict: unknown class → skip, never default
+
           const id = crypto.randomUUID();
           d.students.push({
             id,
