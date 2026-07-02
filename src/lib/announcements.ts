@@ -14,7 +14,7 @@ export function visibleAnnouncements(
   const classIds = new Set(ctx.classIds ?? []);
   const filtered = all.filter((a) => {
     // School admin & super_admin see everything for their school
-    if (role === "school_admin" || role === "super_admin") return true;
+    if (role === "school_admin" || role === "super_admin" || role === "secretary") return true;
     if (role === "teacher") {
       return a.audience === "Tous" || a.audience === "Enseignants";
     }
