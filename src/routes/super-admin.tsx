@@ -523,6 +523,7 @@ function SuperAdminPage() {
           onClose={() => setHistorySchool(null)}
         />
       )}
+      <InactivityGuard />
     </div>
   );
 }
