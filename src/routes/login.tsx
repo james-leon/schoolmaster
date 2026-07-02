@@ -314,11 +314,16 @@ function LoginPage() {
 
           <div className="mt-8 border-t border-[#E8EDF4] pt-5 text-center text-[11px] text-[#64748B]">
             En continuant, vous acceptez nos conditions.
-            <div className="mt-1.5">
+            <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1">
+              <Link to="/cgu" className="font-medium text-[#0F172A] hover:underline">
+                CGU
+              </Link>
+              <span>·</span>
               <Link to="/confidentialite" className="font-medium text-[#0F172A] hover:underline">
                 Politique de confidentialité
-              </Link>{" "}
-              · Conforme à la loi n°2024/017 (Cameroun)
+              </Link>
+              <span>·</span>
+              <span>Conforme à la loi n°2024/017 (Cameroun)</span>
             </div>
           </div>
         </div>
