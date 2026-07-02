@@ -424,12 +424,7 @@ function AdminDashboard() {
             Voici l'activité de votre établissement.
           </p>
         </div>
-        <Button
-          onClick={() => navigate({ to: "/scolarite" })}
-          className="h-11 rounded-xl bg-[#0D2C54] px-4 text-sm font-semibold text-white shadow-[0_8px_24px_-12px_rgba(13,44,84,0.5)] hover:bg-[#0A2447]"
-        >
-          <Plus className="mr-1.5 h-4 w-4" /> Nouvelle action
-        </Button>
+        <QuickActionsDropdown role={user?.role} />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
