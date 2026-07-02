@@ -40,6 +40,12 @@ export const adminApi = {
     callAdmin({ action: "set-active", targetUserId, isActive }),
   delete: (targetUserId: string) =>
     callAdmin({ action: "delete", targetUserId }),
+  createSecretary: (p: { firstName: string; lastName: string; email: string; phone?: string }) =>
+    callAdmin({ action: "create-secretary", ...p }) as Promise<{ ok: true; userId: string; tempPassword: string }>,
+  listSchoolSecretaries: () =>
+    callAdmin({ action: "list-school-secretaries" }) as Promise<{
+      secretaries: { id: string; full_name: string; email: string; phone: string | null; is_active: boolean; created_at: string }[];
+    }>,
   announcementReadStats: () =>
     callAdmin({ action: "announcement-read-stats" }) as Promise<{
       ok: true; stats: Record<string, { read: number; total: number }>;
