@@ -60,7 +60,7 @@ function QuickActionsDropdown({ role }: { role?: string }) {
           className="h-11 rounded-xl bg-[#0D2C54] px-4 text-sm font-semibold text-white shadow-[0_8px_24px_-12px_rgba(13,44,84,0.5)] hover:bg-[#0A2447]"
         >
           <Plus className="mr-1.5 h-4 w-4" /> Nouvelle action
-          <ChevronRight className="ml-1.5 h-4 w-4 rotate-90 transition-transform" />
+          <ChevronRight className="ml-1.5 h-4 w-4 rotate-90 transition-transform data-[state=open]:-rotate-180" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
