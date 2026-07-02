@@ -79,7 +79,7 @@ function AnnoncesPage() {
 
   // Admin read stats
   const [stats, setStats] = useState<Record<string, { read: number; total: number }>>({});
-  const isAdminView = user?.role === "school_admin";
+  const isAdminView = user?.role === "school_admin" || user?.role === "secretary";
   const loadStats = useCallback(async () => {
     if (!isAdminView) return;
     try {
