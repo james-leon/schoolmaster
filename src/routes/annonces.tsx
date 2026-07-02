@@ -50,7 +50,7 @@ function AnnoncesPage() {
   const { user } = useAuth();
   const { hasFeature, loading } = usePlan();
 
-  const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
+  const isAdmin = user?.role === "school_admin" || user?.role === "super_admin" || user?.role === "secretary";
 
   // Build class context for parents (children's classes via local db)
   const parentClassIds = useMemo(() => {
