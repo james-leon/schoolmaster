@@ -220,8 +220,8 @@ function buildStudentImportConfig(
       "Format de date : JJ/MM/AAAA. Genre : Masculin ou Féminin.",
     ],
     previewColumns: ["Prénom", "Nom", "Date naiss.", "Genre", "Classe", "Parent"],
-    showAutoCreateClasses: true,
-    validateRow: (raw, { autoCreateClasses }) => {
+    showAutoCreateClasses: false,
+    validateRow: (raw) => {
       const get = (k: string) => String(raw[k] ?? "").trim();
       const firstName = get("Prénom");
       const lastName = get("Nom");
@@ -238,15 +238,15 @@ function buildStudentImportConfig(
       const gender = normalizeGender(genderRaw);
       if (genderRaw && !gender) messages.push("Genre invalide (Masculin/Féminin)");
 
-      const classExists = !!classes.find((c) => c.name.toLowerCase() === className.toLowerCase());
-      if (className && !classExists) {
-        if (autoCreateClasses) {
-          messages.push(`Classe « ${className} » sera créée`);
-          status = "warning";
-        } else {
-          messages.push(`Classe « ${className} » introuvable`);
-          status = "warning";
-        }
+      const matchedClass = className
+        ? classes.find((c) => c.name.trim().toLowerCase() === className.toLowerCase())
+        : undefined;
+      if (!className) {
+        messages.push("Classe manquante");
+        status = "error";
+      } else if (!matchedClass) {
+        messages.push(`Classe « ${className} » introuvable pour cette école`);
+        status = "error";
       }
 
       // Duplicate check
@@ -259,11 +259,11 @@ function buildStudentImportConfig(
 
       if (!firstName || !lastName) status = "error";
 
-      const data: StudentImport | null = status === "error" ? null : {
+      const data: StudentImport | null = status === "error" || !matchedClass ? null : {
         firstName, lastName,
         birthDate: birthDate ?? "",
         gender: gender ?? "M",
-        className: className || (classes[0]?.name ?? ""),
+        className: matchedClass.name,
         status: normalizeStatus(raw["Statut"]),
         parentName: get("Nom du parent") || undefined,
         parentPhone: get("Téléphone parent") || undefined,
@@ -277,26 +277,19 @@ function buildStudentImportConfig(
           gender ?? String(genderRaw ?? "—"), className || "—", get("Nom du parent") || "—"],
       };
     },
-    importRows: async (rows, { autoCreateClasses, onProgress }) => {
+
+    importRows: async (rows, { onProgress }) => {
       const valid = rows.filter((r) => r.data) as Required<ParsedRow<StudentImport>>[];
       let imported = 0;
       const skipped = rows.length - valid.length;
 
       updateDB((d) => {
-        const classByName = new Map(d.classes.map((c) => [c.name.toLowerCase(), c]));
+        const classByName = new Map(d.classes.map((c) => [c.name.trim().toLowerCase(), c]));
         for (const r of valid) {
           const data = r.data!;
-          let cls = classByName.get(data.className.toLowerCase());
-          if (!cls && autoCreateClasses && data.className) {
-            const newCls = {
-              id: crypto.randomUUID(), name: data.className, level: "CP" as const,
-              teacherId: "", fees: 0, capacity: 30,
-            };
-            d.classes.push(newCls);
-            classByName.set(data.className.toLowerCase(), newCls);
-            cls = newCls;
-          }
-          if (!cls) continue; // skip unresolved class
+          const cls = classByName.get(data.className.trim().toLowerCase());
+          if (!cls) continue; // strict: unknown class → skip, never default
+
           const id = crypto.randomUUID();
           d.students.push({
             id,
