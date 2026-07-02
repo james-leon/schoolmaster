@@ -57,6 +57,7 @@ type SubFilter = "all" | "soon" | "expired" | "trial" | "active";
 
 function SuperAdminPage() {
   const { originalUser, loading, logout, startImpersonating } = useAuth();
+  const { theme, toggle } = useTheme();
   const navigate = useNavigate();
   const [schools, setSchools] = useState<PlatformSchool[]>([]);
   const [kpis, setKpis] = useState<PlatformKpis | null>(null);
