@@ -220,8 +220,8 @@ function buildStudentImportConfig(
       "Format de date : JJ/MM/AAAA. Genre : Masculin ou Féminin.",
     ],
     previewColumns: ["Prénom", "Nom", "Date naiss.", "Genre", "Classe", "Parent"],
-    showAutoCreateClasses: true,
-    validateRow: (raw, { autoCreateClasses }) => {
+    showAutoCreateClasses: false,
+    validateRow: (raw) => {
       const get = (k: string) => String(raw[k] ?? "").trim();
       const firstName = get("Prénom");
       const lastName = get("Nom");
@@ -238,15 +238,15 @@ function buildStudentImportConfig(
       const gender = normalizeGender(genderRaw);
       if (genderRaw && !gender) messages.push("Genre invalide (Masculin/Féminin)");
 
-      const classExists = !!classes.find((c) => c.name.toLowerCase() === className.toLowerCase());
-      if (className && !classExists) {
-        if (autoCreateClasses) {
-          messages.push(`Classe « ${className} » sera créée`);
-          status = "warning";
-        } else {
-          messages.push(`Classe « ${className} » introuvable`);
-          status = "warning";
-        }
+      const matchedClass = className
+        ? classes.find((c) => c.name.trim().toLowerCase() === className.toLowerCase())
+        : undefined;
+      if (!className) {
+        messages.push("Classe manquante");
+        status = "error";
+      } else if (!matchedClass) {
+        messages.push(`Classe « ${className} » introuvable pour cette école`);
+        status = "error";
       }
 
       // Duplicate check
@@ -259,11 +259,11 @@ function buildStudentImportConfig(
 
       if (!firstName || !lastName) status = "error";
 
-      const data: StudentImport | null = status === "error" ? null : {
+      const data: StudentImport | null = status === "error" || !matchedClass ? null : {
         firstName, lastName,
         birthDate: birthDate ?? "",
         gender: gender ?? "M",
-        className: className || (classes[0]?.name ?? ""),
+        className: matchedClass.name,
         status: normalizeStatus(raw["Statut"]),
         parentName: get("Nom du parent") || undefined,
         parentPhone: get("Téléphone parent") || undefined,
@@ -277,6 +277,7 @@ function buildStudentImportConfig(
           gender ?? String(genderRaw ?? "—"), className || "—", get("Nom du parent") || "—"],
       };
     },
+
     importRows: async (rows, { autoCreateClasses, onProgress }) => {
       const valid = rows.filter((r) => r.data) as Required<ParsedRow<StudentImport>>[];
       let imported = 0;
