@@ -819,6 +819,22 @@ function ManageSubscriptionDialog({
               <Input id="sub-trial" type="date" value={trialEnd} onChange={(e) => setTrialEnd(e.target.value)} />
             </div>
           )}
+          <div className="rounded-md border p-3">
+            <label className="flex items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4"
+                checked={hasTransportAddon}
+                onChange={(e) => setHasTransportAddon(e.target.checked)}
+              />
+              <span>
+                <span className="font-medium">Option Transport (+40 000 FCFA/an)</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  Active le module Transport (véhicules, chauffeurs, itinéraires, frais).
+                </span>
+              </span>
+            </label>
+          </div>
           <p className="text-xs text-muted-foreground">
             La date de fin est automatiquement suggérée à 1 mois après la date de début.
           </p>
