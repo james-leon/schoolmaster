@@ -41,7 +41,7 @@ export const Route = createFileRoute("/super-admin")({
 const PLAN_LABELS: Record<string, string> = {
   essentiel: "Essentiel", pro: "Pro",
   // Legacy labels (still displayed for historical data before migration).
-  starter: "Essentiel", "school+": "Pro", free: "Essai", premium: "Pro", trial: "Essai",
+  starter: "Essentiel", "pro": "Pro", free: "Essai", premium: "Pro", trial: "Essai",
 };
 const PLAN_OPTIONS: PlanId[] = ["essentiel", "pro"];
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
@@ -55,7 +55,7 @@ const PLAN_MRR: Record<string, number> = {
   pro: PLAN_CONFIG.pro.priceFcfa,
   // Legacy → mapped to closest new plan for aggregation only.
   starter: PLAN_CONFIG.essentiel.priceFcfa,
-  "school+": PLAN_CONFIG.pro.priceFcfa,
+  "pro": PLAN_CONFIG.pro.priceFcfa,
 };
 
 type SubFilter = "all" | "soon" | "expired" | "trial" | "active";
@@ -296,7 +296,7 @@ function SuperAdminPage() {
                             <div className="font-medium">{s.name}</div>
                             <div className="text-xs text-muted-foreground">{s.city ?? "—"}</div>
                           </TableCell>
-                          <TableCell className="text-sm">{PLAN_LABELS[s.subscription_plan ?? "starter"] ?? s.subscription_plan}</TableCell>
+                          <TableCell className="text-sm">{PLAN_LABELS[s.subscription_plan ?? "essentiel"] ?? s.subscription_plan}</TableCell>
                           <TableCell><Badge className={st.cls}>{st.label}</Badge></TableCell>
                           <TableCell className="text-xs text-muted-foreground">
                             {s.subscription_start ? new Date(s.subscription_start).toLocaleDateString("fr-FR") : "—"}
@@ -374,7 +374,7 @@ function SuperAdminPage() {
                           </TableCell>
                           <TableCell className="text-sm">{s.city ?? "—"}</TableCell>
                           <TableCell>
-                            <Select value={s.subscription_plan ?? "starter"} onValueChange={(v) => handleChangePlan(s, v)}>
+                            <Select value={s.subscription_plan ?? "essentiel"} onValueChange={(v) => handleChangePlan(s, v)}>
                               <SelectTrigger className="h-8 w-[130px]">
                                 <SelectValue />
                               </SelectTrigger>
@@ -587,7 +587,7 @@ function KpiCard({ label, value, icon: Icon, tone }: { label: string; value: str
 function CreateSchoolDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (c: CredentialsInfo) => void }) {
   const [form, setForm] = useState({
     schoolName: "", city: "", country: "Cameroun", phone: "", schoolEmail: "",
-    plan: "starter", status: "trial" as "trial" | "active", trialEndsAt: "",
+    plan: "essentiel", status: "trial" as "trial" | "active", trialEndsAt: "",
     directorName: "", directorEmail: "",
   });
   const [loading, setLoading] = useState(false);
@@ -860,7 +860,7 @@ const PAYMENT_METHODS = ["Espèces", "Mobile Money", "Virement", "Carte", "Autre
 function RenewSubscriptionDialog({
   school, onClose, onSaved,
 }: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
-  const [plan, setPlan] = useState<PlanId>((school.subscription_plan as PlanId) ?? "starter");
+  const [plan, setPlan] = useState<PlanId>((school.subscription_plan as PlanId) ?? "essentiel");
   const [months, setMonths] = useState(1);
   const [amount, setAmount] = useState<number>(PLAN_CONFIG[plan].priceFcfa);
   const [method, setMethod] = useState<string>("Mobile Money");
@@ -898,7 +898,7 @@ function RenewSubscriptionDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="rounded-md border bg-muted/40 p-3 text-xs">
-            <div>Plan actuel : <strong>{PLAN_LABELS[school.subscription_plan ?? "starter"]}</strong></div>
+            <div>Plan actuel : <strong>{PLAN_LABELS[school.subscription_plan ?? "essentiel"]}</strong></div>
             <div>Fin actuelle : <strong>{school.subscription_end ? new Date(school.subscription_end).toLocaleDateString("fr-FR") : "—"}</strong></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -953,7 +953,7 @@ function RenewSubscriptionDialog({
 function ConvertTrialDialog({
   school, onClose, onSaved,
 }: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
-  const [plan, setPlan] = useState<PlanId>((school.subscription_plan as PlanId) ?? "starter");
+  const [plan, setPlan] = useState<PlanId>((school.subscription_plan as PlanId) ?? "essentiel");
   const [months, setMonths] = useState(1);
   const [amount, setAmount] = useState<number>(PLAN_CONFIG[plan].priceFcfa);
   const [method, setMethod] = useState<string>("Mobile Money");
