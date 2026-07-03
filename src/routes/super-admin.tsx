@@ -235,7 +235,10 @@ function SuperAdminPage() {
 
         <MrrAnalytics schools={schools} />
 
+        <SchoolHealth schools={schools} onChanged={refresh} />
+
         <MaintenancePanel />
+
 
 
 
