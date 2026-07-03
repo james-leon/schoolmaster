@@ -1271,6 +1271,7 @@ export type Database = {
           director_name: string | null
           email: string | null
           enrollment_targets: Json
+          has_transport_addon: boolean
           id: string
           internal_notes: string | null
           last_activity_at: string | null
@@ -1294,6 +1295,7 @@ export type Database = {
           director_name?: string | null
           email?: string | null
           enrollment_targets?: Json
+          has_transport_addon?: boolean
           id?: string
           internal_notes?: string | null
           last_activity_at?: string | null
@@ -1317,6 +1319,7 @@ export type Database = {
           director_name?: string | null
           email?: string | null
           enrollment_targets?: Json
+          has_transport_addon?: boolean
           id?: string
           internal_notes?: string | null
           last_activity_at?: string | null
