@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Lock, Crown } from "lucide-react";
-import type { PlanConfig } from "@/lib/plans";
+import type { PlanConfig, AddonConfig } from "@/lib/plans";
 import { WINTEK_CONTACT } from "@/lib/plans";
 
 interface UpgradeModalProps {
@@ -46,17 +46,26 @@ export function UpgradeModal({ open, onClose, title, message, requiredPlan }: Up
 }
 
 /** Inline overlay shown over a locked section. */
-export function LockedFeatureOverlay({ requiredPlan, featureLabel }: { requiredPlan: PlanConfig; featureLabel?: string }) {
+export function LockedFeatureOverlay({
+  requiredPlan,
+  requiredAddon,
+  featureLabel,
+}: {
+  requiredPlan?: PlanConfig;
+  requiredAddon?: AddonConfig;
+  featureLabel?: string;
+}) {
   const navigate = useNavigate();
+  const heading = requiredAddon
+    ? `${featureLabel ?? "Cette fonctionnalité"} nécessite l'option ${requiredAddon.label}`
+    : `${featureLabel ?? "Cette fonctionnalité"} fait partie du plan ${requiredPlan?.label ?? "Pro"}`;
   return (
     <div className="relative">
       <div className="rounded-lg border border-dashed border-border bg-muted/30 p-8 text-center">
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-background shadow">
           <Lock className="h-5 w-5 text-muted-foreground" />
         </div>
-        <h3 className="text-base font-semibold">
-          {featureLabel ?? "Cette fonctionnalité"} est disponible avec le plan {requiredPlan.label}
-        </h3>
+        <h3 className="text-base font-semibold">{heading}</h3>
         <p className="mt-2 text-sm text-muted-foreground">
           Contactez Wintek pour mettre à niveau votre abonnement
           {" "}— {WINTEK_CONTACT.phone} · {WINTEK_CONTACT.email}

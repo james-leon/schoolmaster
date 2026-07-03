@@ -39,9 +39,11 @@ export const Route = createFileRoute("/super-admin")({
 });
 
 const PLAN_LABELS: Record<string, string> = {
-  starter: "Starter", pro: "Pro", "school+": "School+", free: "Gratuit", premium: "Premium", trial: "Essai",
+  essentiel: "Essentiel", pro: "Pro",
+  // Legacy labels (still displayed for historical data before migration).
+  starter: "Essentiel", "school+": "Pro", free: "Essai", premium: "Pro", trial: "Essai",
 };
-const PLAN_OPTIONS = ["starter", "pro", "school+"];
+const PLAN_OPTIONS: PlanId[] = ["essentiel", "pro"];
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   active:    { label: "Actif",     cls: "bg-success/15 text-success" },
   trial:     { label: "Essai",     cls: "bg-primary/15 text-primary" },
@@ -49,9 +51,11 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   expired:   { label: "Expiré",    cls: "bg-destructive/15 text-destructive" },
 };
 const PLAN_MRR: Record<string, number> = {
-  starter: PLAN_CONFIG.starter.priceFcfa,
+  essentiel: PLAN_CONFIG.essentiel.priceFcfa,
   pro: PLAN_CONFIG.pro.priceFcfa,
-  "school+": PLAN_CONFIG["school+"].priceFcfa,
+  // Legacy → mapped to closest new plan for aggregation only.
+  starter: PLAN_CONFIG.essentiel.priceFcfa,
+  "school+": PLAN_CONFIG.pro.priceFcfa,
 };
 
 type SubFilter = "all" | "soon" | "expired" | "trial" | "active";
@@ -292,7 +296,7 @@ function SuperAdminPage() {
                             <div className="font-medium">{s.name}</div>
                             <div className="text-xs text-muted-foreground">{s.city ?? "—"}</div>
                           </TableCell>
-                          <TableCell className="text-sm">{PLAN_LABELS[s.subscription_plan ?? "starter"] ?? s.subscription_plan}</TableCell>
+                          <TableCell className="text-sm">{PLAN_LABELS[s.subscription_plan ?? "essentiel"] ?? s.subscription_plan}</TableCell>
                           <TableCell><Badge className={st.cls}>{st.label}</Badge></TableCell>
                           <TableCell className="text-xs text-muted-foreground">
                             {s.subscription_start ? new Date(s.subscription_start).toLocaleDateString("fr-FR") : "—"}
@@ -370,7 +374,7 @@ function SuperAdminPage() {
                           </TableCell>
                           <TableCell className="text-sm">{s.city ?? "—"}</TableCell>
                           <TableCell>
-                            <Select value={s.subscription_plan ?? "starter"} onValueChange={(v) => handleChangePlan(s, v)}>
+                            <Select value={s.subscription_plan ?? "essentiel"} onValueChange={(v) => handleChangePlan(s, v)}>
                               <SelectTrigger className="h-8 w-[130px]">
                                 <SelectValue />
                               </SelectTrigger>
@@ -583,7 +587,7 @@ function KpiCard({ label, value, icon: Icon, tone }: { label: string; value: str
 function CreateSchoolDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (c: CredentialsInfo) => void }) {
   const [form, setForm] = useState({
     schoolName: "", city: "", country: "Cameroun", phone: "", schoolEmail: "",
-    plan: "starter", status: "trial" as "trial" | "active", trialEndsAt: "",
+    plan: "essentiel", status: "trial" as "trial" | "active", trialEndsAt: "",
     directorName: "", directorEmail: "",
   });
   const [loading, setLoading] = useState(false);
@@ -728,7 +732,11 @@ function ManageSubscriptionDialog({
   school, onClose, onSaved,
 }: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
   const today = toISODate(new Date());
-  const [plan, setPlan] = useState<string>(school.subscription_plan ?? "starter");
+  const initialPlan: PlanId = (school.subscription_plan === "essentiel" || school.subscription_plan === "pro")
+    ? school.subscription_plan
+    : "pro";
+  const [plan, setPlan] = useState<PlanId>(initialPlan);
+  const [hasTransportAddon, setHasTransportAddon] = useState<boolean>(!!school.has_transport_addon);
   const [status, setStatus] = useState<"active" | "trial" | "suspended" | "expired">(
     (school.status as "active" | "trial" | "suspended" | "expired") ?? "active",
   );
@@ -755,6 +763,7 @@ function ManageSubscriptionDialog({
         subscriptionStart: start || undefined,
         subscriptionEnd: end || undefined,
         trialEnd: status === "trial" ? (trialEnd || end || undefined) : undefined,
+        hasTransportAddon,
       });
       toast.success("Abonnement mis à jour");
       onSaved();
@@ -772,7 +781,7 @@ function ManageSubscriptionDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Plan</Label>
-              <Select value={plan} onValueChange={setPlan}>
+              <Select value={plan} onValueChange={(v) => setPlan(v as PlanId)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {PLAN_OPTIONS.map((p) => (
@@ -810,6 +819,22 @@ function ManageSubscriptionDialog({
               <Input id="sub-trial" type="date" value={trialEnd} onChange={(e) => setTrialEnd(e.target.value)} />
             </div>
           )}
+          <div className="rounded-md border p-3">
+            <label className="flex items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4"
+                checked={hasTransportAddon}
+                onChange={(e) => setHasTransportAddon(e.target.checked)}
+              />
+              <span>
+                <span className="font-medium">Option Transport (+40 000 FCFA/an)</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  Active le module Transport (véhicules, chauffeurs, itinéraires, frais).
+                </span>
+              </span>
+            </label>
+          </div>
           <p className="text-xs text-muted-foreground">
             La date de fin est automatiquement suggérée à 1 mois après la date de début.
           </p>
@@ -835,7 +860,7 @@ const PAYMENT_METHODS = ["Espèces", "Mobile Money", "Virement", "Carte", "Autre
 function RenewSubscriptionDialog({
   school, onClose, onSaved,
 }: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
-  const [plan, setPlan] = useState<PlanId>((school.subscription_plan as PlanId) ?? "starter");
+  const [plan, setPlan] = useState<PlanId>((school.subscription_plan === "essentiel" || school.subscription_plan === "pro" ? school.subscription_plan : "pro"));
   const [months, setMonths] = useState(1);
   const [amount, setAmount] = useState<number>(PLAN_CONFIG[plan].priceFcfa);
   const [method, setMethod] = useState<string>("Mobile Money");
@@ -873,7 +898,7 @@ function RenewSubscriptionDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="rounded-md border bg-muted/40 p-3 text-xs">
-            <div>Plan actuel : <strong>{PLAN_LABELS[school.subscription_plan ?? "starter"]}</strong></div>
+            <div>Plan actuel : <strong>{PLAN_LABELS[school.subscription_plan ?? "essentiel"]}</strong></div>
             <div>Fin actuelle : <strong>{school.subscription_end ? new Date(school.subscription_end).toLocaleDateString("fr-FR") : "—"}</strong></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -928,7 +953,7 @@ function RenewSubscriptionDialog({
 function ConvertTrialDialog({
   school, onClose, onSaved,
 }: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
-  const [plan, setPlan] = useState<PlanId>((school.subscription_plan as PlanId) ?? "starter");
+  const [plan, setPlan] = useState<PlanId>((school.subscription_plan === "essentiel" || school.subscription_plan === "pro" ? school.subscription_plan : "pro"));
   const [months, setMonths] = useState(1);
   const [amount, setAmount] = useState<number>(PLAN_CONFIG[plan].priceFcfa);
   const [method, setMethod] = useState<string>("Mobile Money");

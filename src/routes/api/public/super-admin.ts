@@ -77,7 +77,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
 
             const { data: schools, error } = await supabaseAdmin
               .from("schools")
-              .select("id, name, city, country, email, phone, subscription_plan, status, trial_ends_at, subscription_start, subscription_end, created_at, director_name, last_activity_at, internal_notes")
+              .select("id, name, city, country, email, phone, subscription_plan, status, trial_ends_at, subscription_start, subscription_end, created_at, director_name, last_activity_at, internal_notes, has_transport_addon")
               .order("created_at", { ascending: false });
             if (error) return safeError("super-admin", 500, error);
 
@@ -218,20 +218,23 @@ export const Route = createFileRoute("/api/public/super-admin")({
           }
 
           if (action === "update-subscription") {
-            const { schoolId, plan, status, subscriptionStart, subscriptionEnd, trialEnd } = body;
+            const { schoolId, plan, status, subscriptionStart, subscriptionEnd, trialEnd, hasTransportAddon } = body;
             if (!schoolId || !plan || !["active", "trial", "suspended", "expired"].includes(status)) {
               return Response.json({ error: "Paramètres invalides" }, { status: 400 });
             }
-            const patch = {
+            const patch: Record<string, unknown> = {
               subscription_plan: plan,
               status,
               subscription_start: subscriptionStart || null,
               subscription_end: subscriptionEnd || null,
               trial_ends_at: trialEnd || null,
             };
+            if (typeof hasTransportAddon === "boolean") {
+              patch.has_transport_addon = hasTransportAddon;
+            }
             const { error } = await (supabaseAdmin.from("schools") as any).update(patch).eq("id", schoolId);
             if (error) return safeError("super-admin", 500, error);
-            console.log("[super-admin] subscription updated", { schoolId, plan, status, by: ctx.userId });
+            console.log("[super-admin] subscription updated", { schoolId, plan, status, hasTransportAddon, by: ctx.userId });
             return Response.json({ ok: true });
           }
 

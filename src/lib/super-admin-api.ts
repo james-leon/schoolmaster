@@ -34,6 +34,7 @@ export interface PlatformSchool {
   recent_payments: number;
   recent_grades: number;
   recent_attendance: number;
+  has_transport_addon: boolean;
 }
 
 
@@ -71,6 +72,7 @@ export const superAdminApi = {
     subscriptionStart?: string;
     subscriptionEnd?: string;
     trialEnd?: string;
+    hasTransportAddon?: boolean;
   }) => call({ action: "update-subscription", ...p }),
   renewSubscription: (p: {
     schoolId: string; plan: string; months: number;

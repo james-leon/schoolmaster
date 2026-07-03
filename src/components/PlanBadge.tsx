@@ -9,11 +9,11 @@ const TONES: Record<string, string> = {
 };
 
 export function PlanBadge({ className }: { className?: string }) {
-  const { plan, loading } = usePlan();
+  const { plan, planLabel, loading } = usePlan();
   if (loading) return null;
   return (
     <Badge variant="outline" className={cn("border", TONES[plan.tone], className)}>
-      Plan {plan.label}
+      Plan {planLabel}
     </Badge>
   );
 }

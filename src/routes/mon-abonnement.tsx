@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Check, X, Phone, Mail, Crown } from "lucide-react";
 import { usePlan } from "@/lib/usePlan";
-import { PLAN_LIST, FEATURE_LABELS, WINTEK_CONTACT, type FeatureId } from "@/lib/plans";
+import { PLAN_LIST, ADDON_CONFIG, FEATURE_LABELS, WINTEK_CONTACT, type FeatureId } from "@/lib/plans";
 import { fcfa } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -14,14 +14,13 @@ export const Route = createFileRoute("/mon-abonnement")({ component: MonAbonneme
 
 const ALL_FEATURES: FeatureId[] = [
   "students", "classes", "grades", "bulletins", "fees", "payments", "attendance",
-  "sms", "parent_portal", "announcements",
-  "multi_campus", "advanced_reports", "priority_support",
+  "parent_portal", "announcements", "timetable", "calendar",
+  "accounting", "budget", "personnel", "extra_roles",
 ];
 
 function MonAbonnementPage() {
   const {
-    plan, planId, effectiveStatus,
-    studentCount, teacherCount, limits,
+    plan, planId, hasTransportAddon, planLabel, effectiveStatus,
     isTrial, daysLeftInTrial,
     subscriptionStart, subscriptionEnd, daysUntilExpiry,
     loading,
@@ -59,9 +58,12 @@ function MonAbonnementPage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Crown className="h-5 w-5 text-accent" />
-                  Plan actuel : {plan.label.toUpperCase()}
+                  Plan actuel : {planLabel.toUpperCase()}
                 </CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">{fcfa(plan.priceFcfa)} / mois</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {fcfa(plan.priceFcfa + (hasTransportAddon ? ADDON_CONFIG.transport.priceFcfa : 0))} / an
+                  {hasTransportAddon && <span className="ml-1 text-xs">(plan {plan.label} + module Transport)</span>}
+                </p>
               </div>
               <Badge variant={effectiveStatus === "active" ? "default" : "secondary"} className="capitalize">
                 <span className={cn(
@@ -109,19 +111,8 @@ function MonAbonnementPage() {
                 </div>
               )}
 
-              <div>
-                <div className="mb-1 flex items-center justify-between text-sm">
-                  <span>Élèves utilisés</span>
-                  <span className="font-medium">{studentCount} / {limits.maxStudents >= 999_999 ? "∞" : limits.maxStudents}</span>
-                </div>
-                <Progress value={limits.maxStudents >= 999_999 ? 5 : Math.min(100, (studentCount / limits.maxStudents) * 100)} />
-              </div>
-              <div>
-                <div className="mb-1 flex items-center justify-between text-sm">
-                  <span>Enseignants utilisés</span>
-                  <span className="font-medium">{teacherCount} / {limits.maxTeachers >= 999_999 ? "∞" : limits.maxTeachers}</span>
-                </div>
-                <Progress value={limits.maxTeachers >= 999_999 ? 5 : Math.min(100, (teacherCount / limits.maxTeachers) * 100)} />
+              <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                Élèves et enseignants illimités sur tous les plans.
               </div>
             </CardContent>
           </Card>
@@ -138,15 +129,10 @@ function MonAbonnementPage() {
                         <CardTitle className="text-base">{p.label}</CardTitle>
                         {current && <Badge>Actuel</Badge>}
                       </div>
-                      <p className="text-2xl font-bold">{fcfa(p.priceFcfa)}<span className="text-sm font-normal text-muted-foreground"> /mois</span></p>
+                      <p className="text-2xl font-bold">{fcfa(p.priceFcfa)}<span className="text-sm font-normal text-muted-foreground"> /an</span></p>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      <p className="text-sm text-muted-foreground">
-                        Jusqu'à <strong>{p.maxStudents >= 999_999 ? "illimité" : p.maxStudents}</strong> élèves
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Jusqu'à <strong>{p.maxTeachers >= 999_999 ? "illimité" : p.maxTeachers}</strong> enseignants
-                      </p>
+                      <p className="text-sm text-muted-foreground">Élèves et enseignants illimités</p>
                       <ul className="mt-3 space-y-1.5">
                         {ALL_FEATURES.map((f) => {
                           const has = p.features.includes(f);

@@ -19,6 +19,9 @@ import { Plus, Pencil, Trash2, Bus, User, FileText, Wallet, AlertTriangle, Route
 import { toast } from "sonner";
 import { useDB, updateDB, getDB } from "@/lib/store";
 import { deriveInvoiceStatus, type Payment } from "@/lib/types";
+import { usePlan } from "@/lib/usePlan";
+import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
+import { addonRequiredFor } from "@/lib/plans";
 
 export const Route = createFileRoute("/transport")({ component: TransportPage });
 
@@ -108,6 +111,7 @@ function expiryBadge(iso: string | null | undefined) {
 
 function TransportPage() {
   const { user } = useAuth();
+  const { hasFeature, loading: planLoading } = usePlan();
   const schoolId = user?.schoolId;
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
   const isSecretary = user?.role === "secretary";
@@ -179,6 +183,17 @@ function TransportPage() {
 
   if (!user) return <Navigate to="/login" />;
   if (!canAccess) return <Navigate to="/dashboard" />;
+
+  if (!planLoading && user?.role !== "super_admin" && !hasFeature("transport")) {
+    return (
+      <AppLayout title="Transport">
+        <LockedFeatureOverlay
+          requiredAddon={addonRequiredFor("transport") ?? undefined}
+          featureLabel="Le module Transport"
+        />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout title="Transport">
