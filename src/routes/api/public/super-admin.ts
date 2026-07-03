@@ -9,6 +9,7 @@ import { rateLimitOr429, RATE_LIMITS } from "@/lib/rate-limit.server";
 const WRITE_ACTIONS = new Set([
   "update-notes", "create-school", "update-status", "update-subscription",
   "update-plan", "extend-trial", "renew-subscription", "convert-trial",
+  "broadcast-announcement",
 ]);
 // Destructive actions — much tighter budget.
 const DESTRUCTIVE_ACTIONS = new Set(["delete-school"]);
