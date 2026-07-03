@@ -13,16 +13,17 @@ import { fcfa } from "@/lib/format";
 import type { PlatformSchool } from "@/lib/super-admin-api";
 
 const PLAN_COLORS: Record<PlanId, string> = {
-  starter: "hsl(174 60% 45%)",   // teal
-  pro: "hsl(220 60% 35%)",       // navy
-  "school+": "hsl(28 90% 55%)",  // orange
+  essentiel: "hsl(174 60% 45%)", // teal
+  pro: "hsl(28 90% 55%)",        // orange
 };
 
 const MONTHS_FR = ["Janv.", "Févr.", "Mars", "Avr.", "Mai", "Juin", "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
 
 function planOf(s: PlatformSchool): PlanId | null {
   const p = s.subscription_plan;
-  if (p === "starter" || p === "pro" || p === "school+") return p;
+  if (p === "essentiel" || p === "pro") return p;
+  // Legacy plans (starter, school+, premium…) collapsed to Pro.
+  if (p) return "pro";
   return null;
 }
 
