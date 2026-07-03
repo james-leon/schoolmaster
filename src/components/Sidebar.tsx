@@ -104,19 +104,7 @@ export function Sidebar() {
         })}
       </nav>
       <div className="space-y-2 p-3">
-        {user?.role === "school_admin" && (
-          <Link
-            to="/mon-abonnement"
-            className="block rounded-xl bg-white/5 p-3 ring-1 ring-white/10 transition hover:bg-white/10"
-          >
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F58B1F]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#F58B1F]">
-              Plan School+
-            </span>
-            <p className="mt-2 text-[11px] leading-snug text-white/70">
-              Toutes les fonctionnalités sont actives pour votre établissement.
-            </p>
-          </Link>
-        )}
+        {user?.role === "school_admin" && <SidebarPlanCard />}
         <button
           onClick={logout}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
