@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/lib/theme";
 import { AuthProvider } from "@/lib/auth";
 import { MaintenanceGate } from "@/components/MaintenanceGate";
+import { MaintenanceAnnouncementBanner } from "@/components/MaintenanceAnnouncementBanner";
 import { installFriendlyToastInterceptor } from "@/lib/connection-friendly";
 
 
