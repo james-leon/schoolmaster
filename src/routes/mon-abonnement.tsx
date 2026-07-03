@@ -111,19 +111,8 @@ function MonAbonnementPage() {
                 </div>
               )}
 
-              <div>
-                <div className="mb-1 flex items-center justify-between text-sm">
-                  <span>Élèves utilisés</span>
-                  <span className="font-medium">{studentCount} / {limits.maxStudents >= 999_999 ? "∞" : limits.maxStudents}</span>
-                </div>
-                <Progress value={limits.maxStudents >= 999_999 ? 5 : Math.min(100, (studentCount / limits.maxStudents) * 100)} />
-              </div>
-              <div>
-                <div className="mb-1 flex items-center justify-between text-sm">
-                  <span>Enseignants utilisés</span>
-                  <span className="font-medium">{teacherCount} / {limits.maxTeachers >= 999_999 ? "∞" : limits.maxTeachers}</span>
-                </div>
-                <Progress value={limits.maxTeachers >= 999_999 ? 5 : Math.min(100, (teacherCount / limits.maxTeachers) * 100)} />
+              <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                Élèves et enseignants illimités sur tous les plans.
               </div>
             </CardContent>
           </Card>
