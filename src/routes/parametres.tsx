@@ -651,8 +651,19 @@ function SubjectsPanel() {
   const [renameTo, setRenameTo] = useState("");
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
 
-  const usageCount = (name: string) =>
-    db.classSubjects.filter((s) => s.name.toLowerCase() === name.toLowerCase()).length;
+  const classCount = (name: string) => {
+    const key = name.toLowerCase();
+    const ids = new Set(
+      db.classSubjects.filter((s) => s.name.toLowerCase() === key).map((s) => s.classId),
+    );
+    return ids.size;
+  };
+  const teacherCount = (name: string) => {
+    const key = name.toLowerCase();
+    return db.teachers.filter((t) =>
+      (t.subjects ?? [t.subject]).some((x) => (x ?? "").toLowerCase() === key),
+    ).length;
+  };
 
   const addSubject = () => {
     const name = newName.trim();
