@@ -11,7 +11,9 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/lib/theme";
 import { AuthProvider } from "@/lib/auth";
+import { MaintenanceGate } from "@/components/MaintenanceGate";
 import { installFriendlyToastInterceptor } from "@/lib/connection-friendly";
+
 
 if (typeof window !== "undefined") installFriendlyToastInterceptor();
 
@@ -175,11 +177,14 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
+          <MaintenanceGate>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </MaintenanceGate>
           <Toaster richColors position="top-right" />
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
 }
+
