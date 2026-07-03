@@ -25,6 +25,10 @@ interface UsePlanResult extends SchoolSubscription {
   /** Full label incl. add-on, e.g. "Pro + Transport". */
   planLabel: string;
   hasFeature: (f: FeatureId) => boolean;
+  /** Deprecated — both plans are now unlimited. Kept for backward compat. */
+  limits: { maxStudents: number; maxTeachers: number };
+  canAddStudent: () => boolean;
+  canAddTeacher: () => boolean;
   isBlocked: boolean;
   isTrial: boolean;
   daysLeftInTrial: number | null;
