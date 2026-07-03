@@ -108,6 +108,7 @@ function expiryBadge(iso: string | null | undefined) {
 
 function TransportPage() {
   const { user } = useAuth();
+  const { hasFeature, loading: planLoading } = usePlan();
   const schoolId = user?.schoolId;
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
   const isSecretary = user?.role === "secretary";
