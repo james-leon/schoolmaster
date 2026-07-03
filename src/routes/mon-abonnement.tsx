@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Check, X, Phone, Mail, Crown } from "lucide-react";
 import { usePlan } from "@/lib/usePlan";
-import { PLAN_LIST, FEATURE_LABELS, WINTEK_CONTACT, type FeatureId } from "@/lib/plans";
+import { PLAN_LIST, ADDON_CONFIG, FEATURE_LABELS, WINTEK_CONTACT, type FeatureId } from "@/lib/plans";
 import { fcfa } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -14,14 +14,13 @@ export const Route = createFileRoute("/mon-abonnement")({ component: MonAbonneme
 
 const ALL_FEATURES: FeatureId[] = [
   "students", "classes", "grades", "bulletins", "fees", "payments", "attendance",
-  "sms", "parent_portal", "announcements",
-  "multi_campus", "advanced_reports", "priority_support",
+  "parent_portal", "announcements", "timetable", "calendar",
+  "accounting", "budget", "personnel", "extra_roles",
 ];
 
 function MonAbonnementPage() {
   const {
-    plan, planId, effectiveStatus,
-    studentCount, teacherCount, limits,
+    plan, planId, hasTransportAddon, planLabel, effectiveStatus,
     isTrial, daysLeftInTrial,
     subscriptionStart, subscriptionEnd, daysUntilExpiry,
     loading,
