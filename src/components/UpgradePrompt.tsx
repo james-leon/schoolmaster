@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Lock, Crown } from "lucide-react";
-import type { PlanConfig } from "@/lib/plans";
+import type { PlanConfig, AddonConfig } from "@/lib/plans";
 import { WINTEK_CONTACT } from "@/lib/plans";
 
 interface UpgradeModalProps {
