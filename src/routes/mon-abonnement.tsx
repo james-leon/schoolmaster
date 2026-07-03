@@ -58,9 +58,12 @@ function MonAbonnementPage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Crown className="h-5 w-5 text-accent" />
-                  Plan actuel : {plan.label.toUpperCase()}
+                  Plan actuel : {planLabel.toUpperCase()}
                 </CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">{fcfa(plan.priceFcfa)} / mois</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {fcfa(plan.priceFcfa + (hasTransportAddon ? ADDON_CONFIG.transport.priceFcfa : 0))} / an
+                  {hasTransportAddon && <span className="ml-1 text-xs">(plan {plan.label} + module Transport)</span>}
+                </p>
               </div>
               <Badge variant={effectiveStatus === "active" ? "default" : "secondary"} className="capitalize">
                 <span className={cn(
