@@ -1134,6 +1134,33 @@ export type Database = {
           },
         ]
       }
+      platform_settings: {
+        Row: {
+          id: boolean
+          maintenance_active: boolean
+          maintenance_expected_return: string | null
+          maintenance_message: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: boolean
+          maintenance_active?: boolean
+          maintenance_expected_return?: string | null
+          maintenance_message?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: boolean
+          maintenance_active?: boolean
+          maintenance_expected_return?: string | null
+          maintenance_message?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           assigned_classes: string[] | null
