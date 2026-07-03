@@ -475,9 +475,24 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">Gestion des utilisateurs</CardTitle>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
-          <UserPlus className="h-4 w-4 mr-2" />Ajouter une secrétaire
-        </Button>
+        {canCreateExtra ? (
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />Ajouter une secrétaire
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              toast.info(
+                `🔒 Le rôle Secrétaire nécessite le plan Pro. Contactez Wintek (${WINTEK_CONTACT.phone} / ${WINTEK_CONTACT.email}) pour mettre à niveau.`,
+              )
+            }
+            title="Nécessite le plan Pro"
+          >
+            <Lock className="h-4 w-4 mr-2" />Secrétaire (Plan Pro)
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         {loading ? <p className="py-6 text-center text-sm text-muted-foreground">Chargement...</p> : (
