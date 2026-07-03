@@ -398,6 +398,8 @@ function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
 
 
 function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string; schoolName?: string; currentUserId?: string }) {
+  const { hasFeature } = usePlan();
+  const canCreateExtra = hasFeature("extra_roles");
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
