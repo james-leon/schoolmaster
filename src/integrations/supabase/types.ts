@@ -1136,6 +1136,11 @@ export type Database = {
       }
       platform_settings: {
         Row: {
+          announcement_active: boolean
+          announcement_ends_at: string | null
+          announcement_message: string | null
+          announcement_starts_at: string | null
+          announcement_updated_at: string | null
           id: boolean
           maintenance_active: boolean
           maintenance_expected_return: string | null
@@ -1144,6 +1149,11 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          announcement_active?: boolean
+          announcement_ends_at?: string | null
+          announcement_message?: string | null
+          announcement_starts_at?: string | null
+          announcement_updated_at?: string | null
           id?: boolean
           maintenance_active?: boolean
           maintenance_expected_return?: string | null
@@ -1152,6 +1162,11 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          announcement_active?: boolean
+          announcement_ends_at?: string | null
+          announcement_message?: string | null
+          announcement_starts_at?: string | null
+          announcement_updated_at?: string | null
           id?: boolean
           maintenance_active?: boolean
           maintenance_expected_return?: string | null

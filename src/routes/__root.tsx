@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/lib/theme";
 import { AuthProvider } from "@/lib/auth";
 import { MaintenanceGate } from "@/components/MaintenanceGate";
+import { MaintenanceAnnouncementBanner } from "@/components/MaintenanceAnnouncementBanner";
 import { installFriendlyToastInterceptor } from "@/lib/connection-friendly";
 
 
@@ -178,6 +179,7 @@ function RootComponent() {
       <ThemeProvider>
         <AuthProvider>
           <MaintenanceGate>
+            <MaintenanceAnnouncementBanner />
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
             <Outlet />
           </MaintenanceGate>

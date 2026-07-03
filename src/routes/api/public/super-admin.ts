@@ -9,6 +9,7 @@ import { rateLimitOr429, RATE_LIMITS } from "@/lib/rate-limit.server";
 const WRITE_ACTIONS = new Set([
   "update-notes", "create-school", "update-status", "update-subscription",
   "update-plan", "extend-trial", "renew-subscription", "convert-trial",
+  "broadcast-announcement",
 ]);
 // Destructive actions — much tighter budget.
 const DESTRUCTIVE_ACTIONS = new Set(["delete-school"]);
@@ -392,6 +393,37 @@ export const Route = createFileRoute("/api/public/super-admin")({
               .order("payment_date", { ascending: false });
             if (error) return safeError("super-admin", 500, error);
             return Response.json({ ok: true, payments: data ?? [] });
+          }
+
+          if (action === "broadcast-announcement") {
+            const message = String(body?.message ?? "").trim();
+            if (!message) return Response.json({ error: "Message requis" }, { status: 400 });
+            // Fan-out an in-app notification to every profile (all schools, all roles).
+            const { data: profiles, error: pErr } = await supabaseAdmin
+              .from("profiles")
+              .select("id, school_id")
+              .not("school_id", "is", null);
+            if (pErr) return safeError("super-admin", 500, pErr);
+            const rows = (profiles ?? []).map((p: any) => ({
+              school_id: p.school_id,
+              recipient_id: p.id,
+              type: "custom",
+              title: "Maintenance programmée",
+              message,
+              link: null,
+            }));
+            if (rows.length) {
+              // Insert in chunks to stay well under any payload limits.
+              const chunkSize = 500;
+              for (let i = 0; i < rows.length; i += chunkSize) {
+                const { error: iErr } = await supabaseAdmin
+                  .from("notifications")
+                  .insert(rows.slice(i, i + chunkSize));
+                if (iErr) return safeError("super-admin", 500, iErr);
+              }
+            }
+            console.info("[super-admin] announcement broadcast", { by: ctx.userId, recipients: rows.length });
+            return Response.json({ ok: true, recipients: rows.length });
           }
 
           return Response.json({ error: "Action inconnue" }, { status: 400 });
