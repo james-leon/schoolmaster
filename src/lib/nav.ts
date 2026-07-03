@@ -36,7 +36,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/annonces", label: "Annonces", icon: Megaphone, roles: ["super_admin", "school_admin", "secretary", "teacher"] },
   { to: "/enseignants", label: "Enseignants", icon: UserCheck, roles: ["super_admin", "school_admin"] },
   { to: "/personnel", label: "Personnel", icon: Briefcase, roles: ["super_admin", "school_admin"], feature: "accounting" },
-  { to: "/transport", label: "Transport", icon: Bus, roles: ["super_admin", "school_admin", "secretary"] },
+  { to: "/transport", label: "Transport", icon: Bus, roles: ["super_admin", "school_admin", "secretary"], feature: "transport" },
   { to: "/budget", label: "Budget", icon: PiggyBank, roles: ["super_admin", "school_admin"], feature: "accounting" },
   { to: "/parametres", label: "Paramètres", icon: Settings, roles: ["super_admin", "school_admin"] },
 ];
