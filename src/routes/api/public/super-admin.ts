@@ -77,7 +77,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
 
             const { data: schools, error } = await supabaseAdmin
               .from("schools")
-              .select("id, name, city, country, email, phone, subscription_plan, status, trial_ends_at, subscription_start, subscription_end, created_at, director_name, last_activity_at, internal_notes")
+              .select("id, name, city, country, email, phone, subscription_plan, status, trial_ends_at, subscription_start, subscription_end, created_at, director_name, last_activity_at, internal_notes, has_transport_addon")
               .order("created_at", { ascending: false });
             if (error) return safeError("super-admin", 500, error);
 
