@@ -88,6 +88,13 @@ function BudgetPage() {
 
   if (!user) return <Navigate to="/login" />;
   if (!isAdmin) return <Navigate to="/dashboard" />;
+  if (!planLoading && user.role !== "super_admin" && !hasFeature("budget")) {
+    return (
+      <AppLayout title="Budget">
+        <LockedFeatureOverlay requiredPlan={requiredPlanFor("budget")} featureLabel="Budget" />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout title="Budget">
