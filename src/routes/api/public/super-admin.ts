@@ -395,6 +395,40 @@ export const Route = createFileRoute("/api/public/super-admin")({
             return Response.json({ ok: true, payments: data ?? [] });
           }
 
+          if (action === "broadcast-announcement") {
+            const message = String(body?.message ?? "").trim();
+            if (!message) return Response.json({ error: "Message requis" }, { status: 400 });
+            // Fan-out an in-app notification to every profile (all schools, all roles).
+            const { data: profiles, error: pErr } = await supabaseAdmin
+              .from("profiles")
+              .select("id, school_id")
+              .not("school_id", "is", null);
+            if (pErr) return safeError("super-admin", 500, pErr);
+            const rows = (profiles ?? []).map((p: any) => ({
+              school_id: p.school_id,
+              recipient_id: p.id,
+              type: "custom",
+              title: "Maintenance programmée",
+              message,
+              link: null,
+            }));
+            if (rows.length) {
+              // Insert in chunks to stay well under any payload limits.
+              const chunkSize = 500;
+              for (let i = 0; i < rows.length; i += chunkSize) {
+                const { error: iErr } = await supabaseAdmin
+                  .from("notifications")
+                  .insert(rows.slice(i, i + chunkSize));
+                if (iErr) return safeError("super-admin", 500, iErr);
+              }
+            }
+            await logAuditServer(supabaseAdmin, {
+              actorId: ctx.userId, action: "announcement_broadcast",
+              targetType: "platform", targetId: null, details: { recipients: rows.length },
+            });
+            return Response.json({ ok: true, recipients: rows.length });
+          }
+
           return Response.json({ error: "Action inconnue" }, { status: 400 });
         } catch (e) {
           console.error("[super-admin]", e);
