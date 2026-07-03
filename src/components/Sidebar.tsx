@@ -5,7 +5,7 @@ import { Logo } from "./Logo";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { usePlan } from "@/lib/usePlan";
-import { requiredPlanFor } from "@/lib/plans";
+import { requiredPlanFor, addonRequiredFor } from "@/lib/plans";
 import { toast } from "sonner";
 import { LogOut, Lock, LayoutGrid } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
