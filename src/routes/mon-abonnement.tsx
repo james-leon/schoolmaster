@@ -129,15 +129,10 @@ function MonAbonnementPage() {
                         <CardTitle className="text-base">{p.label}</CardTitle>
                         {current && <Badge>Actuel</Badge>}
                       </div>
-                      <p className="text-2xl font-bold">{fcfa(p.priceFcfa)}<span className="text-sm font-normal text-muted-foreground"> /mois</span></p>
+                      <p className="text-2xl font-bold">{fcfa(p.priceFcfa)}<span className="text-sm font-normal text-muted-foreground"> /an</span></p>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      <p className="text-sm text-muted-foreground">
-                        Jusqu'à <strong>{p.maxStudents >= 999_999 ? "illimité" : p.maxStudents}</strong> élèves
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Jusqu'à <strong>{p.maxTeachers >= 999_999 ? "illimité" : p.maxTeachers}</strong> enseignants
-                      </p>
+                      <p className="text-sm text-muted-foreground">Élèves et enseignants illimités</p>
                       <ul className="mt-3 space-y-1.5">
                         {ALL_FEATURES.map((f) => {
                           const has = p.features.includes(f);
