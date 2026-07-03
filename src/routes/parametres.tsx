@@ -20,6 +20,7 @@ import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
 import { AuditLogPanel } from "@/components/AuditLogPanel";
 import { SEQUENCES, SEQUENCE_TERM, getSequenceCoefficients, setSequenceCoefficients, type Sequence } from "@/lib/types";
+import { getSchoolSubjects } from "@/lib/subjects";
 
 export const Route = createFileRoute("/parametres")({
   component: ParametresPage,
@@ -121,6 +122,7 @@ function ParametresPage() {
           <TabsTrigger value="ecole">École</TabsTrigger>
           <TabsTrigger value="objectifs">Objectifs</TabsTrigger>
           <TabsTrigger value="evaluations">Évaluations</TabsTrigger>
+          <TabsTrigger value="matieres">Matières</TabsTrigger>
           <TabsTrigger value="utilisateurs">Utilisateurs</TabsTrigger>
           <TabsTrigger value="confidentialite">Confidentialité</TabsTrigger>
           {isAdmin && <TabsTrigger value="journal">Journal d'activité</TabsTrigger>}
@@ -204,6 +206,11 @@ function ParametresPage() {
         <TabsContent value="evaluations" className="mt-4">
           <SequenceCoefficientsPanel />
         </TabsContent>
+
+        <TabsContent value="matieres" className="mt-4">
+          <SubjectsPanel />
+        </TabsContent>
+
 
 
         <TabsContent value="utilisateurs" className="mt-4">
@@ -635,3 +642,148 @@ function PrivacyPanel({ schoolId }: { schoolId?: string }) {
     </div>
   );
 }
+
+function SubjectsPanel() {
+  const db = useDB();
+  const subjects = getSchoolSubjects(db);
+  const [newName, setNewName] = useState("");
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [renameTo, setRenameTo] = useState("");
+  const [confirmDel, setConfirmDel] = useState<string | null>(null);
+
+  const usageCount = (name: string) =>
+    db.classSubjects.filter((s) => s.name.toLowerCase() === name.toLowerCase()).length;
+
+  const addSubject = () => {
+    const name = newName.trim();
+    if (!name) return;
+    if (subjects.some((s) => s.toLowerCase() === name.toLowerCase())) {
+      toast.error("Cette matière existe déjà");
+      return;
+    }
+    // Adds to the unified list by attaching it to every existing class
+    // as an unassigned entry, so it's immediately pickable everywhere.
+    // Admin can remove it per-class if not relevant.
+    updateDB((d) => {
+      for (const c of d.classes) {
+        d.classSubjects.push({
+          id: crypto.randomUUID(),
+          classId: c.id,
+          name,
+          coefficient: 1,
+        });
+      }
+    });
+    toast.success("Matière ajoutée à toutes les classes");
+    setNewName("");
+  };
+
+  const doRename = () => {
+    if (!renaming) return;
+    const to = renameTo.trim();
+    if (!to) { toast.error("Nom requis"); return; }
+    updateDB((d) => {
+      for (const s of d.classSubjects) {
+        if (s.name.toLowerCase() === renaming.toLowerCase()) s.name = to;
+      }
+    });
+    toast.success("Matière renommée");
+    setRenaming(null);
+    setRenameTo("");
+  };
+
+  const doDelete = () => {
+    if (!confirmDel) return;
+    const key = confirmDel.toLowerCase();
+    updateDB((d) => {
+      d.classSubjects = d.classSubjects.filter((s) => s.name.toLowerCase() !== key);
+    });
+    toast.success("Matière supprimée");
+    setConfirmDel(null);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Matières de l'école</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Liste unique des matières utilisée partout (classes, enseignants, notes). Toute matière créée ici
+          est immédiatement disponible dans Classes et lors de l'affectation d'un enseignant.
+        </p>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Nouvelle matière (ex: Sciences Physiques)"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addSubject()}
+          />
+          <Button onClick={addSubject}>Ajouter</Button>
+        </div>
+
+        <div className="rounded-md border border-border">
+          <div className="grid grid-cols-[1fr_auto_auto] gap-2 border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground">
+            <div>Matière</div>
+            <div>Utilisation</div>
+            <div className="text-right">Actions</div>
+          </div>
+          {subjects.length === 0 && (
+            <div className="p-4 text-center text-sm text-muted-foreground">Aucune matière.</div>
+          )}
+          {subjects.map((s) => {
+            const count = usageCount(s);
+            const isRenaming = renaming === s;
+            return (
+              <div key={s} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 border-b border-border px-3 py-2 text-sm last:border-b-0">
+                {isRenaming ? (
+                  <Input
+                    value={renameTo}
+                    onChange={(e) => setRenameTo(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && doRename()}
+                    autoFocus
+                  />
+                ) : (
+                  <span className="font-medium">{s}</span>
+                )}
+                <Badge variant="secondary">{count} classe{count > 1 ? "s" : ""}</Badge>
+                <div className="flex justify-end gap-1">
+                  {isRenaming ? (
+                    <>
+                      <Button size="sm" onClick={doRename}>OK</Button>
+                      <Button size="sm" variant="outline" onClick={() => { setRenaming(null); setRenameTo(""); }}>Annuler</Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => { setRenaming(s); setRenameTo(s); }}>Renommer</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setConfirmDel(s)} disabled={count === 0}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <Dialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Supprimer « {confirmDel} » ?</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              Cette matière sera retirée de toutes les classes qui l'utilisent. Les notes déjà saisies restent
+              conservées mais ne pourront plus être associées à cette matière.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setConfirmDel(null)}>Annuler</Button>
+              <Button className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={doDelete}>Supprimer</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  );
+}
+

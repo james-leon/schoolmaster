@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { ImportDialog, type ImportConfig, type RowStatus } from "@/components/ImportDialog";
 import { useAuth } from "@/lib/auth";
 import { resolveTeacherClasses } from "@/lib/teacher-scope";
+import { getSchoolSubjects } from "@/lib/subjects";
 
 export const Route = createFileRoute("/classes")({ component: ClassesPage });
 
@@ -412,7 +413,15 @@ function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: ()
           <div className="rounded-md border border-border p-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Field label="Matière">
-                <Input value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} placeholder="ex: Français" />
+                <Input
+                  list="school-subjects-list"
+                  value={draft.name}
+                  onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+                  placeholder="ex: Français"
+                />
+                <datalist id="school-subjects-list">
+                  {getSchoolSubjects(db).map((s) => <option key={s} value={s} />)}
+                </datalist>
               </Field>
               <Field label="Coefficient">
                 <Input type="number" min={1} max={5} value={draft.coefficient} onChange={(e) => setDraft((d) => ({ ...d, coefficient: e.target.value }))} />

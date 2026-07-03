@@ -3,7 +3,8 @@ import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useLoaded, TableSkeleton, EmptyState } from "@/components/shared";
 import { useDB, updateDB } from "@/lib/store";
-import { SUBJECTS, type Teacher } from "@/lib/types";
+import { type Teacher } from "@/lib/types";
+import { getSchoolSubjects } from "@/lib/subjects";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -232,13 +233,16 @@ function EnseignantsPage() {
             <div className="sm:col-span-2">
               <Field label="Matières enseignées" error={errors.subjects}>
                 <div className="grid grid-cols-2 gap-2 rounded-md border border-border p-3">
-                  {SUBJECTS.map((s) => (
+                  {getSchoolSubjects(db).map((s) => (
                     <label key={s} className="flex cursor-pointer items-center gap-2 text-sm">
                       <Checkbox checked={form.subjects.includes(s)} onCheckedChange={() => toggle("subjects", s)} />
                       {s}
                     </label>
                   ))}
                 </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Les matières proviennent des classes de l'école. Ajoutez-en depuis Classes ou Paramètres → Matières.
+                </p>
               </Field>
             </div>
             {!editing && (
