@@ -52,6 +52,7 @@ function BudgetPage() {
   const { user } = useAuth();
   const schoolId = user?.schoolId;
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
+  const { hasFeature, loading: planLoading } = usePlan();
 
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [lines, setLines] = useState<BudgetLine[]>([]);
