@@ -117,6 +117,23 @@ export function Sidebar() {
   );
 }
 
+function SidebarPlanCard() {
+  const { planLabel, loading } = usePlan();
+  return (
+    <Link
+      to="/mon-abonnement"
+      className="block rounded-xl bg-white/5 p-3 ring-1 ring-white/10 transition hover:bg-white/10"
+    >
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F58B1F]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#F58B1F]">
+        {loading ? "Plan…" : `Plan ${planLabel}`}
+      </span>
+      <p className="mt-2 text-[11px] leading-snug text-white/70">
+        Gérer votre abonnement et vos options.
+      </p>
+    </Link>
+  );
+}
+
 const PRIMARY_BY_ROLE: Record<string, string[]> = {
   school_admin: ["/dashboard", "/eleves", "/scolarite", "/notes"],
   super_admin: ["/dashboard", "/eleves", "/scolarite", "/notes"],
