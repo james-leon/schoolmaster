@@ -20,6 +20,7 @@ import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
 import { AuditLogPanel } from "@/components/AuditLogPanel";
 import { SEQUENCES, SEQUENCE_TERM, getSequenceCoefficients, setSequenceCoefficients, type Sequence } from "@/lib/types";
+import { getSchoolSubjects } from "@/lib/subjects";
 
 export const Route = createFileRoute("/parametres")({
   component: ParametresPage,
