@@ -122,6 +122,7 @@ function ParametresPage() {
           <TabsTrigger value="ecole">École</TabsTrigger>
           <TabsTrigger value="objectifs">Objectifs</TabsTrigger>
           <TabsTrigger value="evaluations">Évaluations</TabsTrigger>
+          <TabsTrigger value="matieres">Matières</TabsTrigger>
           <TabsTrigger value="utilisateurs">Utilisateurs</TabsTrigger>
           <TabsTrigger value="confidentialite">Confidentialité</TabsTrigger>
           {isAdmin && <TabsTrigger value="journal">Journal d'activité</TabsTrigger>}
