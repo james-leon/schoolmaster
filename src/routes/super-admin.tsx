@@ -33,6 +33,8 @@ import { Logo } from "@/components/Logo";
 import { PLAN_CONFIG, type PlanId } from "@/lib/plans";
 import { MrrAnalytics } from "@/components/super-admin/MrrAnalytics";
 import { SchoolHealth } from "@/components/super-admin/SchoolHealth";
+import { MaintenancePanel } from "@/components/super-admin/MaintenancePanel";
+
 
 export const Route = createFileRoute("/super-admin")({
   component: SuperAdminPage,
