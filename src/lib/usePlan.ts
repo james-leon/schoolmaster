@@ -123,6 +123,9 @@ export function usePlan(): UsePlanResult {
     studentCount, teacherCount,
     planLabel,
     hasFeature,
+    limits: { maxStudents: Number.POSITIVE_INFINITY, maxTeachers: Number.POSITIVE_INFINITY },
+    canAddStudent: () => true,
+    canAddTeacher: () => true,
     isBlocked, isTrial, daysLeftInTrial, daysUntilExpiry,
     refresh: fetchSub,
   };
