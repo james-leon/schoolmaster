@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { superAdminApi } from "@/lib/super-admin-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -7,12 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Wrench, Loader2 } from "lucide-react";
+import { Wrench, Loader2, Megaphone } from "lucide-react";
 
 type Row = {
   maintenance_active: boolean;
   maintenance_message: string | null;
   maintenance_expected_return: string | null;
+  announcement_active: boolean;
+  announcement_message: string | null;
+  announcement_starts_at: string | null;
+  announcement_ends_at: string | null;
 };
 
 function toLocalInput(iso: string | null): string {
@@ -25,6 +30,8 @@ function toLocalInput(iso: string | null): string {
 
 const DEFAULT_MSG =
   "Nous effectuons une maintenance pour améliorer votre expérience. Merci de votre patience.";
+const DEFAULT_ANN =
+  "Maintenance prévue prochainement. L'application sera temporairement indisponible pendant cette période.";
 
 export function MaintenancePanel() {
   const [loading, setLoading] = useState(true);
@@ -33,11 +40,20 @@ export function MaintenancePanel() {
   const [message, setMessage] = useState(DEFAULT_MSG);
   const [expected, setExpected] = useState("");
 
+  // Announcement state
+  const [annSaving, setAnnSaving] = useState(false);
+  const [annActive, setAnnActive] = useState(false);
+  const [annMessage, setAnnMessage] = useState(DEFAULT_ANN);
+  const [annStarts, setAnnStarts] = useState("");
+  const [annEnds, setAnnEnds] = useState("");
+
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("platform_settings")
-      .select("maintenance_active, maintenance_message, maintenance_expected_return")
+      .select(
+        "maintenance_active, maintenance_message, maintenance_expected_return, announcement_active, announcement_message, announcement_starts_at, announcement_ends_at",
+      )
       .eq("id", true)
       .maybeSingle();
     if (!error && data) {
@@ -45,6 +61,10 @@ export function MaintenancePanel() {
       setActive(!!r.maintenance_active);
       setMessage(r.maintenance_message || DEFAULT_MSG);
       setExpected(toLocalInput(r.maintenance_expected_return));
+      setAnnActive(!!r.announcement_active);
+      setAnnMessage(r.announcement_message || DEFAULT_ANN);
+      setAnnStarts(toLocalInput(r.announcement_starts_at));
+      setAnnEnds(toLocalInput(r.announcement_ends_at));
     }
     setLoading(false);
   };
@@ -54,16 +74,20 @@ export function MaintenancePanel() {
   const save = async (nextActive?: boolean) => {
     setSaving(true);
     try {
-      const payload = {
+      const turningOn = (nextActive ?? active) === true;
+      const payload: Record<string, unknown> = {
         id: true,
         maintenance_active: nextActive ?? active,
         maintenance_message: message.trim() || null,
         maintenance_expected_return: expected ? new Date(expected).toISOString() : null,
         updated_at: new Date().toISOString(),
       };
+      // Turning maintenance ON auto-disables the pre-announcement banner.
+      if (turningOn) payload.announcement_active = false;
       const { error } = await supabase.from("platform_settings").upsert(payload, { onConflict: "id" });
       if (error) throw error;
       if (typeof nextActive === "boolean") setActive(nextActive);
+      if (turningOn) setAnnActive(false);
       toast.success(
         (nextActive ?? active) ? "Mode maintenance activé" : "Mode maintenance désactivé",
       );
@@ -71,6 +95,39 @@ export function MaintenancePanel() {
       toast.error((e as Error).message || "Échec de la mise à jour");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const saveAnnouncement = async (nextActive?: boolean, opts?: { broadcast?: boolean }) => {
+    setAnnSaving(true);
+    try {
+      const turningOn = (nextActive ?? annActive) === true;
+      const payload: Record<string, unknown> = {
+        id: true,
+        announcement_active: nextActive ?? annActive,
+        announcement_message: annMessage.trim() || null,
+        announcement_starts_at: annStarts ? new Date(annStarts).toISOString() : null,
+        announcement_ends_at: annEnds ? new Date(annEnds).toISOString() : null,
+        announcement_updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await supabase.from("platform_settings").upsert(payload, { onConflict: "id" });
+      if (error) throw error;
+      if (typeof nextActive === "boolean") setAnnActive(nextActive);
+      if (turningOn && opts?.broadcast !== false) {
+        try {
+          const res = await superAdminApi.broadcastAnnouncement(annMessage.trim() || DEFAULT_ANN);
+          toast.success(`Annonce diffusée (${res.recipients} destinataires)`);
+        } catch (e) {
+          toast.error("Annonce activée mais l'envoi des notifications a échoué : " + (e as Error).message);
+        }
+      } else {
+        toast.success(turningOn ? "Annonce activée" : "Annonce désactivée");
+      }
+    } catch (e) {
+      toast.error((e as Error).message || "Échec de la mise à jour");
+    } finally {
+      setAnnSaving(false);
     }
   };
 
@@ -133,6 +190,94 @@ export function MaintenancePanel() {
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Enregistrer le message
               </Button>
+            </div>
+
+            {/* ─── Announcement banner ─────────────────────────────── */}
+            <div className="mt-6 border-t pt-5">
+              <div className="mb-3 flex items-center gap-2">
+                <Megaphone className="h-4 w-4 text-amber-600" />
+                <h3 className="text-sm font-semibold">Annonce de maintenance programmée</h3>
+              </div>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Bandeau ambré non-bloquant affiché à tous les utilisateurs pour
+                prévenir d'une maintenance à venir. Se masque automatiquement
+                après la date de fin ou dès que la vraie maintenance est activée.
+              </p>
+
+              <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+                <div>
+                  <div className="text-sm font-medium">
+                    {annActive ? "Annonce ACTIVE" : "Aucune annonce"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {annActive
+                      ? "Le bandeau s'affiche en haut de l'application pour tous les rôles."
+                      : "Activez pour prévenir les utilisateurs d'une maintenance à venir."}
+                  </div>
+                </div>
+                <Switch
+                  checked={annActive}
+                  onCheckedChange={(v) => saveAnnouncement(v, { broadcast: v })}
+                  disabled={annSaving || active}
+                />
+              </div>
+              {active && (
+                <p className="mt-2 text-xs text-amber-600">
+                  Le bandeau est désactivé automatiquement pendant que le mode maintenance est actif.
+                </p>
+              )}
+
+              <div className="mt-4 space-y-2">
+                <Label htmlFor="ann-msg">Message de l'annonce</Label>
+                <Textarea
+                  id="ann-msg"
+                  rows={3}
+                  value={annMessage}
+                  onChange={(e) => setAnnMessage(e.target.value)}
+                  placeholder={DEFAULT_ANN}
+                />
+              </div>
+
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="ann-starts">Début (optionnel)</Label>
+                  <Input
+                    id="ann-starts"
+                    type="datetime-local"
+                    value={annStarts}
+                    onChange={(e) => setAnnStarts(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ann-ends">Fin (masquage auto)</Label>
+                  <Input
+                    id="ann-ends"
+                    type="datetime-local"
+                    value={annEnds}
+                    onChange={(e) => setAnnEnds(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-3 flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => saveAnnouncement(undefined, { broadcast: false })}
+                  disabled={annSaving}
+                >
+                  {annSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Enregistrer
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => saveAnnouncement(true, { broadcast: true })}
+                  disabled={annSaving || active}
+                >
+                  {annSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Activer + Notifier
+                </Button>
+              </div>
             </div>
           </>
         )}
