@@ -63,10 +63,13 @@ export function MaintenanceGate({ children }: { children: ReactNode }) {
 
   const isSuperAdmin = originalUser?.role === "super_admin";
   // Always let super admins through so they can turn maintenance off.
-  // Also always allow the super-admin route itself (so an unauthenticated
-  // super_admin can still sign in via /login → /super-admin).
-  const isSuperAdminRoute = pathname === "/super-admin" || pathname.startsWith("/super-admin/");
-  const isBypassRoute = isSuperAdminRoute;
+  // Also always allow the login and super-admin routes (so a super_admin
+  // can still sign in and reach their console while maintenance is on).
+  const isBypassRoute =
+    pathname === "/login" ||
+    pathname === "/super-admin" ||
+    pathname.startsWith("/super-admin/");
+
 
   if (settings?.maintenance_active && !isSuperAdmin && !isBypassRoute) {
     return (
