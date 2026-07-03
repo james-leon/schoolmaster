@@ -93,6 +93,8 @@ export const superAdminApi = {
         period_start: string | null; period_end: string | null; reference: string | null;
       }[];
     }>,
+  broadcastAnnouncement: (message: string) =>
+    call({ action: "broadcast-announcement", message }) as Promise<{ ok: true; recipients: number }>,
 };
 
 // Impersonation state lives in localStorage so the AuthProvider can hydrate
