@@ -19,6 +19,9 @@ import { Plus, Pencil, Trash2, Bus, User, FileText, Wallet, AlertTriangle, Route
 import { toast } from "sonner";
 import { useDB, updateDB, getDB } from "@/lib/store";
 import { deriveInvoiceStatus, type Payment } from "@/lib/types";
+import { usePlan } from "@/lib/usePlan";
+import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
+import { addonRequiredFor } from "@/lib/plans";
 
 export const Route = createFileRoute("/transport")({ component: TransportPage });
 
