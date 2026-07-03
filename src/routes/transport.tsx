@@ -184,6 +184,17 @@ function TransportPage() {
   if (!user) return <Navigate to="/login" />;
   if (!canAccess) return <Navigate to="/dashboard" />;
 
+  if (!planLoading && user?.role !== "super_admin" && !hasFeature("transport")) {
+    return (
+      <AppLayout title="Transport">
+        <LockedFeatureOverlay
+          requiredAddon={addonRequiredFor("transport") ?? undefined}
+          featureLabel="Le module Transport"
+        />
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout title="Transport">
       <div className="space-y-6">
