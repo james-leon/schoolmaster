@@ -207,6 +207,11 @@ function ParametresPage() {
           <SequenceCoefficientsPanel />
         </TabsContent>
 
+        <TabsContent value="matieres" className="mt-4">
+          <SubjectsPanel />
+        </TabsContent>
+
+
 
         <TabsContent value="utilisateurs" className="mt-4">
           <UsersPanel schoolId={school?.id} schoolName={school?.name} currentUserId={user?.id} />
