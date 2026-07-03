@@ -781,7 +781,7 @@ function ManageSubscriptionDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Plan</Label>
-              <Select value={plan} onValueChange={setPlan}>
+              <Select value={plan} onValueChange={(v) => setPlan(v as PlanId)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {PLAN_OPTIONS.map((p) => (
