@@ -708,6 +708,10 @@ function SubjectsPanel() {
     const key = confirmDel.toLowerCase();
     updateDB((d) => {
       d.classSubjects = d.classSubjects.filter((s) => s.name.toLowerCase() !== key);
+      d.teachers.forEach((t) => {
+        if (t.subjects) t.subjects = t.subjects.filter((x) => (x ?? "").toLowerCase() !== key);
+        if ((t.subject ?? "").toLowerCase() === key) t.subject = t.subjects?.[0] ?? "";
+      });
     });
     toast.success("Matière supprimée");
     setConfirmDel(null);
