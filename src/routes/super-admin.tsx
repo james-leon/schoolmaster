@@ -860,7 +860,7 @@ const PAYMENT_METHODS = ["Espèces", "Mobile Money", "Virement", "Carte", "Autre
 function RenewSubscriptionDialog({
   school, onClose, onSaved,
 }: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
-  const [plan, setPlan] = useState<PlanId>((school.subscription_plan as PlanId) ?? "essentiel");
+  const [plan, setPlan] = useState<PlanId>((school.subscription_plan === "essentiel" || school.subscription_plan === "pro" ? school.subscription_plan : "pro"));
   const [months, setMonths] = useState(1);
   const [amount, setAmount] = useState<number>(PLAN_CONFIG[plan].priceFcfa);
   const [method, setMethod] = useState<string>("Mobile Money");
@@ -953,7 +953,7 @@ function RenewSubscriptionDialog({
 function ConvertTrialDialog({
   school, onClose, onSaved,
 }: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
-  const [plan, setPlan] = useState<PlanId>((school.subscription_plan as PlanId) ?? "essentiel");
+  const [plan, setPlan] = useState<PlanId>((school.subscription_plan === "essentiel" || school.subscription_plan === "pro" ? school.subscription_plan : "pro"));
   const [months, setMonths] = useState(1);
   const [amount, setAmount] = useState<number>(PLAN_CONFIG[plan].priceFcfa);
   const [method, setMethod] = useState<string>("Mobile Money");
