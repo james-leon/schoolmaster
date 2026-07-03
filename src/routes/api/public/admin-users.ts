@@ -256,6 +256,19 @@ export const Route = createFileRoute("/api/public/admin-users")({
             if (!firstName || !lastName || !email) {
               return Response.json({ error: "Champs requis manquants" }, { status: 400 });
             }
+            // Plan gate: Secretary role requires Pro
+            const { data: sch } = await supabaseAdmin
+              .from("schools")
+              .select("subscription_plan")
+              .eq("id", ctx.schoolId)
+              .maybeSingle();
+            const planId = (sch as any)?.subscription_plan;
+            if (planId !== "pro") {
+              return Response.json(
+                { error: "Le rôle Secrétaire nécessite le plan Pro. Contactez Wintek pour mettre à niveau." },
+                { status: 403 },
+              );
+            }
             const tempPassword = genPassword(10);
             const { data: created, error: cErr } = await supabaseAdmin.auth.admin.createUser({
               email, password: tempPassword, email_confirm: true,

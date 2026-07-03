@@ -19,6 +19,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Pencil, Trash2, AlertTriangle, PiggyBank, Download, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { csvRow } from "@/lib/csv";
+import { usePlan } from "@/lib/usePlan";
+import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
+import { requiredPlanFor } from "@/lib/plans";
 
 export const Route = createFileRoute("/budget")({ component: BudgetPage });
 
@@ -49,6 +52,7 @@ function BudgetPage() {
   const { user } = useAuth();
   const schoolId = user?.schoolId;
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
+  const { hasFeature, loading: planLoading } = usePlan();
 
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [lines, setLines] = useState<BudgetLine[]>([]);
@@ -84,6 +88,13 @@ function BudgetPage() {
 
   if (!user) return <Navigate to="/login" />;
   if (!isAdmin) return <Navigate to="/dashboard" />;
+  if (!planLoading && user.role !== "super_admin" && !hasFeature("budget")) {
+    return (
+      <AppLayout title="Budget">
+        <LockedFeatureOverlay requiredPlan={requiredPlanFor("budget")} featureLabel="Budget" />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout title="Budget">

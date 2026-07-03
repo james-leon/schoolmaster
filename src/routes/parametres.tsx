@@ -14,10 +14,12 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Upload, Image as ImageIcon, KeyRound, UserX, UserCheck, UserPlus } from "lucide-react";
+import { Trash2, Upload, Image as ImageIcon, KeyRound, UserX, UserCheck, UserPlus, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
+import { usePlan } from "@/lib/usePlan";
+import { WINTEK_CONTACT } from "@/lib/plans";
 import { AuditLogPanel } from "@/components/AuditLogPanel";
 import { SEQUENCES, SEQUENCE_TERM, getSequenceCoefficients, setSequenceCoefficients, type Sequence } from "@/lib/types";
 import { getSchoolSubjects } from "@/lib/subjects";
@@ -396,6 +398,8 @@ function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
 
 
 function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string; schoolName?: string; currentUserId?: string }) {
+  const { hasFeature } = usePlan();
+  const canCreateExtra = hasFeature("extra_roles");
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -473,9 +477,24 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">Gestion des utilisateurs</CardTitle>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
-          <UserPlus className="h-4 w-4 mr-2" />Ajouter une secrétaire
-        </Button>
+        {canCreateExtra ? (
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />Ajouter une secrétaire
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              toast.info(
+                `🔒 Le rôle Secrétaire nécessite le plan Pro. Contactez Wintek (${WINTEK_CONTACT.phone} / ${WINTEK_CONTACT.email}) pour mettre à niveau.`,
+              )
+            }
+            title="Nécessite le plan Pro"
+          >
+            <Lock className="h-4 w-4 mr-2" />Secrétaire (Plan Pro)
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         {loading ? <p className="py-6 text-center text-sm text-muted-foreground">Chargement...</p> : (
