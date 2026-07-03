@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./auth";
 import { useDB } from "./store";
-import { getPlan, type PlanConfig, type FeatureId, type PlanId } from "./plans";
+import { getPlan, ADDON_CONFIG, type PlanConfig, type FeatureId, type PlanId } from "./plans";
 
 export type SubscriptionStatus = "active" | "trial" | "suspended" | "expired";
 
 export interface SchoolSubscription {
   plan: PlanConfig;
   planId: PlanId;
+  hasTransportAddon: boolean;
   status: SubscriptionStatus;
   trialEnd: string | null;
   subscriptionStart: string | null;
@@ -19,12 +20,11 @@ export interface SchoolSubscription {
 
 interface UsePlanResult extends SchoolSubscription {
   loading: boolean;
-  limits: { maxStudents: number; maxTeachers: number };
   studentCount: number;
   teacherCount: number;
+  /** Full label incl. add-on, e.g. "Pro + Transport". */
+  planLabel: string;
   hasFeature: (f: FeatureId) => boolean;
-  canAddStudent: () => boolean;
-  canAddTeacher: () => boolean;
   isBlocked: boolean;
   isTrial: boolean;
   daysLeftInTrial: number | null;
@@ -44,8 +44,8 @@ function computeEffectiveStatus(s: SchoolSubscription): SubscriptionStatus {
 }
 
 const DEFAULT: SchoolSubscription = {
-  plan: getPlan("starter"), planId: "starter", status: "active",
-  trialEnd: null, subscriptionStart: null, subscriptionEnd: null,
+  plan: getPlan("essentiel"), planId: "essentiel", hasTransportAddon: false,
+  status: "active", trialEnd: null, subscriptionStart: null, subscriptionEnd: null,
   effectiveStatus: "active",
 };
 
@@ -61,16 +61,19 @@ export function usePlan(): UsePlanResult {
     if (!schoolId) { setSub(DEFAULT); setLoading(false); return; }
     const { data } = await supabase
       .from("schools")
-      .select("subscription_plan, status, trial_ends_at, subscription_start, subscription_end")
+      .select("subscription_plan, status, trial_ends_at, subscription_start, subscription_end, has_transport_addon" as any)
       .eq("id", schoolId)
       .maybeSingle();
+    const raw = (data ?? {}) as any;
+    const planId: PlanId = raw.subscription_plan === "essentiel" ? "essentiel" : "pro";
     const next: SchoolSubscription = {
-      plan: getPlan((data?.subscription_plan as string) ?? "starter"),
-      planId: ((data?.subscription_plan as PlanId) ?? "starter"),
-      status: ((data?.status as SubscriptionStatus) ?? "active"),
-      trialEnd: (data?.trial_ends_at as string | null) ?? null,
-      subscriptionStart: (data?.subscription_start as string | null) ?? null,
-      subscriptionEnd: (data?.subscription_end as string | null) ?? null,
+      plan: getPlan(planId),
+      planId,
+      hasTransportAddon: !!raw.has_transport_addon,
+      status: ((raw.status as SubscriptionStatus) ?? "active"),
+      trialEnd: (raw.trial_ends_at as string | null) ?? null,
+      subscriptionStart: (raw.subscription_start as string | null) ?? null,
+      subscriptionEnd: (raw.subscription_end as string | null) ?? null,
       effectiveStatus: "active",
     };
     next.effectiveStatus = computeEffectiveStatus(next);
@@ -87,9 +90,11 @@ export function usePlan(): UsePlanResult {
   const studentCount = db.students.length;
   const teacherCount = db.teachers.length;
 
-  const hasFeature = (f: FeatureId) => sub.plan.features.includes(f);
-  const canAddStudent = () => studentCount < sub.plan.maxStudents;
-  const canAddTeacher = () => teacherCount < sub.plan.maxTeachers;
+  const hasFeature = (f: FeatureId) => {
+    if (f === "transport") return sub.hasTransportAddon;
+    if (ADDON_CONFIG.transport.features.includes(f)) return sub.hasTransportAddon;
+    return sub.plan.features.includes(f);
+  };
 
   const isTrial = sub.effectiveStatus === "trial";
   const isBlocked = sub.effectiveStatus === "suspended" || sub.effectiveStatus === "expired";
@@ -106,12 +111,14 @@ export function usePlan(): UsePlanResult {
     daysUntilExpiry = Math.ceil(ms / (1000 * 60 * 60 * 24));
   }
 
+  const planLabel = sub.plan.label + (sub.hasTransportAddon ? " + Transport" : "");
+
   return {
     ...sub,
     loading,
-    limits: { maxStudents: sub.plan.maxStudents, maxTeachers: sub.plan.maxTeachers },
     studentCount, teacherCount,
-    hasFeature, canAddStudent, canAddTeacher,
+    planLabel,
+    hasFeature,
     isBlocked, isTrial, daysLeftInTrial, daysUntilExpiry,
     refresh: fetchSub,
   };
