@@ -41,7 +41,7 @@ export const Route = createFileRoute("/super-admin")({
 const PLAN_LABELS: Record<string, string> = {
   essentiel: "Essentiel", pro: "Pro",
   // Legacy labels (still displayed for historical data before migration).
-  starter: "Essentiel", "pro": "Pro", free: "Essai", premium: "Pro", trial: "Essai",
+  starter: "Essentiel", "school+": "Pro", free: "Essai", premium: "Pro", trial: "Essai",
 };
 const PLAN_OPTIONS: PlanId[] = ["essentiel", "pro"];
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
@@ -55,7 +55,7 @@ const PLAN_MRR: Record<string, number> = {
   pro: PLAN_CONFIG.pro.priceFcfa,
   // Legacy → mapped to closest new plan for aggregation only.
   starter: PLAN_CONFIG.essentiel.priceFcfa,
-  "pro": PLAN_CONFIG.pro.priceFcfa,
+  "school+": PLAN_CONFIG.pro.priceFcfa,
 };
 
 type SubFilter = "all" | "soon" | "expired" | "trial" | "active";
