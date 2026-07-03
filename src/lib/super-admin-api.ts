@@ -72,6 +72,7 @@ export const superAdminApi = {
     subscriptionStart?: string;
     subscriptionEnd?: string;
     trialEnd?: string;
+    hasTransportAddon?: boolean;
   }) => call({ action: "update-subscription", ...p }),
   renewSubscription: (p: {
     schoolId: string; plan: string; months: number;
