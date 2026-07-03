@@ -19,6 +19,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Pencil, Trash2, AlertTriangle, PiggyBank, Download, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { csvRow } from "@/lib/csv";
+import { usePlan } from "@/lib/usePlan";
+import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
+import { requiredPlanFor } from "@/lib/plans";
 
 export const Route = createFileRoute("/budget")({ component: BudgetPage });
 
