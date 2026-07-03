@@ -738,19 +738,21 @@ function SubjectsPanel() {
         </div>
 
         <div className="rounded-md border border-border">
-          <div className="grid grid-cols-[1fr_auto_auto] gap-2 border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground">
+          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground">
             <div>Matière</div>
-            <div>Utilisation</div>
+            <div>Classes</div>
+            <div>Enseignants</div>
             <div className="text-right">Actions</div>
           </div>
           {subjects.length === 0 && (
             <div className="p-4 text-center text-sm text-muted-foreground">Aucune matière.</div>
           )}
           {subjects.map((s) => {
-            const count = usageCount(s);
+            const cCount = classCount(s);
+            const tCount = teacherCount(s);
             const isRenaming = renaming === s;
             return (
-              <div key={s} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 border-b border-border px-3 py-2 text-sm last:border-b-0">
+              <div key={s} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 border-b border-border px-3 py-2 text-sm last:border-b-0">
                 {isRenaming ? (
                   <Input
                     value={renameTo}
@@ -761,7 +763,8 @@ function SubjectsPanel() {
                 ) : (
                   <span className="font-medium">{s}</span>
                 )}
-                <Badge variant="secondary">{count} classe{count > 1 ? "s" : ""}</Badge>
+                <Badge variant="secondary">{cCount} classe{cCount > 1 ? "s" : ""}</Badge>
+                <Badge variant="secondary">{tCount} ens.</Badge>
                 <div className="flex justify-end gap-1">
                   {isRenaming ? (
                     <>
@@ -771,7 +774,7 @@ function SubjectsPanel() {
                   ) : (
                     <>
                       <Button size="sm" variant="outline" onClick={() => { setRenaming(s); setRenameTo(s); }}>Renommer</Button>
-                      <Button size="sm" variant="ghost" onClick={() => setConfirmDel(s)} disabled={count === 0}>
+                      <Button size="sm" variant="ghost" onClick={() => setConfirmDel(s)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </>
