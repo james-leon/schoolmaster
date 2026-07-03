@@ -732,7 +732,11 @@ function ManageSubscriptionDialog({
   school, onClose, onSaved,
 }: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
   const today = toISODate(new Date());
-  const [plan, setPlan] = useState<string>(school.subscription_plan ?? "starter");
+  const initialPlan: PlanId = (school.subscription_plan === "essentiel" || school.subscription_plan === "pro")
+    ? school.subscription_plan
+    : "pro";
+  const [plan, setPlan] = useState<PlanId>(initialPlan);
+  const [hasTransportAddon, setHasTransportAddon] = useState<boolean>(!!school.has_transport_addon);
   const [status, setStatus] = useState<"active" | "trial" | "suspended" | "expired">(
     (school.status as "active" | "trial" | "suspended" | "expired") ?? "active",
   );
@@ -759,6 +763,7 @@ function ManageSubscriptionDialog({
         subscriptionStart: start || undefined,
         subscriptionEnd: end || undefined,
         trialEnd: status === "trial" ? (trialEnd || end || undefined) : undefined,
+        hasTransportAddon,
       });
       toast.success("Abonnement mis à jour");
       onSaved();
