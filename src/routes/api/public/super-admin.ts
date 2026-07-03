@@ -422,10 +422,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
                 if (iErr) return safeError("super-admin", 500, iErr);
               }
             }
-            await logAuditServer(supabaseAdmin, {
-              actorId: ctx.userId, action: "announcement_broadcast",
-              targetType: "platform", targetId: null, details: { recipients: rows.length },
-            });
+            console.info("[super-admin] announcement broadcast", { by: ctx.userId, recipients: rows.length });
             return Response.json({ ok: true, recipients: rows.length });
           }
 
