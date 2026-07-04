@@ -82,6 +82,7 @@ function BudgetPage() {
   }, [schoolId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+  useRealtimeRefresh(schoolId, BUDGET_REALTIME_TABLES, fetchAll);
 
   const active = useMemo(() => budgets.find((b) => b.status === "actif") || null, [budgets]);
   const selected = useMemo(
