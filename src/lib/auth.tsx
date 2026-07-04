@@ -182,6 +182,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Global realtime rehydration for local-store tables. Whenever any of
+  // these tables changes on the server for our school (from another tab,
+  // another user, or a server-side trigger), refetch so useDB() reflects
+  // it immediately — no manual refresh, no navigate-away-and-back.
+  useEffect(() => {
+    const schoolId = user?.schoolId;
+    if (!schoolId) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const rehydrate = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        // Never overwrite an in-flight local write.
+        if (isSyncActive()) { rehydrate(); return; }
+        if (getCurrentSchoolId() !== schoolId) return;
+        hydrateAll(schoolId).catch((e) => console.warn("[rehydrate]", e));
+      }, 600);
+    };
+    const channel = supabase.channel(`store-rt-${schoolId}`);
+    for (const table of LOCAL_STORE_TABLES) {
+      (channel as unknown as {
+        on: (
+          type: string,
+          filter: { event: string; schema: string; table: string; filter: string },
+          cb: () => void,
+        ) => unknown;
+      }).on(
+        "postgres_changes",
+        { event: "*", schema: "public", table, filter: `school_id=eq.${schoolId}` },
+        rehydrate,
+      );
+    }
+    channel.subscribe();
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, [user?.schoolId]);
+
+
   const login = async (email: string, password: string): Promise<User> => {
     const { withTimeoutRetry } = await import("@/lib/connection-friendly");
 
