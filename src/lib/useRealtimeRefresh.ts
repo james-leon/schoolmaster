@@ -36,8 +36,13 @@ export function useRealtimeRefresh(
     const key = tables.join("+");
     const channel = supabase.channel(`rt-${key}-${schoolId}`);
     for (const table of tables) {
-      channel.on(
-        // @ts-expect-error — supabase-js types are strict on the literal but accept this shape
+      (channel as unknown as {
+        on: (
+          type: string,
+          filter: { event: string; schema: string; table: string; filter: string },
+          cb: () => void,
+        ) => unknown;
+      }).on(
         "postgres_changes",
         { event: "*", schema: "public", table, filter: `school_id=eq.${schoolId}` },
         trigger,
