@@ -80,6 +80,12 @@ export function getCurrentSchoolId(): string | null {
   return currentSchoolId;
 }
 
+/** True while we are pushing local writes to Supabase. Used by the global
+ *  realtime subscriber so it never rehydrates over an in-flight local write. */
+export function isSyncActive(): boolean {
+  return syncing || pendingSync;
+}
+
 
 // ---- Row <-> domain mapping ----
 function rowToSchool(r: { id: string; name: string; director_name: string | null; email: string | null; phone: string | null; city: string | null; country: string | null; address: string | null; logo_url: string | null }): School {

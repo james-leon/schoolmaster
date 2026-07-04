@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Printer, Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 
 export const Route = createFileRoute("/emploi-du-temps")({ component: EmploiDuTempsPage });
 
@@ -101,6 +102,7 @@ function EmploiDuTempsPage() {
     void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.schoolId, teacherRecord?.id]);
+  useRealtimeRefresh(user?.schoolId, ["timetable"], refresh);
 
   // Filter rows for the visible grid
   const gridRows = useMemo(() => {

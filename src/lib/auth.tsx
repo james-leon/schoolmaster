@@ -2,9 +2,21 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { User } from "./types";
 import { getDB, clearLocalDB } from "./store";
 import { supabase } from "@/integrations/supabase/client";
-import { hydrateAll, clearHydration, triggerSync, getCurrentSchoolId } from "./supabase-sync";
+import { hydrateAll, clearHydration, triggerSync, getCurrentSchoolId, isSyncActive } from "./supabase-sync";
 import { registerPersistHook } from "./store";
 import { getImpersonatedSchoolId, setImpersonatedSchoolId } from "./super-admin-api";
+
+// Tables owned by the local optimistic store. When any of these changes on
+// the server (another tab, another user, or a server-side write), we
+// re-hydrate so the UI reflects the true current state without waiting for
+// the user to navigate away and back.
+const LOCAL_STORE_TABLES = [
+  "schools", "classes", "students", "teachers",
+  "class_subjects", "class_teachers",
+  "grades", "attendance",
+  "fee_types", "invoices", "payment_records",
+  "parents", "announcements", "academic_years",
+] as const;
 
 interface AuthContextType {
   user: User | null;
@@ -169,6 +181,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; sub.subscription.unsubscribe(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Global realtime rehydration for local-store tables. Whenever any of
+  // these tables changes on the server for our school (from another tab,
+  // another user, or a server-side trigger), refetch so useDB() reflects
+  // it immediately — no manual refresh, no navigate-away-and-back.
+  useEffect(() => {
+    const schoolId = user?.schoolId;
+    if (!schoolId) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const rehydrate = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        // Never overwrite an in-flight local write.
+        if (isSyncActive()) { rehydrate(); return; }
+        if (getCurrentSchoolId() !== schoolId) return;
+        hydrateAll(schoolId).catch((e) => console.warn("[rehydrate]", e));
+      }, 600);
+    };
+    const channel = supabase.channel(`store-rt-${schoolId}`);
+    for (const table of LOCAL_STORE_TABLES) {
+      (channel as unknown as {
+        on: (
+          type: string,
+          filter: { event: string; schema: string; table: string; filter: string },
+          cb: () => void,
+        ) => unknown;
+      }).on(
+        "postgres_changes",
+        { event: "*", schema: "public", table, filter: `school_id=eq.${schoolId}` },
+        rehydrate,
+      );
+    }
+    channel.subscribe();
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, [user?.schoolId]);
+
 
   const login = async (email: string, password: string): Promise<User> => {
     const { withTimeoutRetry } = await import("@/lib/connection-friendly");

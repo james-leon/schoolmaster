@@ -22,6 +22,13 @@ import { deriveInvoiceStatus, type Payment } from "@/lib/types";
 import { usePlan } from "@/lib/usePlan";
 import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
 import { addonRequiredFor } from "@/lib/plans";
+import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
+
+const TRANSPORT_REALTIME_TABLES = [
+  "vehicles", "drivers", "vehicle_documents",
+  "transport_routes", "route_stops", "student_transport",
+  "transactions", "suppliers",
+] as const;
 
 export const Route = createFileRoute("/transport")({ component: TransportPage });
 
@@ -153,6 +160,7 @@ function TransportPage() {
   }, [schoolId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+  useRealtimeRefresh(schoolId, TRANSPORT_REALTIME_TABLES, fetchAll);
 
   // alerts
   const alerts = useMemo(() => {
