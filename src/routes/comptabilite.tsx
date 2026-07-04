@@ -145,6 +145,7 @@ function ComptabilitePage() {
   }, [schoolId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+  useRealtimeRefresh(schoolId, REALTIME_TABLES, fetchAll);
 
   const allItems = useMemo<TxRow[]>(() => [...txs, ...feeIncome], [txs, feeIncome]);
 
