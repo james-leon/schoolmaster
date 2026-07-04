@@ -98,6 +98,7 @@ function CalendrierPage() {
   }, []);
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
+  useRealtimeRefresh(user?.schoolId, ["events"], fetchEvents);
 
   const monthEvents = useMemo(() => {
     const y = cursor.getFullYear(), m = cursor.getMonth();
