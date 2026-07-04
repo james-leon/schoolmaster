@@ -102,6 +102,7 @@ function EmploiDuTempsPage() {
     void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.schoolId, teacherRecord?.id]);
+  useRealtimeRefresh(user?.schoolId, ["timetable"], refresh);
 
   // Filter rows for the visible grid
   const gridRows = useMemo(() => {
