@@ -2,9 +2,21 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { User } from "./types";
 import { getDB, clearLocalDB } from "./store";
 import { supabase } from "@/integrations/supabase/client";
-import { hydrateAll, clearHydration, triggerSync, getCurrentSchoolId } from "./supabase-sync";
+import { hydrateAll, clearHydration, triggerSync, getCurrentSchoolId, isSyncActive } from "./supabase-sync";
 import { registerPersistHook } from "./store";
 import { getImpersonatedSchoolId, setImpersonatedSchoolId } from "./super-admin-api";
+
+// Tables owned by the local optimistic store. When any of these changes on
+// the server (another tab, another user, or a server-side write), we
+// re-hydrate so the UI reflects the true current state without waiting for
+// the user to navigate away and back.
+const LOCAL_STORE_TABLES = [
+  "schools", "classes", "students", "teachers",
+  "class_subjects", "class_teachers",
+  "grades", "attendance",
+  "fee_types", "invoices", "payment_records",
+  "parents", "announcements", "academic_years",
+] as const;
 
 interface AuthContextType {
   user: User | null;
