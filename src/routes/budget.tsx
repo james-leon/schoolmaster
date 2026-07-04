@@ -22,6 +22,9 @@ import { csvRow } from "@/lib/csv";
 import { usePlan } from "@/lib/usePlan";
 import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
 import { requiredPlanFor } from "@/lib/plans";
+import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
+
+const BUDGET_REALTIME_TABLES = ["budgets", "budget_lines", "transaction_categories", "transactions"] as const;
 
 export const Route = createFileRoute("/budget")({ component: BudgetPage });
 
