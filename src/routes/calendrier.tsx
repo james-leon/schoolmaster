@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Plus, Pencil, Trash2, MapPin, Clock, CalendarDays, List, LayoutGrid } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 
 export const Route = createFileRoute("/calendrier")({ component: CalendrierPage });
 
