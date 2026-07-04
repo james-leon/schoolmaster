@@ -160,6 +160,7 @@ function TransportPage() {
   }, [schoolId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+  useRealtimeRefresh(schoolId, TRANSPORT_REALTIME_TABLES, fetchAll);
 
   // alerts
   const alerts = useMemo(() => {
