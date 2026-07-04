@@ -26,6 +26,9 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip as RTooltip,
   ResponsiveContainer, Legend, CartesianGrid,
 } from "recharts";
+import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
+
+const REALTIME_TABLES = ["transactions", "payment_records", "transaction_categories", "suppliers", "invoices"] as const;
 
 export const Route = createFileRoute("/comptabilite")({ component: ComptabilitePage });
 
