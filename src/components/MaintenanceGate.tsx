@@ -55,9 +55,18 @@ export function MaintenanceGate({ children }: { children: ReactNode }) {
     const iv = setInterval(fetchSettings, REFRESH_MS);
     const onFocus = () => fetchSettings();
     window.addEventListener("focus", onFocus);
+    const channel = supabase
+      .channel("platform-settings-gate")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "platform_settings" },
+        () => fetchSettings(),
+      )
+      .subscribe();
     return () => {
       clearInterval(iv);
       window.removeEventListener("focus", onFocus);
+      supabase.removeChannel(channel);
     };
   }, [fetchSettings]);
 
