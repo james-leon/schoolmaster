@@ -200,20 +200,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, 600);
     };
     const channel = supabase.channel(`store-rt-${schoolId}`);
+    type PgChangesOn = {
+      on: (
+        type: string,
+        filter: { event: string; schema: string; table: string; filter: string },
+        cb: () => void,
+      ) => unknown;
+    };
     for (const table of LOCAL_STORE_TABLES) {
-      (channel as unknown as {
-        on: (
-          type: string,
-          filter: { event: string; schema: string; table: string; filter: string },
-          cb: () => void,
-        ) => unknown;
-      }).on(
+      // `schools` is the tenant root: it has no school_id column, its own id
+      // IS the school id. An invalid filter column breaks the whole channel.
+      const filter = table === "schools" ? `id=eq.${schoolId}` : `school_id=eq.${schoolId}`;
+      (channel as unknown as PgChangesOn).on(
         "postgres_changes",
-        { event: "*", schema: "public", table, filter: `school_id=eq.${schoolId}` },
+        { event: "*", schema: "public", table, filter },
         rehydrate,
       );
     }
-    channel.subscribe();
+    channel.subscribe((status, err) => {
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        console.warn("[store-rt] channel", status, err?.message);
+      }
+    });
     return () => {
       if (timer) clearTimeout(timer);
       supabase.removeChannel(channel);
