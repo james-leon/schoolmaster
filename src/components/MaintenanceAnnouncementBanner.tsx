@@ -16,6 +16,7 @@ const DISMISS_KEY = "wintek_announcement_dismissed_at";
 
 export function MaintenanceAnnouncementBanner() {
   const [row, setRow] = useState<Row | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const [dismissedFor, setDismissedFor] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     return sessionStorage.getItem(DISMISS_KEY);
@@ -39,11 +40,26 @@ export function MaintenanceAnnouncementBanner() {
   useEffect(() => {
     void fetchIt();
     const iv = setInterval(fetchIt, REFRESH_MS);
-    const onFocus = () => fetchIt();
+    const tick = setInterval(() => setNow(Date.now()), 15_000);
+    const onFocus = () => {
+      setNow(Date.now());
+      fetchIt();
+    };
     window.addEventListener("focus", onFocus);
+    // Realtime: react instantly when the super admin toggles the banner
+    const channel = supabase
+      .channel("platform-settings-banner")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "platform_settings" },
+        () => fetchIt(),
+      )
+      .subscribe();
     return () => {
       clearInterval(iv);
+      clearInterval(tick);
       window.removeEventListener("focus", onFocus);
+      supabase.removeChannel(channel);
     };
   }, [fetchIt]);
 
@@ -51,8 +67,9 @@ export function MaintenanceAnnouncementBanner() {
   if (row.maintenance_active) return null; // real maintenance takes over
   if (!row.announcement_active) return null;
 
-  const now = Date.now();
+  const starts = row.announcement_starts_at ? new Date(row.announcement_starts_at).getTime() : null;
   const ends = row.announcement_ends_at ? new Date(row.announcement_ends_at).getTime() : null;
+  if (starts && now < starts) return null;
   if (ends && now > ends) return null;
 
   const version = row.announcement_updated_at ?? "v0";
