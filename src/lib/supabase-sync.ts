@@ -3,7 +3,7 @@
 // Phase 2 tables: grades, attendance, fee_types, invoices(payments), payment_records.
 
 import { supabase } from "@/integrations/supabase/client";
-import { getDB, updateDB } from "./store";
+import { getDB, hydrateDB } from "./store";
 import { toast } from "sonner";
 import { logAudit } from "./audit";
 import type {
@@ -353,28 +353,33 @@ export async function hydrateAll(schoolId: string): Promise<void> {
     }
   }
 
-  syncing = true;
-  try {
-    updateDB((db) => {
-      db.schools = schools;
-      db.classes = classes;
-      db.students = students;
-      db.teachers = teachers;
-      db.classSubjects = classSubjects;
-      db.grades = grades;
-      db.attendance = attendance;
-      db.feeTypes = feeTypes;
-      db.payments = payments;
-      db.paymentRecords = paymentRecords;
-      db.parents = parents;
-      db.announcements = announcements;
-      db.academicYears = academicYears;
-      db.classTeachers = classTeachers;
-    });
-  } finally {
-    syncing = false;
-  }
+  // Apply server state WITHOUT firing the sync hook: this data came from
+  // the server, so there is nothing to push back. Previously this used
+  // updateDB while `syncing` was true, which set pendingSync=true and
+  // nothing ever cleared it — isSyncActive() then returned true forever
+  // and the global realtime rehydrater skipped itself permanently.
+  hydrateDB((db) => {
+    db.schools = schools;
+    db.classes = classes;
+    db.students = students;
+    db.teachers = teachers;
+    db.classSubjects = classSubjects;
+    db.grades = grades;
+    db.attendance = attendance;
+    db.feeTypes = feeTypes;
+    db.payments = payments;
+    db.paymentRecords = paymentRecords;
+    db.parents = parents;
+    db.announcements = announcements;
+    db.academicYears = academicYears;
+    db.classTeachers = classTeachers;
+  });
   lastSnapshot = snapshot();
+  // Drain any local write that raced with hydration so it still pushes.
+  if (pendingSync && !syncing) {
+    pendingSync = false;
+    triggerSync();
+  }
 }
 
 export function clearHydration(): void {
