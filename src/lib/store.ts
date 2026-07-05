@@ -42,16 +42,33 @@ function load(): DB {
   return cache;
 }
 
-function persist() {
+/**
+ * Reassign references so React sees changes. CRITICAL: updateDB callers
+ * mutate nested arrays in place (d.students.push(...), inv.amountPaid += x),
+ * and components everywhere derive lists with useMemo(..., [db.students]).
+ * A shallow top-level clone keeps the SAME array references, so those memos
+ * never recompute and the UI looks frozen until remount. We must give every
+ * top-level array (and each row) a fresh reference on every persist.
+ */
+function cloneForSnapshot(db: DB): DB {
+  const next = {} as Record<string, unknown>;
+  for (const [k, v] of Object.entries(db as unknown as Record<string, unknown>)) {
+    next[k] = Array.isArray(v)
+      ? v.map((row) => (row && typeof row === "object" ? { ...(row as object) } : row))
+      : v;
+  }
+  return next as unknown as DB;
+}
+
+function persist(opts?: { silent?: boolean }) {
   if (cache) {
-    // Reassign reference so useSyncExternalStore sees a new snapshot
-    cache = { ...cache };
+    cache = cloneForSnapshot(cache);
     if (typeof window !== "undefined") {
       localStorage.setItem(KEY, JSON.stringify(cache));
     }
   }
   listeners.forEach((l) => l());
-  if (syncHook) syncHook();
+  if (!opts?.silent && syncHook) syncHook();
 }
 
 export function getDB(): DB {
@@ -62,6 +79,18 @@ export function updateDB(fn: (db: DB) => void) {
   const db = load();
   fn(db);
   persist();
+}
+
+/**
+ * Like updateDB but does NOT fire the sync hook. Used when applying
+ * server-fetched state (hydration): the data came FROM the server, so
+ * pushing it back would be a no-op at best and previously left the
+ * sync layer's pending flag stuck, silently disabling realtime refresh.
+ */
+export function hydrateDB(fn: (db: DB) => void) {
+  const db = load();
+  fn(db);
+  persist({ silent: true });
 }
 
 export function resetDB() {
