@@ -150,6 +150,7 @@ function AnnoncesWidget() {
 }
 
 function TeacherDashboard() {
+  const { t } = useTranslation();
   const db = useDB();
   const { user } = useAuth();
   const navigate = useNavigate();
