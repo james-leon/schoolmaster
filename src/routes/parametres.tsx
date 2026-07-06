@@ -23,6 +23,7 @@ import { WINTEK_CONTACT } from "@/lib/plans";
 import { AuditLogPanel } from "@/components/AuditLogPanel";
 import { SEQUENCES, SEQUENCE_TERM, getSequenceCoefficients, setSequenceCoefficients, type Sequence } from "@/lib/types";
 import { getSchoolSubjects } from "@/lib/subjects";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export const Route = createFileRoute("/parametres")({
   component: ParametresPage,
