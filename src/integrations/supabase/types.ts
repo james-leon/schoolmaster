@@ -1186,6 +1186,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_active: boolean
+          language: string
           last_sign_in_at: string | null
           must_change_password: boolean
           phone: string | null
@@ -1203,6 +1204,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_active?: boolean
+          language?: string
           last_sign_in_at?: string | null
           must_change_password?: boolean
           phone?: string | null
@@ -1220,6 +1222,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
+          language?: string
           last_sign_in_at?: string | null
           must_change_password?: boolean
           phone?: string | null

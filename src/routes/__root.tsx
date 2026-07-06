@@ -14,6 +14,7 @@ import { AuthProvider } from "@/lib/auth";
 import { MaintenanceGate } from "@/components/MaintenanceGate";
 import { MaintenanceAnnouncementBanner } from "@/components/MaintenanceAnnouncementBanner";
 import { installFriendlyToastInterceptor } from "@/lib/connection-friendly";
+import "@/lib/i18n";
 
 
 if (typeof window !== "undefined") installFriendlyToastInterceptor();

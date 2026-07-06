@@ -23,6 +23,7 @@ import { WINTEK_CONTACT } from "@/lib/plans";
 import { AuditLogPanel } from "@/components/AuditLogPanel";
 import { SEQUENCES, SEQUENCE_TERM, getSequenceCoefficients, setSequenceCoefficients, type Sequence } from "@/lib/types";
 import { getSchoolSubjects } from "@/lib/subjects";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export const Route = createFileRoute("/parametres")({
   component: ParametresPage,
@@ -232,16 +233,29 @@ function ParametresPage() {
 
 
         <TabsContent value="compte" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Compte</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Nom</span><span className="font-medium">{user?.name}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span className="font-medium">{user?.email}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Rôle</span><span className="font-medium">{user ? ROLE_LABELS[user.role] : ""}</span></div>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Langue de l'interface / Interface language</CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center justify-between gap-4">
+                <p className="text-sm text-muted-foreground">
+                  Choisissez la langue affichée. Votre choix est enregistré sur votre profil.
+                </p>
+                <LanguageSwitcher />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Compte</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Nom</span><span className="font-medium">{user?.name}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span className="font-medium">{user?.email}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Rôle</span><span className="font-medium">{user ? ROLE_LABELS[user.role] : ""}</span></div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </AppLayout>
