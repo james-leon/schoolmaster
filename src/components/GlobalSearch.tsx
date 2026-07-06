@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { Search, Users, BookOpen, FileText, UserCheck } from "lucide-react";
 import { useDB } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
@@ -17,6 +18,7 @@ type Result = {
 const MAX_PER_GROUP = 5;
 
 export function GlobalSearch() {
+  const { t } = useTranslation();
   const db = useDB();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -213,7 +215,7 @@ export function GlobalSearch() {
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
-        placeholder="Rechercher un élève, une facture..."
+        placeholder={t("header.searchPlaceholder")}
         className="h-10 w-full rounded-xl border border-[#E8EDF4] bg-[#F7F9FC] pl-9 pr-14 text-sm text-[#0F172A] outline-none transition focus:border-[#2563EB] focus:bg-card focus:ring-2 focus:ring-[#2563EB]/15"
       />
       <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 items-center gap-0.5 rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground lg:inline-flex">

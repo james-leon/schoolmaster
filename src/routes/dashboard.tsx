@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
 
 import { useDB } from "@/lib/store";
@@ -58,6 +59,7 @@ const TEACHER_ACTIONS = [
 ];
 
 function QuickActionsDropdown({ role }: { role?: string }) {
+  const { t } = useTranslation();
   const actions =
     role === "teacher" ? TEACHER_ACTIONS
     : role === "secretary" ? SECRETARY_ACTIONS
@@ -71,13 +73,13 @@ function QuickActionsDropdown({ role }: { role?: string }) {
         <Button
           className="h-11 rounded-xl bg-[#0D2C54] px-4 text-sm font-semibold text-white shadow-[0_8px_24px_-12px_rgba(13,44,84,0.5)] hover:bg-[#0A2447]"
         >
-          <Plus className="mr-1.5 h-4 w-4" /> Nouvelle action
+          <Plus className="mr-1.5 h-4 w-4" /> {t("dashboard.newAction")}
           <ChevronRight className="ml-1.5 h-4 w-4 rotate-90 transition-transform data-[state=open]:-rotate-180" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
         <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          Actions rapides
+          {t("dashboard.quickActionsLabel")}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {actions.map((action) => {
@@ -118,6 +120,7 @@ function DashboardPage() {
 }
 
 function AnnoncesWidget() {
+  const { t } = useTranslation();
   const db = useDB();
   const { user } = useAuth();
   const items = visibleAnnouncements(db.announcements, user?.role).slice(0, 2);
@@ -126,12 +129,12 @@ function AnnoncesWidget() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Megaphone className="h-4 w-4 text-secondary" /> Annonces récentes
+          <Megaphone className="h-4 w-4 text-secondary" /> {t("dashboard.recentAnnouncements")}
         </CardTitle>
         <Link to={href} className="text-xs font-medium text-primary hover:underline">Voir tout</Link>
       </CardHeader>
       <CardContent className="space-y-3">
-        {items.length === 0 && <p className="text-sm text-muted-foreground">Aucune annonce pour le moment</p>}
+        {items.length === 0 && <p className="text-sm text-muted-foreground">{t("dashboard.noAnnouncements")}</p>}
         {items.map((a) => (
           <Link key={a.id} to={href} className="block rounded-md border border-border p-3 transition hover:border-accent hover:bg-muted/40">
             <div className="flex items-center justify-between gap-2">
@@ -228,7 +231,7 @@ function TeacherDashboard() {
 
         <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-2">
           <CardHeader>
-            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">Actions rapides</CardTitle>
+            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">{t("dashboard.quickActions")}</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-3">
             {quickActions.map((q) => (
@@ -292,6 +295,7 @@ function TeacherDashboard() {
 const MONTH_LABELS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
 
 function AdminDashboard() {
+  const { t } = useTranslation();
   const db = useDB();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -426,14 +430,14 @@ function AdminDashboard() {
   const absencesTrend = pctDelta(absentToday, absentYesterday);
 
   return (
-    <AppLayout title="Tableau de bord">
+    <AppLayout title={t("nav.dashboard")}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-['Sora'] text-2xl font-bold tracking-tight text-foreground md:text-[28px]">
-            Bonjour, {user?.name?.split(" ")[0] ?? ""}
+            {t("dashboard.hello", { name: user?.name?.split(" ")[0] ?? "" })}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Voici l'activité de votre établissement.
+            {t("dashboard.adminSubtitle")}
           </p>
         </div>
         <QuickActionsDropdown role={user?.role} />
@@ -441,36 +445,36 @@ function AdminDashboard() {
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Élèves inscrits"
+          label={t("dashboard.kpiStudents")}
           value={String(totalStudents)}
           icon={Users}
           tone="blue"
-          sub={showTargets && totalTarget > 0 ? `sur ${totalTarget} places` : undefined}
+          sub={showTargets && totalTarget > 0 ? t("dashboard.kpiSeats", { total: totalTarget }) : undefined}
           progress={showTargets && totalTarget > 0 ? targetPct : undefined}
           trend={studentsTrend}
         />
         <KpiCard
-          label="Chiffre d'affaires"
+          label={t("dashboard.kpiRevenue")}
           value={fcfa(trimesterCA)}
           icon={TrendingUp}
           tone="green"
-          sub="FCFA ce trimestre"
+          sub={t("dashboard.kpiRevenueSub")}
           trend={caTrend}
         />
         <KpiCard
-          label="Taux de recouvrement"
+          label={t("dashboard.kpiRecovery")}
           value={`${recoveryRate}%`}
           valueClass={recoveryColor}
           icon={PieChartIcon}
           tone="orange"
-          sub={`${fcfa(remaining)} restants`}
+          sub={t("dashboard.kpiRecoverySub", { amount: fcfa(remaining) })}
         />
         <KpiCard
-          label="Absences aujourd'hui"
+          label={t("dashboard.kpiAbsences")}
           value={String(absentToday)}
           icon={AlertCircle}
           tone="red"
-          sub={`sur ${totalStudents} élèves`}
+          sub={t("dashboard.kpiAbsencesSub", { total: totalStudents })}
           trend={absencesTrend}
           trendInvert
         />
@@ -479,7 +483,7 @@ function AdminDashboard() {
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-5">
         <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-3">
           <CardHeader>
-            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">Recettes par mois</CardTitle>
+            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">{t("dashboard.revenueChart")}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -500,11 +504,11 @@ function AdminDashboard() {
 
         <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-2">
           <CardHeader>
-            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">Répartition des paiements</CardTitle>
+            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">{t("dashboard.paymentBreakdown")}</CardTitle>
           </CardHeader>
           <CardContent>
             {donutTotal === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">Aucun paiement enregistré.</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">{t("dashboard.noPayments")}</p>
             ) : (
               <div className="flex w-full flex-col items-center gap-4 md:flex-row">
                 <div className="relative h-[200px] w-[200px] shrink-0">
@@ -520,7 +524,7 @@ function AdminDashboard() {
                   </ResponsiveContainer>
                   <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
                     <div className="font-['Sora'] text-2xl font-bold text-foreground">{recoveryRate}%</div>
-                    <div className="text-[11px] text-muted-foreground">recouvré</div>
+                    <div className="text-[11px] text-muted-foreground">{t("dashboard.recovered")}</div>
                   </div>
                 </div>
                 <ul className="w-full min-w-0 flex-1 space-y-2 text-sm">
@@ -544,12 +548,12 @@ function AdminDashboard() {
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-5">
         <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-3">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">Activité récente</CardTitle>
-            <Link to="/notifications" className="text-xs font-semibold text-[#2563EB] hover:underline">Tout voir</Link>
+            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">{t("dashboard.recentActivity")}</CardTitle>
+            <Link to="/notifications" className="text-xs font-semibold text-[#2563EB] hover:underline">{t("common.viewAll")}</Link>
           </CardHeader>
           <CardContent className="space-y-3">
             {db.activities.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">Aucune activité récente</p>
+              <p className="py-6 text-center text-sm text-muted-foreground">{t("dashboard.noActivity")}</p>
             ) : (
               db.activities.slice(0, 6).map((a) => {
                 const Icon = activityIcons[a.type];
@@ -575,7 +579,7 @@ function AdminDashboard() {
 
         <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] lg:col-span-2">
           <CardHeader>
-            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">Actions rapides</CardTitle>
+            <CardTitle className="font-['Sora'] text-base font-semibold text-foreground">{t("dashboard.quickActions")}</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-3">
             {[
@@ -603,21 +607,21 @@ function AdminDashboard() {
         <Card className="rounded-2xl border-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-['Sora'] text-base font-semibold text-foreground">
-              <AlertTriangle className="h-4 w-4 text-destructive" /> Alertes
+              <AlertTriangle className="h-4 w-4 text-destructive" /> {t("dashboard.alerts")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {overdueStudents.length === 0 && <p className="text-sm text-muted-foreground">Aucune alerte.</p>}
+            {overdueStudents.length === 0 && <p className="text-sm text-muted-foreground">{t("dashboard.noAlerts")}</p>}
             {overdueStudents.map((s) => (
               <div key={s!.id} className="flex items-center gap-3 rounded-xl bg-destructive/5 p-3">
                 <FileText className="h-4 w-4 text-destructive" />
                 <div className="text-sm">
-                  <span className="font-medium">{s!.firstName} {s!.lastName}</span> — facture impayée
+                  <span className="font-medium">{s!.firstName} {s!.lastName}</span> — {t("dashboard.unpaidInvoice")}
                 </div>
               </div>
             ))}
             <Button variant="outline" size="sm" className="w-full rounded-xl" onClick={() => navigate({ to: "/scolarite" })}>
-              Voir tous les paiements
+              {t("dashboard.viewAllPayments")}
             </Button>
           </CardContent>
         </Card>

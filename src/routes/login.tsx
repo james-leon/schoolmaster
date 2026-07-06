@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { friendlyConnectionMessage } from "@/lib/connection-friendly";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   GraduationCap,
   Mail,
@@ -25,9 +27,9 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
-const schema = z.object({
-  email: z.string().email("Adresse email invalide"),
-  password: z.string().min(1, "Le mot de passe est requis"),
+const schema = (t: (k: string) => string) => z.object({
+  email: z.string().email(t("login.invalidEmail")),
+  password: z.string().min(1, t("login.passwordRequired")),
 });
 
 function redirectFor(role: string) {
@@ -40,6 +42,7 @@ const NAVY = "#0D2C54";
 const ORANGE = "#F58B1F";
 
 function LoginPage() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -54,14 +57,15 @@ function LoginPage() {
     try {
       if (sessionStorage.getItem("inactivity_logout_flag") === "1") {
         sessionStorage.removeItem("inactivity_logout_flag");
-        toast.info("Vous avez été déconnecté après une période d'inactivité, pour protéger vos données.", { duration: 8000 });
+        toast.info(t("login.inactivityLogout"), { duration: 8000 });
       }
     } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = schema.safeParse({ email, password });
+    const parsed = schema(t).safeParse({ email, password });
     if (!parsed.success) {
       const errs: Record<string, string> = {};
       parsed.error.issues.forEach((i) => (errs[i.path[0] as string] = i.message));
@@ -73,7 +77,7 @@ function LoginPage() {
     setLoading(true);
     try {
       const u = await login(email, password);
-      toast.success(`Bienvenue, ${u.name} !`);
+      toast.success(t("login.welcomeToast", { name: u.name }));
       if (u.mustChangePassword) {
         navigate({ to: "/changer-mot-de-passe", replace: true });
       } else {
@@ -148,38 +152,33 @@ function LoginPage() {
             className="mb-5 text-xs font-semibold uppercase tracking-[0.2em]"
             style={{ color: ORANGE }}
           >
-            Gestion scolaire intelligente
+            {t("login.tagline")}
           </div>
           <h1
-            className="text-[44px] font-bold leading-[1.05] tracking-tight xl:text-[52px]"
+            className="whitespace-pre-line text-[44px] font-bold leading-[1.05] tracking-tight xl:text-[52px]"
             style={{ fontFamily: "'Sora', sans-serif" }}
           >
-            Toute votre école,
-            <br />
-            dans une seule
-            <br />
-            application.
+            {t("login.heroTitle")}
           </h1>
           <p className="mt-6 max-w-md text-[15px] leading-relaxed text-white/70">
-            Élèves, bulletins, paiements, communication avec les parents. Conçu pour les
-            écoles du Cameroun, propulsé par l'intelligence artificielle.
+            {t("login.heroText")}
           </p>
 
           <ul className="mt-10 space-y-5">
             <Feature
               icon={<FileText className="h-4 w-4" />}
-              title="Bulletins en un clic"
-              text="Moyennes calculées et appréciations rédigées par l'IA."
+              title={t("login.feature1Title")}
+              text={t("login.feature1Text")}
             />
             <Feature
               icon={<Wallet className="h-4 w-4" />}
-              title="Suivi des paiements"
-              text="Mobile Money, reçus automatiques, taux de recouvrement en temps réel."
+              title={t("login.feature2Title")}
+              text={t("login.feature2Text")}
             />
             <Feature
               icon={<Bell className="h-4 w-4" />}
-              title="Parents toujours informés"
-              text="Notes, absences et annonces directement sur leur téléphone."
+              title={t("login.feature3Title")}
+              text={t("login.feature3Text")}
             />
           </ul>
         </div>
@@ -190,7 +189,10 @@ function LoginPage() {
       </aside>
 
       {/* RIGHT — form */}
-      <main className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-8 lg:min-h-0">
+      <main className="relative flex min-h-screen items-center justify-center px-5 py-10 sm:px-8 lg:min-h-0">
+        <div className="absolute right-4 top-4 z-10">
+          <LanguageSwitcher />
+        </div>
         <div className="w-full max-w-[400px]">
           {/* logo block */}
           <div className="mb-7 flex flex-col items-center text-center">
@@ -204,17 +206,17 @@ function LoginPage() {
               className="text-[26px] font-bold tracking-tight"
               style={{ fontFamily: "'Sora', sans-serif", color: NAVY }}
             >
-              Bon retour <span className="inline-block">👋</span>
+              {t("login.welcomeBack")} <span className="inline-block">👋</span>
             </h2>
             <p className="mt-1.5 text-sm text-[#64748B]">
-              Connectez-vous à votre espace SchoolMaster
+              {t("login.subtitle")}
             </p>
           </div>
 
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-sm font-medium text-[#0F172A]">
-                Adresse email
+                {t("login.email")}
               </Label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
@@ -223,7 +225,7 @@ function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="vous@ecole.cm"
+                  placeholder={t("login.emailPlaceholder")}
                   className="login-input h-12 rounded-xl border-[1.5px] border-[#E8EDF4] bg-white pl-10 pr-3 text-[15px] placeholder:text-[#94A3B8] focus-visible:border-[#2563EB] focus-visible:ring-0 focus-visible:outline-none"
                   style={{ fontFamily: "'Inter', sans-serif" }}
                 />
@@ -233,7 +235,7 @@ function LoginPage() {
 
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-sm font-medium text-[#0F172A]">
-                Mot de passe
+                {t("login.password")}
               </Label>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
@@ -248,7 +250,7 @@ function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPwd((s) => !s)}
-                  aria-label={showPwd ? "Masquer" : "Afficher"}
+                  aria-label={showPwd ? t("login.hide") : t("login.show")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-[#64748B] hover:text-[#0F172A]"
                 >
                   {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -267,7 +269,7 @@ function LoginPage() {
                   to="/forgot-password"
                   className="mt-1 inline-block text-sm font-semibold text-amber-900 underline"
                 >
-                  Mot de passe oublié ?
+                  {t("login.forgotPassword")}
                 </Link>
               </div>
             )}
@@ -279,14 +281,14 @@ function LoginPage() {
                   onCheckedChange={(v) => setRemember(!!v)}
                   className="h-4 w-4 rounded border-[#CBD5E1] data-[state=checked]:border-[#2563EB] data-[state=checked]:bg-[#2563EB]"
                 />
-                Se souvenir de moi
+                {t("login.rememberMe")}
               </label>
               <Link
                 to="/forgot-password"
                 className="text-sm font-medium hover:underline"
                 style={{ color: "#2563EB" }}
               >
-                Mot de passe oublié ?
+                {t("login.forgotPassword")}
               </Link>
             </div>
 
@@ -297,10 +299,10 @@ function LoginPage() {
               style={{ background: NAVY }}
             >
               {loading ? (
-                "Connexion..."
+                t("login.signingIn")
               ) : (
                 <span className="inline-flex items-center justify-center gap-2">
-                  Se connecter
+                  {t("login.signIn")}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </span>
               )}
@@ -308,22 +310,22 @@ function LoginPage() {
 
             <div className="flex items-center justify-center gap-2 pt-1 text-xs text-[#64748B]">
               <ShieldCheck className="h-3.5 w-3.5" style={{ color: "#15A05A" }} />
-              Connexion sécurisée · Données chiffrées
+              {t("login.secureNote")}
             </div>
           </form>
 
           <div className="mt-8 border-t border-[#E8EDF4] pt-5 text-center text-[11px] text-[#64748B]">
-            En continuant, vous acceptez nos conditions.
+            {t("login.termsPrefix")}
             <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1">
               <Link to="/cgu" className="font-medium text-[#0F172A] hover:underline">
-                CGU
+                {t("login.terms")}
               </Link>
               <span>·</span>
               <Link to="/confidentialite" className="font-medium text-[#0F172A] hover:underline">
-                Politique de confidentialité
+                {t("login.privacy")}
               </Link>
               <span>·</span>
-              <span>Conforme à la loi n°2024/017 (Cameroun)</span>
+              <span>{t("login.compliance")}</span>
             </div>
           </div>
         </div>

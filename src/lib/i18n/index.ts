@@ -1,0 +1,48 @@
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import { fr } from "./locales/fr";
+import { en } from "./locales/en";
+
+export type AppLanguage = "fr" | "en";
+
+const LOCAL_KEY = "sm.language";
+
+function readInitialLanguage(): AppLanguage {
+  if (typeof window === "undefined") return "fr";
+  try {
+    const v = window.localStorage.getItem(LOCAL_KEY);
+    if (v === "fr" || v === "en") return v;
+  } catch {}
+  return "fr";
+}
+
+if (!i18n.isInitialized) {
+  i18n
+    .use(initReactI18next)
+    .init({
+      resources: {
+        fr: { translation: fr },
+        en: { translation: en },
+      },
+      lng: readInitialLanguage(),
+      fallbackLng: "fr",
+      interpolation: { escapeValue: false },
+      returnNull: false,
+    });
+}
+
+export function setAppLanguage(lang: AppLanguage) {
+  if (lang !== "fr" && lang !== "en") return;
+  i18n.changeLanguage(lang);
+  if (typeof window !== "undefined") {
+    try { window.localStorage.setItem(LOCAL_KEY, lang); } catch {}
+    try { document.documentElement.lang = lang; } catch {}
+  }
+}
+
+export function getAppLanguage(): AppLanguage {
+  const cur = i18n.language;
+  return cur === "en" ? "en" : "fr";
+}
+
+export default i18n;

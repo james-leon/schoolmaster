@@ -1,5 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { NAV_ITEMS } from "@/lib/nav";
 import { Logo } from "./Logo";
 import { cn } from "@/lib/utils";
@@ -13,18 +14,40 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 // Section grouping (mockup): Pilotage / Scolarité / Finances / Pédagogie /
 // Communication / Ressources humaines / Logistique. Routes not listed render
 // without a header (e.g. /parametres at the bottom).
-const NAV_GROUPS: { label: string; routes: string[] }[] = [
-  { label: "Pilotage", routes: ["/dashboard"] },
-  { label: "Scolarité", routes: ["/eleves", "/parents", "/classes"] },
-  { label: "Finances", routes: ["/scolarite", "/comptabilite", "/budget"] },
-  { label: "Pédagogie", routes: ["/notes", "/presences", "/emploi-du-temps", "/calendrier"] },
-  { label: "Communication", routes: ["/annonces"] },
-  { label: "Ressources humaines", routes: ["/enseignants", "/personnel"] },
-  { label: "Logistique", routes: ["/transport"] },
-  { label: "Système", routes: ["/parametres"] },
+const NAV_GROUPS: { key: string; routes: string[] }[] = [
+  { key: "groupPilotage", routes: ["/dashboard"] },
+  { key: "groupScolarite", routes: ["/eleves", "/parents", "/classes"] },
+  { key: "groupFinances", routes: ["/scolarite", "/comptabilite", "/budget"] },
+  { key: "groupPedagogie", routes: ["/notes", "/presences", "/emploi-du-temps", "/calendrier"] },
+  { key: "groupCommunication", routes: ["/annonces"] },
+  { key: "groupRH", routes: ["/enseignants", "/personnel"] },
+  { key: "groupLogistique", routes: ["/transport"] },
+  { key: "groupSysteme", routes: ["/parametres"] },
 ];
 
+// Map each nav route to its translation key under `nav.*`. Keeps the
+// underlying route data (NAV_ITEMS) untouched — only labels are translated.
+const NAV_LABEL_KEYS: Record<string, string> = {
+  "/dashboard": "dashboard",
+  "/eleves": "students",
+  "/parents": "parents",
+  "/classes": "classes",
+  "/scolarite": "billing",
+  "/comptabilite": "accounting",
+  "/notes": "grades",
+  "/presences": "attendance",
+  "/emploi-du-temps": "schedule",
+  "/calendrier": "calendar",
+  "/annonces": "announcements",
+  "/enseignants": "teachers",
+  "/personnel": "personnel",
+  "/transport": "transport",
+  "/budget": "budget",
+  "/parametres": "settings",
+};
+
 export function Sidebar() {
+  const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { logout, user } = useAuth();
   const { hasFeature } = usePlan();
@@ -32,9 +55,15 @@ export function Sidebar() {
   const items = NAV_ITEMS.filter((i) => !user || !i.roles || i.roles.includes(user.role));
   const byPath = new Map(items.map((i) => [i.to, i]));
 
+  const labelFor = (to: string, fallback: string) => {
+    const k = NAV_LABEL_KEYS[to];
+    return k ? t(`nav.${k}`) : fallback;
+  };
+
   const renderItem = (item: (typeof items)[number]) => {
     const active = pathname === item.to;
     const locked = !!(item.feature && user?.role !== "super_admin" && !hasFeature(item.feature));
+    const label = labelFor(item.to, item.label);
     const base =
       "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors";
     const className = cn(
@@ -50,7 +79,7 @@ export function Sidebar() {
           <span className="absolute inset-y-1.5 left-0 w-[3px] rounded-r-full bg-[#F58B1F]" />
         )}
         <item.icon className="h-[18px] w-[18px] shrink-0" />
-        <span className="flex-1 truncate">{item.label}</span>
+        <span className="flex-1 truncate">{label}</span>
         {locked && <Lock className="h-3.5 w-3.5 text-white/40" />}
       </>
     );
@@ -58,8 +87,8 @@ export function Sidebar() {
       const addon = addonRequiredFor(item.feature);
       const req = requiredPlanFor(item.feature);
       const msg = addon
-        ? `🔒 ${item.label} nécessite l'option ${addon.label}. Contactez Wintek pour l'activer.`
-        : `🔒 ${item.label} est disponible avec le plan ${req.label}. Contactez Wintek pour mettre à niveau.`;
+        ? `🔒 ${label} nécessite l'option ${addon.label}. Contactez Wintek pour l'activer.`
+        : `🔒 ${label} est disponible avec le plan ${req.label}. Contactez Wintek pour mettre à niveau.`;
       return (
         <button
           key={item.to}
@@ -94,9 +123,9 @@ export function Sidebar() {
           const groupItems = group.routes.map((r) => byPath.get(r)).filter(Boolean) as typeof items;
           if (!groupItems.length) return null;
           return (
-            <div key={group.label} className="space-y-1">
+            <div key={group.key} className="space-y-1">
               <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/40">
-                {group.label}
+                {t(`nav.${group.key}`)}
               </div>
               {groupItems.map(renderItem)}
             </div>
@@ -110,7 +139,7 @@ export function Sidebar() {
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
         >
           <LogOut className="h-[18px] w-[18px]" />
-          Déconnexion
+          {t("common.signOut")}
         </button>
       </div>
     </aside>
@@ -118,6 +147,7 @@ export function Sidebar() {
 }
 
 function SidebarPlanCard() {
+  const { t } = useTranslation();
   const { planLabel, loading } = usePlan();
   return (
     <Link
@@ -125,10 +155,10 @@ function SidebarPlanCard() {
       className="block rounded-xl bg-white/5 p-3 ring-1 ring-white/10 transition hover:bg-white/10"
     >
       <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F58B1F]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#F58B1F]">
-        {loading ? "Plan…" : `Plan ${planLabel}`}
+        {loading ? t("nav.planLoading") : t("nav.planLabel", { name: planLabel })}
       </span>
       <p className="mt-2 text-[11px] leading-snug text-white/70">
-        Gérer votre abonnement et vos options.
+        {t("nav.planCardText")}
       </p>
     </Link>
   );
@@ -141,6 +171,7 @@ const PRIMARY_BY_ROLE: Record<string, string[]> = {
 };
 
 export function MobileNav() {
+  const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -153,6 +184,11 @@ export function MobileNav() {
   const primarySet = new Set(primary.map((i) => i.to));
   const overflow = allItems.filter((i) => !primarySet.has(i.to));
   const plusActive = overflow.some((i) => i.to === pathname);
+
+  const labelFor = (to: string, fallback: string) => {
+    const k = NAV_LABEL_KEYS[to];
+    return k ? t(`nav.${k}`) : fallback;
+  };
 
   const tabClass = (active: boolean) =>
     cn(
@@ -168,10 +204,11 @@ export function MobileNav() {
       >
         {primary.map((item) => {
           const active = pathname === item.to;
+          const label = labelFor(item.to, item.label);
           return (
             <Link key={item.to} to={item.to} className={tabClass(active)}>
               <item.icon className="h-5 w-5" />
-              <span className="truncate">{item.label.split(" ")[0]}</span>
+              <span className="truncate">{label.split(" ")[0]}</span>
             </Link>
           );
         })}
@@ -180,10 +217,10 @@ export function MobileNav() {
             type="button"
             onClick={() => setOpen(true)}
             className={tabClass(plusActive)}
-            aria-label="Plus de modules"
+            aria-label={t("nav.moreModules")}
           >
             <LayoutGrid className="h-5 w-5" />
-            <span className="truncate">Plus</span>
+            <span className="truncate">{t("nav.more")}</span>
           </button>
         )}
       </nav>
@@ -191,7 +228,7 @@ export function MobileNav() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="bottom" className="rounded-t-2xl p-0">
           <SheetHeader className="border-b px-4 py-3 text-left">
-            <SheetTitle>Menu</SheetTitle>
+            <SheetTitle>{t("nav.menu")}</SheetTitle>
           </SheetHeader>
           <div className="grid max-h-[70vh] grid-cols-1 gap-1 overflow-y-auto p-3">
             {overflow.map((item) => {
@@ -207,7 +244,7 @@ export function MobileNav() {
                   )}
                 >
                   <item.icon className="h-5 w-5" />
-                  <span>{item.label}</span>
+                  <span>{labelFor(item.to, item.label)}</span>
                 </Link>
               );
             })}

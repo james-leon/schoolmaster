@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { hydrateAll, clearHydration, triggerSync, getCurrentSchoolId, isSyncActive } from "./supabase-sync";
 import { registerPersistHook } from "./store";
 import { getImpersonatedSchoolId, setImpersonatedSchoolId } from "./super-admin-api";
+import { setAppLanguage, type AppLanguage } from "./i18n";
 
 // Tables owned by the local optimistic store. When any of these changes on
 // the server (another tab, another user, or a server-side write), we
@@ -73,7 +74,7 @@ async function loadProfile(userId: string): Promise<User | null> {
   // 1) Try profiles table
   const { data } = await supabase
     .from("profiles")
-    .select("id, school_id, full_name, email, role, avatar_url, assigned_classes, assigned_subjects, student_id, student_ids, must_change_password, is_active")
+    .select("id, school_id, full_name, email, role, avatar_url, assigned_classes, assigned_subjects, student_id, student_ids, must_change_password, is_active, language")
     .eq("id", userId)
     .maybeSingle();
 
@@ -81,6 +82,8 @@ async function loadProfile(userId: string): Promise<User | null> {
   //    school-scoped profile row when first created).
   if (data) {
     const user = profileToUser(data as ProfileRow);
+    const lang = (data as { language?: string }).language;
+    if (lang === "fr" || lang === "en") setAppLanguage(lang as AppLanguage);
     if (user.role && user.role !== "school_admin" && user.role !== "teacher" && user.role !== "parent" && user.role !== "super_admin" && user.role !== "secretary") {
       // unknown role — fall through to role lookup
     } else {

@@ -1,6 +1,7 @@
-import { Bell, Moon, Sun, User as UserIcon, LogOut, Settings, CreditCard, Shield, Megaphone, AlertCircle, Calendar, Check, Trash2, Search, ChevronRight } from "lucide-react";
+import { Bell, Moon, Sun, User as UserIcon, LogOut, Settings, CreditCard, Shield, Megaphone, AlertCircle, Calendar, Check, ChevronRight } from "lucide-react";
 import { GlobalSearch } from "./GlobalSearch";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/format";
@@ -15,7 +16,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +43,7 @@ function typeIconColor(type: string) {
 }
 
 export function Header({ title }: { title: string }) {
+  const { t } = useTranslation();
   const { theme, toggle } = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -66,20 +67,20 @@ export function Header({ title }: { title: string }) {
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-[#E8EDF4] bg-card px-4 md:px-6">
       <nav className="flex min-w-0 items-center gap-1.5 text-sm text-[#64748B]">
-        <span className="hidden sm:inline">Accueil</span>
+        <span className="hidden sm:inline">{t("common.home")}</span>
         <ChevronRight className="hidden h-3.5 w-3.5 sm:inline" />
         <span className="truncate font-medium text-[#0F172A]">{title}</span>
       </nav>
       <div className="flex flex-1 items-center justify-end gap-2 md:gap-3">
         <GlobalSearch />
-        <Button variant="ghost" size="icon" onClick={toggle} aria-label="Basculer le thème" className="hidden md:inline-flex">
+        <Button variant="ghost" size="icon" onClick={toggle} aria-label={t("header.toggleTheme")} className="hidden md:inline-flex">
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
 
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
+            <Button variant="ghost" size="icon" className="relative" aria-label={t("header.notifications")}>
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
                 <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
@@ -90,17 +91,17 @@ export function Header({ title }: { title: string }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-96">
             <DropdownMenuLabel className="flex items-center justify-between gap-2">
-              <span className="flex items-center gap-2"><Bell className="h-4 w-4" /> Notifications</span>
+              <span className="flex items-center gap-2"><Bell className="h-4 w-4" /> {t("header.notifications")}</span>
               {unreadCount > 0 && (
                 <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={(e) => { e.preventDefault(); markAllAsRead(); }}>
-                  <Check className="mr-1 h-3 w-3" /> Tout marquer
+                  <Check className="mr-1 h-3 w-3" /> {t("header.markAll")}
                 </Button>
               )}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {recent.length === 0 && (
               <div className="px-2 py-8 text-center text-sm text-muted-foreground">
-                Aucune notification
+                {t("header.noNotifications")}
               </div>
             )}
             {recent.map((n) => {
@@ -129,7 +130,7 @@ export function Header({ title }: { title: string }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link to="/notifications" className="justify-center text-sm font-medium text-primary">
-                Voir toutes les notifications
+                {t("header.viewAllNotifications")}
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -137,7 +138,7 @@ export function Header({ title }: { title: string }) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="ml-1 flex items-center gap-2 rounded-full outline-none focus:ring-2 focus:ring-ring" aria-label="Menu profil">
+            <button className="ml-1 flex items-center gap-2 rounded-full outline-none focus:ring-2 focus:ring-ring" aria-label={t("header.profileMenu")}>
               <Avatar className="h-9 w-9 cursor-pointer">
                 <AvatarFallback className="bg-secondary text-secondary-foreground text-xs font-semibold">
                   {initials || <UserIcon className="h-4 w-4" />}
@@ -163,19 +164,19 @@ export function Header({ title }: { title: string }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link to="/mon-profil">
-                <UserIcon className="mr-2 h-4 w-4" /> Mon profil
+                <UserIcon className="mr-2 h-4 w-4" /> {t("common.myProfile")}
               </Link>
             </DropdownMenuItem>
             {user?.role === "school_admin" && (
               <>
                 <DropdownMenuItem asChild>
                   <Link to="/parametres">
-                    <Settings className="mr-2 h-4 w-4" /> Paramètres
+                    <Settings className="mr-2 h-4 w-4" /> {t("common.settings")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/mon-abonnement">
-                    <CreditCard className="mr-2 h-4 w-4" /> Mon abonnement
+                    <CreditCard className="mr-2 h-4 w-4" /> {t("common.mySubscription")}
                   </Link>
                 </DropdownMenuItem>
               </>
@@ -183,7 +184,7 @@ export function Header({ title }: { title: string }) {
             {user?.role === "super_admin" && (
               <DropdownMenuItem asChild>
                 <Link to="/super-admin">
-                  <Shield className="mr-2 h-4 w-4" /> Console plateforme
+                  <Shield className="mr-2 h-4 w-4" /> {t("common.platformConsole")}
                 </Link>
               </DropdownMenuItem>
             )}
@@ -193,13 +194,13 @@ export function Header({ title }: { title: string }) {
             >
               <span className="flex items-center">
                 {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-                Mode sombre
+                {t("common.darkMode")}
               </span>
               <Switch checked={theme === "dark"} onCheckedChange={toggle} />
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="text-destructive">
-              <LogOut className="mr-2 h-4 w-4" /> Déconnexion
+              <LogOut className="mr-2 h-4 w-4" /> {t("common.signOut")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
