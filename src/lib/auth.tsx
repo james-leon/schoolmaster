@@ -82,8 +82,21 @@ async function loadProfile(userId: string): Promise<User | null> {
   //    school-scoped profile row when first created).
   if (data) {
     const user = profileToUser(data as ProfileRow);
-    const lang = (data as { language?: string }).language;
-    if (lang === "fr" || lang === "en") setAppLanguage(lang as AppLanguage);
+    const savedLang = (data as { language?: string }).language;
+    // Reconcile language: an explicit local choice (e.g. picked on the login
+    // page before signing in) is the user's most recent intent and wins over
+    // whatever is stored on the profile. Persist it back so future logins
+    // and other devices pick it up. Otherwise, apply the saved profile lang.
+    let localLang: string | null = null;
+    try { localLang = typeof window !== "undefined" ? window.localStorage.getItem("sm.language") : null; } catch {}
+    if (localLang === "fr" || localLang === "en") {
+      setAppLanguage(localLang as AppLanguage);
+      if (savedLang !== localLang) {
+        supabase.from("profiles").update({ language: localLang }).eq("id", userId).then(() => {});
+      }
+    } else if (savedLang === "fr" || savedLang === "en") {
+      setAppLanguage(savedLang as AppLanguage);
+    }
     if (user.role && user.role !== "school_admin" && user.role !== "teacher" && user.role !== "parent" && user.role !== "super_admin" && user.role !== "secretary") {
       // unknown role — fall through to role lookup
     } else {
