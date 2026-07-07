@@ -78,6 +78,7 @@ export function Header({ title }: { title: string }) {
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
 
+        <LanguageSwitcher className="hidden sm:flex" />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
