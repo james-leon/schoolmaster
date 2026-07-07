@@ -1,5 +1,6 @@
 import { Bell, Moon, Sun, User as UserIcon, LogOut, Settings, CreditCard, Shield, Megaphone, AlertCircle, Calendar, Check, ChevronRight } from "lucide-react";
 import { GlobalSearch } from "./GlobalSearch";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@/lib/theme";
@@ -77,6 +78,7 @@ export function Header({ title }: { title: string }) {
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
 
+        <LanguageSwitcher className="hidden sm:flex" />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

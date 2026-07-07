@@ -7,13 +7,26 @@ export type AppLanguage = "fr" | "en";
 
 const LOCAL_KEY = "sm.language";
 
+function detectBrowserLanguage(): AppLanguage {
+  if (typeof navigator === "undefined") return "fr";
+  const langs: string[] = [];
+  if (Array.isArray(navigator.languages)) langs.push(...navigator.languages);
+  if (navigator.language) langs.push(navigator.language);
+  for (const l of langs) {
+    const code = (l || "").toLowerCase().split("-")[0];
+    if (code === "en") return "en";
+    if (code === "fr") return "fr";
+  }
+  return "fr";
+}
+
 function readInitialLanguage(): AppLanguage {
   if (typeof window === "undefined") return "fr";
   try {
     const v = window.localStorage.getItem(LOCAL_KEY);
     if (v === "fr" || v === "en") return v;
   } catch {}
-  return "fr";
+  return detectBrowserLanguage();
 }
 
 if (!i18n.isInitialized) {
@@ -29,6 +42,12 @@ if (!i18n.isInitialized) {
       interpolation: { escapeValue: false },
       returnNull: false,
     });
+  if (typeof document !== "undefined") {
+    try { document.documentElement.lang = i18n.language === "en" ? "en" : "fr"; } catch {}
+    i18n.on("languageChanged", (lng) => {
+      try { document.documentElement.lang = lng === "en" ? "en" : "fr"; } catch {}
+    });
+  }
 }
 
 export function setAppLanguage(lang: AppLanguage) {
