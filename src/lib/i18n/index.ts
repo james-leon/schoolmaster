@@ -42,6 +42,12 @@ if (!i18n.isInitialized) {
       interpolation: { escapeValue: false },
       returnNull: false,
     });
+  if (typeof document !== "undefined") {
+    try { document.documentElement.lang = i18n.language === "en" ? "en" : "fr"; } catch {}
+    i18n.on("languageChanged", (lng) => {
+      try { document.documentElement.lang = lng === "en" ? "en" : "fr"; } catch {}
+    });
+  }
 }
 
 export function setAppLanguage(lang: AppLanguage) {
