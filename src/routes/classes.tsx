@@ -21,6 +21,7 @@ import { ImportDialog, type ImportConfig, type RowStatus } from "@/components/Im
 import { useAuth } from "@/lib/auth";
 import { resolveTeacherClasses } from "@/lib/teacher-scope";
 import { getSchoolSubjects } from "@/lib/subjects";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/classes")({ component: ClassesPage });
 
