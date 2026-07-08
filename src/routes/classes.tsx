@@ -237,12 +237,12 @@ function ClassesPage() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editing ? "Modifier la classe" : "Nouvelle classe"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? t("classes.editClass") : t("classes.newClass")}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Nom" error={errors.name}>
+            <Field label={t("classes.fieldName")} error={errors.name}>
               <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="ex: CP-A" />
             </Field>
-            <Field label="Niveau" error={errors.level}>
+            <Field label={t("classes.fieldLevel")} error={errors.level}>
               <Select value={form.level} onValueChange={(v) => set("level", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -250,30 +250,30 @@ function ClassesPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Capacité" error={errors.capacity}>
+            <Field label={t("classes.fieldCapacity")} error={errors.capacity}>
               <Input type="number" value={form.capacity} onChange={(e) => set("capacity", e.target.value)} />
             </Field>
-            <Field label="Frais (FCFA)" error={errors.fees}>
+            <Field label={t("classes.fieldFees")} error={errors.fees}>
               <Input type="number" value={form.fees} onChange={(e) => set("fees", e.target.value)} />
             </Field>
             <div className="sm:col-span-2 space-y-2">
-              <Label>Enseignants</Label>
+              <Label>{t("classes.fieldTeachers")}</Label>
               <div className="rounded-md border border-border divide-y divide-border max-h-64 overflow-auto">
                 {db.teachers.length === 0 ? (
-                  <div className="p-3 text-sm text-muted-foreground">Aucun enseignant. Créez-en d'abord dans « Enseignants ».</div>
-                ) : db.teachers.map((t) => {
-                  const checked = selectedTeacherIds.includes(t.id);
-                  const isPrincipal = form.teacherId === t.id;
+                  <div className="p-3 text-sm text-muted-foreground">{t("classes.noTeachers")}</div>
+                ) : db.teachers.map((teacher) => {
+                  const checked = selectedTeacherIds.includes(teacher.id);
+                  const isPrincipal = form.teacherId === teacher.id;
                   return (
-                    <div key={t.id} className="flex items-center justify-between gap-3 p-2">
+                    <div key={teacher.id} className="flex items-center justify-between gap-3 p-2">
                       <label className="flex items-center gap-2 flex-1 cursor-pointer">
                         <input
                           type="checkbox"
                           className="h-4 w-4"
                           checked={checked}
-                          onChange={() => toggleTeacher(t.id)}
+                          onChange={() => toggleTeacher(teacher.id)}
                         />
-                        <span className="text-sm">{t.firstName} {t.lastName}</span>
+                        <span className="text-sm">{teacher.firstName} {teacher.lastName}</span>
                       </label>
                       {checked && (
                         <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
@@ -281,9 +281,9 @@ function ClassesPage() {
                             type="radio"
                             name="principal"
                             checked={isPrincipal}
-                            onChange={() => set("teacherId", t.id)}
+                            onChange={() => set("teacherId", teacher.id)}
                           />
-                          Principal
+                          {t("classes.principal")}
                         </label>
                       )}
                     </div>
@@ -291,13 +291,13 @@ function ClassesPage() {
                 })}
               </div>
               <p className="text-xs text-muted-foreground">
-                Cochez un ou plusieurs enseignants. Marquez-en un comme « Principal » (titulaire). Associez un enseignant à une matière via « Matières ».
+                {t("classes.principalHelp")}
               </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button onClick={submit}>{editing ? "Enregistrer" : "Créer"}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("common.cancel")}</Button>
+            <Button onClick={submit}>{editing ? t("common.save") : t("common.create")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -305,14 +305,14 @@ function ClassesPage() {
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer cette classe ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("classes.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              La classe « {toDelete?.name} » sera définitivement supprimée. Cette action est irréversible.
+              {t("classes.deleteDesc", { name: toDelete?.name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Supprimer</AlertDialogAction>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("common.delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
