@@ -327,6 +327,7 @@ function ClassesPage() {
 }
 
 function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: () => void }) {
+  const { t } = useTranslation();
   const db = useDB();
   const [editing, setEditing] = useState<ClassSubject | null>(null);
   const [draft, setDraft] = useState<{ name: string; coefficient: string; teacherId: string }>({ name: "", coefficient: "1", teacherId: "" });
@@ -379,25 +380,25 @@ function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: ()
     <Dialog open={!!classe} onOpenChange={(o) => { if (!o) { reset(); onClose(); } }}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Matières — {classe?.name}</DialogTitle>
+          <DialogTitle>{t("classes.subjectsTitle", { name: classe?.name ?? "" })}</DialogTitle>
         </DialogHeader>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Matière</TableHead>
-              <TableHead>Coef.</TableHead>
-              <TableHead>Enseignant</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t("classes.subjectCol")}</TableHead>
+              <TableHead>{t("classes.subjectCoef")}</TableHead>
+              <TableHead>{t("classes.subjectTeacher")}</TableHead>
+              <TableHead className="text-right">{t("common.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {subjects.map((s) => {
-              const t = db.teachers.find((x) => x.id === s.teacherId);
+              const tt = db.teachers.find((x) => x.id === s.teacherId);
               return (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium">{s.name}</TableCell>
                   <TableCell><Badge variant="outline">{s.coefficient}</Badge></TableCell>
-                  <TableCell className="text-muted-foreground">{t ? `${t.firstName} ${t.lastName}` : "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{tt ? `${tt.firstName} ${tt.lastName}` : "—"}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => startEdit(s)}><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => setConfirmDel(s)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -406,7 +407,7 @@ function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: ()
               );
             })}
             {subjects.length === 0 && (
-              <TableRow><TableCell colSpan={4} className="py-6 text-center text-muted-foreground">Aucune matière.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="py-6 text-center text-muted-foreground">{t("classes.noSubjects")}</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -414,7 +415,7 @@ function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: ()
         {adding ? (
           <div className="rounded-md border border-border p-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <Field label="Matière">
+              <Field label={t("classes.fieldSubject")}>
                 <Input
                   list="school-subjects-list"
                   value={draft.name}
@@ -425,36 +426,36 @@ function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: ()
                   {getSchoolSubjects(db).map((s) => <option key={s} value={s} />)}
                 </datalist>
               </Field>
-              <Field label="Coefficient">
+              <Field label={t("classes.fieldCoefficient")}>
                 <Input type="number" min={1} max={5} value={draft.coefficient} onChange={(e) => setDraft((d) => ({ ...d, coefficient: e.target.value }))} />
               </Field>
-              <Field label="Enseignant">
+              <Field label={t("classes.fieldSubjectTeacher")}>
                 <Select value={draft.teacherId} onValueChange={(v) => setDraft((d) => ({ ...d, teacherId: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("classes.choose")} /></SelectTrigger>
                   <SelectContent>
-                    {db.teachers.map((t) => <SelectItem key={t.id} value={t.id}>{t.firstName} {t.lastName}</SelectItem>)}
+                    {db.teachers.map((tt) => <SelectItem key={tt.id} value={tt.id}>{tt.firstName} {tt.lastName}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </Field>
             </div>
             <div className="mt-3 flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={reset}>Annuler</Button>
-              <Button size="sm" onClick={save}>{editing ? "Enregistrer" : "Ajouter"}</Button>
+              <Button variant="outline" size="sm" onClick={reset}>{t("common.cancel")}</Button>
+              <Button size="sm" onClick={save}>{editing ? t("common.save") : t("common.add")}</Button>
             </div>
           </div>
         ) : (
-          <Button variant="outline" onClick={() => setAdding(true)}><Plus className="mr-1.5 h-4 w-4" /> Ajouter une matière</Button>
+          <Button variant="outline" onClick={() => setAdding(true)}><Plus className="mr-1.5 h-4 w-4" /> {t("classes.addSubject")}</Button>
         )}
 
         <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Supprimer cette matière ?</AlertDialogTitle>
-              <AlertDialogDescription>« {confirmDel?.name} » sera supprimée de cette classe.</AlertDialogDescription>
+              <AlertDialogTitle>{t("classes.deleteSubjectTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>{t("classes.deleteSubjectDesc", { name: confirmDel?.name ?? "" })}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={remove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Supprimer</AlertDialogAction>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+              <AlertDialogAction onClick={remove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("common.delete")}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -462,6 +463,7 @@ function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: ()
     </Dialog>
   );
 }
+
 
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
