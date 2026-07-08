@@ -37,6 +37,7 @@ type FormState = { name: string; level: string; capacity: string; teacherId: str
 const empty: FormState = { name: "", level: "CP", capacity: "30", teacherId: "", fees: "150000" };
 
 function ClassesPage() {
+  const { t } = useTranslation();
   const db = useDB();
   const { user } = useAuth();
   const loaded = useLoaded();
