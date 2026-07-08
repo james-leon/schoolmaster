@@ -153,15 +153,15 @@ function ClassesPage() {
   });
 
   return (
-    <AppLayout title="Classes">
+    <AppLayout title={t("classes.title")}>
       {isAdmin && (
         <div className="mb-4 flex justify-end gap-2">
           {user?.role === "school_admin" && (
             <Button variant="outline" onClick={() => setImportOpen(true)}>
-              <FileUp className="mr-1.5 h-4 w-4" /> Importer
+              <FileUp className="mr-1.5 h-4 w-4" /> {t("common.import")}
             </Button>
           )}
-          <Button onClick={openNew}><Plus className="mr-1.5 h-4 w-4" /> Nouvelle classe</Button>
+          <Button onClick={openNew}><Plus className="mr-1.5 h-4 w-4" /> {t("classes.newClass")}</Button>
         </div>
       )}
 
@@ -172,21 +172,21 @@ function ClassesPage() {
           ) : visibleClasses.length === 0 ? (
             <EmptyState
               icon={BookOpen}
-              title={isTeacher ? "Aucune classe assignée" : "Aucune classe"}
-              description={isTeacher ? "Vous n'êtes pas encore assigné à une classe." : "Créez votre première classe."}
-              actionLabel={isAdmin ? "Nouvelle classe" : undefined}
+              title={isTeacher ? t("classes.emptyTeacher") : t("classes.emptyAdmin")}
+              description={isTeacher ? t("classes.emptyTeacherDesc") : t("classes.emptyAdminDesc")}
+              actionLabel={isAdmin ? t("classes.newClass") : undefined}
               onAction={isAdmin ? openNew : undefined}
             />
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Classe</TableHead>
-                  <TableHead>Niveau</TableHead>
-                  <TableHead>Enseignant</TableHead>
-                  <TableHead>Effectif / Capacité</TableHead>
-                  {isAdmin && <TableHead>Frais</TableHead>}
-                  {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                  <TableHead>{t("classes.colClass")}</TableHead>
+                  <TableHead>{t("classes.colLevel")}</TableHead>
+                  <TableHead>{t("classes.colTeacher")}</TableHead>
+                  <TableHead>{t("classes.colHeadcount")}</TableHead>
+                  {isAdmin && <TableHead>{t("classes.colFees")}</TableHead>}
+                  {isAdmin && <TableHead className="text-right">{t("common.actions")}</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
