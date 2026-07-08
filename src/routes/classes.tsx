@@ -21,6 +21,7 @@ import { ImportDialog, type ImportConfig, type RowStatus } from "@/components/Im
 import { useAuth } from "@/lib/auth";
 import { resolveTeacherClasses } from "@/lib/teacher-scope";
 import { getSchoolSubjects } from "@/lib/subjects";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/classes")({ component: ClassesPage });
 
@@ -36,6 +37,7 @@ type FormState = { name: string; level: string; capacity: string; teacherId: str
 const empty: FormState = { name: "", level: "CP", capacity: "30", teacherId: "", fees: "150000" };
 
 function ClassesPage() {
+  const { t } = useTranslation();
   const db = useDB();
   const { user } = useAuth();
   const loaded = useLoaded();
@@ -151,15 +153,15 @@ function ClassesPage() {
   });
 
   return (
-    <AppLayout title="Classes">
+    <AppLayout title={t("classes.title")}>
       {isAdmin && (
         <div className="mb-4 flex justify-end gap-2">
           {user?.role === "school_admin" && (
             <Button variant="outline" onClick={() => setImportOpen(true)}>
-              <FileUp className="mr-1.5 h-4 w-4" /> Importer
+              <FileUp className="mr-1.5 h-4 w-4" /> {t("common.import")}
             </Button>
           )}
-          <Button onClick={openNew}><Plus className="mr-1.5 h-4 w-4" /> Nouvelle classe</Button>
+          <Button onClick={openNew}><Plus className="mr-1.5 h-4 w-4" /> {t("classes.newClass")}</Button>
         </div>
       )}
 
@@ -170,21 +172,21 @@ function ClassesPage() {
           ) : visibleClasses.length === 0 ? (
             <EmptyState
               icon={BookOpen}
-              title={isTeacher ? "Aucune classe assignée" : "Aucune classe"}
-              description={isTeacher ? "Vous n'êtes pas encore assigné à une classe." : "Créez votre première classe."}
-              actionLabel={isAdmin ? "Nouvelle classe" : undefined}
+              title={isTeacher ? t("classes.emptyTeacher") : t("classes.emptyAdmin")}
+              description={isTeacher ? t("classes.emptyTeacherDesc") : t("classes.emptyAdminDesc")}
+              actionLabel={isAdmin ? t("classes.newClass") : undefined}
               onAction={isAdmin ? openNew : undefined}
             />
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Classe</TableHead>
-                  <TableHead>Niveau</TableHead>
-                  <TableHead>Enseignant</TableHead>
-                  <TableHead>Effectif / Capacité</TableHead>
-                  {isAdmin && <TableHead>Frais</TableHead>}
-                  {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                  <TableHead>{t("classes.colClass")}</TableHead>
+                  <TableHead>{t("classes.colLevel")}</TableHead>
+                  <TableHead>{t("classes.colTeacher")}</TableHead>
+                  <TableHead>{t("classes.colHeadcount")}</TableHead>
+                  {isAdmin && <TableHead>{t("classes.colFees")}</TableHead>}
+                  {isAdmin && <TableHead className="text-right">{t("common.actions")}</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -192,8 +194,8 @@ function ClassesPage() {
                   const count = db.students.filter((s) => s.classId === c.id).length;
                   const teacherIds = teachersOfClass(c.id);
                   const teacherList = teacherIds
-                    .map((tid) => db.teachers.find((t) => t.id === tid))
-                    .filter((t): t is NonNullable<typeof t> => !!t);
+                    .map((tid) => db.teachers.find((tt) => tt.id === tid))
+                    .filter((tt): tt is NonNullable<typeof tt> => !!tt);
                   const principalId = c.teacherId;
                   return (
                     <TableRow key={c.id}>
@@ -202,11 +204,11 @@ function ClassesPage() {
                       <TableCell>
                         {teacherList.length === 0 ? "—" : (
                           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                            {teacherList.slice(0, 2).map((t, i) => (
-                              <span key={t.id} className="text-sm">
+                            {teacherList.slice(0, 2).map((tt, i) => (
+                              <span key={tt.id} className="text-sm">
                                 {i > 0 && <span className="text-muted-foreground mr-1">,</span>}
-                                {t.firstName} {t.lastName}
-                                {t.id === principalId && <Badge variant="secondary" className="ml-1 text-[10px]">Principal</Badge>}
+                                {tt.firstName} {tt.lastName}
+                                {tt.id === principalId && <Badge variant="secondary" className="ml-1 text-[10px]">{t("classes.principal")}</Badge>}
                               </span>
                             ))}
                             {teacherList.length > 2 && (
@@ -235,12 +237,12 @@ function ClassesPage() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editing ? "Modifier la classe" : "Nouvelle classe"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? t("classes.editClass") : t("classes.newClass")}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Nom" error={errors.name}>
+            <Field label={t("classes.fieldName")} error={errors.name}>
               <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="ex: CP-A" />
             </Field>
-            <Field label="Niveau" error={errors.level}>
+            <Field label={t("classes.fieldLevel")} error={errors.level}>
               <Select value={form.level} onValueChange={(v) => set("level", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -248,30 +250,30 @@ function ClassesPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Capacité" error={errors.capacity}>
+            <Field label={t("classes.fieldCapacity")} error={errors.capacity}>
               <Input type="number" value={form.capacity} onChange={(e) => set("capacity", e.target.value)} />
             </Field>
-            <Field label="Frais (FCFA)" error={errors.fees}>
+            <Field label={t("classes.fieldFees")} error={errors.fees}>
               <Input type="number" value={form.fees} onChange={(e) => set("fees", e.target.value)} />
             </Field>
             <div className="sm:col-span-2 space-y-2">
-              <Label>Enseignants</Label>
+              <Label>{t("classes.fieldTeachers")}</Label>
               <div className="rounded-md border border-border divide-y divide-border max-h-64 overflow-auto">
                 {db.teachers.length === 0 ? (
-                  <div className="p-3 text-sm text-muted-foreground">Aucun enseignant. Créez-en d'abord dans « Enseignants ».</div>
-                ) : db.teachers.map((t) => {
-                  const checked = selectedTeacherIds.includes(t.id);
-                  const isPrincipal = form.teacherId === t.id;
+                  <div className="p-3 text-sm text-muted-foreground">{t("classes.noTeachers")}</div>
+                ) : db.teachers.map((teacher) => {
+                  const checked = selectedTeacherIds.includes(teacher.id);
+                  const isPrincipal = form.teacherId === teacher.id;
                   return (
-                    <div key={t.id} className="flex items-center justify-between gap-3 p-2">
+                    <div key={teacher.id} className="flex items-center justify-between gap-3 p-2">
                       <label className="flex items-center gap-2 flex-1 cursor-pointer">
                         <input
                           type="checkbox"
                           className="h-4 w-4"
                           checked={checked}
-                          onChange={() => toggleTeacher(t.id)}
+                          onChange={() => toggleTeacher(teacher.id)}
                         />
-                        <span className="text-sm">{t.firstName} {t.lastName}</span>
+                        <span className="text-sm">{teacher.firstName} {teacher.lastName}</span>
                       </label>
                       {checked && (
                         <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
@@ -279,9 +281,9 @@ function ClassesPage() {
                             type="radio"
                             name="principal"
                             checked={isPrincipal}
-                            onChange={() => set("teacherId", t.id)}
+                            onChange={() => set("teacherId", teacher.id)}
                           />
-                          Principal
+                          {t("classes.principal")}
                         </label>
                       )}
                     </div>
@@ -289,13 +291,13 @@ function ClassesPage() {
                 })}
               </div>
               <p className="text-xs text-muted-foreground">
-                Cochez un ou plusieurs enseignants. Marquez-en un comme « Principal » (titulaire). Associez un enseignant à une matière via « Matières ».
+                {t("classes.principalHelp")}
               </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button onClick={submit}>{editing ? "Enregistrer" : "Créer"}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("common.cancel")}</Button>
+            <Button onClick={submit}>{editing ? t("common.save") : t("common.create")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -303,14 +305,14 @@ function ClassesPage() {
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer cette classe ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("classes.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              La classe « {toDelete?.name} » sera définitivement supprimée. Cette action est irréversible.
+              {t("classes.deleteDesc", { name: toDelete?.name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Supprimer</AlertDialogAction>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("common.delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -325,6 +327,7 @@ function ClassesPage() {
 }
 
 function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: () => void }) {
+  const { t } = useTranslation();
   const db = useDB();
   const [editing, setEditing] = useState<ClassSubject | null>(null);
   const [draft, setDraft] = useState<{ name: string; coefficient: string; teacherId: string }>({ name: "", coefficient: "1", teacherId: "" });
@@ -377,25 +380,25 @@ function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: ()
     <Dialog open={!!classe} onOpenChange={(o) => { if (!o) { reset(); onClose(); } }}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Matières — {classe?.name}</DialogTitle>
+          <DialogTitle>{t("classes.subjectsTitle", { name: classe?.name ?? "" })}</DialogTitle>
         </DialogHeader>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Matière</TableHead>
-              <TableHead>Coef.</TableHead>
-              <TableHead>Enseignant</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t("classes.subjectCol")}</TableHead>
+              <TableHead>{t("classes.subjectCoef")}</TableHead>
+              <TableHead>{t("classes.subjectTeacher")}</TableHead>
+              <TableHead className="text-right">{t("common.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {subjects.map((s) => {
-              const t = db.teachers.find((x) => x.id === s.teacherId);
+              const tt = db.teachers.find((x) => x.id === s.teacherId);
               return (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium">{s.name}</TableCell>
                   <TableCell><Badge variant="outline">{s.coefficient}</Badge></TableCell>
-                  <TableCell className="text-muted-foreground">{t ? `${t.firstName} ${t.lastName}` : "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{tt ? `${tt.firstName} ${tt.lastName}` : "—"}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => startEdit(s)}><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => setConfirmDel(s)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -404,7 +407,7 @@ function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: ()
               );
             })}
             {subjects.length === 0 && (
-              <TableRow><TableCell colSpan={4} className="py-6 text-center text-muted-foreground">Aucune matière.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="py-6 text-center text-muted-foreground">{t("classes.noSubjects")}</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -412,7 +415,7 @@ function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: ()
         {adding ? (
           <div className="rounded-md border border-border p-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <Field label="Matière">
+              <Field label={t("classes.fieldSubject")}>
                 <Input
                   list="school-subjects-list"
                   value={draft.name}
@@ -423,36 +426,36 @@ function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: ()
                   {getSchoolSubjects(db).map((s) => <option key={s} value={s} />)}
                 </datalist>
               </Field>
-              <Field label="Coefficient">
+              <Field label={t("classes.fieldCoefficient")}>
                 <Input type="number" min={1} max={5} value={draft.coefficient} onChange={(e) => setDraft((d) => ({ ...d, coefficient: e.target.value }))} />
               </Field>
-              <Field label="Enseignant">
+              <Field label={t("classes.fieldSubjectTeacher")}>
                 <Select value={draft.teacherId} onValueChange={(v) => setDraft((d) => ({ ...d, teacherId: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("classes.choose")} /></SelectTrigger>
                   <SelectContent>
-                    {db.teachers.map((t) => <SelectItem key={t.id} value={t.id}>{t.firstName} {t.lastName}</SelectItem>)}
+                    {db.teachers.map((tt) => <SelectItem key={tt.id} value={tt.id}>{tt.firstName} {tt.lastName}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </Field>
             </div>
             <div className="mt-3 flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={reset}>Annuler</Button>
-              <Button size="sm" onClick={save}>{editing ? "Enregistrer" : "Ajouter"}</Button>
+              <Button variant="outline" size="sm" onClick={reset}>{t("common.cancel")}</Button>
+              <Button size="sm" onClick={save}>{editing ? t("common.save") : t("common.add")}</Button>
             </div>
           </div>
         ) : (
-          <Button variant="outline" onClick={() => setAdding(true)}><Plus className="mr-1.5 h-4 w-4" /> Ajouter une matière</Button>
+          <Button variant="outline" onClick={() => setAdding(true)}><Plus className="mr-1.5 h-4 w-4" /> {t("classes.addSubject")}</Button>
         )}
 
         <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Supprimer cette matière ?</AlertDialogTitle>
-              <AlertDialogDescription>« {confirmDel?.name} » sera supprimée de cette classe.</AlertDialogDescription>
+              <AlertDialogTitle>{t("classes.deleteSubjectTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>{t("classes.deleteSubjectDesc", { name: confirmDel?.name ?? "" })}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={remove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Supprimer</AlertDialogAction>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+              <AlertDialogAction onClick={remove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("common.delete")}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -460,6 +463,7 @@ function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: ()
     </Dialog>
   );
 }
+
 
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
