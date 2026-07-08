@@ -208,7 +208,7 @@ function ClassesPage() {
                               <span key={t.id} className="text-sm">
                                 {i > 0 && <span className="text-muted-foreground mr-1">,</span>}
                                 {t.firstName} {t.lastName}
-                                {t.id === principalId && <Badge variant="secondary" className="ml-1 text-[10px]">Principal</Badge>}
+                                {t.id === principalId && <Badge variant="secondary" className="ml-1 text-[10px]">{t.id === principalId ? "" : ""}{/* principal */}</Badge>}
                               </span>
                             ))}
                             {teacherList.length > 2 && (
