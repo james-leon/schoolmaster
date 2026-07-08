@@ -194,8 +194,8 @@ function ClassesPage() {
                   const count = db.students.filter((s) => s.classId === c.id).length;
                   const teacherIds = teachersOfClass(c.id);
                   const teacherList = teacherIds
-                    .map((tid) => db.teachers.find((t) => t.id === tid))
-                    .filter((t): t is NonNullable<typeof t> => !!t);
+                    .map((tid) => db.teachers.find((tt) => tt.id === tid))
+                    .filter((tt): tt is NonNullable<typeof tt> => !!tt);
                   const principalId = c.teacherId;
                   return (
                     <TableRow key={c.id}>
@@ -204,11 +204,11 @@ function ClassesPage() {
                       <TableCell>
                         {teacherList.length === 0 ? "—" : (
                           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                            {teacherList.slice(0, 2).map((t, i) => (
-                              <span key={t.id} className="text-sm">
+                            {teacherList.slice(0, 2).map((tt, i) => (
+                              <span key={tt.id} className="text-sm">
                                 {i > 0 && <span className="text-muted-foreground mr-1">,</span>}
-                                {t.firstName} {t.lastName}
-                                {t.id === principalId && <Badge variant="secondary" className="ml-1 text-[10px]">{t.id === principalId ? "" : ""}{/* principal */}</Badge>}
+                                {tt.firstName} {tt.lastName}
+                                {tt.id === principalId && <Badge variant="secondary" className="ml-1 text-[10px]">{t("classes.principal")}</Badge>}
                               </span>
                             ))}
                             {teacherList.length > 2 && (
