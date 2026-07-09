@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
 import { useLoaded, TableSkeleton, EmptyState } from "@/components/shared";
 import { useDB, updateDB, getDB } from "@/lib/store";
@@ -51,13 +52,14 @@ function appreciationKey(studentId: string, term: string) {
 export const Route = createFileRoute("/notes")({ component: NotesPage });
 
 function NotesPage() {
+  const { t } = useTranslation();
   return (
-    <AppLayout title="Notes & Bulletins">
+    <AppLayout title={t("grades.title")}>
       <Tabs defaultValue="saisie">
         <TabsList>
-          <TabsTrigger value="saisie">Saisie des notes</TabsTrigger>
-          <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-          <TabsTrigger value="bulletins">Bulletins</TabsTrigger>
+          <TabsTrigger value="saisie">{t("grades.tabInput")}</TabsTrigger>
+          <TabsTrigger value="overview">{t("grades.tabOverview")}</TabsTrigger>
+          <TabsTrigger value="bulletins">{t("grades.tabReports")}</TabsTrigger>
         </TabsList>
         <TabsContent value="saisie" className="mt-4"><SaisieTab /></TabsContent>
         <TabsContent value="overview" className="mt-4"><OverviewTab /></TabsContent>

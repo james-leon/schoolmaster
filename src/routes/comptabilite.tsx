@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/lib/auth";
 import { usePlan } from "@/lib/usePlan";
@@ -83,6 +84,7 @@ function todayISO() { const d = new Date(); return `${d.getFullYear()}-${String(
 const COLORS = ["#0ea5e9","#10b981","#f59e0b","#ef4444","#8b5cf6","#ec4899","#14b8a6","#f97316","#6366f1","#84cc16"];
 
 function ComptabilitePage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { hasFeature, loading: planLoading } = usePlan();
   const schoolId = user?.schoolId;
@@ -313,15 +315,15 @@ function ComptabilitePage() {
   // Plan gate
   if (!planLoading && !hasFeature("accounting") && user?.role !== "super_admin") {
     return (
-      <AppLayout title="Comptabilité">
-        <LockedFeatureOverlay requiredPlan={requiredPlanFor("accounting")} featureLabel="Comptabilité" />
+      <AppLayout title={t("accounting.title")}>
+        <LockedFeatureOverlay requiredPlan={requiredPlanFor("accounting")} featureLabel={t("accounting.title")} />
       </AppLayout>
     );
   }
 
   if (!isAdmin) {
     return (
-      <AppLayout title="Comptabilité">
+      <AppLayout title={t("accounting.title")}>
         <Card><CardContent className="p-6 text-sm text-muted-foreground">Accès réservé à l'administration.</CardContent></Card>
       </AppLayout>
     );
@@ -330,7 +332,7 @@ function ComptabilitePage() {
   const catOptions = form.type === "recette" ? recetteCats : depenseCats;
 
   return (
-    <AppLayout title="Comptabilité">
+    <AppLayout title={t("accounting.title")}>
       <div className="space-y-6">
         {/* Period filters */}
         <Card>
@@ -346,7 +348,7 @@ function ComptabilitePage() {
             <div className="ml-auto flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => setSupplierManagerOpen(true)}>Fournisseurs / Partenaires</Button>
               <Button variant="outline" onClick={() => setCatManagerOpen(true)}>Gérer les catégories</Button>
-              <Button variant="outline" onClick={exportCSV}><Download className="mr-2 h-4 w-4" />Exporter CSV</Button>
+              <Button variant="outline" onClick={exportCSV}><Download className="mr-2 h-4 w-4" />{t("common.exportCsv")}</Button>
               <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Nouvelle transaction</Button>
             </div>
           </CardContent>
@@ -354,17 +356,17 @@ function ComptabilitePage() {
 
         {/* KPIs */}
         <div className="grid gap-4 md:grid-cols-4">
-          <KpiCard label="Total recettes" value={fcfa(totals.recettes)} icon={<TrendingUp className="h-5 w-5" />} tone="success" />
-          <KpiCard label="Total dépenses" value={fcfa(totals.depenses)} icon={<TrendingDown className="h-5 w-5" />} tone="destructive" />
-          <KpiCard label="Solde de la période" value={fcfa(totals.solde)} icon={<Scale className="h-5 w-5" />} tone={totals.solde >= 0 ? "success" : "destructive"} />
-          <KpiCard label="Solde de caisse actuel" value={fcfa(cashBalance)} icon={<Wallet className="h-5 w-5" />} tone={cashBalance >= 0 ? "primary" : "destructive"} />
+          <KpiCard label={t("accounting.kpiRevenue")} value={fcfa(totals.recettes)} icon={<TrendingUp className="h-5 w-5" />} tone="success" />
+          <KpiCard label={t("accounting.kpiExpenses")} value={fcfa(totals.depenses)} icon={<TrendingDown className="h-5 w-5" />} tone="destructive" />
+          <KpiCard label={t("accounting.kpiBalance")} value={fcfa(totals.solde)} icon={<Scale className="h-5 w-5" />} tone={totals.solde >= 0 ? "success" : "destructive"} />
+          <KpiCard label={t("accounting.kpiCashBalance")} value={fcfa(cashBalance)} icon={<Wallet className="h-5 w-5" />} tone={cashBalance >= 0 ? "primary" : "destructive"} />
         </div>
 
         <Tabs defaultValue="dashboard" className="w-full">
           <TabsList>
-            <TabsTrigger value="dashboard">Tableau de bord</TabsTrigger>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="report">Rapport</TabsTrigger>
+            <TabsTrigger value="dashboard">{t("accounting.tabDashboard")}</TabsTrigger>
+            <TabsTrigger value="transactions">{t("accounting.tabTransactions")}</TabsTrigger>
+            <TabsTrigger value="report">{t("accounting.tabReport")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-4 pt-4">

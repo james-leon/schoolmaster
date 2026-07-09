@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
 import { StatCard, useLoaded, TableSkeleton, EmptyState } from "@/components/shared";
 import { useDB, updateDB, getDB } from "@/lib/store";
@@ -91,6 +92,7 @@ function nextReceiptNumber(): string {
 }
 
 function ScolaritePage() {
+  const { t } = useTranslation();
   const db = useDB();
   const loaded = useLoaded();
 
@@ -100,19 +102,19 @@ function ScolaritePage() {
   const overdueCount = db.payments.filter((p) => deriveInvoiceStatus(p.amount, p.amountPaid, p.dueDate) === "retard").length;
 
   return (
-    <AppLayout title="Scolarité & Paiements">
+    <AppLayout title={t("fees.title")}>
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total attendu" value={fcfa(totalDue)} icon={Wallet} tone="blue" />
-        <StatCard label="Total encaissé" value={fcfa(totalCollected)} icon={TrendingUp} tone="green" />
-        <StatCard label="En attente" value={String(pendingCount)} icon={CreditCard} tone="orange" />
-        <StatCard label="En retard" value={String(overdueCount)} icon={AlertTriangle} tone="red" />
+        <StatCard label={t("fees.kpiTotalDue")} value={fcfa(totalDue)} icon={Wallet} tone="blue" />
+        <StatCard label={t("fees.kpiTotalCollected")} value={fcfa(totalCollected)} icon={TrendingUp} tone="green" />
+        <StatCard label={t("fees.kpiPending")} value={String(pendingCount)} icon={CreditCard} tone="orange" />
+        <StatCard label={t("fees.kpiOverdue")} value={String(overdueCount)} icon={AlertTriangle} tone="red" />
       </div>
 
       <Tabs defaultValue="invoices" className="w-full">
         <TabsList>
-          <TabsTrigger value="invoices">Factures</TabsTrigger>
-          <TabsTrigger value="history">Historique</TabsTrigger>
-          <TabsTrigger value="fees">Types de frais</TabsTrigger>
+          <TabsTrigger value="invoices">{t("fees.tabInvoices")}</TabsTrigger>
+          <TabsTrigger value="history">{t("fees.tabHistory")}</TabsTrigger>
+          <TabsTrigger value="fees">{t("fees.tabFeeTypes")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="invoices" className="mt-4">
