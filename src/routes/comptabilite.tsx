@@ -84,6 +84,7 @@ function todayISO() { const d = new Date(); return `${d.getFullYear()}-${String(
 const COLORS = ["#0ea5e9","#10b981","#f59e0b","#ef4444","#8b5cf6","#ec4899","#14b8a6","#f97316","#6366f1","#84cc16"];
 
 function ComptabilitePage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { hasFeature, loading: planLoading } = usePlan();
   const schoolId = user?.schoolId;
