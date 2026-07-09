@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useMemo, useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import { AppLayout } from "@/components/AppLayout";
 import { EmptyState, TableSkeleton, useLoaded } from "@/components/shared";
@@ -330,6 +331,7 @@ function buildStudentImportConfig(
 }
 
 function ElevesPage() {
+  const { t } = useTranslation();
   const db = useDB();
   const { user } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -513,41 +515,41 @@ function ElevesPage() {
 
 
   return (
-    <AppLayout title="Élèves">
+    <AppLayout title={t("students.title")}>
       <Tabs defaultValue="eleves" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="eleves">Élèves</TabsTrigger>
-          {canViewParentsTab && <TabsTrigger value="parents">Parents</TabsTrigger>}
+          <TabsTrigger value="eleves">{t("students.tabStudents")}</TabsTrigger>
+          {canViewParentsTab && <TabsTrigger value="parents">{t("students.tabParents")}</TabsTrigger>}
         </TabsList>
         <TabsContent value="eleves" className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative max-w-xs flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un élève..." className="pl-9" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("students.searchPlaceholder")} className="pl-9" />
           </div>
           <Select value={classFilter} onValueChange={setClassFilter}>
-            <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder="Classe" /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder={t("students.filterClass")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toutes les classes</SelectItem>
+              <SelectItem value="all">{t("students.allClasses")}</SelectItem>
               {db.classes.map((c) => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Statut" /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder={t("students.filterStatus")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les statuts</SelectItem>
+              <SelectItem value="all">{t("students.allStatuses")}</SelectItem>
               {STUDENT_STATUSES.map((s) => (
                 <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Select value={enrollFilter} onValueChange={setEnrollFilter}>
-            <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Inscription" /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder={t("students.filterEnrollment")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous (Nouveaux + Anciens)</SelectItem>
+              <SelectItem value="all">{t("students.allEnrollment")}</SelectItem>
               {ENROLLMENT_STATUSES.map((e) => (
                 <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
               ))}
@@ -557,12 +559,12 @@ function ElevesPage() {
         <div className="flex gap-2">
           {canImport && (
             <Button variant="outline" onClick={() => setImportOpen(true)}>
-              <FileUp className="mr-1.5 h-4 w-4" /> Importer
+              <FileUp className="mr-1.5 h-4 w-4" /> {t("common.import")}
             </Button>
           )}
           {canCreateStudents && (
             <Button onClick={openCreate}>
-              <Plus className="mr-1.5 h-4 w-4" /> Nouvel élève
+              <Plus className="mr-1.5 h-4 w-4" /> {t("students.newStudent")}
             </Button>
           )}
         </div>
@@ -573,20 +575,20 @@ function ElevesPage() {
           {!loaded ? (
             <TableSkeleton cols={showActions ? 9 : 8} />
           ) : filtered.length === 0 ? (
-            <EmptyState icon={Users} title="Aucun élève trouvé" description={canCreateStudents ? "Commencez par inscrire votre premier élève." : "Aucun élève dans vos classes."} actionLabel={canCreateStudents ? "Nouvel élève" : undefined} onAction={canCreateStudents ? openCreate : undefined} />
+            <EmptyState icon={Users} title={t("students.empty")} description={canCreateStudents ? t("students.emptyDescCreate") : t("students.emptyDescTeacher")} actionLabel={canCreateStudents ? t("students.newStudent") : undefined} onAction={canCreateStudents ? openCreate : undefined} />
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12"></TableHead>
-                  <TableHead>Prénom</TableHead>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Classe</TableHead>
-                  <TableHead>Date naissance</TableHead>
-                  <TableHead>Téléphone parent</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Inscription</TableHead>
-                  {showActions && <TableHead className="text-right">Actions</TableHead>}
+                  <TableHead>{t("students.colFirstName")}</TableHead>
+                  <TableHead>{t("students.colLastName")}</TableHead>
+                  <TableHead>{t("students.colClass")}</TableHead>
+                  <TableHead>{t("students.colBirthDate")}</TableHead>
+                  <TableHead>{t("students.colParentPhone")}</TableHead>
+                  <TableHead>{t("students.colStatus")}</TableHead>
+                  <TableHead>{t("students.colEnrollment")}</TableHead>
+                  {showActions && <TableHead className="text-right">{t("common.actions")}</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -640,17 +642,17 @@ function ElevesPage() {
                     {showActions && (
                       <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
                         {canCreateAccounts && (
-                          <Button variant="ghost" size="icon" onClick={() => setParentAccountFor(s)} aria-label="Créer compte parent" title="Créer compte parent">
+                          <Button variant="ghost" size="icon" onClick={() => setParentAccountFor(s)} aria-label={t("students.createParentAccount")} title={t("students.createParentAccount")}>
                             <UserPlus className="h-4 w-4" />
                           </Button>
                         )}
                         {canEditStudents && (
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(s)} aria-label="Modifier">
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(s)} aria-label={t("common.edit")}>
                             <Pencil className="h-4 w-4" />
                           </Button>
                         )}
                         {canDeleteStudents && (
-                          <Button variant="ghost" size="icon" onClick={() => setConfirmDelete(s)} aria-label="Supprimer">
+                          <Button variant="ghost" size="icon" onClick={() => setConfirmDelete(s)} aria-label={t("common.delete")}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         )}
@@ -674,7 +676,7 @@ function ElevesPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Modifier l'élève" : "Inscrire un nouvel élève"}</DialogTitle>
+            <DialogTitle>{editingId ? t("students.editStudent") : t("students.createStudent")}</DialogTitle>
           </DialogHeader>
 
           <div className="flex items-center gap-4">
@@ -691,36 +693,36 @@ function ElevesPage() {
             <div>
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => onPhoto(e.target.files?.[0])} />
               <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-                <Upload className="mr-1.5 h-4 w-4" /> {form.photo ? "Changer la photo" : "Ajouter une photo"}
+                <Upload className="mr-1.5 h-4 w-4" /> {form.photo ? t("students.changePhoto") : t("students.addPhoto")}
               </Button>
               {form.photo && (
-                <Button type="button" variant="ghost" size="sm" onClick={() => set("photo", undefined)}>Retirer</Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => set("photo", undefined)}>{t("students.removePhoto")}</Button>
               )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Prénom *" error={errors.firstName}>
+            <Field label={t("students.fieldFirstName") + " *"} error={errors.firstName}>
               <Input value={form.firstName} onChange={(e) => set("firstName", e.target.value)} className={errors.firstName ? "border-destructive" : ""} />
             </Field>
-            <Field label="Nom *" error={errors.lastName}>
+            <Field label={t("students.fieldLastName") + " *"} error={errors.lastName}>
               <Input value={form.lastName} onChange={(e) => set("lastName", e.target.value)} className={errors.lastName ? "border-destructive" : ""} />
             </Field>
-            <Field label="Date de naissance *" error={errors.birthDate}>
+            <Field label={t("students.fieldBirthDate") + " *"} error={errors.birthDate}>
               <Input type="date" value={form.birthDate} onChange={(e) => set("birthDate", e.target.value)} className={errors.birthDate ? "border-destructive" : ""} />
             </Field>
-            <Field label="Genre *" error={errors.gender}>
+            <Field label={t("students.fieldGender") + " *"} error={errors.gender}>
               <Select value={form.gender} onValueChange={(v) => set("gender", v as "M" | "F")}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="M">Masculin</SelectItem>
-                  <SelectItem value="F">Féminin</SelectItem>
+                  <SelectItem value="M">{t("students.fieldMale")}</SelectItem>
+                  <SelectItem value="F">{t("students.fieldFemale")}</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Classe *" error={errors.classId}>
+            <Field label={t("students.fieldClass") + " *"} error={errors.classId}>
               <Select value={form.classId} onValueChange={(v) => set("classId", v)}>
-                <SelectTrigger className={errors.classId ? "border-destructive" : ""}><SelectValue placeholder="Choisir" /></SelectTrigger>
+                <SelectTrigger className={errors.classId ? "border-destructive" : ""}><SelectValue placeholder={t("classes.choose")} /></SelectTrigger>
                 <SelectContent>
                   {db.classes.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -728,10 +730,10 @@ function ElevesPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Code élève">
+            <Field label={t("students.fieldCode")}>
               <Input value={form.code} readOnly className="bg-muted" />
             </Field>
-            <Field label="Statut">
+            <Field label={t("students.fieldStatus")}>
               <Select value={form.status} onValueChange={(v) => set("status", v as StudentStatus)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -741,7 +743,7 @@ function ElevesPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Statut d'inscription *" error={errors.enrollmentStatus}>
+            <Field label={t("students.fieldEnrollment") + " *"} error={errors.enrollmentStatus}>
               <Select value={form.enrollmentStatus} onValueChange={(v) => set("enrollmentStatus", v as EnrollmentStatus)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -754,18 +756,18 @@ function ElevesPage() {
           </div>
 
           <div className="mt-2 border-t pt-4">
-            <h3 className="mb-3 text-sm font-semibold">Parent / Tuteur</h3>
+            <h3 className="mb-3 text-sm font-semibold">{t("students.parentSection")}</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Nom du parent *" error={errors.parentName}>
+              <Field label={t("students.fieldParentName") + " *"} error={errors.parentName}>
                 <Input value={form.parentName} onChange={(e) => set("parentName", e.target.value)} className={errors.parentName ? "border-destructive" : ""} />
               </Field>
-              <Field label="Téléphone *" error={errors.parentPhone}>
+              <Field label={t("students.fieldParentPhone") + " *"} error={errors.parentPhone}>
                 <Input value={form.parentPhone} onChange={(e) => set("parentPhone", e.target.value)} className={errors.parentPhone ? "border-destructive" : ""} />
               </Field>
-              <Field label="Email" error={errors.parentEmail}>
+              <Field label={t("students.fieldParentEmail")} error={errors.parentEmail}>
                 <Input type="email" value={form.parentEmail} onChange={(e) => set("parentEmail", e.target.value)} />
               </Field>
-              <Field label="Relation *" error={errors.parentRelation}>
+              <Field label={t("students.fieldParentRelation") + " *"} error={errors.parentRelation}>
                 <Select value={form.parentRelation} onValueChange={(v) => set("parentRelation", v as ParentRelation)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -775,7 +777,7 @@ function ElevesPage() {
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Numéro WhatsApp">
+              <Field label={t("students.fieldParentWhatsapp")}>
                 <Input value={form.parentWhatsapp} onChange={(e) => set("parentWhatsapp", e.target.value)} />
               </Field>
             </div>
@@ -789,16 +791,16 @@ function ElevesPage() {
                 className="mt-0.5"
               />
               <span>
-                Le parent/tuteur a donné son consentement pour le traitement des données de cet élève
-                <span className="ml-1 text-xs text-muted-foreground">(loi n°2024/017)</span>
+                {t("students.consentText")}
+                <span className="ml-1 text-xs text-muted-foreground">{t("students.consentLaw")}</span>
               </span>
             </label>
           </div>
 
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button onClick={submit}>{editingId ? "Enregistrer les modifications" : "Enregistrer"}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("common.cancel")}</Button>
+            <Button onClick={submit}>{editingId ? t("students.saveChanges") : t("common.save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -806,15 +808,15 @@ function ElevesPage() {
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer l'élève</AlertDialogTitle>
+            <AlertDialogTitle>{t("students.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmDelete && `Êtes-vous sûr de vouloir supprimer ${confirmDelete.firstName} ${confirmDelete.lastName} ? Cette action est irréversible.`}
+              {confirmDelete && `${confirmDelete.firstName} ${confirmDelete.lastName}`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmRemove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Supprimer
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
