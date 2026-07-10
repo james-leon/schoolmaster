@@ -692,26 +692,26 @@ function PaymentModal({
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>Encaisser un paiement</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("fees.collectPayment")}</DialogTitle></DialogHeader>
         <div className="rounded-lg border bg-muted/40 p-3 text-sm">
           <div className="font-semibold">{student ? `${student.firstName} ${student.lastName}` : "—"}{cls ? ` — ${cls.name}` : ""}</div>
-          <div className="text-muted-foreground">Facture {invoice.invoiceNumber} • {invoice.type}</div>
+          <div className="text-muted-foreground">{t("fees.colInvoiceNo")} {invoice.invoiceNumber} • {invoice.type}</div>
           <div className="mt-2 grid grid-cols-3 gap-2">
-            <div><div className="text-xs text-muted-foreground">Total</div><div className="font-semibold">{fcfa(invoice.amount)}</div></div>
-            <div><div className="text-xs text-muted-foreground">Payé</div><div className="font-semibold">{fcfa(invoice.amountPaid ?? 0)}</div></div>
-            <div><div className="text-xs text-muted-foreground">Reste</div><div className="font-semibold text-destructive">{fcfa(remaining)}</div></div>
+            <div><div className="text-xs text-muted-foreground">{t("common.total")}</div><div className="font-semibold">{fcfa(invoice.amount)}</div></div>
+            <div><div className="text-xs text-muted-foreground">{t("fees.colAmountPaid")}</div><div className="font-semibold">{fcfa(invoice.amountPaid ?? 0)}</div></div>
+            <div><div className="text-xs text-muted-foreground">{t("fees.colRemaining")}</div><div className="font-semibold text-destructive">{fcfa(remaining)}</div></div>
           </div>
         </div>
         <div className="space-y-4">
-          <Field label="Montant à encaisser (FCFA)" error={errors.amount}>
+          <Field label={t("fees.fieldAmountToCollect")} error={errors.amount}>
             <Input
               type="number"
               value={form.amount}
-              placeholder={`Reste à payer : ${remaining}`}
+              placeholder={String(remaining)}
               onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
             />
           </Field>
-          <Field label="Mode de paiement" error={errors.mode}>
+          <Field label={t("fees.fieldPaymentMode")} error={errors.mode}>
             <Select value={form.mode} onValueChange={(v) => setForm((f) => ({ ...f, mode: v as PaymentMode }))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -719,23 +719,23 @@ function PaymentModal({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Référence / N° reçu" error={errors.reference}>
+          <Field label={t("fees.fieldReceiptRef")} error={errors.reference}>
             <Input
               value={form.reference}
               onChange={(e) => setForm((f) => ({ ...f, reference: e.target.value }))}
-              placeholder={form.mode === "Espèces" ? "Optionnel" : "Obligatoire"}
+              placeholder={form.mode === "Espèces" ? t("fees.refOptional") : t("fees.refRequired")}
             />
           </Field>
-          <Field label="Date du paiement" error={errors.date}>
+          <Field label={t("fees.fieldPaymentDate")} error={errors.date}>
             <Input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
           </Field>
-          <Field label="Notes (optionnel)">
+          <Field label={t("fees.fieldNotes")}>
             <Textarea rows={2} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
           </Field>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Annuler</Button>
-          <Button onClick={submit}>Enregistrer le paiement</Button>
+          <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button onClick={submit}>{t("fees.collect")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
