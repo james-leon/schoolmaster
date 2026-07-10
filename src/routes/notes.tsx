@@ -909,6 +909,7 @@ function BulkGenerateButton({
 
 
 function BulletinSheet({ studentId, classId, term }: { studentId: string; classId: string; term: string }) {
+  const { t } = useTranslation();
   const db = useDB();
   const student = db.students.find((s) => s.id === studentId);
   const cls = db.classes.find((c) => c.id === classId);
@@ -968,14 +969,14 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
       <div className="border-b-2 border-black pb-3 text-center">
         <h1 className="text-lg font-bold uppercase">{school?.name ?? "École"}</h1>
         <p className="text-sm">{school?.city ?? ""}{school?.country ? ` — ${school.country}` : ""}</p>
-        <p className="text-xs">Tél: {school?.phone ?? ""}</p>
+        <p className="text-xs">{t("common.phone")}: {school?.phone ?? ""}</p>
       </div>
 
       <div className="mt-4 grid grid-cols-[1fr_auto] gap-4 border-b border-gray-300 pb-3">
         <div>
-          <h2 className="text-base font-bold">BULLETIN DE NOTES</h2>
+          <h2 className="text-base font-bold">{t("grades.reportCard")}</h2>
           <p className="text-sm">{term}</p>
-          <p className="text-sm">Année scolaire : 2025-2026</p>
+          <p className="text-sm">{t("grades.schoolYear")} : 2025-2026</p>
         </div>
         <div className="flex items-start gap-3 text-sm">
           {student.photo ? (
@@ -984,23 +985,23 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
             <div className="flex h-20 w-20 items-center justify-center rounded border border-gray-300 bg-gray-100 text-xl font-bold">{initials}</div>
           )}
           <div>
-            <p><strong>Nom :</strong> {student.lastName} {student.firstName}</p>
-            <p><strong>Classe :</strong> {cls.name}</p>
-            <p><strong>N° Élève :</strong> {student.code ?? "—"}</p>
+            <p><strong>{t("grades.labelName")} :</strong> {student.lastName} {student.firstName}</p>
+            <p><strong>{t("grades.labelClass")} :</strong> {cls.name}</p>
+            <p><strong>{t("grades.labelStudentNo")} :</strong> {student.code ?? "—"}</p>
           </div>
         </div>
       </div>
 
-      <h3 className="mt-4 mb-2 text-sm font-bold uppercase">Résultats</h3>
+      <h3 className="mt-4 mb-2 text-sm font-bold uppercase">{t("grades.results")}</h3>
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="bg-gray-100">
-            <th className="border border-gray-400 p-1 text-left">Matière</th>
-            <th className="border border-gray-400 p-1">Coef</th>
+            <th className="border border-gray-400 p-1 text-left">{t("grades.colSubject")}</th>
+            <th className="border border-gray-400 p-1">{t("grades.colCoef")}</th>
             {termSequences.map((seqName, i) => (
               <th key={seqName} className="border border-gray-400 p-1">Séq {i + 1 + (term === "2e trimestre" ? 2 : term === "3e trimestre" ? 4 : 0)}</th>
             ))}
-            <th className="border border-gray-400 p-1">Moy</th>
+            <th className="border border-gray-400 p-1">{t("grades.colMoy")}</th>
           </tr>
         </thead>
         <tbody>
@@ -1018,14 +1019,14 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
       </table>
 
       <div className="mt-3 space-y-1 border-y border-gray-400 py-2 text-sm">
-        <p><strong>Moyenne générale :</strong> {gen != null ? gen.toFixed(2) : "—"} / 20</p>
-        <p><strong>Rang dans la classe :</strong> {rank > 0 ? `${rank}${rank === 1 ? "er" : "ème"} / ${totalStudents}` : "—"}</p>
-        <p><strong>Mention :</strong> {gen != null ? mentionFor(gen) : "—"}</p>
+        <p><strong>{t("grades.overallAverage")} :</strong> {gen != null ? gen.toFixed(2) : "—"} / 20</p>
+        <p><strong>{t("grades.classRank")} :</strong> {rank > 0 ? `${rank}${rank === 1 ? "er" : "ème"} / ${totalStudents}` : "—"}</p>
+        <p><strong>{t("grades.mention")} :</strong> {gen != null ? mentionFor(gen) : "—"}</p>
       </div>
 
       <div className="mt-3 text-sm">
         <div className="flex items-center justify-between gap-2">
-          <p className="font-semibold">Appréciation du directeur :</p>
+          <p className="font-semibold">{t("grades.directorAppreciation")} :</p>
           <Button
             type="button"
             size="sm"
@@ -1049,7 +1050,7 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
                   },
                 });
                 onChangeAppreciation(res.text);
-                toast.success("Appréciation générée");
+                toast.success(t("grades.appreciationGenerated"));
               } catch (e: unknown) {
                 const msg = e instanceof Error ? e.message : "Échec de la génération IA";
                 toast.error(msg || "Échec IA — saisie manuelle possible");
@@ -1059,7 +1060,7 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
             }}
           >
             {aiLoading ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : (appreciation ? <RefreshCw className="mr-1 h-3 w-3" /> : <Sparkles className="mr-1 h-3 w-3" />)}
-            {appreciation ? "Régénérer (IA)" : "Générer l'appréciation (IA)"}
+            {appreciation ? t("grades.regenerateAppreciation") : t("grades.generateAppreciation")}
           </Button>
         </div>
         <textarea
@@ -1067,21 +1068,21 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
           rows={3}
           value={appreciation}
           onChange={(e) => onChangeAppreciation(e.target.value)}
-          placeholder="Saisir une appréciation avant impression…"
+          placeholder={t("grades.appreciationPlaceholder")}
         />
       </div>
 
       <div className="mt-2 border-y border-gray-300 py-2 text-sm">
-        <strong>Absences :</strong> {absences} | <strong>Retards :</strong> {retards}
+        <strong>{t("grades.absences")} :</strong> {absences} | <strong>{t("grades.latenesses")} :</strong> {retards}
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-6 pt-4 text-sm">
         <div>
-          <p className="mb-8">Signature des Parents</p>
+          <p className="mb-8">{t("grades.parentSignature")}</p>
           <div className="border-t border-black" />
         </div>
         <div>
-          <p className="mb-8">Cachet & Signature Direction</p>
+          <p className="mb-8">{t("grades.directorSignature")}</p>
           <div className="border-t border-black" />
         </div>
       </div>

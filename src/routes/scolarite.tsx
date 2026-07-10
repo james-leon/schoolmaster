@@ -356,6 +356,7 @@ function CreateInvoiceModal({
   onClose: () => void;
   onPaid: (rec: PaymentRecord) => void;
 }) {
+  const { t } = useTranslation();
   const db = useDB();
   const [form, setForm] = useState({ studentId: "", feeTypeId: "", amount: "", dueDate: "", notes: "" });
   const [studentSearch, setStudentSearch] = useState("");
@@ -487,17 +488,17 @@ function CreateInvoiceModal({
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Nouvelle facture</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("fees.createInvoiceTitle")}</DialogTitle></DialogHeader>
         <div className="space-y-4">
-          <Field label="Élève" error={errors.studentId}>
+          <Field label={t("fees.fieldStudent")} error={errors.studentId}>
             <Input
-              placeholder="Rechercher un élève..."
+              placeholder={t("fees.studentSearchPlaceholder")}
               value={studentSearch}
               onChange={(e) => setStudentSearch(e.target.value)}
               className="mb-2"
             />
             <Select value={form.studentId} onValueChange={(v) => setForm((f) => ({ ...f, studentId: v }))}>
-              <SelectTrigger><SelectValue placeholder="Choisir un élève" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("fees.chooseStudent")} /></SelectTrigger>
               <SelectContent>
                 {filteredStudents.map((s) => {
                   const cls = db.classes.find((c) => c.id === s.classId);
@@ -510,7 +511,7 @@ function CreateInvoiceModal({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Type de frais" error={errors.feeTypeId}>
+          <Field label={t("fees.colFeeType")} error={errors.feeTypeId}>
             <Select
               value={form.feeTypeId}
               onValueChange={(v) => {
@@ -523,7 +524,7 @@ function CreateInvoiceModal({
                 }));
               }}
             >
-              <SelectTrigger><SelectValue placeholder="Choisir un type" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("fees.chooseFeeType")} /></SelectTrigger>
               <SelectContent>
                 {db.feeTypes.map((f) => (
                   <SelectItem key={f.id} value={f.id}>{f.name} — {fcfa(f.amount)}</SelectItem>
@@ -531,13 +532,13 @@ function CreateInvoiceModal({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Montant (FCFA)" error={errors.amount}>
+          <Field label={t("fees.fieldAmount")} error={errors.amount}>
             <Input type="number" value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} />
           </Field>
-          <Field label="Date d'échéance" error={errors.dueDate}>
+          <Field label={t("fees.fieldDueDate")} error={errors.dueDate}>
             <Input type="date" value={form.dueDate} onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))} />
           </Field>
-          <Field label="Notes (optionnel)" error={errors.notes}>
+          <Field label={t("fees.fieldNotes")} error={errors.notes}>
             <Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} rows={2} />
           </Field>
 
@@ -555,11 +556,11 @@ function CreateInvoiceModal({
                 }}
                 className="h-4 w-4"
               />
-              Enregistrer un paiement maintenant
+              {t("fees.payNowCheckbox")}
             </label>
             {payNow && (
               <div className="mt-3 space-y-3">
-                <Field label="Montant payé (FCFA)" error={errors.pay_amount}>
+                <Field label={t("fees.fieldAmountPaid")} error={errors.pay_amount}>
                   <Input
                     type="number"
                     value={payForm.amount}
@@ -567,7 +568,7 @@ function CreateInvoiceModal({
                     onChange={(e) => setPayForm((p) => ({ ...p, amount: e.target.value }))}
                   />
                 </Field>
-                <Field label="Mode de paiement" error={errors.pay_mode}>
+                <Field label={t("fees.fieldPaymentMode")} error={errors.pay_mode}>
                   <Select value={payForm.mode} onValueChange={(v) => setPayForm((p) => ({ ...p, mode: v as PaymentMode }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -575,14 +576,14 @@ function CreateInvoiceModal({
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field label="Référence / N° transaction" error={errors.pay_reference}>
+                <Field label={t("fees.fieldPaymentReference")} error={errors.pay_reference}>
                   <Input
                     value={payForm.reference}
                     onChange={(e) => setPayForm((p) => ({ ...p, reference: e.target.value }))}
-                    placeholder={payForm.mode === "Espèces" ? "Optionnel" : "Obligatoire"}
+                    placeholder={payForm.mode === "Espèces" ? t("fees.refOptional") : t("fees.refRequired")}
                   />
                 </Field>
-                <Field label="Date du paiement" error={errors.pay_date}>
+                <Field label={t("fees.fieldPaymentDate")} error={errors.pay_date}>
                   <Input
                     type="date"
                     value={payForm.date}
@@ -594,9 +595,9 @@ function CreateInvoiceModal({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={submitting}>Annuler</Button>
+          <Button variant="outline" onClick={onClose} disabled={submitting}>{t("common.cancel")}</Button>
           <Button onClick={submit} disabled={submitting}>
-            {payNow ? "Créer et encaisser" : "Créer la facture"}
+            {payNow ? t("fees.createAndCollect") : t("fees.createInvoiceBtn")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -616,6 +617,7 @@ function PaymentModal({
   onClose: () => void;
   onPaid: (rec: PaymentRecord) => void;
 }) {
+  const { t } = useTranslation();
   const db = useDB();
   const student = db.students.find((s) => s.id === invoice.studentId);
   const cls = student ? db.classes.find((c) => c.id === student.classId) : undefined;
@@ -690,26 +692,26 @@ function PaymentModal({
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>Encaisser un paiement</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("fees.collectPayment")}</DialogTitle></DialogHeader>
         <div className="rounded-lg border bg-muted/40 p-3 text-sm">
           <div className="font-semibold">{student ? `${student.firstName} ${student.lastName}` : "—"}{cls ? ` — ${cls.name}` : ""}</div>
-          <div className="text-muted-foreground">Facture {invoice.invoiceNumber} • {invoice.type}</div>
+          <div className="text-muted-foreground">{t("fees.colInvoiceNo")} {invoice.invoiceNumber} • {invoice.type}</div>
           <div className="mt-2 grid grid-cols-3 gap-2">
-            <div><div className="text-xs text-muted-foreground">Total</div><div className="font-semibold">{fcfa(invoice.amount)}</div></div>
-            <div><div className="text-xs text-muted-foreground">Payé</div><div className="font-semibold">{fcfa(invoice.amountPaid ?? 0)}</div></div>
-            <div><div className="text-xs text-muted-foreground">Reste</div><div className="font-semibold text-destructive">{fcfa(remaining)}</div></div>
+            <div><div className="text-xs text-muted-foreground">{t("common.total")}</div><div className="font-semibold">{fcfa(invoice.amount)}</div></div>
+            <div><div className="text-xs text-muted-foreground">{t("fees.colAmountPaid")}</div><div className="font-semibold">{fcfa(invoice.amountPaid ?? 0)}</div></div>
+            <div><div className="text-xs text-muted-foreground">{t("fees.colRemaining")}</div><div className="font-semibold text-destructive">{fcfa(remaining)}</div></div>
           </div>
         </div>
         <div className="space-y-4">
-          <Field label="Montant à encaisser (FCFA)" error={errors.amount}>
+          <Field label={t("fees.fieldAmountToCollect")} error={errors.amount}>
             <Input
               type="number"
               value={form.amount}
-              placeholder={`Reste à payer : ${remaining}`}
+              placeholder={String(remaining)}
               onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
             />
           </Field>
-          <Field label="Mode de paiement" error={errors.mode}>
+          <Field label={t("fees.fieldPaymentMode")} error={errors.mode}>
             <Select value={form.mode} onValueChange={(v) => setForm((f) => ({ ...f, mode: v as PaymentMode }))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -717,23 +719,23 @@ function PaymentModal({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Référence / N° reçu" error={errors.reference}>
+          <Field label={t("fees.fieldReceiptRef")} error={errors.reference}>
             <Input
               value={form.reference}
               onChange={(e) => setForm((f) => ({ ...f, reference: e.target.value }))}
-              placeholder={form.mode === "Espèces" ? "Optionnel" : "Obligatoire"}
+              placeholder={form.mode === "Espèces" ? t("fees.refOptional") : t("fees.refRequired")}
             />
           </Field>
-          <Field label="Date du paiement" error={errors.date}>
+          <Field label={t("fees.fieldPaymentDate")} error={errors.date}>
             <Input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
           </Field>
-          <Field label="Notes (optionnel)">
+          <Field label={t("fees.fieldNotes")}>
             <Textarea rows={2} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
           </Field>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Annuler</Button>
-          <Button onClick={submit}>Enregistrer le paiement</Button>
+          <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button onClick={submit}>{t("fees.collect")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

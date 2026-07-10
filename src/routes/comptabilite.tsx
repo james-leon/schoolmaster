@@ -516,24 +516,24 @@ function ComptabilitePage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editing ? "Modifier la transaction" : "Nouvelle transaction"}</DialogTitle>
+            <DialogTitle>{editing ? t("accounting.editTransaction") : t("accounting.newTransaction")}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Type</Label>
+                <Label>{t("accounting.fieldType")}</Label>
                 <Select value={form.type} onValueChange={(v) => setForm(f => ({ ...f, type: v as TxType, category: "" }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="recette">Recette</SelectItem>
-                    <SelectItem value="depense">Dépense</SelectItem>
+                    <SelectItem value="recette">{t("accounting.typeRecette")}</SelectItem>
+                    <SelectItem value="depense">{t("accounting.typeDepense")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Catégorie</Label>
+                <Label>{t("accounting.fieldCategory")}</Label>
                 <Select value={form.category} onValueChange={(v) => setForm(f => ({ ...f, category: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Choisir…" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("accounting.chooseCategoryPh")} /></SelectTrigger>
                   <SelectContent>
                     {catOptions.map((c: string) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
@@ -542,16 +542,16 @@ function ComptabilitePage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Montant (FCFA)</Label>
+                <Label>{t("accounting.fieldAmount")}</Label>
                 <Input type="number" min="0" value={form.amount} onChange={(e) => setForm(f => ({ ...f, amount: e.target.value }))} />
               </div>
               <div>
-                <Label>Date</Label>
+                <Label>{t("accounting.fieldDate")}</Label>
                 <Input type="date" value={form.date} onChange={(e) => setForm(f => ({ ...f, date: e.target.value }))} />
               </div>
             </div>
             <div>
-              <Label>Méthode de paiement</Label>
+              <Label>{t("accounting.fieldPaymentMethod")}</Label>
               <Select value={form.payment_method} onValueChange={(v) => setForm(f => ({ ...f, payment_method: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -560,16 +560,16 @@ function ComptabilitePage() {
               </Select>
             </div>
             <div>
-              <Label>Description</Label>
+              <Label>{t("accounting.fieldDescription")}</Label>
               <Textarea rows={2} value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} />
             </div>
             <div>
-              <Label>Référence (optionnel)</Label>
+              <Label>{t("accounting.fieldReferenceOptional")}</Label>
               <Input value={form.reference} onChange={(e) => setForm(f => ({ ...f, reference: e.target.value }))} />
             </div>
             {form.type === "depense" && (
               <div>
-                <Label>Bénéficiaire / Fournisseur (optionnel)</Label>
+                <Label>{t("accounting.fieldBeneficiary")}</Label>
                 <SupplierPicker
                   value={form.supplier_id}
                   suppliers={suppliers}
@@ -581,8 +581,8 @@ function ComptabilitePage() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Annuler</Button>
-            <Button onClick={save} disabled={saving}>{saving ? "Enregistrement…" : (editing ? "Enregistrer" : "Créer")}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>{t("common.cancel")}</Button>
+            <Button onClick={save} disabled={saving}>{saving ? t("accounting.savingLabel") : (editing ? t("common.save") : t("common.create"))}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -590,12 +590,12 @@ function ComptabilitePage() {
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer cette transaction ?</AlertDialogTitle>
-            <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+            <AlertDialogTitle>{t("accounting.deleteTxTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("accounting.deleteTxDesc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Supprimer</AlertDialogAction>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>{t("common.delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
