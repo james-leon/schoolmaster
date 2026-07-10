@@ -356,6 +356,7 @@ function CreateInvoiceModal({
   onClose: () => void;
   onPaid: (rec: PaymentRecord) => void;
 }) {
+  const { t } = useTranslation();
   const db = useDB();
   const [form, setForm] = useState({ studentId: "", feeTypeId: "", amount: "", dueDate: "", notes: "" });
   const [studentSearch, setStudentSearch] = useState("");
