@@ -617,6 +617,7 @@ function PaymentModal({
   onClose: () => void;
   onPaid: (rec: PaymentRecord) => void;
 }) {
+  const { t } = useTranslation();
   const db = useDB();
   const student = db.students.find((s) => s.id === invoice.studentId);
   const cls = student ? db.classes.find((c) => c.id === student.classId) : undefined;
