@@ -909,6 +909,7 @@ function BulkGenerateButton({
 
 
 function BulletinSheet({ studentId, classId, term }: { studentId: string; classId: string; term: string }) {
+  const { t } = useTranslation();
   const db = useDB();
   const student = db.students.find((s) => s.id === studentId);
   const cls = db.classes.find((c) => c.id === classId);
