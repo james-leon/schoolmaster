@@ -8,23 +8,21 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
 import { TrendingUp, Banknote, Users, Sparkles } from "lucide-react";
-import { PLAN_CONFIG, PLAN_LIST, type PlanId } from "@/lib/plans";
+import { PLAN_CONFIG, PLAN_LIST, normalizePlanId, type PlanId } from "@/lib/plans";
 import { fcfa } from "@/lib/format";
 import type { PlatformSchool } from "@/lib/super-admin-api";
 
 const PLAN_COLORS: Record<PlanId, string> = {
   essentiel: "hsl(174 60% 45%)", // teal
-  pro: "hsl(28 90% 55%)",        // orange
+  complet: "hsl(28 90% 55%)",    // orange
 };
 
 const MONTHS_FR = ["Janv.", "Févr.", "Mars", "Avr.", "Mai", "Juin", "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
 
 function planOf(s: PlatformSchool): PlanId | null {
   const p = s.subscription_plan;
-  if (p === "essentiel" || p === "pro") return p;
-  // Legacy plans (starter, school+, premium…) collapsed to Pro.
-  if (p) return "pro";
-  return null;
+  if (!p) return null;
+  return normalizePlanId(p);
 }
 
 function priceOf(s: PlatformSchool): number {

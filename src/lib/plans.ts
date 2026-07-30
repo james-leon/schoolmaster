@@ -1,18 +1,16 @@
 // Subscription plan definitions for SchoolMaster.
-// Two base plans (Essentiel / Pro) + one combinable add-on (Transport).
+// Two tiers: Essentiel / Complet. Transport is bundled into Complet
+// (there is no separate add-on anymore).
 // This file is the single source of truth for pricing and feature gating.
 
-export type PlanId = "essentiel" | "pro";
-export type AddonId = "transport";
+export type PlanId = "essentiel" | "complet";
 
 export type FeatureId =
   // Base features (Essentiel and up)
   | "students" | "classes" | "grades" | "bulletins" | "fees" | "payments"
   | "attendance" | "parent_portal" | "announcements" | "timetable" | "calendar"
-  // Pro-only features
-  | "accounting" | "budget" | "personnel" | "extra_roles"
-  // Add-on
-  | "transport";
+  // Complet-only features
+  | "accounting" | "budget" | "personnel" | "extra_roles" | "transport";
 
 export interface PlanConfig {
   id: PlanId;
@@ -23,63 +21,43 @@ export interface PlanConfig {
   tone: "teal" | "blue" | "orange";
 }
 
-export interface AddonConfig {
-  id: AddonId;
-  label: string;
-  priceFcfa: number;
-  features: FeatureId[];
-}
-
 const ESSENTIEL_FEATURES: FeatureId[] = [
   "students", "classes", "grades", "bulletins", "fees", "payments",
   "attendance", "parent_portal", "announcements", "timetable", "calendar",
 ];
-const PRO_ONLY_FEATURES: FeatureId[] = [
-  "accounting", "budget", "personnel", "extra_roles",
+const COMPLET_ONLY_FEATURES: FeatureId[] = [
+  "accounting", "budget", "personnel", "extra_roles", "transport",
 ];
-const PRO_FEATURES: FeatureId[] = [...ESSENTIEL_FEATURES, ...PRO_ONLY_FEATURES];
+const COMPLET_FEATURES: FeatureId[] = [...ESSENTIEL_FEATURES, ...COMPLET_ONLY_FEATURES];
 
 export const PLAN_CONFIG: Record<PlanId, PlanConfig> = {
   essentiel: {
-    id: "essentiel", label: "Essentiel", priceFcfa: 50000,
+    id: "essentiel", label: "Essentiel", priceFcfa: 150000,
     features: ESSENTIEL_FEATURES, tone: "teal",
   },
-  pro: {
-    id: "pro", label: "Pro", priceFcfa: 100000,
-    features: PRO_FEATURES, tone: "orange",
+  complet: {
+    id: "complet", label: "Complet", priceFcfa: 300000,
+    features: COMPLET_FEATURES, tone: "orange",
   },
 };
 
-export const ADDON_CONFIG: Record<AddonId, AddonConfig> = {
-  transport: {
-    id: "transport", label: "Transport", priceFcfa: 40000,
-    features: ["transport"],
-  },
-};
+export const PLAN_LIST: PlanConfig[] = [PLAN_CONFIG.essentiel, PLAN_CONFIG.complet];
 
-export const PLAN_LIST: PlanConfig[] = [PLAN_CONFIG.essentiel, PLAN_CONFIG.pro];
+/** Normalizes any stored plan value (incl. legacy tiers) to a current plan id. */
+export function normalizePlanId(id?: string | null): PlanId {
+  if (id === "essentiel" || id === "starter") return "essentiel";
+  // Any other legacy plan (pro, school+, premium, …) collapses to Complet so
+  // no school loses access.
+  return "complet";
+}
 
 export function getPlan(id?: string | null): PlanConfig {
-  if (id === "essentiel") return PLAN_CONFIG.essentiel;
-  if (id === "pro") return PLAN_CONFIG.pro;
-  // Any legacy plan (starter, school+, premium, …) collapses to Pro so no
-  // school loses access before the migration runs.
-  return PLAN_CONFIG.pro;
+  return PLAN_CONFIG[normalizePlanId(id)];
 }
 
-/** Returns the base plan that first unlocks a feature, or null if it's an add-on. */
+/** Returns the plan that first unlocks a feature. */
 export function requiredPlanFor(feature: FeatureId): PlanConfig {
-  if (feature === "transport") {
-    // Transport isn't part of any base plan — see addonRequiredFor().
-    return PLAN_CONFIG.essentiel;
-  }
-  return PLAN_LIST.find((p) => p.features.includes(feature)) ?? PLAN_CONFIG.pro;
-}
-
-/** Returns the add-on required by a feature, if any. */
-export function addonRequiredFor(feature: FeatureId): AddonConfig | null {
-  if (feature === "transport") return ADDON_CONFIG.transport;
-  return null;
+  return PLAN_LIST.find((p) => p.features.includes(feature)) ?? PLAN_CONFIG.complet;
 }
 
 export const FEATURE_LABELS: Record<FeatureId, string> = {

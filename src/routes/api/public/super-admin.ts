@@ -78,7 +78,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
 
             const { data: schools, error } = await supabaseAdmin
               .from("schools")
-              .select("id, name, city, country, email, phone, subscription_plan, status, trial_ends_at, subscription_start, subscription_end, created_at, director_name, last_activity_at, internal_notes, has_transport_addon")
+              .select("id, name, city, country, email, phone, subscription_plan, status, trial_ends_at, subscription_start, subscription_end, created_at, director_name, last_activity_at, internal_notes")
               .order("created_at", { ascending: false });
             if (error) return safeError("super-admin", 500, error);
 
@@ -160,7 +160,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
                 phone: phone ? String(phone).slice(0, 50) : null,
                 email: schoolEmail ? String(schoolEmail).slice(0, 200) : null,
                 director_name: String(directorName).slice(0, 200),
-                subscription_plan: plan ?? "starter",
+                subscription_plan: plan ?? "essentiel",
                 status: status ?? "trial",
                 trial_ends_at: trialEndsAt ?? null,
               })
@@ -219,7 +219,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
           }
 
           if (action === "update-subscription") {
-            const { schoolId, plan, status, subscriptionStart, subscriptionEnd, trialEnd, hasTransportAddon } = body;
+            const { schoolId, plan, status, subscriptionStart, subscriptionEnd, trialEnd } = body;
             if (!schoolId || !plan || !["active", "trial", "suspended", "expired"].includes(status)) {
               return Response.json({ error: "Paramètres invalides" }, { status: 400 });
             }
@@ -230,12 +230,9 @@ export const Route = createFileRoute("/api/public/super-admin")({
               subscription_end: subscriptionEnd || null,
               trial_ends_at: trialEnd || null,
             };
-            if (typeof hasTransportAddon === "boolean") {
-              patch.has_transport_addon = hasTransportAddon;
-            }
             const { error } = await (supabaseAdmin.from("schools") as any).update(patch).eq("id", schoolId);
             if (error) return safeError("super-admin", 500, error);
-            console.log("[super-admin] subscription updated", { schoolId, plan, status, hasTransportAddon, by: ctx.userId });
+            console.log("[super-admin] subscription updated", { schoolId, plan, status, by: ctx.userId });
             return Response.json({ ok: true });
           }
 

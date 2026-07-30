@@ -501,12 +501,12 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
             variant="outline"
             onClick={() =>
               toast.info(
-                `🔒 Le rôle Secrétaire nécessite le plan Pro. Contactez Wintek (${WINTEK_CONTACT.phone} / ${WINTEK_CONTACT.email}) pour mettre à niveau.`,
+                `🔒 Le rôle Secrétaire nécessite le plan Complet. Contactez Wintek (${WINTEK_CONTACT.phone} / ${WINTEK_CONTACT.email}) pour mettre à niveau.`,
               )
             }
-            title="Nécessite le plan Pro"
+            title="Nécessite le plan Complet"
           >
-            <Lock className="h-4 w-4 mr-2" />Secrétaire (Plan Pro)
+            <Lock className="h-4 w-4 mr-2" />Secrétaire (Plan Complet)
           </Button>
         )}
       </CardHeader>
