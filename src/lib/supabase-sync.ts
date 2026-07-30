@@ -102,14 +102,14 @@ function rowToSchool(r: { id: string; name: string; director_name: string | null
   };
 }
 
-function rowToClasse(r: { id: string; name: string; level: string | null; capacity: number | null; teacher_id: string | null }): Classe {
+function rowToClasse(r: { id: string; name: string; level: string | null; capacity: number | null; teacher_id: string | null; fees?: number | string | null }): Classe {
   return {
     id: r.id,
     name: r.name,
     level: (r.level ?? "CP") as Level,
     capacity: r.capacity ?? 30,
     teacherId: r.teacher_id ?? "",
-    fees: 150000,
+    fees: Number(r.fees ?? 0),
   };
 }
 
@@ -445,13 +445,13 @@ async function pushDiffs(): Promise<void> {
   for (const c of classDiff.inserted) {
     const { error } = await supabase.from("classes").insert({
       id: c.id, school_id: schoolId, name: c.name, level: c.level,
-      capacity: c.capacity, teacher_id: c.teacherId || null,
+      capacity: c.capacity, teacher_id: c.teacherId || null, fees: c.fees ?? 0,
     });
     if (error) throw error;
   }
   for (const c of classDiff.updated) {
     const { error } = await supabase.from("classes").update({
-      name: c.name, level: c.level, capacity: c.capacity, teacher_id: c.teacherId || null,
+      name: c.name, level: c.level, capacity: c.capacity, teacher_id: c.teacherId || null, fees: c.fees ?? 0,
     }).eq("id", c.id);
     if (error) throw error;
   }

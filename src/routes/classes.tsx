@@ -30,11 +30,14 @@ const schema = z.object({
   level: z.enum(LEVELS as [Level, ...Level[]], { message: "Niveau requis" }),
   capacity: z.coerce.number().int().positive("Capacité invalide").max(200),
   teacherId: z.string(),
-  fees: z.coerce.number().nonnegative("Frais invalides"),
+  fees: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.coerce.number({ message: "Frais requis" }).nonnegative("Frais invalides"),
+  ),
 });
 
 type FormState = { name: string; level: string; capacity: string; teacherId: string; fees: string };
-const empty: FormState = { name: "", level: "CP", capacity: "30", teacherId: "", fees: "150000" };
+const empty: FormState = { name: "", level: "CP", capacity: "30", teacherId: "", fees: "" };
 
 function ClassesPage() {
   const { t } = useTranslation();
@@ -254,7 +257,7 @@ function ClassesPage() {
               <Input type="number" value={form.capacity} onChange={(e) => set("capacity", e.target.value)} />
             </Field>
             <Field label={t("classes.fieldFees")} error={errors.fees}>
-              <Input type="number" value={form.fees} onChange={(e) => set("fees", e.target.value)} />
+              <Input type="number" placeholder="150000" value={form.fees} onChange={(e) => set("fees", e.target.value)} />
             </Field>
             <div className="sm:col-span-2 space-y-2">
               <Label>{t("classes.fieldTeachers")}</Label>
