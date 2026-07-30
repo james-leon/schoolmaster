@@ -445,13 +445,13 @@ async function pushDiffs(): Promise<void> {
   for (const c of classDiff.inserted) {
     const { error } = await supabase.from("classes").insert({
       id: c.id, school_id: schoolId, name: c.name, level: c.level,
-      capacity: c.capacity, teacher_id: c.teacherId || null,
+      capacity: c.capacity, teacher_id: c.teacherId || null, fees: c.fees ?? 0,
     });
     if (error) throw error;
   }
   for (const c of classDiff.updated) {
     const { error } = await supabase.from("classes").update({
-      name: c.name, level: c.level, capacity: c.capacity, teacher_id: c.teacherId || null,
+      name: c.name, level: c.level, capacity: c.capacity, teacher_id: c.teacherId || null, fees: c.fees ?? 0,
     }).eq("id", c.id);
     if (error) throw error;
   }
