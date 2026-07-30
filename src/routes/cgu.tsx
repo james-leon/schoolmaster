@@ -186,7 +186,7 @@ function CguPage() {
                 </p>
                 <ul className="list-disc space-y-1 pl-5">
                   <li>Email : {WINTEK_CONTACT.email}</li>
-                  <li>Téléphone : {WINTEK_CONTACT.phone}</li>
+                  <li>Téléphone : {WINTEK_CONTACT.phones}</li>
                 </ul>
               </Section>
             </article>

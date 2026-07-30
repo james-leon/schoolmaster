@@ -64,7 +64,7 @@ export function LockedFeatureOverlay({
         <h3 className="text-base font-semibold">{heading}</h3>
         <p className="mt-2 text-sm text-muted-foreground">
           Contactez Wintek pour mettre à niveau votre abonnement
-          {" "}— {WINTEK_CONTACT.phone} · {WINTEK_CONTACT.email}
+          {" "}— {WINTEK_CONTACT.phones} · {WINTEK_CONTACT.email}
         </p>
         <Button className="mt-4" onClick={() => navigate({ to: "/mon-abonnement" })}>
           Voir les plans

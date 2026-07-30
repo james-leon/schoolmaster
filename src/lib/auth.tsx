@@ -281,7 +281,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data: school } = await supabase.from("schools").select("status").eq("id", u.schoolId).maybeSingle();
       if (school?.status === "suspended") {
         await supabase.auth.signOut();
-        throw new Error("Compte suspendu. Contactez Wintek pour réactiver votre école.");
+        throw new Error("Compte suspendu. Contactez Wintek : +237 690 72 23 16 / +237 675 86 72 45 — wintek2021@gmail.com");
       }
     }
 

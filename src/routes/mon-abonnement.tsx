@@ -105,7 +105,7 @@ function MonAbonnementPage() {
                     <Progress value={elapsedPct} />
                   )}
                   <p className="text-xs text-muted-foreground">
-                    Renouvellement : Contactez Wintek — {WINTEK_CONTACT.phone}
+                    Renouvellement : Contactez Wintek — {WINTEK_CONTACT.phones} · {WINTEK_CONTACT.email}
                   </p>
                 </div>
               )}
@@ -158,7 +158,7 @@ function MonAbonnementPage() {
                   Contactez Wintek pour activer un nouveau plan (paiement par Mobile Money).
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
-                  <span className="flex items-center gap-1.5"><Phone className="h-4 w-4" /> {WINTEK_CONTACT.phone}</span>
+                  <span className="flex items-center gap-1.5"><Phone className="h-4 w-4" /> {WINTEK_CONTACT.phones}</span>
                   <span className="flex items-center gap-1.5"><Mail className="h-4 w-4" /> {WINTEK_CONTACT.email}</span>
                 </div>
               </div>

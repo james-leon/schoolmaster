@@ -71,6 +71,11 @@ export const FEATURE_LABELS: Record<FeatureId, string> = {
 };
 
 export const WINTEK_CONTACT = {
-  phone: "+237 6 80 00 00 00",
-  email: "contact@wintek.cm",
+  /** Primary line. */
+  phone: "+237 690 72 23 16",
+  /** Secondary line. */
+  phone2: "+237 675 86 72 45",
+  /** Both lines, ready to display. */
+  phones: "+237 690 72 23 16 / +237 675 86 72 45",
+  email: "wintek2021@gmail.com",
 };

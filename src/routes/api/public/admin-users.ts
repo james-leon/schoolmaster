@@ -265,7 +265,7 @@ export const Route = createFileRoute("/api/public/admin-users")({
             const planId = (sch as any)?.subscription_plan;
             if (planId === "essentiel" || planId === "starter") {
               return Response.json(
-                { error: "Le rôle Secrétaire nécessite le plan Complet. Contactez Wintek pour mettre à niveau." },
+                { error: "Le rôle Secrétaire nécessite le plan Complet. Contactez Wintek : +237 690 72 23 16 / +237 675 86 72 45 — wintek2021@gmail.com" },
                 { status: 403 },
               );
             }
