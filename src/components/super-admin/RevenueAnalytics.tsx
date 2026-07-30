@@ -4,10 +4,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
-import { TrendingUp, Banknote, Users, Sparkles } from "lucide-react";
+import { Banknote, Building2, Users, CalendarClock } from "lucide-react";
 import { PLAN_CONFIG, PLAN_LIST, normalizePlanId, type PlanId } from "@/lib/plans";
 import { fcfa } from "@/lib/format";
 import type { PlatformSchool } from "@/lib/super-admin-api";
@@ -16,8 +16,6 @@ const PLAN_COLORS: Record<PlanId, string> = {
   essentiel: "hsl(174 60% 45%)", // teal
   complet: "hsl(28 90% 55%)",    // orange
 };
-
-const MONTHS_FR = ["Janv.", "Févr.", "Mars", "Avr.", "Mai", "Juin", "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
 
 function planOf(s: PlatformSchool): PlanId | null {
   const p = s.subscription_plan;
@@ -30,12 +28,11 @@ function priceOf(s: PlatformSchool): number {
   return p ? PLAN_CONFIG[p].priceFcfa : 0;
 }
 
-export function MrrAnalytics({ schools }: { schools: PlatformSchool[] }) {
+export function RevenueAnalytics({ schools }: { schools: PlatformSchool[] }) {
   const data = useMemo(() => {
     const active = schools.filter((s) => s.status === "active");
-    const mrr = active.reduce((sum, s) => sum + priceOf(s), 0);
-    const arr = mrr * 12;
-    const arpu = active.length > 0 ? Math.round(mrr / active.length) : 0;
+    const annual = active.reduce((sum, s) => sum + priceOf(s), 0);
+    const avg = active.length > 0 ? Math.round(annual / active.length) : 0;
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -43,28 +40,21 @@ export function MrrAnalytics({ schools }: { schools: PlatformSchool[] }) {
       (s) => new Date(s.created_at) >= startOfMonth,
     ).length;
 
-    // Last 12 months series
-    const months: { key: string; label: string; mrr: number; schools: number }[] = [];
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const endOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
-      let monthMrr = 0;
-      let monthSchools = 0;
-      for (const s of schools) {
-        const created = new Date(s.created_at);
-        if (created > endOfMonth) continue;
-        // Approximate: school counted if not suspended/expired today and existed in that month
-        if (s.status === "suspended") continue;
-        monthSchools++;
-        if (s.status === "active") monthMrr += priceOf(s);
-      }
-      months.push({
-        key: `${d.getFullYear()}-${d.getMonth()}`,
-        label: `${MONTHS_FR[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`,
-        mrr: monthMrr,
-        schools: monthSchools,
-      });
+    // Annual subscription revenue by renewal year (based on subscription_end).
+    const byYearMap = new Map<number, { revenue: number; schools: number }>();
+    for (const s of active) {
+      const end = s.subscription_end;
+      if (!end) continue;
+      const y = new Date(end).getFullYear();
+      if (Number.isNaN(y)) continue;
+      const cur = byYearMap.get(y) ?? { revenue: 0, schools: 0 };
+      cur.revenue += priceOf(s);
+      cur.schools += 1;
+      byYearMap.set(y, cur);
     }
+    const byYear = [...byYearMap.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([year, v]) => ({ year: String(year), ...v }));
 
     // Breakdown by plan
     const breakdown = PLAN_LIST.map((p) => {
@@ -75,74 +65,90 @@ export function MrrAnalytics({ schools }: { schools: PlatformSchool[] }) {
         label: p.label,
         count,
         revenue,
-        pct: mrr > 0 ? (revenue / mrr) * 100 : 0,
+        pct: annual > 0 ? (revenue / annual) * 100 : 0,
         color: PLAN_COLORS[p.id],
       };
     });
 
-    return { mrr, arr, arpu, newThisMonth, months, breakdown, activeCount: active.length };
+    // Upcoming renewals (next 90 days)
+    const todayMs = Date.now();
+    const upcoming = schools
+      .filter((s) => s.status === "active" || s.status === "trial")
+      .map((s) => {
+        const end = s.subscription_end ?? s.trial_ends_at;
+        if (!end) return null;
+        const days = Math.ceil((new Date(end).getTime() - todayMs) / 86400000);
+        return { school: s, end, days };
+      })
+      .filter((r): r is { school: PlatformSchool; end: string; days: number } =>
+        r !== null && r.days >= 0 && r.days <= 90)
+      .sort((a, b) => a.days - b.days)
+      .slice(0, 8);
+
+    return { annual, avg, newThisMonth, byYear, breakdown, upcoming, activeCount: active.length };
   }, [schools]);
 
   return (
     <section className="mt-6 space-y-6">
       {/* KPI cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MrrKpi
-          tone="green" icon={Banknote} label="MRR actuel"
-          value={fcfa(data.mrr)} hint="Revenu mensuel récurrent" big
+        <RevKpi
+          tone="green" icon={Banknote} label="Revenu total annuel"
+          value={fcfa(data.annual)} hint="Abonnements actifs (facturation annuelle)" big
         />
-        <MrrKpi
-          tone="navy" icon={TrendingUp} label="Projection annuelle"
-          value={fcfa(data.arr)} hint="ARR — revenu annuel"
+        <RevKpi
+          tone="navy" icon={Building2} label="Écoles abonnées"
+          value={String(data.activeCount)} hint="Abonnements actifs"
         />
-        <MrrKpi
+        <RevKpi
           tone="blue" icon={Users} label="Revenu moyen par école"
-          value={fcfa(data.arpu)} hint="ARPU"
+          value={fcfa(data.avg)} hint="Par an"
         />
-        <MrrKpi
-          tone="orange" icon={Sparkles} label="Croissance ce mois"
-          value={`+${data.newThisMonth} école${data.newThisMonth > 1 ? "s" : ""}`}
-          hint="Nouvelles inscriptions"
+        <RevKpi
+          tone="orange" icon={CalendarClock} label="Renouvellements à venir"
+          value={String(data.upcoming.length)} hint="Dans les 90 prochains jours"
         />
       </div>
 
-      {/* MRR evolution */}
+      {/* Revenue by renewal year */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Évolution du MRR (12 derniers mois)</CardTitle>
+          <CardTitle className="text-base">Revenu d'abonnement par année de renouvellement</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data.months} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis
-                  stroke="hsl(var(--muted-foreground))" fontSize={12}
-                  tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
-                />
-                <Tooltip
-                  formatter={(v: number) => [fcfa(v), "MRR"]}
-                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
-                />
-                <Line
-                  type="monotone" dataKey="mrr" stroke="hsl(142 70% 40%)"
-                  strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {data.byYear.length === 0 ? (
+            <p className="py-12 text-center text-sm text-muted-foreground">
+              Aucune date de fin d'abonnement enregistrée.
+            </p>
+          ) : (
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.byYear} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="year" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <YAxis
+                    stroke="hsl(var(--muted-foreground))" fontSize={12}
+                    tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
+                  />
+                  <Tooltip
+                    formatter={(v: number) => [fcfa(v), "Revenu annuel"]}
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
+                  />
+                  <Bar dataKey="revenue" fill="hsl(142 70% 40%)" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Revenue by plan + breakdown table + growth chart */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Répartition du revenu par plan</CardTitle>
+            <CardTitle className="text-base">Répartition du revenu annuel par plan</CardTitle>
           </CardHeader>
           <CardContent>
-            {data.mrr === 0 ? (
+            {data.annual === 0 ? (
               <p className="py-12 text-center text-sm text-muted-foreground">
                 Aucune école active pour le moment.
               </p>
@@ -178,8 +184,8 @@ export function MrrAnalytics({ schools }: { schools: PlatformSchool[] }) {
                     <TableRow>
                       <TableHead>Plan</TableHead>
                       <TableHead className="text-right">Écoles</TableHead>
-                      <TableHead className="text-right">Revenu mensuel</TableHead>
-                      <TableHead className="text-right">% du MRR</TableHead>
+                      <TableHead className="text-right">Revenu annuel</TableHead>
+                      <TableHead className="text-right">% du total</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -205,23 +211,39 @@ export function MrrAnalytics({ schools }: { schools: PlatformSchool[] }) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Évolution du nombre d'écoles</CardTitle>
+            <CardTitle className="text-base">Prochains renouvellements (90 jours)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.months} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
-                  <Tooltip
-                    formatter={(v: number) => [v, "Écoles"]}
-                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
-                  />
-                  <Bar dataKey="schools" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {data.upcoming.length === 0 ? (
+              <p className="py-12 text-center text-sm text-muted-foreground">
+                Aucun renouvellement prévu dans les 90 prochains jours.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>École</TableHead>
+                    <TableHead>Échéance</TableHead>
+                    <TableHead className="text-right">Jours</TableHead>
+                    <TableHead className="text-right">Montant annuel</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.upcoming.map((r) => (
+                    <TableRow key={r.school.id}>
+                      <TableCell className="font-medium">{r.school.name}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(r.end).toLocaleDateString("fr-FR")}
+                      </TableCell>
+                      <TableCell className={`text-right text-sm ${r.days <= 15 ? "font-semibold text-destructive" : ""}`}>
+                        {r.days} j
+                      </TableCell>
+                      <TableCell className="text-right text-sm">{fcfa(priceOf(r.school))}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -229,7 +251,7 @@ export function MrrAnalytics({ schools }: { schools: PlatformSchool[] }) {
   );
 }
 
-function MrrKpi({
+function RevKpi({
   tone, icon: Icon, label, value, hint, big,
 }: {
   tone: "green" | "navy" | "blue" | "orange";
