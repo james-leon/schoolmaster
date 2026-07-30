@@ -34,7 +34,7 @@ const schema = z.object({
 });
 
 type FormState = { name: string; level: string; capacity: string; teacherId: string; fees: string };
-const empty: FormState = { name: "", level: "CP", capacity: "30", teacherId: "", fees: "150000" };
+const empty: FormState = { name: "", level: "CP", capacity: "30", teacherId: "", fees: "" };
 
 function ClassesPage() {
   const { t } = useTranslation();
