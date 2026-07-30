@@ -256,16 +256,16 @@ export const Route = createFileRoute("/api/public/admin-users")({
             if (!firstName || !lastName || !email) {
               return Response.json({ error: "Champs requis manquants" }, { status: 400 });
             }
-            // Plan gate: Secretary role requires Pro
+            // Plan gate: Secretary role requires the Complet plan
             const { data: sch } = await supabaseAdmin
               .from("schools")
               .select("subscription_plan")
               .eq("id", ctx.schoolId)
               .maybeSingle();
             const planId = (sch as any)?.subscription_plan;
-            if (planId !== "pro") {
+            if (planId === "essentiel" || planId === "starter") {
               return Response.json(
-                { error: "Le rôle Secrétaire nécessite le plan Pro. Contactez Wintek pour mettre à niveau." },
+                { error: "Le rôle Secrétaire nécessite le plan Complet. Contactez Wintek pour mettre à niveau." },
                 { status: 403 },
               );
             }
