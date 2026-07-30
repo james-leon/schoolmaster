@@ -30,7 +30,10 @@ const schema = z.object({
   level: z.enum(LEVELS as [Level, ...Level[]], { message: "Niveau requis" }),
   capacity: z.coerce.number().int().positive("Capacité invalide").max(200),
   teacherId: z.string(),
-  fees: z.coerce.number().nonnegative("Frais invalides"),
+  fees: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.coerce.number({ message: "Frais requis" }).nonnegative("Frais invalides"),
+  ),
 });
 
 type FormState = { name: string; level: string; capacity: string; teacherId: string; fees: string };
