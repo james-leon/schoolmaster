@@ -75,7 +75,7 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
               : "Votre abonnement a expiré. Contactez Wintek pour réactiver l'accès à votre école."}
           </p>
           <div className="mt-4 rounded-md bg-muted p-3 text-sm">
-            <div>{WINTEK_CONTACT.phone}</div>
+            <div>{WINTEK_CONTACT.phones}</div>
             <div>{WINTEK_CONTACT.email}</div>
           </div>
           <Button variant="outline" className="mt-6" onClick={logout}>Déconnexion</Button>

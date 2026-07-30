@@ -128,7 +128,7 @@ function PrivacyPage() {
               <p>Pour exercer vos droits ou toute question sur le traitement de vos données :</p>
               <ul className="ml-5 list-disc space-y-1">
                 <li>Contactez d'abord <strong>votre école</strong> (responsable du traitement).</li>
-                <li>Pour les questions techniques : <strong>{WINTEK_CONTACT.email}</strong> — {WINTEK_CONTACT.phone}</li>
+                <li>Pour les questions techniques : <strong>{WINTEK_CONTACT.email}</strong> — {WINTEK_CONTACT.phones}</li>
               </ul>
             </Section>
 
