@@ -1,0 +1,1 @@
+ALTER TABLE public.schools DROP COLUMN IF EXISTS has_transport_addon;
