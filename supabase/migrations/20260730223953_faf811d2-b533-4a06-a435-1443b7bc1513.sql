@@ -1,0 +1,1 @@
+ALTER TABLE public.classes ADD COLUMN IF NOT EXISTS fees numeric NOT NULL DEFAULT 0;

@@ -414,6 +414,7 @@ export type Database = {
         Row: {
           capacity: number | null
           created_at: string
+          fees: number
           id: string
           level: string | null
           name: string
@@ -423,6 +424,7 @@ export type Database = {
         Insert: {
           capacity?: number | null
           created_at?: string
+          fees?: number
           id?: string
           level?: string | null
           name: string
@@ -432,6 +434,7 @@ export type Database = {
         Update: {
           capacity?: number | null
           created_at?: string
+          fees?: number
           id?: string
           level?: string | null
           name?: string
