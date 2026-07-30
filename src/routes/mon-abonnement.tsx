@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Check, X, Phone, Mail, Crown } from "lucide-react";
 import { usePlan } from "@/lib/usePlan";
-import { PLAN_LIST, ADDON_CONFIG, FEATURE_LABELS, WINTEK_CONTACT, type FeatureId } from "@/lib/plans";
+import { PLAN_LIST, FEATURE_LABELS, WINTEK_CONTACT, type FeatureId } from "@/lib/plans";
 import { fcfa } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -15,12 +15,12 @@ export const Route = createFileRoute("/mon-abonnement")({ component: MonAbonneme
 const ALL_FEATURES: FeatureId[] = [
   "students", "classes", "grades", "bulletins", "fees", "payments", "attendance",
   "parent_portal", "announcements", "timetable", "calendar",
-  "accounting", "budget", "personnel", "extra_roles",
+  "accounting", "budget", "personnel", "extra_roles", "transport",
 ];
 
 function MonAbonnementPage() {
   const {
-    plan, planId, hasTransportAddon, planLabel, effectiveStatus,
+    plan, planId, planLabel, effectiveStatus,
     isTrial, daysLeftInTrial,
     subscriptionStart, subscriptionEnd, daysUntilExpiry,
     loading,
@@ -61,8 +61,7 @@ function MonAbonnementPage() {
                   Plan actuel : {planLabel.toUpperCase()}
                 </CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {fcfa(plan.priceFcfa + (hasTransportAddon ? ADDON_CONFIG.transport.priceFcfa : 0))} / an
-                  {hasTransportAddon && <span className="ml-1 text-xs">(plan {plan.label} + module Transport)</span>}
+                  {fcfa(plan.priceFcfa)} / an
                 </p>
               </div>
               <Badge variant={effectiveStatus === "active" ? "default" : "secondary"} className="capitalize">
@@ -119,7 +118,7 @@ function MonAbonnementPage() {
 
           <div>
             <h2 className="mb-3 text-lg font-semibold">Comparer les plans</h2>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               {PLAN_LIST.map((p) => {
                 const current = p.id === planId;
                 return (
