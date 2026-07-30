@@ -31,7 +31,7 @@ import {
 import { fcfa } from "@/lib/format";
 import { Logo } from "@/components/Logo";
 import { PLAN_CONFIG, normalizePlanId, type PlanId } from "@/lib/plans";
-import { MrrAnalytics } from "@/components/super-admin/MrrAnalytics";
+import { RevenueAnalytics } from "@/components/super-admin/RevenueAnalytics";
 import { SchoolHealth } from "@/components/super-admin/SchoolHealth";
 import { MaintenancePanel } from "@/components/super-admin/MaintenancePanel";
 
@@ -52,7 +52,7 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   suspended: { label: "Suspendu",  cls: "bg-muted text-muted-foreground" },
   expired:   { label: "Expiré",    cls: "bg-destructive/15 text-destructive" },
 };
-const PLAN_MRR: Record<string, number> = {
+const PLAN_PRICE_ANNUAL: Record<string, number> = {
   essentiel: PLAN_CONFIG.essentiel.priceFcfa,
   complet: PLAN_CONFIG.complet.priceFcfa,
   // Legacy → mapped to closest new plan for aggregation only.
@@ -110,9 +110,9 @@ function SuperAdminPage() {
     );
   }
 
-  const mrr = schools.reduce((sum, s) => {
+  const annualRevenue = schools.reduce((sum, s) => {
     if (s.status !== "active") return sum;
-    return sum + (PLAN_MRR[s.subscription_plan ?? ""] ?? 0);
+    return sum + (PLAN_PRICE_ANNUAL[s.subscription_plan ?? ""] ?? 0);
   }, 0);
 
   const todayMs = Date.now();
@@ -205,7 +205,7 @@ function SuperAdminPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <KpiCard label="Écoles actives" value={String(kpis?.activeSchools ?? 0)} icon={Building2} tone="blue" />
           <KpiCard label="Total élèves" value={String(kpis?.totalStudents ?? 0)} icon={Users} tone="green" />
-          <KpiCard label="MRR estimé" value={fcfa(mrr)} icon={TrendingUp} tone="orange" />
+          <KpiCard label="Revenu total annuel" value={fcfa(annualRevenue)} icon={TrendingUp} tone="orange" />
           <KpiCard
             label="Essai / Payantes"
             value={`${kpis?.trialSchools ?? 0} / ${kpis?.paidSchools ?? 0}`}
@@ -234,7 +234,7 @@ function SuperAdminPage() {
           />
         </div>
 
-        <MrrAnalytics schools={schools} />
+        <RevenueAnalytics schools={schools} />
 
         <SchoolHealth schools={schools} onChanged={refresh} />
 
@@ -279,7 +279,7 @@ function SuperAdminPage() {
                       <TableHead>Début</TableHead>
                       <TableHead>Fin</TableHead>
                       <TableHead>Jours restants</TableHead>
-                      <TableHead>Montant / mois</TableHead>
+                      <TableHead>Montant / an</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -311,7 +311,7 @@ function SuperAdminPage() {
                             {end ? new Date(end).toLocaleDateString("fr-FR") : "—"}
                           </TableCell>
                           <TableCell className={`text-xs ${daysCls}`}>{daysLabel}</TableCell>
-                          <TableCell className="text-sm font-medium">{fcfa(PLAN_MRR[s.subscription_plan ?? ""] ?? 0)}</TableCell>
+                          <TableCell className="text-sm font-medium">{fcfa(PLAN_PRICE_ANNUAL[s.subscription_plan ?? ""] ?? 0)}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               {s.status === "trial" ? (
