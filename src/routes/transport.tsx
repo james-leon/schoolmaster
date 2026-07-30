@@ -21,7 +21,7 @@ import { useDB, updateDB, getDB } from "@/lib/store";
 import { deriveInvoiceStatus, type Payment } from "@/lib/types";
 import { usePlan } from "@/lib/usePlan";
 import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
-import { addonRequiredFor } from "@/lib/plans";
+import { requiredPlanFor } from "@/lib/plans";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 
 const TRANSPORT_REALTIME_TABLES = [
@@ -196,7 +196,7 @@ function TransportPage() {
     return (
       <AppLayout title="Transport">
         <LockedFeatureOverlay
-          requiredAddon={addonRequiredFor("transport") ?? undefined}
+          requiredPlan={requiredPlanFor("transport")}
           featureLabel="Le module Transport"
         />
       </AppLayout>

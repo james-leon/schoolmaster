@@ -41,11 +41,11 @@ export const Route = createFileRoute("/super-admin")({
 });
 
 const PLAN_LABELS: Record<string, string> = {
-  essentiel: "Essentiel", pro: "Pro",
+  essentiel: "Essentiel", complet: "Complet",
   // Legacy labels (still displayed for historical data before migration).
-  starter: "Essentiel", "school+": "Pro", free: "Essai", premium: "Pro", trial: "Essai",
+  starter: "Essentiel", pro: "Complet", "school+": "Complet", free: "Essai", premium: "Complet", trial: "Essai",
 };
-const PLAN_OPTIONS: PlanId[] = ["essentiel", "pro"];
+const PLAN_OPTIONS: PlanId[] = ["essentiel", "complet"];
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   active:    { label: "Actif",     cls: "bg-success/15 text-success" },
   trial:     { label: "Essai",     cls: "bg-primary/15 text-primary" },
@@ -54,10 +54,11 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
 };
 const PLAN_MRR: Record<string, number> = {
   essentiel: PLAN_CONFIG.essentiel.priceFcfa,
-  pro: PLAN_CONFIG.pro.priceFcfa,
+  complet: PLAN_CONFIG.complet.priceFcfa,
   // Legacy → mapped to closest new plan for aggregation only.
   starter: PLAN_CONFIG.essentiel.priceFcfa,
-  "school+": PLAN_CONFIG.pro.priceFcfa,
+  pro: PLAN_CONFIG.complet.priceFcfa,
+  "school+": PLAN_CONFIG.complet.priceFcfa,
 };
 
 type SubFilter = "all" | "soon" | "expired" | "trial" | "active";
@@ -737,11 +738,8 @@ function ManageSubscriptionDialog({
   school, onClose, onSaved,
 }: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
   const today = toISODate(new Date());
-  const initialPlan: PlanId = (school.subscription_plan === "essentiel" || school.subscription_plan === "pro")
-    ? school.subscription_plan
-    : "pro";
+  const initialPlan: PlanId = normalizePlanId(school.subscription_plan);
   const [plan, setPlan] = useState<PlanId>(initialPlan);
-  const [hasTransportAddon, setHasTransportAddon] = useState<boolean>(!!school.has_transport_addon);
   const [status, setStatus] = useState<"active" | "trial" | "suspended" | "expired">(
     (school.status as "active" | "trial" | "suspended" | "expired") ?? "active",
   );
@@ -768,7 +766,6 @@ function ManageSubscriptionDialog({
         subscriptionStart: start || undefined,
         subscriptionEnd: end || undefined,
         trialEnd: status === "trial" ? (trialEnd || end || undefined) : undefined,
-        hasTransportAddon,
       });
       toast.success("Abonnement mis à jour");
       onSaved();
@@ -824,22 +821,10 @@ function ManageSubscriptionDialog({
               <Input id="sub-trial" type="date" value={trialEnd} onChange={(e) => setTrialEnd(e.target.value)} />
             </div>
           )}
-          <div className="rounded-md border p-3">
-            <label className="flex items-start gap-3 text-sm">
-              <input
-                type="checkbox"
-                className="mt-1 h-4 w-4"
-                checked={hasTransportAddon}
-                onChange={(e) => setHasTransportAddon(e.target.checked)}
-              />
-              <span>
-                <span className="font-medium">Option Transport (+40 000 FCFA/an)</span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">
-                  Active le module Transport (véhicules, chauffeurs, itinéraires, frais).
-                </span>
-              </span>
-            </label>
-          </div>
+          <p className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
+            Le plan <strong>Complet</strong> inclut la comptabilité, le budget, le personnel &amp; paie,
+            les rôles Secrétaire/Comptable et le module Transport.
+          </p>
           <p className="text-xs text-muted-foreground">
             La date de fin est automatiquement suggérée à 1 mois après la date de début.
           </p>
@@ -865,7 +850,7 @@ const PAYMENT_METHODS = ["Espèces", "Mobile Money", "Virement", "Carte", "Autre
 function RenewSubscriptionDialog({
   school, onClose, onSaved,
 }: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
-  const [plan, setPlan] = useState<PlanId>((school.subscription_plan === "essentiel" || school.subscription_plan === "pro" ? school.subscription_plan : "pro"));
+  const [plan, setPlan] = useState<PlanId>(normalizePlanId(school.subscription_plan));
   const [months, setMonths] = useState(1);
   const [amount, setAmount] = useState<number>(PLAN_CONFIG[plan].priceFcfa);
   const [method, setMethod] = useState<string>("Mobile Money");
@@ -958,7 +943,7 @@ function RenewSubscriptionDialog({
 function ConvertTrialDialog({
   school, onClose, onSaved,
 }: { school: PlatformSchool; onClose: () => void; onSaved: () => void }) {
-  const [plan, setPlan] = useState<PlanId>((school.subscription_plan === "essentiel" || school.subscription_plan === "pro" ? school.subscription_plan : "pro"));
+  const [plan, setPlan] = useState<PlanId>(normalizePlanId(school.subscription_plan));
   const [months, setMonths] = useState(1);
   const [amount, setAmount] = useState<number>(PLAN_CONFIG[plan].priceFcfa);
   const [method, setMethod] = useState<string>("Mobile Money");

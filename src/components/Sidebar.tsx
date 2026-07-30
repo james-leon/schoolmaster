@@ -6,7 +6,7 @@ import { Logo } from "./Logo";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { usePlan } from "@/lib/usePlan";
-import { requiredPlanFor, addonRequiredFor } from "@/lib/plans";
+import { requiredPlanFor } from "@/lib/plans";
 import { toast } from "sonner";
 import { LogOut, Lock, LayoutGrid } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -84,11 +84,8 @@ export function Sidebar() {
       </>
     );
     if (locked && item.feature) {
-      const addon = addonRequiredFor(item.feature);
       const req = requiredPlanFor(item.feature);
-      const msg = addon
-        ? `🔒 ${label} nécessite l'option ${addon.label}. Contactez Wintek pour l'activer.`
-        : `🔒 ${label} est disponible avec le plan ${req.label}. Contactez Wintek pour mettre à niveau.`;
+      const msg = `🔒 ${label} nécessite le plan ${req.label}. Contactez Wintek pour mettre à niveau.`;
       return (
         <button
           key={item.to}

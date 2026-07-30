@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Lock, Crown } from "lucide-react";
-import type { PlanConfig, AddonConfig } from "@/lib/plans";
+import type { PlanConfig } from "@/lib/plans";
 import { WINTEK_CONTACT } from "@/lib/plans";
 
 interface UpgradeModalProps {
@@ -48,17 +48,13 @@ export function UpgradeModal({ open, onClose, title, message, requiredPlan }: Up
 /** Inline overlay shown over a locked section. */
 export function LockedFeatureOverlay({
   requiredPlan,
-  requiredAddon,
   featureLabel,
 }: {
   requiredPlan?: PlanConfig;
-  requiredAddon?: AddonConfig;
   featureLabel?: string;
 }) {
   const navigate = useNavigate();
-  const heading = requiredAddon
-    ? `${featureLabel ?? "Cette fonctionnalité"} nécessite l'option ${requiredAddon.label}`
-    : `${featureLabel ?? "Cette fonctionnalité"} fait partie du plan ${requiredPlan?.label ?? "Pro"}`;
+  const heading = `${featureLabel ?? "Cette fonctionnalité"} nécessite le plan ${requiredPlan?.label ?? "Complet"}`;
   return (
     <div className="relative">
       <div className="rounded-lg border border-dashed border-border bg-muted/30 p-8 text-center">

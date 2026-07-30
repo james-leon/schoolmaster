@@ -2,14 +2,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./auth";
 import { useDB } from "./store";
-import { getPlan, ADDON_CONFIG, type PlanConfig, type FeatureId, type PlanId } from "./plans";
+import { getPlan, normalizePlanId, type PlanConfig, type FeatureId, type PlanId } from "./plans";
 
 export type SubscriptionStatus = "active" | "trial" | "suspended" | "expired";
 
 export interface SchoolSubscription {
   plan: PlanConfig;
   planId: PlanId;
-  hasTransportAddon: boolean;
   status: SubscriptionStatus;
   trialEnd: string | null;
   subscriptionStart: string | null;
@@ -48,7 +47,7 @@ function computeEffectiveStatus(s: SchoolSubscription): SubscriptionStatus {
 }
 
 const DEFAULT: SchoolSubscription = {
-  plan: getPlan("essentiel"), planId: "essentiel", hasTransportAddon: false,
+  plan: getPlan("essentiel"), planId: "essentiel",
   status: "active", trialEnd: null, subscriptionStart: null, subscriptionEnd: null,
   effectiveStatus: "active",
 };
@@ -65,15 +64,14 @@ export function usePlan(): UsePlanResult {
     if (!schoolId) { setSub(DEFAULT); setLoading(false); return; }
     const { data } = await supabase
       .from("schools")
-      .select("subscription_plan, status, trial_ends_at, subscription_start, subscription_end, has_transport_addon" as any)
+      .select("subscription_plan, status, trial_ends_at, subscription_start, subscription_end" as any)
       .eq("id", schoolId)
       .maybeSingle();
     const raw = (data ?? {}) as any;
-    const planId: PlanId = raw.subscription_plan === "essentiel" ? "essentiel" : "pro";
+    const planId: PlanId = normalizePlanId(raw.subscription_plan);
     const next: SchoolSubscription = {
       plan: getPlan(planId),
       planId,
-      hasTransportAddon: !!raw.has_transport_addon,
       status: ((raw.status as SubscriptionStatus) ?? "active"),
       trialEnd: (raw.trial_ends_at as string | null) ?? null,
       subscriptionStart: (raw.subscription_start as string | null) ?? null,
@@ -94,11 +92,7 @@ export function usePlan(): UsePlanResult {
   const studentCount = db.students.length;
   const teacherCount = db.teachers.length;
 
-  const hasFeature = (f: FeatureId) => {
-    if (f === "transport") return sub.hasTransportAddon;
-    if (ADDON_CONFIG.transport.features.includes(f)) return sub.hasTransportAddon;
-    return sub.plan.features.includes(f);
-  };
+  const hasFeature = (f: FeatureId) => sub.plan.features.includes(f);
 
   const isTrial = sub.effectiveStatus === "trial";
   const isBlocked = sub.effectiveStatus === "suspended" || sub.effectiveStatus === "expired";
@@ -115,7 +109,7 @@ export function usePlan(): UsePlanResult {
     daysUntilExpiry = Math.ceil(ms / (1000 * 60 * 60 * 24));
   }
 
-  const planLabel = sub.plan.label + (sub.hasTransportAddon ? " + Transport" : "");
+  const planLabel = sub.plan.label;
 
   return {
     ...sub,
