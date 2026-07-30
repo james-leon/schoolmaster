@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ShieldCheck, FileText } from "lucide-react";
+import { WINTEK_CONTACT } from "@/lib/plans";
 
 export function AppFooter({ className = "" }: { className?: string }) {
   return (
@@ -15,6 +16,8 @@ export function AppFooter({ className = "" }: { className?: string }) {
       </Link>
       <span className="hidden sm:inline">•</span>
       <span>Conforme à la loi n°2024/017 (Cameroun)</span>
+      <span className="hidden sm:inline">•</span>
+      <span>Support Wintek : {WINTEK_CONTACT.phones} — {WINTEK_CONTACT.email}</span>
     </footer>
   );
 }
