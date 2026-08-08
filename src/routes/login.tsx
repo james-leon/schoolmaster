@@ -129,12 +129,8 @@ function LoginPage() {
 
         {/* logo */}
         <div className="relative z-10 flex items-center gap-3">
-          <div
-            className="flex h-12 w-12 items-center justify-center rounded-xl shadow-lg"
-            style={{ background: ORANGE }}
-          >
-            <GraduationCap className="h-6 w-6 text-white" strokeWidth={2.4} />
-          </div>
+          <BrandLogo className="h-12 w-12 shadow-lg" />
+
           <div className="leading-tight">
             <div
               className="text-xl font-bold tracking-tight"
