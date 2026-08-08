@@ -13,7 +13,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { BrandLogo } from "@/components/BrandLogo";
 
 import {
-  GraduationCap,
+  
   Mail,
   Lock,
   Eye,
