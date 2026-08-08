@@ -192,12 +192,8 @@ function LoginPage() {
         <div className="w-full max-w-[400px]">
           {/* logo block */}
           <div className="mb-7 flex flex-col items-center text-center">
-            <div
-              className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl shadow-md"
-              style={{ background: NAVY }}
-            >
-              <GraduationCap className="h-7 w-7" style={{ color: ORANGE }} strokeWidth={2.4} />
-            </div>
+            <BrandLogo className="mb-5 h-14 w-14 shadow-md" rounded="rounded-2xl" />
+
             <h2
               className="text-[26px] font-bold tracking-tight"
               style={{ fontFamily: "'Sora', sans-serif", color: NAVY }}
