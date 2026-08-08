@@ -10,8 +10,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { friendlyConnectionMessage } from "@/lib/connection-friendly";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { BrandLogo } from "@/components/BrandLogo";
+
 import {
-  GraduationCap,
+  
   Mail,
   Lock,
   Eye,
@@ -129,12 +131,8 @@ function LoginPage() {
 
         {/* logo */}
         <div className="relative z-10 flex items-center gap-3">
-          <div
-            className="flex h-12 w-12 items-center justify-center rounded-xl shadow-lg"
-            style={{ background: ORANGE }}
-          >
-            <GraduationCap className="h-6 w-6 text-white" strokeWidth={2.4} />
-          </div>
+          <BrandLogo className="h-12 w-12 shadow-lg" />
+
           <div className="leading-tight">
             <div
               className="text-xl font-bold tracking-tight"
@@ -196,12 +194,8 @@ function LoginPage() {
         <div className="w-full max-w-[400px]">
           {/* logo block */}
           <div className="mb-7 flex flex-col items-center text-center">
-            <div
-              className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl shadow-md"
-              style={{ background: NAVY }}
-            >
-              <GraduationCap className="h-7 w-7" style={{ color: ORANGE }} strokeWidth={2.4} />
-            </div>
+            <BrandLogo className="mb-5 h-14 w-14 shadow-md" rounded="rounded-2xl" />
+
             <h2
               className="text-[26px] font-bold tracking-tight"
               style={{ fontFamily: "'Sora', sans-serif", color: NAVY }}
