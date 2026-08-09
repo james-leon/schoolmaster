@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
 import { StatCard, useLoaded, TableSkeleton, EmptyState } from "@/components/shared";
 import { useDB, updateDB, getDB } from "@/lib/store";
+import { EmptySelectHint, CreateNewOption, CREATE_NEW_VALUE, QuickCreateFeeTypeDialog } from "@/components/QuickCreate";
 import { fcfa } from "@/lib/format";
 import {
   PAYMENT_MODES,
@@ -362,6 +363,7 @@ function CreateInvoiceModal({
   const [studentSearch, setStudentSearch] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [quickFeeOpen, setQuickFeeOpen] = useState(false);
 
   // Pay-now state
   const [payNow, setPayNow] = useState(false);
@@ -551,7 +553,7 @@ function CreateInvoiceModal({
           <QuickCreateFeeTypeDialog
             open={quickFeeOpen}
             onOpenChange={setQuickFeeOpen}
-            onCreated={(id) => {
+            onCreated={(id: string) => {
               setForm((f) => {
                 const fee = getDB().feeTypes.find((x) => x.id === id);
                 return {
