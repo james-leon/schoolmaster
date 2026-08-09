@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useOptionalAuth } from "@/lib/auth";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Wrench, RefreshCw, Loader2 } from "lucide-react";
@@ -28,7 +28,7 @@ function formatDateTime(iso: string | null): string | null {
 }
 
 export function MaintenanceGate({ children }: { children: ReactNode }) {
-  const { originalUser } = useAuth();
+  const originalUser = useOptionalAuth()?.originalUser ?? null;
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
   const [settings, setSettings] = useState<Settings | null>(null);
