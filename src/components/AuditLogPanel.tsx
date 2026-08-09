@@ -173,7 +173,7 @@ export function AuditLogPanel({ schoolId }: { schoolId?: string }) {
                 <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">Chargement…</td></tr>
               )}
               {!loading && rows.length === 0 && (
-                <tr><td colSpan={5} className="p-0"><EmptyStateBlock titleKey="emptyAuditLog" className="border-0" /></td></tr>
+                <tr><td colSpan={5} className="p-0"><EmptyStateBlock titleKey="emptyAudit" className="border-0" /></td></tr>
               )}
               {rows.map((r) => (
                 <tr key={r.id} className="border-t border-border align-top">
