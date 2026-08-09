@@ -32,6 +32,7 @@ import { useAuth } from "@/lib/auth";
 import { resolveTeacherClasses } from "@/lib/teacher-scope";
 import { useServerFn } from "@tanstack/react-start";
 import { generateAppreciation, generateAppreciationBulk } from "@/lib/ai-appreciation.functions";
+import { EmptySelectHint, QuickSubjectDialog } from "@/components/QuickCreate";
 
 const APPRECIATION_KEY = "bulletin_appreciations_v1";
 function loadAppreciations(): Record<string, string> {
