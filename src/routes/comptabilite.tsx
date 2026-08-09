@@ -358,10 +358,10 @@ function ComptabilitePage() {
 
         {/* KPIs */}
         <div className="grid gap-4 md:grid-cols-4">
-          <KpiCard label={t("accounting.kpiRevenue")} value={fcfa(totals.recettes)} icon={<TrendingUp className="h-5 w-5" />} tone="success" />
-          <KpiCard label={t("accounting.kpiExpenses")} value={fcfa(totals.depenses)} icon={<TrendingDown className="h-5 w-5" />} tone="destructive" />
-          <KpiCard label={t("accounting.kpiBalance")} value={fcfa(totals.solde)} icon={<Scale className="h-5 w-5" />} tone={totals.solde >= 0 ? "success" : "destructive"} />
-          <KpiCard label={t("accounting.kpiCashBalance")} value={fcfa(cashBalance)} icon={<Wallet className="h-5 w-5" />} tone={cashBalance >= 0 ? "primary" : "destructive"} />
+          <KpiCard label={t("accounting.kpiRevenue")} value={fcfa(totals.recettes)} hint={t("accounting.kpiPeriodHint")} icon={<TrendingUp className="h-5 w-5" />} tone="success" />
+          <KpiCard label={t("accounting.kpiExpenses")} value={fcfa(totals.depenses)} hint={t("accounting.kpiPeriodHint")} icon={<TrendingDown className="h-5 w-5" />} tone="destructive" />
+          <KpiCard label={t("accounting.kpiBalance")} value={fcfa(totals.solde)} hint={t("accounting.kpiPeriodHint")} icon={<Scale className="h-5 w-5" />} tone={totals.solde >= 0 ? "success" : "destructive"} />
+          <KpiCard label={t("accounting.kpiCashBalance")} value={fcfa(cashBalance)} hint={t("accounting.kpiCashBalanceHint")} icon={<Wallet className="h-5 w-5" />} tone={cashBalance >= 0 ? "primary" : "destructive"} />
         </div>
 
         <Tabs defaultValue="dashboard" className="w-full">
