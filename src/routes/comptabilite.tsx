@@ -642,7 +642,7 @@ function ComptabilitePage() {
   );
 }
 
-function KpiCard({ label, value, icon, tone }: { label: string; value: string; icon: React.ReactNode; tone: "success"|"destructive"|"primary" }) {
+function KpiCard({ label, value, icon, tone, hint }: { label: string; value: string; icon: React.ReactNode; tone: "success"|"destructive"|"primary"; hint?: string }) {
   const toneCls =
     tone === "success" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" :
     tone === "destructive" ? "bg-red-500/10 text-red-600 dark:text-red-400" :
@@ -653,6 +653,7 @@ function KpiCard({ label, value, icon, tone }: { label: string; value: string; i
         <div>
           <div className="text-xs text-muted-foreground">{label}</div>
           <div className="mt-1 text-xl font-semibold">{value}</div>
+          {hint && <div className="mt-1 text-[11px] leading-tight text-muted-foreground">{hint}</div>}
         </div>
         <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${toneCls}`}>{icon}</div>
       </CardContent>
