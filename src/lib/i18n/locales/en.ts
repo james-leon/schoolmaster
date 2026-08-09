@@ -460,6 +460,8 @@ export const en: Dict = {
     kpiExpenses: "Total expenses",
     kpiBalance: "Period balance",
     kpiCashBalance: "Current cash balance",
+    kpiPeriodHint: "For the selected period",
+    kpiCashBalanceHint: "All periods, including tuition payments",
     tabDashboard: "Dashboard",
     tabTransactions: "Transactions",
     tabReport: "Report",

@@ -358,10 +358,10 @@ function ComptabilitePage() {
 
         {/* KPIs */}
         <div className="grid gap-4 md:grid-cols-4">
-          <KpiCard label={t("accounting.kpiRevenue")} value={fcfa(totals.recettes)} icon={<TrendingUp className="h-5 w-5" />} tone="success" />
-          <KpiCard label={t("accounting.kpiExpenses")} value={fcfa(totals.depenses)} icon={<TrendingDown className="h-5 w-5" />} tone="destructive" />
-          <KpiCard label={t("accounting.kpiBalance")} value={fcfa(totals.solde)} icon={<Scale className="h-5 w-5" />} tone={totals.solde >= 0 ? "success" : "destructive"} />
-          <KpiCard label={t("accounting.kpiCashBalance")} value={fcfa(cashBalance)} icon={<Wallet className="h-5 w-5" />} tone={cashBalance >= 0 ? "primary" : "destructive"} />
+          <KpiCard label={t("accounting.kpiRevenue")} value={fcfa(totals.recettes)} hint={t("accounting.kpiPeriodHint")} icon={<TrendingUp className="h-5 w-5" />} tone="success" />
+          <KpiCard label={t("accounting.kpiExpenses")} value={fcfa(totals.depenses)} hint={t("accounting.kpiPeriodHint")} icon={<TrendingDown className="h-5 w-5" />} tone="destructive" />
+          <KpiCard label={t("accounting.kpiBalance")} value={fcfa(totals.solde)} hint={t("accounting.kpiPeriodHint")} icon={<Scale className="h-5 w-5" />} tone={totals.solde >= 0 ? "success" : "destructive"} />
+          <KpiCard label={t("accounting.kpiCashBalance")} value={fcfa(cashBalance)} hint={t("accounting.kpiCashBalanceHint")} icon={<Wallet className="h-5 w-5" />} tone={cashBalance >= 0 ? "primary" : "destructive"} />
         </div>
 
         <Tabs defaultValue="dashboard" className="w-full">
@@ -642,7 +642,7 @@ function ComptabilitePage() {
   );
 }
 
-function KpiCard({ label, value, icon, tone }: { label: string; value: string; icon: React.ReactNode; tone: "success"|"destructive"|"primary" }) {
+function KpiCard({ label, value, icon, tone, hint }: { label: string; value: string; icon: React.ReactNode; tone: "success"|"destructive"|"primary"; hint?: string }) {
   const toneCls =
     tone === "success" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" :
     tone === "destructive" ? "bg-red-500/10 text-red-600 dark:text-red-400" :
@@ -653,6 +653,7 @@ function KpiCard({ label, value, icon, tone }: { label: string; value: string; i
         <div>
           <div className="text-xs text-muted-foreground">{label}</div>
           <div className="mt-1 text-xl font-semibold">{value}</div>
+          {hint && <div className="mt-1 text-[11px] leading-tight text-muted-foreground">{hint}</div>}
         </div>
         <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${toneCls}`}>{icon}</div>
       </CardContent>
