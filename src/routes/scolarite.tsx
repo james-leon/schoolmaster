@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
 import { StatCard, useLoaded, TableSkeleton, EmptyState } from "@/components/shared";
 import { useDB, updateDB, getDB } from "@/lib/store";
+import { EmptySelectHint, CreateNewOption, CREATE_NEW_VALUE, QuickCreateFeeTypeDialog } from "@/components/QuickCreate";
 import { fcfa } from "@/lib/format";
 import {
   PAYMENT_MODES,
@@ -362,6 +363,7 @@ function CreateInvoiceModal({
   const [studentSearch, setStudentSearch] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [quickFeeOpen, setQuickFeeOpen] = useState(false);
 
   // Pay-now state
   const [payNow, setPayNow] = useState(false);
@@ -491,47 +493,80 @@ function CreateInvoiceModal({
         <DialogHeader><DialogTitle>{t("fees.createInvoiceTitle")}</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <Field label={t("fees.fieldStudent")} error={errors.studentId}>
-            <Input
-              placeholder={t("fees.studentSearchPlaceholder")}
-              value={studentSearch}
-              onChange={(e) => setStudentSearch(e.target.value)}
-              className="mb-2"
-            />
-            <Select value={form.studentId} onValueChange={(v) => setForm((f) => ({ ...f, studentId: v }))}>
-              <SelectTrigger><SelectValue placeholder={t("fees.chooseStudent")} /></SelectTrigger>
-              <SelectContent>
-                {filteredStudents.map((s) => {
-                  const cls = db.classes.find((c) => c.id === s.classId);
-                  return (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.firstName} {s.lastName} {cls ? `— ${cls.name}` : ""}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+            {db.students.length === 0 ? (
+              <EmptySelectHint message={t("quickCreate.noStudents")} />
+            ) : (
+              <>
+                <Input
+                  placeholder={t("fees.studentSearchPlaceholder")}
+                  value={studentSearch}
+                  onChange={(e) => setStudentSearch(e.target.value)}
+                  className="mb-2"
+                />
+                <Select value={form.studentId} onValueChange={(v) => setForm((f) => ({ ...f, studentId: v }))}>
+                  <SelectTrigger><SelectValue placeholder={t("fees.chooseStudent")} /></SelectTrigger>
+                  <SelectContent>
+                    {filteredStudents.map((s) => {
+                      const cls = db.classes.find((c) => c.id === s.classId);
+                      return (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.firstName} {s.lastName} {cls ? `— ${cls.name}` : ""}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </>
+            )}
           </Field>
           <Field label={t("fees.colFeeType")} error={errors.feeTypeId}>
-            <Select
-              value={form.feeTypeId}
-              onValueChange={(v) => {
-                const fee = db.feeTypes.find((f) => f.id === v);
-                setForm((f) => ({
+            {db.feeTypes.length === 0 ? (
+              <EmptySelectHint
+                message={t("quickCreate.noFeeTypes")}
+                actionLabel={t("quickCreate.createFeeType")}
+                onAction={() => setQuickFeeOpen(true)}
+              />
+            ) : (
+              <Select
+                value={form.feeTypeId}
+                onValueChange={(v) => {
+                  if (v === CREATE_NEW_VALUE) { setQuickFeeOpen(true); return; }
+                  const fee = db.feeTypes.find((f) => f.id === v);
+                  setForm((f) => ({
+                    ...f,
+                    feeTypeId: v,
+                    amount: fee ? String(fee.amount) : f.amount,
+                    dueDate: fee?.dueDate || f.dueDate,
+                  }));
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder={t("fees.chooseFeeType")} /></SelectTrigger>
+                <SelectContent>
+                  {db.feeTypes.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>{f.name} — {fcfa(f.amount)}</SelectItem>
+                  ))}
+                  <CreateNewOption label={t("quickCreate.createFeeType")} />
+                </SelectContent>
+              </Select>
+            )}
+          </Field>
+          <QuickCreateFeeTypeDialog
+            open={quickFeeOpen}
+            onOpenChange={setQuickFeeOpen}
+            onCreated={(id: string) => {
+              setForm((f) => {
+                const fee = getDB().feeTypes.find((x) => x.id === id);
+                return {
                   ...f,
-                  feeTypeId: v,
+                  feeTypeId: id,
                   amount: fee ? String(fee.amount) : f.amount,
                   dueDate: fee?.dueDate || f.dueDate,
-                }));
-              }}
-            >
-              <SelectTrigger><SelectValue placeholder={t("fees.chooseFeeType")} /></SelectTrigger>
-              <SelectContent>
-                {db.feeTypes.map((f) => (
-                  <SelectItem key={f.id} value={f.id}>{f.name} — {fcfa(f.amount)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
+                };
+              });
+              setErrors((e) => ({ ...e, feeTypeId: "" }));
+            }}
+          />
+
           <Field label={t("fees.fieldAmount")} error={errors.amount}>
             <Input type="number" value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} />
           </Field>

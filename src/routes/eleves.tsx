@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EmptySelectHint, CreateNewOption, CREATE_NEW_VALUE, QuickCreateClassDialog } from "@/components/QuickCreate";
 import { useSchoolParentAccounts } from "@/lib/useSchoolParentAccounts";
 import { Users, Search, Plus, Trash2, Pencil, Upload, UserPlus, Eye, KeyRound, Link2, X, CheckCircle2, Mail, Phone, FileUp, ShieldAlert, Download } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -351,6 +352,8 @@ function ElevesPage() {
   const [credentials, setCredentials] = useState<CredentialsInfo | null>(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [quickClassOpen, setQuickClassOpen] = useState(false);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const school = db.schools.find((s) => s.id === user?.schoolId);
   const { plan, canAddStudent, limits, studentCount } = usePlan();
@@ -721,15 +724,31 @@ function ElevesPage() {
               </Select>
             </Field>
             <Field label={t("students.fieldClass") + " *"} error={errors.classId}>
-              <Select value={form.classId} onValueChange={(v) => set("classId", v)}>
-                <SelectTrigger className={errors.classId ? "border-destructive" : ""}><SelectValue placeholder={t("classes.choose")} /></SelectTrigger>
-                <SelectContent>
-                  {db.classes.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {db.classes.length === 0 ? (
+                <EmptySelectHint
+                  message={t("quickCreate.noClasses")}
+                  actionLabel={t("quickCreate.createClass")}
+                  onAction={() => setQuickClassOpen(true)}
+                />
+              ) : (
+                <Select
+                  value={form.classId}
+                  onValueChange={(v) => {
+                    if (v === CREATE_NEW_VALUE) { setQuickClassOpen(true); return; }
+                    set("classId", v);
+                  }}
+                >
+                  <SelectTrigger className={errors.classId ? "border-destructive" : ""}><SelectValue placeholder={t("classes.choose")} /></SelectTrigger>
+                  <SelectContent>
+                    {db.classes.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                    <CreateNewOption label={t("quickCreate.createClass")} />
+                  </SelectContent>
+                </Select>
+              )}
             </Field>
+
             <Field label={t("students.fieldCode")}>
               <Input value={form.code} readOnly className="bg-muted" />
             </Field>
@@ -804,6 +823,12 @@ function ElevesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <QuickCreateClassDialog
+        open={quickClassOpen}
+        onOpenChange={setQuickClassOpen}
+        onCreated={(id) => { set("classId", id); setErrors((e) => ({ ...e, classId: "" })); }}
+      />
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>

@@ -17,6 +17,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, Bus, User, FileText, Wallet, AlertTriangle, Route as RouteIcon, Users, ArrowUp, ArrowDown, Receipt } from "lucide-react";
 import { toast } from "sonner";
+import { EmptySelectHint } from "@/components/QuickCreate";
+import { useTranslation } from "react-i18next";
 import { useDB, updateDB, getDB } from "@/lib/store";
 import { deriveInvoiceStatus, type Payment } from "@/lib/types";
 import { usePlan } from "@/lib/usePlan";
@@ -1072,7 +1074,9 @@ function RouteDetailDialog({ route, stops, assignments, vehicles, onClose, reloa
 
 // ---------------- TRANSPORTED STUDENTS ----------------
 function TransportedStudentsTab({ schoolId, routes, stops, assignments, vehicles, reload }: { schoolId: string; routes: TRoute[]; stops: RouteStop[]; assignments: StudentTransport[]; vehicles: Vehicle[]; reload: () => void }) {
+  const { t } = useTranslation();
   const db = useDB();
+
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<StudentTransport | null>(null);
   const [del, setDel] = useState<StudentTransport | null>(null);
@@ -1184,10 +1188,14 @@ function TransportedStudentsTab({ schoolId, routes, stops, assignments, vehicles
               </Select>
             </div>
             <div className="col-span-2"><Label>Circuit *</Label>
-              <Select value={form.route_id} onValueChange={(v)=>setForm({...form, route_id:v, stop_id:""})}>
-                <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
-                <SelectContent>{routes.map(r=><SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
-              </Select>
+              {routes.length === 0 ? (
+                <EmptySelectHint message={t("quickCreate.noRoutes")} />
+              ) : (
+                <Select value={form.route_id} onValueChange={(v)=>setForm({...form, route_id:v, stop_id:""})}>
+                  <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
+                  <SelectContent>{routes.map(r=><SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
+                </Select>
+              )}
             </div>
             <div><Label>Arrêt</Label>
               <Select value={form.stop_id || "none"} onValueChange={(v)=>setForm({...form, stop_id: v==="none"?"":v})}>
