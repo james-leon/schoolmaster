@@ -721,15 +721,31 @@ function ElevesPage() {
               </Select>
             </Field>
             <Field label={t("students.fieldClass") + " *"} error={errors.classId}>
-              <Select value={form.classId} onValueChange={(v) => set("classId", v)}>
-                <SelectTrigger className={errors.classId ? "border-destructive" : ""}><SelectValue placeholder={t("classes.choose")} /></SelectTrigger>
-                <SelectContent>
-                  {db.classes.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {db.classes.length === 0 ? (
+                <EmptySelectHint
+                  message={t("quickCreate.noClasses")}
+                  actionLabel={t("quickCreate.createClass")}
+                  onAction={() => setQuickClassOpen(true)}
+                />
+              ) : (
+                <Select
+                  value={form.classId}
+                  onValueChange={(v) => {
+                    if (v === CREATE_NEW_VALUE) { setQuickClassOpen(true); return; }
+                    set("classId", v);
+                  }}
+                >
+                  <SelectTrigger className={errors.classId ? "border-destructive" : ""}><SelectValue placeholder={t("classes.choose")} /></SelectTrigger>
+                  <SelectContent>
+                    {db.classes.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                    <CreateNewOption label={t("quickCreate.createClass")} />
+                  </SelectContent>
+                </Select>
+              )}
             </Field>
+
             <Field label={t("students.fieldCode")}>
               <Input value={form.code} readOnly className="bg-muted" />
             </Field>
