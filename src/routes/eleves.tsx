@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EmptySelectHint, CreateNewOption, CREATE_NEW_VALUE, QuickCreateClassDialog } from "@/components/QuickCreate";
 import { useSchoolParentAccounts } from "@/lib/useSchoolParentAccounts";
 import { Users, Search, Plus, Trash2, Pencil, Upload, UserPlus, Eye, KeyRound, Link2, X, CheckCircle2, Mail, Phone, FileUp, ShieldAlert, Download } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -822,6 +823,12 @@ function ElevesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <QuickCreateClassDialog
+        open={quickClassOpen}
+        onOpenChange={setQuickClassOpen}
+        onCreated={(id) => { set("classId", id); setErrors((e) => ({ ...e, classId: "" })); }}
+      />
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
