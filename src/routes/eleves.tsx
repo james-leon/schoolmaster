@@ -351,6 +351,8 @@ function ElevesPage() {
   const [credentials, setCredentials] = useState<CredentialsInfo | null>(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [quickClassOpen, setQuickClassOpen] = useState(false);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const school = db.schools.find((s) => s.id === user?.schoolId);
   const { plan, canAddStudent, limits, studentCount } = usePlan();
