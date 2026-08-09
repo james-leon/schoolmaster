@@ -4,7 +4,7 @@ import { ArrowLeft, FileText } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Logo } from "@/components/Logo";
+import { BrandLogo } from "@/components/BrandLogo";
 import { createFileRoute } from "@tanstack/react-router";
 import { WINTEK_CONTACT } from "@/lib/plans";
 
@@ -43,9 +43,7 @@ function CguPage() {
           >
             <ArrowLeft className="mr-1.5 h-4 w-4" /> {backLabel}
           </Link>
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Logo compact />
-          </div>
+          <BrandLogo className="h-9 w-9" rounded="rounded-lg" />
         </div>
 
         <Card className="overflow-hidden print:border-0 print:shadow-none">

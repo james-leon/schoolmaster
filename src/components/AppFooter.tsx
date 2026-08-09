@@ -1,10 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { ShieldCheck, FileText } from "lucide-react";
 import { WINTEK_CONTACT } from "@/lib/plans";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export function AppFooter({ className = "" }: { className?: string }) {
   return (
     <footer className={"flex flex-wrap items-center justify-center gap-x-4 gap-y-1 py-4 text-xs text-muted-foreground " + className}>
+      <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+        <BrandLogo className="h-4 w-4" rounded="rounded" />
+        SchoolMaster
+      </span>
+      <span className="hidden sm:inline">•</span>
       <Link to="/cgu" className="inline-flex items-center gap-1 hover:text-foreground">
         <FileText className="h-3.5 w-3.5" />
         CGU

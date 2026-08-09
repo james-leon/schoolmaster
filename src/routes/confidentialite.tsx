@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/Logo";
+import { BrandLogo } from "@/components/BrandLogo";
 import { useAuth } from "@/lib/auth";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
 import { WINTEK_CONTACT } from "@/lib/plans";
@@ -45,9 +45,7 @@ function PrivacyPage() {
           <Link to={backTo} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="mr-1.5 h-4 w-4" /> {backLabel}
           </Link>
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Logo compact />
-          </div>
+          <BrandLogo className="h-9 w-9" rounded="rounded-lg" />
         </div>
         <Card>
           <CardContent className="space-y-6 p-6 sm:p-8">
