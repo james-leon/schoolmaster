@@ -21,6 +21,7 @@ import { ImportDialog, type ImportConfig, type RowStatus } from "@/components/Im
 import { useAuth } from "@/lib/auth";
 import { resolveTeacherClasses } from "@/lib/teacher-scope";
 import { getSchoolSubjects } from "@/lib/subjects";
+import { EmptySelectHint } from "@/components/QuickCreate";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/classes")({ component: ClassesPage });
@@ -433,12 +434,16 @@ function SubjectsModal({ classe, onClose }: { classe: Classe | null; onClose: ()
                 <Input type="number" min={1} max={5} value={draft.coefficient} onChange={(e) => setDraft((d) => ({ ...d, coefficient: e.target.value }))} />
               </Field>
               <Field label={t("classes.fieldSubjectTeacher")}>
-                <Select value={draft.teacherId} onValueChange={(v) => setDraft((d) => ({ ...d, teacherId: v }))}>
-                  <SelectTrigger><SelectValue placeholder={t("classes.choose")} /></SelectTrigger>
-                  <SelectContent>
-                    {db.teachers.map((tt) => <SelectItem key={tt.id} value={tt.id}>{tt.firstName} {tt.lastName}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                {db.teachers.length === 0 ? (
+                  <EmptySelectHint message={t("quickCreate.noTeachers")} />
+                ) : (
+                  <Select value={draft.teacherId} onValueChange={(v) => setDraft((d) => ({ ...d, teacherId: v }))}>
+                    <SelectTrigger><SelectValue placeholder={t("classes.choose")} /></SelectTrigger>
+                    <SelectContent>
+                      {db.teachers.map((tt) => <SelectItem key={tt.id} value={tt.id}>{tt.firstName} {tt.lastName}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
               </Field>
             </div>
             <div className="mt-3 flex justify-end gap-2">
