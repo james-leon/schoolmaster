@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AUDIT_ACTION_LABELS, labelForAction } from "@/lib/audit";
 import { ScrollText, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { EmptyStateBlock } from "@/components/states";
 
 interface AuditRow {
   id: string;
@@ -172,7 +173,7 @@ export function AuditLogPanel({ schoolId }: { schoolId?: string }) {
                 <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">Chargement…</td></tr>
               )}
               {!loading && rows.length === 0 && (
-                <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">Aucune entrée</td></tr>
+                <tr><td colSpan={5} className="p-0"><EmptyStateBlock titleKey="emptyAuditLog" className="border-0" /></td></tr>
               )}
               {rows.map((r) => (
                 <tr key={r.id} className="border-t border-border align-top">

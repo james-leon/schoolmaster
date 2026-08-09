@@ -3,7 +3,8 @@ import { useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AppLayout } from "@/components/AppLayout";
-import { EmptyState, TableSkeleton, useLoaded } from "@/components/shared";
+import { useLoaded } from "@/components/shared";
+import { ListState } from "@/components/states";
 import { useDB, updateDB, getDB } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -388,6 +389,19 @@ function ElevesPage() {
     });
   }, [db.students, db.classes, search, classFilter, statusFilter, enrollFilter, teacherClassIds]);
 
+  // Total BEFORE user filters — lets us tell "no pupils yet" apart from
+  // "no result for the current filters".
+  const scopedTotal = useMemo(
+    () => db.students.filter((s) => !teacherClassIds || teacherClassIds.has(s.classId)).length,
+    [db.students, teacherClassIds],
+  );
+  const clearFilters = () => {
+    setSearch("");
+    setClassFilter("all");
+    setStatusFilter("all");
+    setEnrollFilter("all");
+  };
+
   if (pathname !== "/eleves") {
     return <Outlet />;
   }
@@ -575,11 +589,18 @@ function ElevesPage() {
 
       <Card>
         <CardContent className="p-4">
-          {!loaded ? (
-            <TableSkeleton cols={showActions ? 9 : 8} />
-          ) : filtered.length === 0 ? (
-            <EmptyState icon={Users} title={t("students.empty")} description={canCreateStudents ? t("students.emptyDescCreate") : t("students.emptyDescTeacher")} actionLabel={canCreateStudents ? t("students.newStudent") : undefined} onAction={canCreateStudents ? openCreate : undefined} />
-          ) : (
+          <ListState
+            total={scopedTotal}
+            count={filtered.length}
+            loading={!loaded}
+            skeletonRows={6}
+            onClearFilters={clearFilters}
+            icon={Users}
+            emptyTitle={t("students.empty")}
+            emptyDescription={canCreateStudents ? t("students.emptyDescCreate") : t("students.emptyDescTeacher")}
+            emptyActionLabel={canCreateStudents ? t("students.newStudent") : undefined}
+            onEmptyAction={canCreateStudents ? openCreate : undefined}
+          >
             <Table>
               <TableHeader>
                 <TableRow>
@@ -665,7 +686,7 @@ function ElevesPage() {
                 ))}
               </TableBody>
             </Table>
-          )}
+          </ListState>
         </CardContent>
       </Card>
         </TabsContent>

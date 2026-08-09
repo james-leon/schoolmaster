@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Bell, AlertCircle, CreditCard, Megaphone, Calendar, Check, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmptyStateBlock, NoResultsState } from "@/components/states";
 
 export const Route = createFileRoute("/notifications")({ component: NotificationsPage });
 
@@ -115,10 +116,11 @@ function NotificationsPage() {
       </div>
 
       {filtered.length === 0 && (
-        <Card><CardContent className="py-16 text-center text-muted-foreground">
-          <Bell className="mx-auto mb-3 h-10 w-10 opacity-40" />
-          Aucune notification
-        </CardContent></Card>
+        notifications.length > 0 ? (
+          <NoResultsState onClear={() => { setTypeFilter("all"); setReadFilter("all"); }} />
+        ) : (
+          <EmptyStateBlock icon={Bell} titleKey="emptyNotifications" />
+        )
       )}
 
       <div className="space-y-6">

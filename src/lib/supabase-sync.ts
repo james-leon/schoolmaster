@@ -4,6 +4,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { getDB, hydrateDB } from "./store";
+import { setDataStatus, registerDataRetry } from "./data-status";
 import { toast } from "sonner";
 import { logAudit } from "./audit";
 import type {
@@ -297,7 +298,20 @@ function rowToAcademicYear(r: {
 }
 
 // ---- Hydration ----
+/** Public entry point: tracks LOADING / ERROR / READY for the whole app. */
 export async function hydrateAll(schoolId: string): Promise<void> {
+  setDataStatus("loading");
+  registerDataRetry(() => { void hydrateAll(schoolId).catch(() => {}); });
+  try {
+    await hydrateAllInner(schoolId);
+    setDataStatus("ready");
+  } catch (e) {
+    setDataStatus("error", e);
+    throw e;
+  }
+}
+
+async function hydrateAllInner(schoolId: string): Promise<void> {
   currentSchoolId = schoolId;
   const [
     schoolsRes, classesRes, studentsRes, teachersRes, subjectsRes,
