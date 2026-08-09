@@ -295,16 +295,42 @@ function SaisieTab() {
             <SelectTrigger><SelectValue placeholder="Classe" /></SelectTrigger>
             <SelectContent>{visibleClasses.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
           </Select>
-          <Select value={subject} onValueChange={setSubject} disabled={!classId}>
-            <SelectTrigger><SelectValue placeholder="Matière" /></SelectTrigger>
-            <SelectContent>{subjects.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
-          </Select>
+          {classId && subjects.length === 0 && canManageSubjects ? (
+            <EmptySelectHint
+              message={
+                schoolSubjectNames.length === 0
+                  ? t("quickCreate.noSchoolSubjects")
+                  : t("quickCreate.noClassSubjects", { class: currentClassName })
+              }
+              actionLabel={
+                schoolSubjectNames.length === 0
+                  ? t("quickCreate.createSubject")
+                  : t("quickCreate.assignSubjects")
+              }
+              onAction={() => setSubjectDialog(true)}
+            />
+          ) : (
+            <Select value={subject} onValueChange={setSubject} disabled={!classId}>
+              <SelectTrigger><SelectValue placeholder="Matière" /></SelectTrigger>
+              <SelectContent>{subjects.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
+            </Select>
+          )}
           <Select value={term} onValueChange={setTerm}>
             <SelectTrigger><SelectValue placeholder="Trimestre" /></SelectTrigger>
             <SelectContent>{TERMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
           </Select>
         </CardContent>
       </Card>
+
+      <QuickSubjectDialog
+        open={subjectDialog}
+        onOpenChange={setSubjectDialog}
+        classId={classId}
+        className={currentClassName}
+        availableSubjects={schoolSubjectNames}
+        mode={schoolSubjectNames.length === 0 ? "create" : "assign"}
+        onDone={(name) => setSubject(name)}
+      />
 
       {!ready ? (
         <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">
