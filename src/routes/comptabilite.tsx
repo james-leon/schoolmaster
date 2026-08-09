@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { EmptyStateBlock, NoResultsState, ListSkeleton } from "@/components/states";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/lib/auth";
 import { usePlan } from "@/lib/usePlan";
@@ -426,9 +427,21 @@ function ComptabilitePage() {
             <Card>
               <CardContent className="p-0">
                 {loading ? (
-                  <div className="p-6 text-sm text-muted-foreground">Chargement…</div>
+                  <ListSkeleton rows={5} className="p-4" />
                 ) : filteredList.length === 0 ? (
-                  <div className="p-10 text-center text-sm text-muted-foreground">Aucune transaction sur cette période.</div>
+                  periodItems.length > 0 ? (
+                    <NoResultsState
+                      className="border-0"
+                      onClear={() => { setFilterType("all"); setFilterCategory("all"); }}
+                    />
+                  ) : (
+                    <EmptyStateBlock
+                      titleKey="emptyTransactions"
+                      actionLabel="Nouvelle transaction"
+                      onAction={openCreate}
+                      className="border-0"
+                    />
+                  )
                 ) : (
                   <Table>
                     <TableHeader>
@@ -986,7 +999,7 @@ function SupplierManagerDialog({
         <div className="grid gap-4 md:grid-cols-[1fr_320px]">
           <div className="max-h-[60vh] overflow-auto rounded-md border border-border">
             {suppliers.length === 0 ? (
-              <div className="p-4 text-sm text-muted-foreground">Aucun bénéficiaire pour le moment.</div>
+              <EmptyStateBlock titleKey="emptySuppliers" className="border-0" />
             ) : (
               <Table>
                 <TableHeader>
@@ -1086,7 +1099,7 @@ function SupplierDetailDialog({ supplier, onOpenChange, expenses }: {
             <div>
               <h3 className="mb-2 text-sm font-semibold">Historique des dépenses ({expenses.length})</h3>
               {expenses.length === 0 ? (
-                <div className="rounded-md border border-border p-4 text-sm text-muted-foreground">Aucune dépense enregistrée.</div>
+                <EmptyStateBlock titleKey="emptyExpenses" className="py-8" />
               ) : (
                 <div className="max-h-72 overflow-auto rounded-md border border-border">
                   <Table>

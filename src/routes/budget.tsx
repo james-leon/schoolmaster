@@ -4,6 +4,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { fcfa } from "@/lib/format";
+import { TableEmpty, EmptyStateBlock } from "@/components/states";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,10 +169,11 @@ function OverviewTab({ loading, active, lines, categories, txs }: {
 
   if (!active) {
     return (
-      <Card><CardContent className="py-12 text-center space-y-2">
-        <PiggyBank className="mx-auto h-10 w-10 text-muted-foreground" />
-        <div className="text-muted-foreground">Aucun budget actif. Créez un budget et marquez-le comme actif.</div>
-      </CardContent></Card>
+      <EmptyStateBlock
+        icon={PiggyBank}
+        titleKey="emptyBudgets"
+        description="Aucun budget actif. Créez un budget et marquez-le comme actif."
+      />
     );
   }
 
@@ -224,7 +226,7 @@ function OverviewTab({ loading, active, lines, categories, txs }: {
       <Card><CardContent className="p-5 space-y-3">
         <div className="font-semibold">Aperçu par catégorie — {active.name}</div>
         <div className="space-y-3">
-          {rows.length === 0 && <div className="text-sm text-muted-foreground">Aucune ligne dans ce budget.</div>}
+          {rows.length === 0 && <EmptyStateBlock titleKey="emptyBudgetLines" className="py-8" />}
           {rows.map((r) => (
             <div key={r.lineId} className="space-y-1">
               <div className="flex items-center justify-between text-sm">
@@ -314,9 +316,7 @@ function BudgetsTab({ schoolId, budgets, lines, categories, onChange, selectedId
             <TableHead className="text-right">Actions</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {budgets.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Aucun budget</TableCell></TableRow>
-            )}
+            {budgets.length === 0 && <TableEmpty colSpan={7} titleKey="emptyBudgets" />}
             {budgets.map((b) => {
               const ls = linesByBudget.get(b.id) || [];
               const rec = ls.filter((l) => l.type === "recette").reduce((s, l) => s + Number(l.planned_amount || 0), 0);
@@ -518,9 +518,7 @@ function LinesEditor({ schoolId, budget, lines, categories, onChange }: {
           <TableHead className="text-right">Actions</TableHead>
         </TableRow></TableHeader>
         <TableBody>
-          {lines.length === 0 && (
-            <TableRow><TableCell colSpan={5} className="text-center py-6 text-muted-foreground">Aucune ligne</TableCell></TableRow>
-          )}
+          {lines.length === 0 && <TableEmpty colSpan={5} titleKey="emptyBudgetLines" />}
           {lines.map((l) => {
             const c = catById.get(l.category_id);
             return (
@@ -653,9 +651,7 @@ function ComparisonSection({ title, rows, planned, actual, expense }: { title: s
           <TableHead className="w-[200px]">Progression</TableHead>
         </TableRow></TableHeader>
         <TableBody>
-          {rows.length === 0 && (
-            <TableRow><TableCell colSpan={6} className="text-center py-6 text-muted-foreground">Aucune ligne</TableCell></TableRow>
-          )}
+          {rows.length === 0 && <TableEmpty colSpan={6} titleKey="emptyBudgetLines" />}
           {rows.map((r) => {
             const ecart = r.actual - r.planned;
             const over = expense ? r.actual > r.planned : r.actual < r.planned;

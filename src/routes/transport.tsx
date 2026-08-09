@@ -19,6 +19,7 @@ import { Plus, Pencil, Trash2, Bus, User, FileText, Wallet, AlertTriangle, Route
 import { toast } from "sonner";
 import { EmptySelectHint } from "@/components/QuickCreate";
 import { useTranslation } from "react-i18next";
+import { TableEmpty, EmptyStateBlock, ListSkeleton } from "@/components/states";
 import { useDB, updateDB, getDB } from "@/lib/store";
 import { deriveInvoiceStatus, type Payment } from "@/lib/types";
 import { usePlan } from "@/lib/usePlan";
@@ -347,8 +348,8 @@ function VehiclesTab({ schoolId, vehicles, reload, loading, expenses }: { school
   return (
     <div className="space-y-4">
       <div className="flex justify-end"><Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Nouveau bus</Button></div>
-      {loading ? <p className="text-muted-foreground text-sm">Chargement…</p> :
-        vehicles.length === 0 ? <Card><CardContent className="p-6 text-center text-muted-foreground">Aucun bus enregistré</CardContent></Card> : (
+      {loading ? <ListSkeleton rows={3} /> :
+        vehicles.length === 0 ? <EmptyStateBlock titleKey="emptyVehicles" actionLabel="Nouveau bus" onAction={openNew} /> : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {vehicles.map((v) => (
             <Card key={v.id}>
@@ -473,7 +474,7 @@ function DriversTab({ schoolId, drivers, vehicles, reload }: { schoolId: string;
             <TableHead>Bus assigné</TableHead><TableHead></TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {drivers.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucun chauffeur</TableCell></TableRow> :
+            {drivers.length === 0 ? <TableEmpty colSpan={6} titleKey="emptyDrivers" actionLabel="Nouveau chauffeur" onAction={openNew} /> :
             drivers.map((d) => {
               const v = vehicles.find((x) => x.id === d.assigned_vehicle_id);
               return (
@@ -590,7 +591,7 @@ function DocumentsTab({ schoolId, docs, vehicles, reload }: { schoolId: string; 
             <TableHead>Expiration</TableHead><TableHead>Montant</TableHead><TableHead></TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {docs.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Aucun document</TableCell></TableRow> :
+            {docs.length === 0 ? <TableEmpty colSpan={7} titleKey="emptyDocuments" actionLabel="Nouveau document" onAction={openNew} /> :
             docs.map((d) => {
               const v = vehicles.find((x) => x.id === d.vehicle_id);
               return (
@@ -744,7 +745,7 @@ function ExpensesTab({ schoolId, expenses, vehicles, suppliers, reload, userId }
             <TableHead>Mode</TableHead><TableHead className="text-right">Montant</TableHead><TableHead></TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {expenses.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Aucune dépense</TableCell></TableRow> :
+            {expenses.length === 0 ? <TableEmpty colSpan={7} titleKey="emptyExpenses" actionLabel="Nouvelle dépense" onAction={openNew} /> :
             expenses.map((e) => {
               const v = vehicles.find((x) => x.id === e.vehicle_id);
               const s = suppliers.find((x) => x.id === e.supplier_id);
@@ -876,7 +877,7 @@ function RoutesTab({ schoolId, routes, stops, assignments, vehicles, drivers, re
   return (
     <div className="space-y-4">
       <div className="flex justify-end"><Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Nouveau circuit</Button></div>
-      {routes.length === 0 ? <Card><CardContent className="p-6 text-center text-muted-foreground">Aucun circuit</CardContent></Card> : (
+      {routes.length === 0 ? <EmptyStateBlock titleKey="emptyRoutes" actionLabel="Nouveau circuit" onAction={openNew} /> : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {routes.map((r) => {
             const v = vehicles.find((x) => x.id === r.assigned_vehicle_id);
@@ -1021,7 +1022,7 @@ function RouteDetailDialog({ route, stops, assignments, vehicles, onClose, reloa
             <Table>
               <TableHeader><TableRow><TableHead className="w-12">#</TableHead><TableHead>Arrêt</TableHead><TableHead>Horaire</TableHead><TableHead></TableHead></TableRow></TableHeader>
               <TableBody>
-                {stops.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-4">Aucun arrêt</TableCell></TableRow> :
+                {stops.length === 0 ? <TableEmpty colSpan={4} titleKey="emptyStops" /> :
                 [...stops].sort((a,b)=>a.order_index-b.order_index).map((s, i) => (
                   <TableRow key={s.id}>
                     <TableCell>{i+1}</TableCell>

@@ -34,6 +34,7 @@ import { PLAN_CONFIG, normalizePlanId, type PlanId } from "@/lib/plans";
 import { RevenueAnalytics } from "@/components/super-admin/RevenueAnalytics";
 import { SchoolHealth } from "@/components/super-admin/SchoolHealth";
 import { MaintenancePanel } from "@/components/super-admin/MaintenancePanel";
+import { EmptyStateBlock, NoResultsState } from "@/components/states";
 
 
 export const Route = createFileRoute("/super-admin")({
@@ -267,7 +268,7 @@ function SuperAdminPage() {
           </CardHeader>
           <CardContent>
             {filteredSchools.length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">Aucune école pour ce filtre.</p>
+              <NoResultsState onClear={schools.length ? () => setSubFilter("all") : undefined} />
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -351,9 +352,7 @@ function SuperAdminPage() {
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
               </div>
             ) : schools.length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">
-                Aucune école pour le moment. Cliquez sur "Nouvelle école" pour en créer une.
-              </p>
+              <EmptyStateBlock titleKey="emptySchools" />
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -1060,7 +1059,7 @@ function SubscriptionHistoryDialog({
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
           </div>
         ) : payments.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">Aucun paiement enregistré.</p>
+          <EmptyStateBlock title="Aucun paiement enregistré" description="Les paiements d'abonnement apparaîtront ici." />
         ) : (
           <div className="overflow-x-auto">
             <Table>

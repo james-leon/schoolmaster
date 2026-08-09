@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
+import { EmptyStateBlock } from "@/components/states";
 import { useLoaded, TableSkeleton, StatCard } from "@/components/shared";
 import { useDB, updateDB } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
@@ -129,10 +130,7 @@ function PresencesPage() {
             </Table>
           )}
           {loaded && students.length === 0 && (
-            <div className="flex flex-col items-center py-12 text-center text-muted-foreground">
-              <CalendarCheck className="mb-2 h-8 w-8" />
-              Aucun élève dans cette classe.
-            </div>
+            <EmptyStateBlock icon={CalendarCheck} titleKey="emptyStudents" description="Aucun élève dans cette classe." />
           )}
         </CardContent>
       </Card>

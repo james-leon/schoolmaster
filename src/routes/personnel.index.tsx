@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -20,6 +21,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Search, Briefcase, Users, Wallet, CheckCircle2, Clock, Eye, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { TableEmpty } from "@/components/states";
 
 export const Route = createFileRoute("/personnel/")({ component: PersonnelPage });
 
@@ -285,11 +287,18 @@ function PersonnelPage() {
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
-                  {loading ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Chargement…</TableCell></TableRow>
-                  : filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    <Briefcase className="mx-auto mb-2 h-8 w-8 opacity-40" />
-                    Aucun membre du personnel, ajoutez-en un.
-                  </TableCell></TableRow>
+                  {loading ? <TableRow><TableCell colSpan={7} className="p-3"><Skeleton className="h-24 w-full" /></TableCell></TableRow>
+                  : filtered.length === 0 ? (
+                    <TableEmpty
+                      colSpan={7}
+                      icon={Briefcase}
+                      titleKey="emptyStaff"
+                      filtered={staff.length > 0}
+                      onClearFilters={() => { setSearch(""); setRoleFilter("all"); setStatusFilter("all"); }}
+                      actionLabel="Nouveau membre du personnel"
+                      onAction={() => { resetForm(); setOpen(true); }}
+                    />
+                  )
                   : filtered.map(s => (
                     <TableRow key={s.id}>
                       <TableCell>
@@ -342,9 +351,9 @@ function PersonnelPage() {
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
-                  {monthPayroll.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">
-                    Aucune fiche pour {MONTHS_FR[month - 1]} {year}
-                  </TableCell></TableRow>
+                  {monthPayroll.length === 0 ? (
+                    <TableEmpty colSpan={5} titleKey="emptyPayroll" actionLabel="Générer toutes les fiches du mois" onAction={bulkGenerate} />
+                  )
                   : monthPayroll.map(p => {
                     const s = staffMap[p.staff_id];
                     return (

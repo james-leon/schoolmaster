@@ -62,6 +62,7 @@ import {
 import { z } from "zod";
 import { toast } from "sonner";
 import { csvRow } from "@/lib/csv";
+import { EmptyStateBlock } from "@/components/states";
 
 export const Route = createFileRoute("/scolarite")({ component: ScolaritePage });
 
@@ -809,7 +810,7 @@ function InvoiceDetailModal({ invoice, onClose }: { invoice: Payment; onClose: (
           <div className="pt-2">
             <div className="mb-2 font-semibold">Historique des paiements</div>
             {records.length === 0 ? (
-              <div className="text-muted-foreground">Aucun paiement enregistré.</div>
+              <EmptyStateBlock title="Aucun paiement enregistré" description="Les paiements de cette facture apparaîtront ici." className="py-8" />
             ) : (
               <div className="space-y-1.5">
                 {records.map((r) => (
