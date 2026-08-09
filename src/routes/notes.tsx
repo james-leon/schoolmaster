@@ -346,7 +346,7 @@ function SaisieTab() {
         className={currentClassName}
         availableSubjects={schoolSubjectNames}
         mode={schoolSubjectNames.length === 0 ? "create" : "assign"}
-        onDone={(name) => setSubject(name)}
+        onDone={(n: string) => setSubject(n)}
       />
 
       {!ready ? (
