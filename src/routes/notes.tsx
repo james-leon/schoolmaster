@@ -129,11 +129,13 @@ function SaisieTab() {
   const db = useDB();
   const loaded = useLoaded();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [classId, setClassId] = useState("");
   const [subject, setSubject] = useState("");
   const [term, setTerm] = useState("");
   const [rows, setRows] = useState<Record<string, RowCells>>({});
   const [confirmReplace, setConfirmReplace] = useState(false);
+  const [subjectDialog, setSubjectDialog] = useState(false);
 
   const visibleClasses = useMemo(
     () => (user?.role === "teacher" ? resolveTeacherClasses(user, db) : db.classes),
@@ -147,6 +149,20 @@ function SaisieTab() {
     }
     return list;
   }, [db.classSubjects, classId, user]);
+
+  const canManageSubjects = user?.role !== "teacher" && user?.role !== "parent";
+  const currentClassName = useMemo(
+    () => db.classes.find((c) => c.id === classId)?.name ?? "",
+    [db.classes, classId],
+  );
+  const schoolSubjectNames = useMemo(() => {
+    const set = new Map<string, string>();
+    for (const cs of db.classSubjects) {
+      const n = (cs.name ?? "").trim();
+      if (n && !set.has(n.toLowerCase())) set.set(n.toLowerCase(), n);
+    }
+    return Array.from(set.values()).sort((a, b) => a.localeCompare(b, "fr"));
+  }, [db.classSubjects]);
   const students = useMemo(
     () => db.students.filter((s) => s.classId === classId).sort((a, b) => a.lastName.localeCompare(b.lastName)),
     [db.students, classId]
