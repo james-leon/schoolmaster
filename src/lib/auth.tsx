@@ -347,6 +347,12 @@ export function useAuth() {
   return ctx;
 }
 
+/** Non-throwing variant for outermost chrome (gates/banners) that may render
+ *  before/outside the provider, e.g. during SSR module reloads. */
+export function useOptionalAuth(): AuthContextType | null {
+  return useContext(AuthContext);
+}
+
 export function visibleClassIds(user: User | null): string[] | null {
   if (!user) return [];
   if (user.role === "teacher" && user.assignedClasses?.length) {
