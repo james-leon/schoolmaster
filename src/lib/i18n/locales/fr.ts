@@ -466,6 +466,8 @@ export const fr = {
     kpiExpenses: "Total dépenses",
     kpiBalance: "Solde de la période",
     kpiCashBalance: "Solde de caisse actuel",
+    kpiPeriodHint: "Sur la période sélectionnée",
+    kpiCashBalanceHint: "Toutes périodes, paiements de scolarité inclus",
     tabDashboard: "Tableau de bord",
     tabTransactions: "Transactions",
     tabReport: "Rapport",
