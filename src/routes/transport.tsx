@@ -1074,7 +1074,9 @@ function RouteDetailDialog({ route, stops, assignments, vehicles, onClose, reloa
 
 // ---------------- TRANSPORTED STUDENTS ----------------
 function TransportedStudentsTab({ schoolId, routes, stops, assignments, vehicles, reload }: { schoolId: string; routes: TRoute[]; stops: RouteStop[]; assignments: StudentTransport[]; vehicles: Vehicle[]; reload: () => void }) {
+  const { t } = useTranslation();
   const db = useDB();
+
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<StudentTransport | null>(null);
   const [del, setDel] = useState<StudentTransport | null>(null);
