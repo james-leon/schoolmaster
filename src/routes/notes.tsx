@@ -33,6 +33,7 @@ import { resolveTeacherClasses } from "@/lib/teacher-scope";
 import { useServerFn } from "@tanstack/react-start";
 import { generateAppreciation, generateAppreciationBulk } from "@/lib/ai-appreciation.functions";
 import { EmptySelectHint, QuickSubjectDialog } from "@/components/QuickCreate";
+import { EmptyStateBlock } from "@/components/states";
 
 const APPRECIATION_KEY = "bulletin_appreciations_v1";
 function loadAppreciations(): Record<string, string> {
@@ -525,7 +526,7 @@ function OverviewTab() {
       <Card>
         <CardContent className="overflow-x-auto p-0">
           {!subjects.length || !students.length ? (
-            <p className="p-8 text-center text-sm text-muted-foreground">Aucune donnée à afficher.</p>
+            <EmptyStateBlock titleKey={!subjects.length ? "emptySubjects" : "emptyStudents"} className="border-0" />
           ) : (
             <Table>
               <TableHeader>

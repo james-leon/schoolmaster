@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
+import { EmptyStateBlock, LoadingState } from "@/components/states";
+import { CalendarDays as CalendarIconEmpty } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { isSchoolAdmin, isSuperAdmin, isSecretary } from "@/lib/permissions";
 import { useDB } from "@/lib/store";
@@ -182,7 +184,7 @@ function CalendrierPage() {
         <Card>
           <CardContent className="p-3 md:p-4">
             {loading ? (
-              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">Chargement…</div>
+              <LoadingState className="h-64" />
             ) : view === "month" ? (
               <div>
                 <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
@@ -240,7 +242,7 @@ function CalendrierPage() {
             ) : (
               <div className="space-y-2">
                 {monthEvents.length === 0 && (
-                  <div className="py-10 text-center text-sm text-muted-foreground">Aucun événement ce mois-ci.</div>
+                  <EmptyStateBlock icon={CalendarIconEmpty} titleKey="emptyEvents" description="Aucun événement ce mois-ci." />
                 )}
                 {monthEvents.map((ev) => <EventListItem key={ev.id} ev={ev} onClick={() => setViewingEvent(ev)} />)}
               </div>
