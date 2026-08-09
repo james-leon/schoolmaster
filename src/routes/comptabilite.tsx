@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, TrendingUp, TrendingDown, Wallet, Scale, Download } from "lucide-react";
 import { toast } from "sonner";
+import { EmptySelectHint } from "@/components/QuickCreate";
 import { csvRow } from "@/lib/csv";
 import { logAudit } from "@/lib/audit";
 import {
@@ -857,6 +858,7 @@ function SupplierPicker({ value, suppliers, onChange, onCreated, schoolId }: {
   onCreated: (s: SupplierRow) => void | Promise<void>;
   schoolId: string;
 }) {
+  const { t } = useTranslation();
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [newType, setNewType] = useState<string>("Fournisseur");
@@ -891,6 +893,13 @@ function SupplierPicker({ value, suppliers, onChange, onCreated, schoolId }: {
           <Plus className="h-4 w-4" />
         </Button>
       </div>
+      {suppliers.length === 0 && !adding && (
+        <EmptySelectHint
+          message={t("quickCreate.noSuppliers")}
+          actionLabel={t("quickCreate.createNew")}
+          onAction={() => setAdding(true)}
+        />
+      )}
       {adding && (
         <div className="grid grid-cols-[1fr_140px_auto] gap-2 rounded-md border border-border bg-muted/30 p-2">
           <Input placeholder="Nom du bénéficiaire" value={newName} onChange={(e) => setNewName(e.target.value)}
