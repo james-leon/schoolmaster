@@ -32,6 +32,7 @@ import { useAuth } from "@/lib/auth";
 import { resolveTeacherClasses } from "@/lib/teacher-scope";
 import { useServerFn } from "@tanstack/react-start";
 import { generateAppreciation, generateAppreciationBulk } from "@/lib/ai-appreciation.functions";
+import { EmptySelectHint, QuickSubjectDialog } from "@/components/QuickCreate";
 
 const APPRECIATION_KEY = "bulletin_appreciations_v1";
 function loadAppreciations(): Record<string, string> {
@@ -129,11 +130,13 @@ function SaisieTab() {
   const db = useDB();
   const loaded = useLoaded();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [classId, setClassId] = useState("");
   const [subject, setSubject] = useState("");
   const [term, setTerm] = useState("");
   const [rows, setRows] = useState<Record<string, RowCells>>({});
   const [confirmReplace, setConfirmReplace] = useState(false);
+  const [subjectDialog, setSubjectDialog] = useState(false);
 
   const visibleClasses = useMemo(
     () => (user?.role === "teacher" ? resolveTeacherClasses(user, db) : db.classes),
@@ -147,6 +150,20 @@ function SaisieTab() {
     }
     return list;
   }, [db.classSubjects, classId, user]);
+
+  const canManageSubjects = user?.role !== "teacher" && user?.role !== "parent";
+  const currentClassName = useMemo(
+    () => db.classes.find((c) => c.id === classId)?.name ?? "",
+    [db.classes, classId],
+  );
+  const schoolSubjectNames = useMemo(() => {
+    const set = new Map<string, string>();
+    for (const cs of db.classSubjects) {
+      const n = (cs.name ?? "").trim();
+      if (n && !set.has(n.toLowerCase())) set.set(n.toLowerCase(), n);
+    }
+    return Array.from(set.values()).sort((a, b) => a.localeCompare(b, "fr"));
+  }, [db.classSubjects]);
   const students = useMemo(
     () => db.students.filter((s) => s.classId === classId).sort((a, b) => a.lastName.localeCompare(b.lastName)),
     [db.students, classId]
@@ -295,16 +312,42 @@ function SaisieTab() {
             <SelectTrigger><SelectValue placeholder="Classe" /></SelectTrigger>
             <SelectContent>{visibleClasses.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
           </Select>
-          <Select value={subject} onValueChange={setSubject} disabled={!classId}>
-            <SelectTrigger><SelectValue placeholder="Matière" /></SelectTrigger>
-            <SelectContent>{subjects.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
-          </Select>
+          {classId && subjects.length === 0 && canManageSubjects ? (
+            <EmptySelectHint
+              message={
+                schoolSubjectNames.length === 0
+                  ? t("quickCreate.noSchoolSubjects")
+                  : t("quickCreate.noClassSubjects", { class: currentClassName })
+              }
+              actionLabel={
+                schoolSubjectNames.length === 0
+                  ? t("quickCreate.createSubject")
+                  : t("quickCreate.assignSubjects")
+              }
+              onAction={() => setSubjectDialog(true)}
+            />
+          ) : (
+            <Select value={subject} onValueChange={setSubject} disabled={!classId}>
+              <SelectTrigger><SelectValue placeholder="Matière" /></SelectTrigger>
+              <SelectContent>{subjects.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
+            </Select>
+          )}
           <Select value={term} onValueChange={setTerm}>
             <SelectTrigger><SelectValue placeholder="Trimestre" /></SelectTrigger>
             <SelectContent>{TERMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
           </Select>
         </CardContent>
       </Card>
+
+      <QuickSubjectDialog
+        open={subjectDialog}
+        onOpenChange={setSubjectDialog}
+        classId={classId}
+        className={currentClassName}
+        availableSubjects={schoolSubjectNames}
+        mode={schoolSubjectNames.length === 0 ? "create" : "assign"}
+        onDone={(n: string) => setSubject(n)}
+      />
 
       {!ready ? (
         <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">
