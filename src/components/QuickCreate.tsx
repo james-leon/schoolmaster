@@ -199,3 +199,113 @@ export function QuickCreateFeeTypeDialog({
     </Dialog>
   );
 }
+
+/**
+ * Quick-create OR assign subjects for a specific class.
+ * - mode "create": school has no subjects at all → create one and link it to the class.
+ * - mode "assign": pick from the school's existing subjects and link them to the class.
+ * In both cases the created/first-assigned subject name is returned for auto-selection.
+ */
+export function QuickSubjectDialog({
+  open,
+  onOpenChange,
+  classId,
+  className,
+  availableSubjects,
+  mode,
+  onDone,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  classId: string;
+  className: string;
+  availableSubjects: string[];
+  mode: "create" | "assign";
+  onDone: (subjectName: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [name, setName] = useState("");
+  const [coefficient, setCoefficient] = useState("1");
+  const [picked, setPicked] = useState<string[]>([]);
+
+  const reset = () => { setName(""); setCoefficient("1"); setPicked([]); };
+
+  const submit = () => {
+    if (!classId) return;
+    if (mode === "create") {
+      const n = name.trim();
+      if (!n) { toast.error(t("quickCreate.nameRequired")); return; }
+      updateDB((d) => {
+        d.classSubjects.push({
+          id: crypto.randomUUID(),
+          classId,
+          name: n,
+          coefficient: Number(coefficient) || 1,
+        });
+      });
+      toast.success(t("quickCreate.subjectCreated"));
+      onDone(n);
+    } else {
+      if (!picked.length) { toast.error(t("quickCreate.pickSubject")); return; }
+      updateDB((d) => {
+        for (const p of picked) {
+          if (d.classSubjects.some((cs) => cs.classId === classId && cs.name.toLowerCase() === p.toLowerCase())) continue;
+          d.classSubjects.push({ id: crypto.randomUUID(), classId, name: p, coefficient: 1 });
+        }
+      });
+      toast.success(t("quickCreate.subjectsAssigned"));
+      onDone(picked[0]);
+    }
+    reset();
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) reset(); onOpenChange(o); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            {mode === "create"
+              ? t("quickCreate.subjectTitle")
+              : t("quickCreate.assignSubjectsTitle", { class: className })}
+          </DialogTitle>
+          <DialogDescription>{t("quickCreate.keepProgress")}</DialogDescription>
+        </DialogHeader>
+        {mode === "create" ? (
+          <div className="space-y-4">
+            <Field label={t("quickCreate.subjectName")}>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Mathématiques" autoFocus />
+            </Field>
+            <Field label={t("quickCreate.subjectCoefficient")}>
+              <Input type="number" min="1" value={coefficient} onChange={(e) => setCoefficient(e.target.value)} />
+            </Field>
+          </div>
+        ) : (
+          <div className="max-h-72 space-y-1 overflow-y-auto rounded-md border border-border p-2">
+            {availableSubjects.map((s) => {
+              const active = picked.includes(s);
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setPicked((p) => (active ? p.filter((x) => x !== s) : [...p, s]))}
+                  className={
+                    "flex w-full items-center justify-between rounded px-3 py-2 text-left text-sm " +
+                    (active ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted")
+                  }
+                >
+                  {s}
+                  {active && <span>✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
+          <Button onClick={submit}>{mode === "create" ? t("common.create") : t("common.save")}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
