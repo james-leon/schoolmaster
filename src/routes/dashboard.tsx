@@ -9,6 +9,8 @@ import { fcfa, timeAgo } from "@/lib/format";
 import { visibleAnnouncements, formatDateFr } from "@/lib/announcements";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveTeacherClasses } from "@/lib/teacher-scope";
+import { trimesterRanges, resolveCurrentTrimester, previousTrimester, isWithin } from "@/lib/trimesters";
+
 import {
   Users, TrendingUp, AlertCircle, AlertTriangle, UserPlus, CreditCard,
   GraduationCap, CalendarCheck, FileText, BookOpen, ClipboardList, Megaphone,
@@ -304,7 +306,7 @@ function AdminDashboard() {
   const today = new Date().toISOString().slice(0, 10);
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth(); // 0-11
-  const quarterStart = Math.floor(currentMonth / 3) * 3; // 0,3,6,9
+  
 
   // Filter all data by current school (defensive — supabase-sync already scopes,
   // but if any legacy entry leaked in we exclude it).
@@ -321,15 +323,15 @@ function AdminDashboard() {
   const recoveryColor =
     recoveryRate >= 80 ? "text-success" : recoveryRate >= 50 ? "text-accent" : "text-destructive";
 
-  // Chiffre d'affaires this trimester (current calendar quarter)
-  const trimesterCA = db.paymentRecords.reduce((sum, r) => {
-    const d = new Date(r.date);
-    if (isNaN(d.getTime())) return sum;
-    if (d.getFullYear() !== currentYear) return sum;
-    const m = d.getMonth();
-    if (m < quarterStart || m >= quarterStart + 3) return sum;
-    return sum + (r.amount || 0);
-  }, 0);
+  // Chiffre d'affaires — REAL school trimester (configured in Paramètres),
+  // falling back to the last completed trimester during vacation.
+  const ranges = useMemo(() => trimesterRanges(db.academicYears), [db.academicYears]);
+  const currentTrimester = useMemo(() => resolveCurrentTrimester(ranges), [ranges]);
+  const trimesterCA = db.paymentRecords.reduce(
+    (sum, r) => (isWithin(r.date, currentTrimester) ? sum + (r.amount || 0) : sum),
+    0
+  );
+
 
   const absentToday = db.attendance.filter((a) => a.date === today && a.status === "absent" && studentIds.has(a.studentId)).length;
 
@@ -414,17 +416,12 @@ function AdminDashboard() {
   }).length;
   const studentsTrend = pctDelta(enrolledThisMonth, enrolledLastMonth);
 
-  const prevQuarterStart = quarterStart === 0 ? 9 : quarterStart - 3;
-  const prevQuarterYear = quarterStart === 0 ? currentYear - 1 : currentYear;
-  const prevTrimesterCA = db.paymentRecords.reduce((sum, r) => {
-    const d = new Date(r.date);
-    if (isNaN(d.getTime())) return sum;
-    if (d.getFullYear() !== prevQuarterYear) return sum;
-    const m = d.getMonth();
-    if (m < prevQuarterStart || m >= prevQuarterStart + 3) return sum;
-    return sum + (r.amount || 0);
-  }, 0);
+  const prevRange = previousTrimester(ranges, currentTrimester);
+  const prevTrimesterCA = prevRange
+    ? db.paymentRecords.reduce((sum, r) => (isWithin(r.date, prevRange) ? sum + (r.amount || 0) : sum), 0)
+    : 0;
   const caTrend = pctDelta(trimesterCA, prevTrimesterCA);
+
 
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
   const absentYesterday = db.attendance.filter((a) => a.date === yesterday && a.status === "absent" && studentIds.has(a.studentId)).length;
@@ -455,13 +452,18 @@ function AdminDashboard() {
           trend={studentsTrend}
         />
         <KpiCard
-          label={t("dashboard.kpiRevenue")}
+          label={`${t("dashboard.kpiRevenue")} — ${t(`trimesters.term${currentTrimester.index + 1}`)}`}
           value={fcfa(trimesterCA)}
           icon={TrendingUp}
           tone="green"
-          sub={t("dashboard.kpiRevenueSub")}
+          sub={
+            currentTrimester.isFallback
+              ? t("dashboard.kpiRevenueSubLastTerm")
+              : t("dashboard.kpiRevenueSubCurrentTerm")
+          }
           trend={caTrend}
         />
+
         <KpiCard
           label={t("dashboard.kpiRecovery")}
           value={`${recoveryRate}%`}

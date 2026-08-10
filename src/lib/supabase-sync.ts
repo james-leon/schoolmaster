@@ -287,6 +287,9 @@ function rowToAnnouncement(r: {
 
 function rowToAcademicYear(r: {
   id: string; name: string; start_date: string | null; end_date: string | null; is_current: boolean;
+  term1_start?: string | null; term1_end?: string | null;
+  term2_start?: string | null; term2_end?: string | null;
+  term3_start?: string | null; term3_end?: string | null;
 }): AcademicYear {
   return {
     id: r.id,
@@ -294,8 +297,15 @@ function rowToAcademicYear(r: {
     startDate: r.start_date ?? undefined,
     endDate: r.end_date ?? undefined,
     isCurrent: r.is_current,
+    term1Start: r.term1_start ?? undefined,
+    term1End: r.term1_end ?? undefined,
+    term2Start: r.term2_start ?? undefined,
+    term2End: r.term2_end ?? undefined,
+    term3Start: r.term3_start ?? undefined,
+    term3End: r.term3_end ?? undefined,
   };
 }
+
 
 // ---- Hydration ----
 /** Public entry point: tracks LOADING / ERROR / READY for the whole app. */
@@ -728,15 +738,22 @@ async function pushDiffs(): Promise<void> {
     const { error } = await supabase.from("academic_years").insert({
       id: y.id, school_id: schoolId, name: y.name,
       start_date: y.startDate ?? null, end_date: y.endDate ?? null, is_current: y.isCurrent,
-    });
+      term1_start: y.term1Start ?? null, term1_end: y.term1End ?? null,
+      term2_start: y.term2Start ?? null, term2_end: y.term2End ?? null,
+      term3_start: y.term3Start ?? null, term3_end: y.term3End ?? null,
+    } as any);
     if (error) throw error;
   }
   for (const y of ayDiff.updated) {
     const { error } = await supabase.from("academic_years").update({
       name: y.name, start_date: y.startDate ?? null, end_date: y.endDate ?? null, is_current: y.isCurrent,
-    }).eq("id", y.id);
+      term1_start: y.term1Start ?? null, term1_end: y.term1End ?? null,
+      term2_start: y.term2Start ?? null, term2_end: y.term2End ?? null,
+      term3_start: y.term3Start ?? null, term3_end: y.term3End ?? null,
+    } as any).eq("id", y.id);
     if (error) throw error;
   }
+
   for (const id of ayDiff.deletedIds) {
     const { error } = await supabase.from("academic_years").delete().eq("id", id);
     if (error) throw error;

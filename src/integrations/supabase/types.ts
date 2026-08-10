@@ -23,6 +23,12 @@ export type Database = {
           name: string
           school_id: string
           start_date: string | null
+          term1_end: string | null
+          term1_start: string | null
+          term2_end: string | null
+          term2_start: string | null
+          term3_end: string | null
+          term3_start: string | null
         }
         Insert: {
           created_at?: string
@@ -32,6 +38,12 @@ export type Database = {
           name: string
           school_id: string
           start_date?: string | null
+          term1_end?: string | null
+          term1_start?: string | null
+          term2_end?: string | null
+          term2_start?: string | null
+          term3_end?: string | null
+          term3_start?: string | null
         }
         Update: {
           created_at?: string
@@ -41,6 +53,12 @@ export type Database = {
           name?: string
           school_id?: string
           start_date?: string | null
+          term1_end?: string | null
+          term1_start?: string | null
+          term2_end?: string | null
+          term2_start?: string | null
+          term3_end?: string | null
+          term3_start?: string | null
         }
         Relationships: []
       }

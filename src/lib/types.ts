@@ -59,7 +59,15 @@ export interface AcademicYear {
   startDate?: string;
   endDate?: string;
   isCurrent: boolean;
+  /** Real school trimester dates (YYYY-MM-DD) — see lib/trimesters.ts */
+  term1Start?: string;
+  term1End?: string;
+  term2Start?: string;
+  term2End?: string;
+  term3Start?: string;
+  term3End?: string;
 }
+
 
 export type Level = "PS" | "MS" | "GS" | "SIL" | "CP" | "CE1" | "CE2" | "CM1" | "CM2";
 
