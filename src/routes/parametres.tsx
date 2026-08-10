@@ -210,7 +210,11 @@ function ParametresPage() {
         </TabsContent>
 
         <TabsContent value="evaluations" className="mt-4">
-          <SequenceCoefficientsPanel />
+          <div className="space-y-4">
+            <TrimesterDatesPanel />
+            <SequenceCoefficientsPanel />
+          </div>
+
         </TabsContent>
 
         <TabsContent value="matieres" className="mt-4">
