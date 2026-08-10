@@ -323,15 +323,15 @@ function AdminDashboard() {
   const recoveryColor =
     recoveryRate >= 80 ? "text-success" : recoveryRate >= 50 ? "text-accent" : "text-destructive";
 
-  // Chiffre d'affaires this trimester (current calendar quarter)
-  const trimesterCA = db.paymentRecords.reduce((sum, r) => {
-    const d = new Date(r.date);
-    if (isNaN(d.getTime())) return sum;
-    if (d.getFullYear() !== currentYear) return sum;
-    const m = d.getMonth();
-    if (m < quarterStart || m >= quarterStart + 3) return sum;
-    return sum + (r.amount || 0);
-  }, 0);
+  // Chiffre d'affaires — REAL school trimester (configured in Paramètres),
+  // falling back to the last completed trimester during vacation.
+  const ranges = useMemo(() => trimesterRanges(db.academicYears), [db.academicYears]);
+  const currentTrimester = useMemo(() => resolveCurrentTrimester(ranges), [ranges]);
+  const trimesterCA = db.paymentRecords.reduce(
+    (sum, r) => (isWithin(r.date, currentTrimester) ? sum + (r.amount || 0) : sum),
+    0
+  );
+
 
   const absentToday = db.attendance.filter((a) => a.date === today && a.status === "absent" && studentIds.has(a.studentId)).length;
 
