@@ -138,6 +138,9 @@ export const en: Dict = {
     kpiStudents: "Enrolled students",
     kpiRevenue: "Revenue",
     kpiRevenueSub: "FCFA this term",
+    kpiRevenueSubCurrentTerm: "FCFA — current term",
+    kpiRevenueSubLastTerm: "FCFA — last completed term",
+
     kpiRecovery: "Collection rate",
     kpiRecoverySub: "{{amount}} remaining",
     kpiAbsences: "Absences today",
