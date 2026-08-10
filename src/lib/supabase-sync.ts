@@ -738,15 +738,22 @@ async function pushDiffs(): Promise<void> {
     const { error } = await supabase.from("academic_years").insert({
       id: y.id, school_id: schoolId, name: y.name,
       start_date: y.startDate ?? null, end_date: y.endDate ?? null, is_current: y.isCurrent,
-    });
+      term1_start: y.term1Start ?? null, term1_end: y.term1End ?? null,
+      term2_start: y.term2Start ?? null, term2_end: y.term2End ?? null,
+      term3_start: y.term3Start ?? null, term3_end: y.term3End ?? null,
+    } as any);
     if (error) throw error;
   }
   for (const y of ayDiff.updated) {
     const { error } = await supabase.from("academic_years").update({
       name: y.name, start_date: y.startDate ?? null, end_date: y.endDate ?? null, is_current: y.isCurrent,
-    }).eq("id", y.id);
+      term1_start: y.term1Start ?? null, term1_end: y.term1End ?? null,
+      term2_start: y.term2Start ?? null, term2_end: y.term2End ?? null,
+      term3_start: y.term3Start ?? null, term3_end: y.term3End ?? null,
+    } as any).eq("id", y.id);
     if (error) throw error;
   }
+
   for (const id of ayDiff.deletedIds) {
     const { error } = await supabase.from("academic_years").delete().eq("id", id);
     if (error) throw error;
