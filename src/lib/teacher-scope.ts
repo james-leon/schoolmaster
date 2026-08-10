@@ -31,7 +31,9 @@ export function resolveTeacherClasses(user: User | null | undefined, db: DB): Cl
   );
 
   return db.classes.filter((c) => {
-    if (assigned.some((a) => c.name === a || c.level === a)) return true;
+    // Only exact class-id references count — never name/level string matching,
+    // which would leak classes taught by other teachers (same level or name).
+    if (assigned.includes(c.id)) return true;
     if (myTeacherId && c.teacherId === myTeacherId) return true;
     if (subjectClassIds.has(c.id)) return true;
     if (linkClassIds.has(c.id)) return true;

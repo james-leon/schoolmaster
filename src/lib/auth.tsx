@@ -6,6 +6,7 @@ import { hydrateAll, clearHydration, triggerSync, getCurrentSchoolId, isSyncActi
 import { registerPersistHook } from "./store";
 import { getImpersonatedSchoolId, setImpersonatedSchoolId } from "./super-admin-api";
 import { setAppLanguage, type AppLanguage } from "./i18n";
+import { resolveTeacherClassIds } from "./teacher-scope";
 
 // Tables owned by the local optimistic store. When any of these changes on
 // the server (another tab, another user, or a server-side write), we
@@ -355,11 +356,9 @@ export function useOptionalAuth(): AuthContextType | null {
 
 export function visibleClassIds(user: User | null): string[] | null {
   if (!user) return [];
-  if (user.role === "teacher" && user.assignedClasses?.length) {
+  if (user.role === "teacher") {
     const db = getDB();
-    return db.classes
-      .filter((c) => user.assignedClasses!.some((a) => c.name === a || c.level === a))
-      .map((c) => c.id);
+    return resolveTeacherClassIds(user, db);
   }
   return null;
 }
