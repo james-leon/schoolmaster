@@ -306,7 +306,7 @@ function AdminDashboard() {
   const today = new Date().toISOString().slice(0, 10);
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth(); // 0-11
-  const quarterStart = Math.floor(currentMonth / 3) * 3; // 0,3,6,9
+  
 
   // Filter all data by current school (defensive — supabase-sync already scopes,
   // but if any legacy entry leaked in we exclude it).
