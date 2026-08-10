@@ -265,7 +265,85 @@ function ParametresPage() {
   );
 }
 
+function TrimesterDatesPanel() {
+  const { t } = useTranslation();
+  const db = useDB();
+  const ranges = trimesterRanges(db.academicYears);
+  const [vals, setVals] = useState(() => ranges.map((r) => ({ start: r.start, end: r.end })));
+  const [saving, setSaving] = useState(false);
+
+  // Re-sync when hydration brings the stored dates in.
+  useEffect(() => {
+    setVals(ranges.map((r) => ({ start: r.start, end: r.end })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(ranges)]);
+
+  const setVal = (i: number, k: "start" | "end", v: string) =>
+    setVals((p) => p.map((x, idx) => (idx === i ? { ...x, [k]: v } : x)));
+
+  const save = () => {
+    for (const [i, v] of vals.entries()) {
+      if (!v.start || !v.end || v.end < v.start) {
+        toast.error(t("trimesters.invalidRange", { n: i + 1 }));
+        return;
+      }
+    }
+    setSaving(true);
+    updateDB((d) => {
+      let ay = currentAcademicYear(d.academicYears);
+      if (!ay) {
+        const y = schoolYearStartYear();
+        ay = { id: crypto.randomUUID(), name: `${y}-${y + 1}`, isCurrent: true };
+        d.academicYears.push(ay);
+      }
+      ay.term1Start = vals[0].start; ay.term1End = vals[0].end;
+      ay.term2Start = vals[1].start; ay.term2End = vals[1].end;
+      ay.term3Start = vals[2].start; ay.term3End = vals[2].end;
+    });
+    setSaving(false);
+    toast.success(t("trimesters.saved"));
+  };
+
+  const reset = () => {
+    const d = defaultTrimesterRanges();
+    setVals(d.map((r) => ({ start: r.start, end: r.end })));
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">{t("trimesters.title")}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">{t("trimesters.help")}</p>
+        <div className="grid grid-cols-1 gap-3">
+          {ranges.map((r, i) => (
+            <div key={r.term} className="rounded-md border border-border p-3">
+              <p className="mb-2 text-sm font-medium">{t(`trimesters.term${i + 1}`)}</p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <Label className="text-xs">{t("trimesters.start")}</Label>
+                  <Input type="date" value={vals[i]?.start ?? ""} onChange={(e) => setVal(i, "start", e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">{t("trimesters.end")}</Label>
+                  <Input type="date" value={vals[i]?.end ?? ""} onChange={(e) => setVal(i, "end", e.target.value)} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={reset}>{t("trimesters.reset")}</Button>
+          <Button onClick={save} disabled={saving}>{t("common.save")}</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function SequenceCoefficientsPanel() {
+
   const [coefs, setCoefs] = useState<Record<string, number>>(() => getSequenceCoefficients());
 
   const set = (seq: Sequence, v: string) => {
