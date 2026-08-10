@@ -355,11 +355,9 @@ export function useOptionalAuth(): AuthContextType | null {
 
 export function visibleClassIds(user: User | null): string[] | null {
   if (!user) return [];
-  if (user.role === "teacher" && user.assignedClasses?.length) {
+  if (user.role === "teacher") {
     const db = getDB();
-    return db.classes
-      .filter((c) => user.assignedClasses!.some((a) => c.name === a || c.level === a))
-      .map((c) => c.id);
+    return resolveTeacherClassIds(user, db);
   }
   return null;
 }
