@@ -121,6 +121,7 @@ export const en: Dict = {
     transport: "Transport",
     budget: "Budget",
     settings: "Settings",
+    help: "Help",
     more: "More",
     menu: "Menu",
     moreModules: "More modules",
@@ -602,5 +603,105 @@ export const en: Dict = {
     noSuppliers: "No beneficiary registered yet. Use \u201cNew\u201d to create one.",
     noRoutes: "No route created yet. Create a route before assigning a pupil to transport.",
     noSubjects: "No subject defined yet. Type a subject name to create it.",
+  },
+  setup: {
+    title: "Quick start",
+    subtitle: "Set up your school in the right order, with no blockers.",
+    progress: "{{done}}/{{total}} steps completed",
+    go: "Start",
+    review: "Review",
+    completeTitle: "Setup complete ✓",
+    completeText: "You can reopen this checklist any time from the Help page.",
+    reopenHint: "This checklist stays available here, even once setup is complete.",
+    steps: {
+      school: {
+        title: "Configure your school",
+        why: "Name, logo, contact details and term dates appear on report cards and receipts.",
+      },
+      classes: {
+        title: "Create your classes (PS to CM2)",
+        why: "Required before enrolling any pupil.",
+      },
+      subjects: {
+        title: "Define your subjects and assign them to classes",
+        why: "Required to enter grades.",
+      },
+      fees: {
+        title: "Create your fee types (tuition, registration…)",
+        why: "Required to issue invoices.",
+      },
+      teachers: {
+        title: "Add your teachers and assign them to classes",
+        why: "They will be able to enter grades and attendance.",
+      },
+      students: {
+        title: "Enrol your pupils (one by one or Excel import)",
+        why: "The heart of your school.",
+      },
+      parentAccounts: {
+        title: "Create parent accounts",
+        why: "Parents will see grades, absences and invoices.",
+      },
+    },
+  },
+  help: {
+    title: "Help",
+    subtitle: "First steps and support.",
+    checklistTitle: "Setup checklist",
+    firstStepsTitle: "First steps",
+    contactTitle: "Wintek support",
+    contactText: "A question or stuck somewhere? Contact our team.",
+    phoneLabel: "Phone / WhatsApp",
+    emailLabel: "Email",
+    roles: {
+      admin: {
+        title: "Principal / Administrator",
+        items: [
+          "Fill in the school details and term dates in Settings.",
+          "Create your classes, then your subjects and assign them to classes.",
+          "Create your fee types before issuing invoices.",
+          "Add your teachers and assign them to their classes.",
+          "Enrol your pupils one by one or via Excel import.",
+          "Create parent accounts from the Parents page.",
+          "Track activity and revenue from the Dashboard.",
+        ],
+      },
+      teacher: {
+        title: "Teacher",
+        items: [
+          "See your classes and pupils under Classes and Students.",
+          "Enter grades in Grades & Report Cards: pick the class, subject and sequence.",
+          "Take attendance daily under Attendance.",
+          "Check your timetable and the announcements addressed to you.",
+        ],
+      },
+      parent: {
+        title: "Parent",
+        items: [
+          "View your child's grades and report cards from the parent space.",
+          "Follow absences and lateness reported by the school.",
+          "Check your invoices and payments.",
+          "Install the app: open the site on your phone, then \"Add to home screen\".",
+        ],
+      },
+      secretary: {
+        title: "Secretary",
+        items: [
+          "Enrol and update pupils.",
+          "Create and manage parent accounts.",
+          "Issue invoices and record payments.",
+          "Keep the calendar up to date and publish announcements.",
+        ],
+      },
+      accountant: {
+        title: "Financial management",
+        items: [
+          "Issue invoices from Fees & Payments.",
+          "Record payments and print receipts.",
+          "Track income and expenses in Accounting.",
+          "Plan and compare budget vs actual in Budget.",
+        ],
+      },
+    },
   },
 };

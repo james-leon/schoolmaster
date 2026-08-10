@@ -38,6 +38,7 @@ import { Route as CguRouteImport } from './routes/cgu'
 import { Route as CalendrierRouteImport } from './routes/calendrier'
 import { Route as BudgetRouteImport } from './routes/budget'
 import { Route as AnnoncesRouteImport } from './routes/annonces'
+import { Route as AideRouteImport } from './routes/aide'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PersonnelIndexRouteImport } from './routes/personnel.index'
 import { Route as PersonnelStaffIdRouteImport } from './routes/personnel.$staffId'
@@ -192,6 +193,11 @@ const AnnoncesRoute = AnnoncesRouteImport.update({
   path: '/annonces',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AideRoute = AideRouteImport.update({
+  id: '/aide',
+  path: '/aide',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -235,6 +241,7 @@ const ApiPublicAdminUsersRoute = ApiPublicAdminUsersRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/aide': typeof AideRoute
   '/annonces': typeof AnnoncesRoute
   '/budget': typeof BudgetRoute
   '/calendrier': typeof CalendrierRoute
@@ -274,6 +281,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/aide': typeof AideRoute
   '/annonces': typeof AnnoncesRoute
   '/budget': typeof BudgetRoute
   '/calendrier': typeof CalendrierRoute
@@ -313,6 +321,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/aide': typeof AideRoute
   '/annonces': typeof AnnoncesRoute
   '/budget': typeof BudgetRoute
   '/calendrier': typeof CalendrierRoute
@@ -354,6 +363,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/aide'
     | '/annonces'
     | '/budget'
     | '/calendrier'
@@ -393,6 +403,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/aide'
     | '/annonces'
     | '/budget'
     | '/calendrier'
@@ -431,6 +442,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/aide'
     | '/annonces'
     | '/budget'
     | '/calendrier'
@@ -471,6 +483,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AideRoute: typeof AideRoute
   AnnoncesRoute: typeof AnnoncesRoute
   BudgetRoute: typeof BudgetRoute
   CalendrierRoute: typeof CalendrierRoute
@@ -711,6 +724,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnnoncesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/aide': {
+      id: '/aide'
+      path: '/aide'
+      fullPath: '/aide'
+      preLoaderRoute: typeof AideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -797,6 +817,7 @@ const PersonnelRouteWithChildren = PersonnelRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AideRoute: AideRoute,
   AnnoncesRoute: AnnoncesRoute,
   BudgetRoute: BudgetRoute,
   CalendrierRoute: CalendrierRoute,
@@ -834,13 +855,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

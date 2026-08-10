@@ -1,4 +1,4 @@
-import { BarChart3, Users, UserCheck, BookOpen, CreditCard, GraduationCap, CalendarCheck, Settings, Megaphone, Calendar, CalendarDays, Wallet, Briefcase, Bus, PiggyBank, type LucideIcon } from "lucide-react";
+import { BarChart3, Users, UserCheck, BookOpen, CreditCard, GraduationCap, CalendarCheck, Settings, Megaphone, Calendar, CalendarDays, Wallet, Briefcase, Bus, PiggyBank, HelpCircle, type LucideIcon } from "lucide-react";
 import type { Role } from "./types";
 import type { FeatureId } from "./plans";
 
@@ -38,6 +38,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/personnel", label: "Personnel", icon: Briefcase, roles: ["super_admin", "school_admin"], feature: "personnel" },
   { to: "/transport", label: "Transport", icon: Bus, roles: ["super_admin", "school_admin", "secretary"], feature: "transport" },
   { to: "/budget", label: "Budget", icon: PiggyBank, roles: ["super_admin", "school_admin"], feature: "budget" },
+  { to: "/aide", label: "Aide", icon: HelpCircle, roles: ["super_admin", "school_admin", "secretary", "teacher", "parent"] },
   { to: "/parametres", label: "Paramètres", icon: Settings, roles: ["super_admin", "school_admin"] },
 ];
 

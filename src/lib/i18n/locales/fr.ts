@@ -120,6 +120,7 @@ export const fr = {
     transport: "Transport",
     budget: "Budget",
     settings: "Paramètres",
+    help: "Aide",
     more: "Plus",
     menu: "Menu",
     moreModules: "Plus de modules",
@@ -609,6 +610,106 @@ export const fr = {
     noSuppliers: "Aucun bénéficiaire enregistré. Utilisez « Nouveau » pour en créer un.",
     noRoutes: "Aucun circuit créé. Créez un circuit avant d'affecter un élève au transport.",
     noSubjects: "Aucune matière définie. Saisissez un nom de matière pour la créer.",
+  },
+  setup: {
+    title: "Démarrage rapide",
+    subtitle: "Configurez votre école dans le bon ordre, sans blocage.",
+    progress: "{{done}}/{{total}} étapes complétées",
+    go: "Commencer",
+    review: "Revoir",
+    completeTitle: "Configuration terminée ✓",
+    completeText: "Vous pouvez rouvrir la liste à tout moment depuis la page Aide.",
+    reopenHint: "Cette liste reste disponible ici, même une fois la configuration terminée.",
+    steps: {
+      school: {
+        title: "Configurer votre école",
+        why: "Nom, logo, coordonnées et dates des trimestres apparaîtront sur les bulletins et reçus.",
+      },
+      classes: {
+        title: "Créer vos classes (PS à CM2)",
+        why: "Indispensable avant d'inscrire des élèves.",
+      },
+      subjects: {
+        title: "Définir vos matières et les assigner aux classes",
+        why: "Nécessaire pour saisir les notes.",
+      },
+      fees: {
+        title: "Créer vos types de frais (scolarité, inscription…)",
+        why: "Nécessaire pour émettre des factures.",
+      },
+      teachers: {
+        title: "Ajouter vos enseignants et les assigner aux classes",
+        why: "Ils pourront saisir notes et présences.",
+      },
+      students: {
+        title: "Inscrire vos élèves (un par un ou import Excel)",
+        why: "Le cœur de votre école.",
+      },
+      parentAccounts: {
+        title: "Créer les comptes parents",
+        why: "Les parents verront notes, absences et factures.",
+      },
+    },
+  },
+  help: {
+    title: "Aide",
+    subtitle: "Premiers pas et assistance.",
+    checklistTitle: "Liste de configuration",
+    firstStepsTitle: "Premiers pas",
+    contactTitle: "Assistance Wintek",
+    contactText: "Une question ou un blocage ? Contactez notre équipe.",
+    phoneLabel: "Téléphone / WhatsApp",
+    emailLabel: "Email",
+    roles: {
+      admin: {
+        title: "Directeur / Administrateur",
+        items: [
+          "Renseignez les informations de l'école et les dates des trimestres dans Paramètres.",
+          "Créez vos classes, puis vos matières et assignez-les aux classes.",
+          "Créez vos types de frais avant d'émettre des factures.",
+          "Ajoutez vos enseignants et affectez-les à leurs classes.",
+          "Inscrivez vos élèves un par un ou par import Excel.",
+          "Créez les comptes parents depuis la page Parents.",
+          "Suivez l'activité et les recettes depuis le Tableau de bord.",
+        ],
+      },
+      teacher: {
+        title: "Enseignant",
+        items: [
+          "Consultez vos classes et vos élèves depuis Classes et Élèves.",
+          "Saisissez les notes dans Notes & Bulletins : choisissez la classe, la matière et la séquence.",
+          "Prenez les présences chaque jour dans Présences.",
+          "Consultez votre emploi du temps et les annonces qui vous concernent.",
+        ],
+      },
+      parent: {
+        title: "Parent",
+        items: [
+          "Consultez les notes et bulletins de votre enfant depuis l'espace parent.",
+          "Suivez les absences et retards signalés par l'école.",
+          "Consultez vos factures et paiements.",
+          "Installez l'application : ouvrez le site sur votre téléphone, puis « Ajouter à l'écran d'accueil ».",
+        ],
+      },
+      secretary: {
+        title: "Secrétaire",
+        items: [
+          "Inscrivez et mettez à jour les élèves.",
+          "Créez et gérez les comptes parents.",
+          "Émettez les factures et enregistrez les paiements.",
+          "Tenez le calendrier et publiez les annonces.",
+        ],
+      },
+      accountant: {
+        title: "Gestion financière",
+        items: [
+          "Émettez les factures depuis Scolarité & Paiements.",
+          "Enregistrez les paiements et imprimez les reçus.",
+          "Suivez recettes et dépenses dans Comptabilité.",
+          "Planifiez et comparez le prévu au réalisé dans Budget.",
+        ],
+      },
+    },
   },
 };
 
