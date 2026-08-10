@@ -137,6 +137,9 @@ export const fr = {
     kpiStudents: "Élèves inscrits",
     kpiRevenue: "Chiffre d'affaires",
     kpiRevenueSub: "FCFA ce trimestre",
+    kpiRevenueSubCurrentTerm: "FCFA — trimestre en cours",
+    kpiRevenueSubLastTerm: "FCFA — dernier trimestre terminé",
+
     kpiRecovery: "Taux de recouvrement",
     kpiRecoverySub: "{{amount}} restants",
     kpiAbsences: "Absences aujourd'hui",
