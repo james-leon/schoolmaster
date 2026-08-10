@@ -24,6 +24,9 @@ import { AuditLogPanel } from "@/components/AuditLogPanel";
 import { SEQUENCES, SEQUENCE_TERM, getSequenceCoefficients, setSequenceCoefficients, type Sequence } from "@/lib/types";
 import { getSchoolSubjects } from "@/lib/subjects";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
+import { trimesterRanges, currentAcademicYear, defaultTrimesterRanges, schoolYearStartYear } from "@/lib/trimesters";
+
 
 export const Route = createFileRoute("/parametres")({
   component: ParametresPage,
