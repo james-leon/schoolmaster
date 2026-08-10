@@ -6,6 +6,7 @@ import { hydrateAll, clearHydration, triggerSync, getCurrentSchoolId, isSyncActi
 import { registerPersistHook } from "./store";
 import { getImpersonatedSchoolId, setImpersonatedSchoolId } from "./super-admin-api";
 import { setAppLanguage, type AppLanguage } from "./i18n";
+import { resolveTeacherClassIds } from "./teacher-scope";
 
 // Tables owned by the local optimistic store. When any of these changes on
 // the server (another tab, another user, or a server-side write), we
