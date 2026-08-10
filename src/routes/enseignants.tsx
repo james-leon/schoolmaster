@@ -254,7 +254,7 @@ function EnseignantsPage() {
                     <div className="grid grid-cols-2 gap-2 rounded-md border border-border p-3 sm:grid-cols-3">
                       {db.classes.map((c) => (
                         <label key={c.id} className="flex cursor-pointer items-center gap-2 text-sm">
-                          <Checkbox checked={form.assignedClasses.includes(c.name)} onCheckedChange={() => toggle("assignedClasses", c.name)} />
+                          <Checkbox checked={form.assignedClasses.includes(c.id)} onCheckedChange={() => toggle("assignedClasses", c.id)} />
                           {c.name}
                         </label>
                       ))}
