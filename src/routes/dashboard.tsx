@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
+import { SetupChecklist } from "@/components/SetupChecklist";
 
 import { useDB } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
@@ -440,6 +441,8 @@ function AdminDashboard() {
         </div>
         <QuickActionsDropdown role={user?.role} />
       </div>
+
+      {(user?.role === "school_admin" || user?.role === "super_admin") && <SetupChecklist />}
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
