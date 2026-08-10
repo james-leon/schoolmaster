@@ -452,13 +452,18 @@ function AdminDashboard() {
           trend={studentsTrend}
         />
         <KpiCard
-          label={t("dashboard.kpiRevenue")}
+          label={`${t("dashboard.kpiRevenue")} — ${t(`trimesters.term${currentTrimester.index + 1}`)}`}
           value={fcfa(trimesterCA)}
           icon={TrendingUp}
           tone="green"
-          sub={t("dashboard.kpiRevenueSub")}
+          sub={
+            currentTrimester.isFallback
+              ? t("dashboard.kpiRevenueSubLastTerm")
+              : t("dashboard.kpiRevenueSubCurrentTerm")
+          }
           trend={caTrend}
         />
+
         <KpiCard
           label={t("dashboard.kpiRecovery")}
           value={`${recoveryRate}%`}
