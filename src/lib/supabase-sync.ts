@@ -287,6 +287,9 @@ function rowToAnnouncement(r: {
 
 function rowToAcademicYear(r: {
   id: string; name: string; start_date: string | null; end_date: string | null; is_current: boolean;
+  term1_start?: string | null; term1_end?: string | null;
+  term2_start?: string | null; term2_end?: string | null;
+  term3_start?: string | null; term3_end?: string | null;
 }): AcademicYear {
   return {
     id: r.id,
@@ -294,8 +297,15 @@ function rowToAcademicYear(r: {
     startDate: r.start_date ?? undefined,
     endDate: r.end_date ?? undefined,
     isCurrent: r.is_current,
+    term1Start: r.term1_start ?? undefined,
+    term1End: r.term1_end ?? undefined,
+    term2Start: r.term2_start ?? undefined,
+    term2End: r.term2_end ?? undefined,
+    term3Start: r.term3_start ?? undefined,
+    term3End: r.term3_end ?? undefined,
   };
 }
+
 
 // ---- Hydration ----
 /** Public entry point: tracks LOADING / ERROR / READY for the whole app. */
