@@ -22,7 +22,7 @@ const NAV_GROUPS: { key: string; routes: string[] }[] = [
   { key: "groupCommunication", routes: ["/annonces"] },
   { key: "groupRH", routes: ["/enseignants", "/personnel"] },
   { key: "groupLogistique", routes: ["/transport"] },
-  { key: "groupSysteme", routes: ["/parametres"] },
+  { key: "groupSysteme", routes: ["/aide", "/parametres"] },
 ];
 
 // Map each nav route to its translation key under `nav.*`. Keeps the
@@ -43,6 +43,7 @@ const NAV_LABEL_KEYS: Record<string, string> = {
   "/personnel": "personnel",
   "/transport": "transport",
   "/budget": "budget",
+  "/aide": "help",
   "/parametres": "settings",
 };
 

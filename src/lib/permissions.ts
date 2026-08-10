@@ -181,6 +181,7 @@ export const TEACHER_ALLOWED_ROUTES: readonly string[] = [
   "/mon-profil",
   "/changer-mot-de-passe",
   "/notifications",
+  "/aide",
 ] as const;
 
 /**
@@ -210,6 +211,7 @@ export const SECRETARY_ALLOWED_ROUTES: readonly string[] = [
   "/notifications",
   "/mon-profil",
   "/changer-mot-de-passe",
+  "/aide",
 ] as const;
 
 export function roleCanVisit(role: Role, path: string): boolean {
