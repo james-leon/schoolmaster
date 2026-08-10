@@ -128,7 +128,20 @@ export const en: Dict = {
     planLabel: "{{name}} plan",
     planCardText: "Manage your subscription and add-ons.",
   },
+  trimesters: {
+    title: "Term dates",
+    help: "Set the real dates of your 3 terms. They drive the \"current term\" figures on the dashboards.",
+    term1: "1st term",
+    term2: "2nd term",
+    term3: "3rd term",
+    start: "Start date",
+    end: "End date",
+    reset: "Restore defaults",
+    saved: "Term dates saved",
+    invalidRange: "Invalid dates for term {{n}}",
+  },
   dashboard: {
+
     hello: "Hello, {{name}}",
     adminSubtitle: "Here is your school's activity.",
     teacherSubtitle: "Here is an overview of your classes and students.",
