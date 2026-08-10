@@ -416,17 +416,12 @@ function AdminDashboard() {
   }).length;
   const studentsTrend = pctDelta(enrolledThisMonth, enrolledLastMonth);
 
-  const prevQuarterStart = quarterStart === 0 ? 9 : quarterStart - 3;
-  const prevQuarterYear = quarterStart === 0 ? currentYear - 1 : currentYear;
-  const prevTrimesterCA = db.paymentRecords.reduce((sum, r) => {
-    const d = new Date(r.date);
-    if (isNaN(d.getTime())) return sum;
-    if (d.getFullYear() !== prevQuarterYear) return sum;
-    const m = d.getMonth();
-    if (m < prevQuarterStart || m >= prevQuarterStart + 3) return sum;
-    return sum + (r.amount || 0);
-  }, 0);
+  const prevRange = previousTrimester(ranges, currentTrimester);
+  const prevTrimesterCA = prevRange
+    ? db.paymentRecords.reduce((sum, r) => (isWithin(r.date, prevRange) ? sum + (r.amount || 0) : sum), 0)
+    : 0;
   const caTrend = pctDelta(trimesterCA, prevTrimesterCA);
+
 
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
   const absentYesterday = db.attendance.filter((a) => a.date === yesterday && a.status === "absent" && studentIds.has(a.studentId)).length;
