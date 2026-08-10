@@ -127,7 +127,20 @@ export const fr = {
     planLabel: "Plan {{name}}",
     planCardText: "Gérer votre abonnement et vos options.",
   },
+  trimesters: {
+    title: "Dates des trimestres",
+    help: "Définissez les dates réelles de vos 3 trimestres. Elles servent au calcul du « trimestre en cours » dans les tableaux de bord.",
+    term1: "1er trimestre",
+    term2: "2e trimestre",
+    term3: "3e trimestre",
+    start: "Date de début",
+    end: "Date de fin",
+    reset: "Valeurs par défaut",
+    saved: "Dates des trimestres enregistrées",
+    invalidRange: "Dates invalides pour le trimestre {{n}}",
+  },
   dashboard: {
+
     hello: "Bonjour, {{name}}",
     adminSubtitle: "Voici l'activité de votre établissement.",
     teacherSubtitle: "Voici un aperçu de vos classes et de vos élèves.",
