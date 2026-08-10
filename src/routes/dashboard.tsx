@@ -9,6 +9,8 @@ import { fcfa, timeAgo } from "@/lib/format";
 import { visibleAnnouncements, formatDateFr } from "@/lib/announcements";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveTeacherClasses } from "@/lib/teacher-scope";
+import { trimesterRanges, resolveCurrentTrimester, previousTrimester, isWithin } from "@/lib/trimesters";
+
 import {
   Users, TrendingUp, AlertCircle, AlertTriangle, UserPlus, CreditCard,
   GraduationCap, CalendarCheck, FileText, BookOpen, ClipboardList, Megaphone,
