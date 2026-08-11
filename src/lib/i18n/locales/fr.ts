@@ -620,6 +620,11 @@ export const fr = {
     completeTitle: "Configuration terminée ✓",
     completeText: "Vous pouvez rouvrir la liste à tout moment depuis la page Aide.",
     reopenHint: "Cette liste reste disponible ici, même une fois la configuration terminée.",
+    hide: "Masquer",
+    expand: "Afficher",
+    collapse: "Réduire",
+    resume: "Reprendre le guide de démarrage",
+    optionalTitle: "Pour aller plus loin (optionnel)",
     steps: {
       school: {
         title: "Configurer votre école",
