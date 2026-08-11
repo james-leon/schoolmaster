@@ -17,6 +17,7 @@ import { AUDIT_ACTION_LABELS, labelForAction } from "@/lib/audit";
 import { ScrollText, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyStateBlock } from "@/components/states";
+import { useTranslation } from "react-i18next";
 
 interface AuditRow {
   id: string;
@@ -39,6 +40,7 @@ interface UserOption {
 const PAGE_SIZE = 50;
 
 export function AuditLogPanel({ schoolId }: { schoolId?: string }) {
+  const { t } = useTranslation();
   const [rows, setRows] = useState<AuditRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -85,7 +87,7 @@ export function AuditLogPanel({ schoolId }: { schoolId?: string }) {
 
         const { data, error, count } = await q;
         if (error) {
-          toast.error("Impossible de charger le journal");
+          toast.error(t("audit.loadError"));
           setRows([]); setTotal(0);
         } else {
           setRows((data ?? []) as unknown as AuditRow[]);
@@ -107,11 +109,11 @@ export function AuditLogPanel({ schoolId }: { schoolId?: string }) {
     <Card>
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="flex items-center gap-2 text-base">
-          <ScrollText className="h-4 w-4" /> Journal d'activité
+          <ScrollText className="h-4 w-4" /> {t("audit.title")}
         </CardTitle>
         <Button size="sm" variant="outline" onClick={() => void load(page)} disabled={loading}>
           <RefreshCw className={`mr-1 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-          Actualiser
+          {t("audit.refresh")}
         </Button>
       </CardHeader>
 
@@ -119,11 +121,11 @@ export function AuditLogPanel({ schoolId }: { schoolId?: string }) {
         {/* Filters */}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
           <div>
-            <Label className="mb-1.5 block text-xs">Utilisateur</Label>
+            <Label className="mb-1.5 block text-xs">{t("audit.filters.user")}</Label>
             <Select value={userFilter} onValueChange={setUserFilter}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="all">{t("audit.filters.all")}</SelectItem>
                 {users.map((u) => (
                   <SelectItem key={u.id} value={u.id}>
                     {u.full_name ?? u.email ?? u.id.slice(0, 8)}
@@ -134,11 +136,11 @@ export function AuditLogPanel({ schoolId }: { schoolId?: string }) {
           </div>
 
           <div>
-            <Label className="mb-1.5 block text-xs">Action</Label>
+            <Label className="mb-1.5 block text-xs">{t("audit.filters.action")}</Label>
             <Select value={actionFilter} onValueChange={setActionFilter}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-72">
-                <SelectItem value="all">Toutes</SelectItem>
+                <SelectItem value="all">{t("audit.filters.allActions")}</SelectItem>
                 {Object.entries(AUDIT_ACTION_LABELS).map(([k, v]) => (
                   <SelectItem key={k} value={k}>{v}</SelectItem>
                 ))}
@@ -147,11 +149,11 @@ export function AuditLogPanel({ schoolId }: { schoolId?: string }) {
           </div>
 
           <div>
-            <Label className="mb-1.5 block text-xs">Du</Label>
+            <Label className="mb-1.5 block text-xs">{t("audit.filters.from")}</Label>
             <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </div>
           <div>
-            <Label className="mb-1.5 block text-xs">Au</Label>
+            <Label className="mb-1.5 block text-xs">{t("audit.filters.to")}</Label>
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
         </div>
@@ -161,16 +163,16 @@ export function AuditLogPanel({ schoolId }: { schoolId?: string }) {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <th className="px-3 py-2 font-medium">Date / Heure</th>
-                <th className="px-3 py-2 font-medium">Utilisateur</th>
-                <th className="px-3 py-2 font-medium">Action</th>
-                <th className="px-3 py-2 font-medium">Cible</th>
-                <th className="px-3 py-2 font-medium">Détails</th>
+                <th className="px-3 py-2 font-medium">{t("audit.colDate")}</th>
+                <th className="px-3 py-2 font-medium">{t("audit.colUser")}</th>
+                <th className="px-3 py-2 font-medium">{t("audit.colAction")}</th>
+                <th className="px-3 py-2 font-medium">{t("audit.colTarget")}</th>
+                <th className="px-3 py-2 font-medium">{t("audit.colDetails")}</th>
               </tr>
             </thead>
             <tbody>
               {loading && rows.length === 0 && (
-                <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">Chargement…</td></tr>
+                <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">{t("audit.loading")}</td></tr>
               )}
               {!loading && rows.length === 0 && (
                 <tr><td colSpan={5} className="p-0"><EmptyStateBlock titleKey="emptyAudit" className="border-0" /></td></tr>
@@ -211,7 +213,7 @@ export function AuditLogPanel({ schoolId }: { schoolId?: string }) {
         {/* Pagination */}
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>
-            {total.toLocaleString("fr-FR")} entrée{total > 1 ? "s" : ""} · page {page + 1} / {pageCount}
+            {t("audit.entries", { count: total })} · {t("audit.page", { current: page + 1, total: pageCount })}
           </span>
           <div className="flex gap-1">
             <Button size="sm" variant="outline" disabled={page === 0 || loading}
@@ -226,7 +228,7 @@ export function AuditLogPanel({ schoolId }: { schoolId?: string }) {
         </div>
 
         <p className="text-[11px] text-muted-foreground">
-          Ce journal est en lecture seule et ne peut être ni modifié ni supprimé.
+          {t("audit.readOnlyNote")}
         </p>
       </CardContent>
     </Card>

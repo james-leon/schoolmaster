@@ -5,6 +5,7 @@ import { useOptionalAuth } from "@/lib/auth";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Wrench, RefreshCw, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type Settings = {
   maintenance_active: boolean;
@@ -105,9 +106,9 @@ function MaintenanceScreen({
   onRetry: () => void;
   checking: boolean;
 }) {
+  const { t } = useTranslation();
   const returnLabel = formatDateTime(expectedReturn);
-  const defaultMsg =
-    "Nous effectuons une maintenance pour améliorer votre expérience. Merci de votre patience.";
+  const defaultMsg = t("maintenance.gate.defaultMessage");
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-muted/40 px-4 py-10">
       <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center shadow-sm">
@@ -118,14 +119,14 @@ function MaintenanceScreen({
           <Wrench className="h-7 w-7" />
         </div>
         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-          Maintenance en cours
+          {t("maintenance.gate.title")}
         </h1>
         <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
           {message?.trim() || defaultMsg}
         </p>
         {returnLabel && (
           <p className="mt-4 text-sm font-medium text-foreground">
-            Retour prévu vers <span className="text-primary">{returnLabel}</span>
+            {t("maintenance.gate.returnPrefix")} <span className="text-primary">{returnLabel}</span>
           </p>
         )}
         <div className="mt-6">
@@ -135,11 +136,11 @@ function MaintenanceScreen({
             ) : (
               <RefreshCw className="mr-2 h-4 w-4" />
             )}
-            Réessayer
+            {t("maintenance.gate.retry")}
           </Button>
         </div>
         <p className="mt-6 text-[11px] text-muted-foreground">
-          Cette page se met à jour automatiquement dès la fin de la maintenance.
+          {t("maintenance.gate.autoRefreshNote")}
         </p>
       </div>
     </div>

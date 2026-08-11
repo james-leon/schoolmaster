@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { superAdminApi } from "@/lib/super-admin-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,12 +29,10 @@ function toLocalInput(iso: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-const DEFAULT_MSG =
-  "Nous effectuons une maintenance pour améliorer votre expérience. Merci de votre patience.";
-const DEFAULT_ANN =
-  "Maintenance prévue prochainement. L'application sera temporairement indisponible pendant cette période.";
-
 export function MaintenancePanel() {
+  const { t } = useTranslation();
+  const DEFAULT_MSG = t("maintenance.panel.defaultMessage");
+  const DEFAULT_ANN = t("maintenance.panel.defaultAnnouncement");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [active, setActive] = useState(false);
@@ -89,10 +88,10 @@ export function MaintenancePanel() {
       if (typeof nextActive === "boolean") setActive(nextActive);
       if (turningOn) setAnnActive(false);
       toast.success(
-        (nextActive ?? active) ? "Mode maintenance activé" : "Mode maintenance désactivé",
+        (nextActive ?? active) ? t("maintenance.panel.toasts.maintenanceOn") : t("maintenance.panel.toasts.maintenanceOff"),
       );
     } catch (e) {
-      toast.error((e as Error).message || "Échec de la mise à jour");
+      toast.error((e as Error).message || t("maintenance.panel.toasts.updateFailed"));
     } finally {
       setSaving(false);
     }
@@ -117,15 +116,15 @@ export function MaintenancePanel() {
       if (turningOn && opts?.broadcast !== false) {
         try {
           const res = await superAdminApi.broadcastAnnouncement(annMessage.trim() || DEFAULT_ANN);
-          toast.success(`Annonce diffusée (${res.recipients} destinataires)`);
+          toast.success(t("maintenance.panel.toasts.broadcastSent", { count: res.recipients }));
         } catch (e) {
-          toast.error("Annonce activée mais l'envoi des notifications a échoué : " + (e as Error).message);
+          toast.error(t("maintenance.panel.toasts.broadcastFailed", { error: (e as Error).message }));
         }
       } else {
-        toast.success(turningOn ? "Annonce activée" : "Annonce désactivée");
+        toast.success(turningOn ? t("maintenance.panel.toasts.announcementOn") : t("maintenance.panel.toasts.announcementOff"));
       }
     } catch (e) {
-      toast.error((e as Error).message || "Échec de la mise à jour");
+      toast.error((e as Error).message || t("maintenance.panel.toasts.updateFailed"));
     } finally {
       setAnnSaving(false);
     }
@@ -136,25 +135,23 @@ export function MaintenancePanel() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Wrench className="h-4 w-4 text-primary" />
-          Mode maintenance
+          {t("maintenance.panel.title")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
+            <Loader2 className="h-4 w-4 animate-spin" /> {t("maintenance.panel.loading")}
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
               <div>
                 <div className="text-sm font-medium">
-                  {active ? "Maintenance ACTIVE" : "Plateforme opérationnelle"}
+                  {active ? t("maintenance.panel.activeLabel") : t("maintenance.panel.offLabel")}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {active
-                    ? "Tous les utilisateurs (sauf super admin) voient l'écran de maintenance."
-                    : "Activez pour afficher un écran de maintenance à tous les utilisateurs."}
+                  {active ? t("maintenance.panel.activeHint") : t("maintenance.panel.offHint")}
                 </div>
               </div>
               <Switch
@@ -165,7 +162,7 @@ export function MaintenancePanel() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="maint-msg">Message affiché aux utilisateurs</Label>
+              <Label htmlFor="maint-msg">{t("maintenance.panel.messageLabel")}</Label>
               <Textarea
                 id="maint-msg"
                 rows={3}
@@ -176,7 +173,7 @@ export function MaintenancePanel() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="maint-eta">Retour prévu (optionnel)</Label>
+              <Label htmlFor="maint-eta">{t("maintenance.panel.etaLabel")}</Label>
               <Input
                 id="maint-eta"
                 type="datetime-local"
@@ -188,7 +185,7 @@ export function MaintenancePanel() {
             <div className="flex justify-end">
               <Button onClick={() => save()} disabled={saving} size="sm">
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Enregistrer le message
+                {t("maintenance.panel.saveMessage")}
               </Button>
             </div>
 
@@ -196,23 +193,19 @@ export function MaintenancePanel() {
             <div className="mt-6 border-t pt-5">
               <div className="mb-3 flex items-center gap-2">
                 <Megaphone className="h-4 w-4 text-amber-600" />
-                <h3 className="text-sm font-semibold">Annonce de maintenance programmée</h3>
+                <h3 className="text-sm font-semibold">{t("maintenance.panel.announcementSectionTitle")}</h3>
               </div>
               <p className="mb-3 text-xs text-muted-foreground">
-                Bandeau ambré non-bloquant affiché à tous les utilisateurs pour
-                prévenir d'une maintenance à venir. Se masque automatiquement
-                après la date de fin ou dès que la vraie maintenance est activée.
+                {t("maintenance.panel.announcementSectionDesc")}
               </p>
 
               <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
                 <div>
                   <div className="text-sm font-medium">
-                    {annActive ? "Annonce ACTIVE" : "Aucune annonce"}
+                    {annActive ? t("maintenance.panel.announcementActiveLabel") : t("maintenance.panel.announcementOffLabel")}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {annActive
-                      ? "Le bandeau s'affiche en haut de l'application pour tous les rôles."
-                      : "Activez pour prévenir les utilisateurs d'une maintenance à venir."}
+                    {annActive ? t("maintenance.panel.announcementActiveHint") : t("maintenance.panel.announcementOffHint")}
                   </div>
                 </div>
                 <Switch
@@ -223,12 +216,12 @@ export function MaintenancePanel() {
               </div>
               {active && (
                 <p className="mt-2 text-xs text-amber-600">
-                  Le bandeau est désactivé automatiquement pendant que le mode maintenance est actif.
+                  {t("maintenance.panel.announcementDisabledNote")}
                 </p>
               )}
 
               <div className="mt-4 space-y-2">
-                <Label htmlFor="ann-msg">Message de l'annonce</Label>
+                <Label htmlFor="ann-msg">{t("maintenance.panel.announcementMessageLabel")}</Label>
                 <Textarea
                   id="ann-msg"
                   rows={3}
@@ -240,7 +233,7 @@ export function MaintenancePanel() {
 
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="ann-starts">Début (optionnel)</Label>
+                  <Label htmlFor="ann-starts">{t("maintenance.panel.announcementStartLabel")}</Label>
                   <Input
                     id="ann-starts"
                     type="datetime-local"
@@ -249,7 +242,7 @@ export function MaintenancePanel() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="ann-ends">Fin (masquage auto)</Label>
+                  <Label htmlFor="ann-ends">{t("maintenance.panel.announcementEndLabel")}</Label>
                   <Input
                     id="ann-ends"
                     type="datetime-local"
@@ -267,7 +260,7 @@ export function MaintenancePanel() {
                   disabled={annSaving}
                 >
                   {annSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Enregistrer
+                  {t("maintenance.panel.save")}
                 </Button>
                 <Button
                   size="sm"
@@ -275,7 +268,7 @@ export function MaintenancePanel() {
                   disabled={annSaving || active}
                 >
                   {annSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Activer + Notifier
+                  {t("maintenance.panel.activateAndNotify")}
                 </Button>
               </div>
             </div>

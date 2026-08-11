@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type Row = {
   maintenance_active: boolean;
@@ -15,6 +16,7 @@ const REFRESH_MS = 60_000;
 const DISMISS_KEY = "wintek_announcement_dismissed_at";
 
 export function MaintenanceAnnouncementBanner() {
+  const { t } = useTranslation();
   const [row, setRow] = useState<Row | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [dismissedFor, setDismissedFor] = useState<string | null>(() => {
@@ -77,7 +79,7 @@ export function MaintenanceAnnouncementBanner() {
 
   const msg =
     row.announcement_message?.trim() ||
-    "Une maintenance est prévue prochainement. L'application pourrait être temporairement indisponible.";
+    t("maintenance.banner.defaultMessage");
 
   const dismiss = () => {
     sessionStorage.setItem(DISMISS_KEY, version);
@@ -92,7 +94,7 @@ export function MaintenanceAnnouncementBanner() {
         <button
           type="button"
           onClick={dismiss}
-          aria-label="Masquer"
+          aria-label={t("maintenance.banner.dismiss")}
           className="rounded p-1 text-amber-700 transition hover:bg-amber-100 dark:text-amber-200 dark:hover:bg-amber-500/20"
         >
           <X className="h-4 w-4" />

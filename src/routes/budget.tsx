@@ -72,17 +72,17 @@ function BudgetPage() {
   const fetchAll = useCallback(async () => {
     if (!schoolId) return;
     setLoading(true);
-    const [b, l, c, t] = await Promise.all([
+    const [b, l, c, txRes] = await Promise.all([
       supabase.from("budgets").select("*").eq("school_id", schoolId).order("period_start", { ascending: false }),
       supabase.from("budget_lines").select("*").eq("school_id", schoolId),
       supabase.from("transaction_categories").select("id,school_id,name,type").eq("school_id", schoolId).order("name"),
       supabase.from("transactions").select("id,school_id,type,category,amount,date").eq("school_id", schoolId),
     ]);
-    if (b.error || l.error || c.error || t.error) toast.error(t("budget.toasts.loadError"));
+    if (b.error || l.error || c.error || txRes.error) toast.error(t("budget.toasts.loadError"));
     setBudgets(((b.data ?? []) as unknown) as Budget[]);
     setLines(((l.data ?? []) as unknown) as BudgetLine[]);
     setCategories(((c.data ?? []) as unknown) as Category[]);
-    setTxs(((t.data ?? []) as unknown) as Tx[]);
+    setTxs(((txRes.data ?? []) as unknown) as Tx[]);
     setLoading(false);
   }, [schoolId]);
 

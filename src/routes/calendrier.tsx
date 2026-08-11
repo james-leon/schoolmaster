@@ -44,6 +44,8 @@ interface EventRow {
   created_at: string;
 }
 
+const EVENT_TYPES: EventType[] = ["vacances", "examen", "reunion", "evenement", "sortie", "ferie"];
+const EVENT_TARGETS: EventTarget[] = ["ecole", "classe", "parents", "enseignants"];
 const TYPE_META_STYLE: Record<EventType, { bg: string; border: string; text: string; dot: string }> = {
   vacances:  { bg: "bg-emerald-100",  border: "border-emerald-400", text: "text-emerald-900", dot: "bg-emerald-500" },
   examen:    { bg: "bg-red-100",      border: "border-red-400",     text: "text-red-900",     dot: "bg-red-500" },
@@ -52,20 +54,9 @@ const TYPE_META_STYLE: Record<EventType, { bg: string; border: string; text: str
   sortie:    { bg: "bg-purple-100",   border: "border-purple-400",  text: "text-purple-900",  dot: "bg-purple-500" },
   ferie:     { bg: "bg-gray-200",     border: "border-gray-400",    text: "text-gray-800",    dot: "bg-gray-500" },
 };
-const TYPE_KEYS: Record<EventType, string> = {
-  vacances: "vacances", examen: "examen", reunion: "reunion", evenement: "evenement", sortie: "sortie", ferie: "ferie",
-};
-const TARGET_KEYS: Record<EventTarget, string> = {
-  ecole: "ecole", classe: "classe", parents: "parents", enseignants: "enseignants",
-};
-function typeLabel(t: EventType) { return i18n.t(`calendar.types.${TYPE_KEYS[t]}`); }
-function targetLabel(tg: EventTarget) { return i18n.t(`calendar.targets.${TARGET_KEYS[tg]}`); }
-const TYPE_META: Record<EventType, { label: string; bg: string; border: string; text: string; dot: string }> = new Proxy({} as any, {
-  get(_t, prop: EventType) { return { label: typeLabel(prop), ...TYPE_META_STYLE[prop] }; },
-});
-const TARGET_LABEL: Record<EventTarget, string> = new Proxy({} as any, {
-  get(_t, prop: EventTarget) { return targetLabel(prop); },
-});
+function typeLabel(t: EventType) { return i18n.t(`calendar.types.${t}`); }
+function targetLabel(tg: EventTarget) { return i18n.t(`calendar.targets.${tg}`); }
+function typeMeta(t: EventType) { return { label: typeLabel(t), ...TYPE_META_STYLE[t] }; }
 
 const MONTH_KEYS = ["january","february","march","april","may","june","july","august","september","october","november","december"];
 const WEEKDAY_KEYS = ["mon","tue","wed","thu","fri","sat","sun"];
@@ -167,7 +158,7 @@ function CalendrierPage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-[180px] text-center text-lg font-semibold">
-            {MONTHS_FR[cursor.getMonth()]} {cursor.getFullYear()}
+            {monthsLabels()[cursor.getMonth()]} {cursor.getFullYear()}
           </div>
           <Button variant="outline" size="icon" onClick={() => { const d = new Date(cursor); d.setMonth(d.getMonth() + 1); setCursor(d); }}>
             <ChevronRight className="h-4 w-4" />
@@ -199,7 +190,7 @@ function CalendrierPage() {
             ) : view === "month" ? (
               <div>
                 <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
-                  {DAYS_FR.map((d) => <div key={d} className="py-1">{d}</div>)}
+                  {weekdaysLabels().map((d) => <div key={d} className="py-1">{d}</div>)}
                 </div>
                 <div className="grid grid-cols-7 gap-1">
                   {grid.map((cell, i) => {
@@ -223,7 +214,7 @@ function CalendrierPage() {
                         <span className={cn("text-[11px] font-semibold leading-none", isToday && "text-primary")}>{cell.date.getDate()}</span>
                         <div className="mt-1 flex min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
                           {visibleEvs.map((ev) => {
-                            const meta = TYPE_META[ev.type];
+                            const meta = typeMeta(ev.type);
                             return (
                               <span
                                 key={ev.id}
@@ -295,10 +286,10 @@ function CalendrierPage() {
             <CardContent className="p-4">
               <h3 className="mb-3 text-sm font-semibold">Légende</h3>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                {(Object.keys(TYPE_META) as EventType[]).map((t) => (
+                {EVENT_TYPES.map((t) => (
                   <div key={t} className="flex items-center gap-2">
-                    <span className={cn("h-3 w-3 rounded-full", TYPE_META[t].dot)} />
-                    <span>{TYPE_META[t].label}</span>
+                    <span className={cn("h-3 w-3 rounded-full", typeMeta(t).dot)} />
+                    <span>{typeMeta(t).label}</span>
                   </div>
                 ))}
               </div>
@@ -314,16 +305,16 @@ function CalendrierPage() {
             <>
               <DialogHeader>
                 <div className="flex items-center gap-2">
-                  <span className={cn("h-3 w-3 rounded-full", TYPE_META[viewingEvent.type].dot)} />
+                  <span className={cn("h-3 w-3 rounded-full", typeMeta(viewingEvent.type).dot)} />
                   <DialogTitle>{viewingEvent.title}</DialogTitle>
                 </div>
               </DialogHeader>
               <div className="space-y-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline" className={cn(TYPE_META[viewingEvent.type].bg, TYPE_META[viewingEvent.type].text, "border-0")}>
-                    {TYPE_META[viewingEvent.type].label}
+                  <Badge variant="outline" className={cn(typeMeta(viewingEvent.type).bg, typeMeta(viewingEvent.type).text, "border-0")}>
+                    {typeMeta(viewingEvent.type).label}
                   </Badge>
-                  <Badge variant="outline">{TARGET_LABEL[viewingEvent.target]}</Badge>
+                  <Badge variant="outline">{targetLabel(viewingEvent.target)}</Badge>
                   {viewingEvent.target === "classe" && viewingEvent.target_class_id && (
                     <Badge variant="outline">{db.classes.find((c) => c.id === viewingEvent.target_class_id)?.name ?? "Classe"}</Badge>
                   )}
@@ -381,7 +372,7 @@ function CalendrierPage() {
 }
 
 function EventListItem({ ev, onClick, compact }: { ev: EventRow; onClick: () => void; compact?: boolean }) {
-  const meta = TYPE_META[ev.type];
+  const meta = typeMeta(ev.type);
   return (
     <button
       type="button"
@@ -497,8 +488,8 @@ function EventFormDialog({
               <Select value={type} onValueChange={(v) => setType(v as EventType)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(TYPE_META) as EventType[]).map((t) => (
-                    <SelectItem key={t} value={t}>{TYPE_META[t].label}</SelectItem>
+                  {EVENT_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>{typeMeta(t).label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -508,8 +499,8 @@ function EventFormDialog({
               <Select value={target} onValueChange={(v) => setTarget(v as EventTarget)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(TARGET_LABEL) as EventTarget[]).map((t) => (
-                    <SelectItem key={t} value={t}>{TARGET_LABEL[t]}</SelectItem>
+                  {EVENT_TARGETS.map((t) => (
+                    <SelectItem key={t} value={t}>{targetLabel(t)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

@@ -768,6 +768,7 @@ function PrivacyPanel({ schoolId }: { schoolId?: string }) {
 }
 
 function SubjectsPanel() {
+  const { t } = useTranslation();
   const db = useDB();
   const subjects = getSchoolSubjects(db);
   const [newName, setNewName] = useState("");
@@ -793,7 +794,7 @@ function SubjectsPanel() {
     const name = newName.trim();
     if (!name) return;
     if (subjects.some((s) => s.toLowerCase() === name.toLowerCase())) {
-      toast.error("Cette matière existe déjà");
+      toast.error(t("settings2.subjects.alreadyExists"));
       return;
     }
     // Adds to the unified list by attaching it to every existing class
@@ -809,20 +810,20 @@ function SubjectsPanel() {
         });
       }
     });
-    toast.success("Matière ajoutée à toutes les classes");
+    toast.success(t("settings2.subjects.added"));
     setNewName("");
   };
 
   const doRename = () => {
     if (!renaming) return;
     const to = renameTo.trim();
-    if (!to) { toast.error("Nom requis"); return; }
+    if (!to) { toast.error(t("settings2.subjects.nameRequired")); return; }
     updateDB((d) => {
       for (const s of d.classSubjects) {
         if (s.name.toLowerCase() === renaming.toLowerCase()) s.name = to;
       }
     });
-    toast.success("Matière renommée");
+    toast.success(t("settings2.subjects.renamed"));
     setRenaming(null);
     setRenameTo("");
   };
@@ -837,39 +838,38 @@ function SubjectsPanel() {
         if ((t.subject ?? "").toLowerCase() === key) t.subject = t.subjects?.[0] ?? "";
       });
     });
-    toast.success("Matière supprimée");
+    toast.success(t("settings2.subjects.deleted"));
     setConfirmDel(null);
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Matières de l'école</CardTitle>
+        <CardTitle className="text-base">{t("settings2.subjects.title")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Liste unique des matières utilisée partout (classes, enseignants, notes). Toute matière créée ici
-          est immédiatement disponible dans Classes et lors de l'affectation d'un enseignant.
+          {t("settings2.subjects.help")}
         </p>
         <div className="flex gap-2">
           <Input
-            placeholder="Nouvelle matière (ex: Sciences Physiques)"
+            placeholder={t("settings2.subjects.placeholder")}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addSubject()}
           />
-          <Button onClick={addSubject}>Ajouter</Button>
+          <Button onClick={addSubject}>{t("settings2.subjects.add")}</Button>
         </div>
 
         <div className="rounded-md border border-border">
           <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground">
-            <div>Matière</div>
-            <div>Classes</div>
-            <div>Enseignants</div>
-            <div className="text-right">Actions</div>
+            <div>{t("settings2.subjects.colSubject")}</div>
+            <div>{t("settings2.subjects.colClasses")}</div>
+            <div>{t("settings2.subjects.colTeachers")}</div>
+            <div className="text-right">{t("settings2.subjects.colActions")}</div>
           </div>
           {subjects.length === 0 && (
-            <div className="p-4 text-center text-sm text-muted-foreground">Aucune matière.</div>
+            <div className="p-4 text-center text-sm text-muted-foreground">{t("settings2.subjects.none")}</div>
           )}
           {subjects.map((s) => {
             const cCount = classCount(s);
@@ -887,17 +887,17 @@ function SubjectsPanel() {
                 ) : (
                   <span className="font-medium">{s}</span>
                 )}
-                <Badge variant="secondary">{cCount} classe{cCount > 1 ? "s" : ""}</Badge>
-                <Badge variant="secondary">{tCount} ens.</Badge>
+                <Badge variant="secondary">{t("settings2.subjects.classesCount", { count: cCount })}</Badge>
+                <Badge variant="secondary">{t("settings2.subjects.teachersAbbrev", { count: tCount })}</Badge>
                 <div className="flex justify-end gap-1">
                   {isRenaming ? (
                     <>
-                      <Button size="sm" onClick={doRename}>OK</Button>
-                      <Button size="sm" variant="outline" onClick={() => { setRenaming(null); setRenameTo(""); }}>Annuler</Button>
+                      <Button size="sm" onClick={doRename}>{t("settings2.subjects.ok")}</Button>
+                      <Button size="sm" variant="outline" onClick={() => { setRenaming(null); setRenameTo(""); }}>{t("settings2.subjects.cancel")}</Button>
                     </>
                   ) : (
                     <>
-                      <Button size="sm" variant="outline" onClick={() => { setRenaming(s); setRenameTo(s); }}>Renommer</Button>
+                      <Button size="sm" variant="outline" onClick={() => { setRenaming(s); setRenameTo(s); }}>{t("settings2.subjects.rename")}</Button>
                       <Button size="sm" variant="ghost" onClick={() => setConfirmDel(s)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -912,15 +912,14 @@ function SubjectsPanel() {
         <Dialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Supprimer « {confirmDel} » ?</DialogTitle>
+              <DialogTitle>{t("settings2.subjects.deleteConfirmTitle", { name: confirmDel })}</DialogTitle>
             </DialogHeader>
             <p className="text-sm text-muted-foreground">
-              Cette matière sera retirée de toutes les classes qui l'utilisent. Les notes déjà saisies restent
-              conservées mais ne pourront plus être associées à cette matière.
+              {t("settings2.subjects.deleteConfirmBody")}
             </p>
             <div className="mt-4 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setConfirmDel(null)}>Annuler</Button>
-              <Button className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={doDelete}>Supprimer</Button>
+              <Button variant="outline" onClick={() => setConfirmDel(null)}>{t("settings2.subjects.cancel")}</Button>
+              <Button className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={doDelete}>{t("settings2.subjects.delete")}</Button>
             </div>
           </DialogContent>
         </Dialog>
