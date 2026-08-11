@@ -486,7 +486,7 @@ function CreateInvoiceModal({
         });
       }
     });
-    toast.success(newRecord ? `Facture créée et paiement enregistré — Reçu N° ${newRecord.receiptNumber}` : "Facture créée avec succès");
+    toast.success(newRecord ? t("fees.invoiceCreatedAndPaid", { num: newRecord.receiptNumber }) : t("fees.invoiceCreatedSuccess"));
     onClose();
     if (newRecord) onPaid(newRecord);
   };
@@ -726,7 +726,7 @@ function PaymentModal({
         date: new Date().toISOString(),
       });
     });
-    toast.success(`Paiement enregistré — Reçu N° ${receiptNumber}`);
+    toast.success(t("fees.paymentSaved", { num: receiptNumber }));
     onPaid(newRecord);
   };
 
@@ -786,36 +786,38 @@ function PaymentModal({
 /* ============================ INVOICE DETAIL ============================ */
 
 function InvoiceDetailModal({ invoice, onClose }: { invoice: Payment; onClose: () => void }) {
+  const { t } = useTranslation();
   const db = useDB();
   const s = db.students.find((x) => x.id === invoice.studentId);
   const cls = s ? db.classes.find((c) => c.id === s.classId) : undefined;
   const records = db.paymentRecords.filter((r) => r.invoiceId === invoice.id);
   const status = deriveInvoiceStatus(invoice.amount, invoice.amountPaid, invoice.dueDate);
+  const STATUS_LABELS = useStatusLabels();
   const st = STATUS_LABELS[status];
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Facture {invoice.invoiceNumber}</DialogTitle>
+          <DialogTitle>{t("fees.invoiceModalTitle", { num: invoice.invoiceNumber })}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Statut</span>
+            <span className="text-muted-foreground">{t("common.status")}</span>
             <Badge className={st.cls}>{st.label}</Badge>
           </div>
-          <Row label="Élève" value={s ? `${s.firstName} ${s.lastName}` : "—"} />
-          <Row label="Classe" value={cls?.name || "—"} />
-          <Row label="Type" value={invoice.type} />
-          <Row label="Montant" value={fcfa(invoice.amount)} />
-          <Row label="Payé" value={fcfa(invoice.amountPaid)} />
-          <Row label="Reste" value={fcfa(invoice.amount - invoice.amountPaid)} />
-          <Row label="Échéance" value={invoice.dueDate || "—"} />
-          {invoice.notes && <Row label="Notes" value={invoice.notes} />}
+          <Row label={t("fees.studentLabel")} value={s ? `${s.firstName} ${s.lastName}` : "—"} />
+          <Row label={t("fees.classLabel")} value={cls?.name || "—"} />
+          <Row label={t("fees.typeLabel")} value={invoice.type} />
+          <Row label={t("fees.amountLabel")} value={fcfa(invoice.amount)} />
+          <Row label={t("fees.paidLabel")} value={fcfa(invoice.amountPaid)} />
+          <Row label={t("fees.remainingLabel")} value={fcfa(invoice.amount - invoice.amountPaid)} />
+          <Row label={t("fees.dueDateLabel")} value={invoice.dueDate || "—"} />
+          {invoice.notes && <Row label={t("fees.notesLabel")} value={invoice.notes} />}
           <div className="pt-2">
-            <div className="mb-2 font-semibold">Historique des paiements</div>
+            <div className="mb-2 font-semibold">{t("fees.paymentHistoryTitle")}</div>
             {records.length === 0 ? (
-              <EmptyStateBlock title="Aucun paiement enregistré" description="Les paiements de cette facture apparaîtront ici." className="py-8" />
+              <EmptyStateBlock title={t("fees.noPaymentRecorded")} description={t("fees.paymentsWillAppearHere")} className="py-8" />
             ) : (
               <div className="space-y-1.5">
                 {records.map((r) => (
@@ -831,7 +833,7 @@ function InvoiceDetailModal({ invoice, onClose }: { invoice: Payment; onClose: (
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Fermer</Button>
+          <Button variant="outline" onClick={onClose}>{t("common.close")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -850,6 +852,7 @@ function Row({ label, value }: { label: string; value: string }) {
 /* ============================ RECEIPT MODAL ============================ */
 
 function ReceiptModal({ record, onClose }: { record: PaymentRecord; onClose: () => void }) {
+  const { t } = useTranslation();
   const db = useDB();
   const student = db.students.find((s) => s.id === record.studentId);
   const cls = student ? db.classes.find((c) => c.id === student.classId) : undefined;
@@ -860,39 +863,39 @@ function ReceiptModal({ record, onClose }: { record: PaymentRecord; onClose: () 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Reçu de paiement</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("fees.receiptModalTitle")}</DialogTitle></DialogHeader>
         <div id="receipt-print" className="rounded-lg border bg-background p-5 text-sm">
           <div className="mb-3 border-b pb-3 text-center">
             <div className="text-base font-bold">{school?.name}</div>
             <div className="text-xs text-muted-foreground">{school?.city}, {school?.country}</div>
-            <div className="text-xs text-muted-foreground">Tél : {school?.phone}</div>
+            <div className="text-xs text-muted-foreground">{t("common.phone")} : {school?.phone}</div>
           </div>
           <div className="mb-3 text-center">
-            <div className="text-sm font-semibold uppercase tracking-wide">Reçu de paiement</div>
-            <div className="font-mono text-xs">N° {record.receiptNumber}</div>
-            <div className="text-xs text-muted-foreground">Date : {record.date}</div>
+            <div className="text-sm font-semibold uppercase tracking-wide">{t("fees.receiptTitle")}</div>
+            <div className="font-mono text-xs">{t("fees.receiptNumberPrefix")} {record.receiptNumber}</div>
+            <div className="text-xs text-muted-foreground">{t("fees.receiptDatePrefix")} {record.date}</div>
           </div>
           <div className="space-y-1.5 border-t border-b py-3">
-            <Row label="Reçu de" value={student?.parentName || "—"} />
-            <Row label="Élève" value={student ? `${student.firstName} ${student.lastName}` : "—"} />
-            <Row label="Classe" value={cls?.name || "—"} />
-            <Row label="Au titre de" value={invoice?.type || "—"} />
-            <Row label="Montant" value={fcfa(record.amount)} />
-            <div className="text-xs italic text-muted-foreground">En lettres : {amountInWords(record.amount)}</div>
-            <Row label="Mode" value={record.mode} />
-            {record.reference && <Row label="Référence" value={record.reference} />}
+            <Row label={t("fees.receivedFrom")} value={student?.parentName || "—"} />
+            <Row label={t("fees.studentLabel")} value={student ? `${student.firstName} ${student.lastName}` : "—"} />
+            <Row label={t("fees.classLabel")} value={cls?.name || "—"} />
+            <Row label={t("fees.forLabel")} value={invoice?.type || "—"} />
+            <Row label={t("fees.amountLabel")} value={fcfa(record.amount)} />
+            <div className="text-xs italic text-muted-foreground">{t("fees.inWordsPrefix")} {amountInWords(record.amount)}</div>
+            <Row label={t("fees.modeLabel")} value={record.mode} />
+            {record.reference && <Row label={t("fees.referenceLabel")} value={record.reference} />}
           </div>
           <div className="py-3">
-            <Row label="Reste à payer" value={fcfa(remaining)} />
+            <Row label={t("fees.remainingToPay")} value={fcfa(remaining)} />
           </div>
           <div className="mt-4 pt-6 text-xs">
-            <div>Signature Caissier :</div>
+            <div>{t("fees.cashierSignaturePrefix")}</div>
             <div className="mt-6 border-t pt-1">_____________________</div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Fermer</Button>
-          <Button onClick={() => printReceipt()}><Printer className="mr-1.5 h-4 w-4" /> Imprimer</Button>
+          <Button variant="outline" onClick={onClose}>{t("common.close")}</Button>
+          <Button onClick={() => printReceipt()}><Printer className="mr-1.5 h-4 w-4" /> {t("common.print")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

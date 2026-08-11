@@ -336,26 +336,26 @@ function PersonnelPage() {
 
           <TabsContent value="payroll" className="space-y-4">
             <Card><CardContent className="flex flex-wrap items-end gap-3 p-4">
-              <div><Label className="text-xs">Mois</Label>
+              <div><Label className="text-xs">{t("payroll.monthLabel")}</Label>
                 <Select value={String(month)} onValueChange={v => setMonth(Number(v))}>
                   <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
                   <SelectContent>{MONTHS_FR.map((m, i) => <SelectItem key={i + 1} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
                 </Select></div>
-              <div><Label className="text-xs">Année</Label>
+              <div><Label className="text-xs">{t("payroll.yearLabel")}</Label>
                 <Input type="number" className="w-[100px]" value={year} onChange={e => setYear(Number(e.target.value))} /></div>
-              <Button onClick={bulkGenerate}>Générer toutes les fiches du mois</Button>
+              <Button onClick={bulkGenerate}>{t("payroll.generateAllButton")}</Button>
             </CardContent></Card>
 
             <Card><CardContent className="p-0">
               <Table>
                 <TableHeader><TableRow>
-                  <TableHead>Salarié</TableHead><TableHead>Période</TableHead>
-                  <TableHead>Net</TableHead><TableHead>Statut</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("payroll.table.employee")}</TableHead><TableHead>{t("payroll.table.period")}</TableHead>
+                  <TableHead>{t("payroll.table.net")}</TableHead><TableHead>{t("payroll.table.status")}</TableHead>
+                  <TableHead className="text-right">{t("common.actions")}</TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                   {monthPayroll.length === 0 ? (
-                    <TableEmpty colSpan={5} titleKey="emptyPayroll" actionLabel="Générer toutes les fiches du mois" onAction={bulkGenerate} />
+                    <TableEmpty colSpan={5} titleKey="emptyPayroll" actionLabel={t("payroll.generateAllButton")} onAction={bulkGenerate} />
                   )
                   : monthPayroll.map(p => {
                     const s = staffMap[p.staff_id];
@@ -370,15 +370,15 @@ function PersonnelPage() {
                         <TableCell className="font-semibold">{fcfa(Number(p.net_salary))}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className={p.status === "payé" ? "border-green-500/30 bg-green-500/10 text-green-700" : ""}>
-                            {p.status}
+                            {t(`staff.leave.statuses.${p.status}`, p.status)}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           {p.status !== "payé" ? (
                             <Button size="sm" variant="outline" onClick={() => { setPayDialog(p); setPayMethod("Espèces"); }}>
-                              Marquer payé
+                              {t("payroll.markPaidButton")}
                             </Button>
-                          ) : <span className="text-xs text-muted-foreground">Payé</span>}
+                          ) : <span className="text-xs text-muted-foreground">{t("payroll.paid")}</span>}
                         </TableCell>
                       </TableRow>
                     );
@@ -393,50 +393,50 @@ function PersonnelPage() {
       {/* Add dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Nouveau membre du personnel</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("staff.newStaffMember")}</DialogTitle></DialogHeader>
           <div className="grid gap-3 md:grid-cols-2">
-            <div><Label>Prénom *</Label><Input value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></div>
-            <div><Label>Nom *</Label><Input value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></div>
-            <div><Label>Fonction *</Label>
+            <div><Label>{t("staff.form.firstName")}</Label><Input value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></div>
+            <div><Label>{t("staff.form.lastName")}</Label><Input value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></div>
+            <div><Label>{t("staff.form.role")}</Label>
               <Select value={form.role_title} onValueChange={v => setForm({ ...form, role_title: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{ROLE_TITLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+                <SelectContent>{ROLE_TITLES.map(r => <SelectItem key={r} value={r}>{t(`staff.roles.${r}`, r)}</SelectItem>)}</SelectContent>
               </Select></div>
-            <div><Label>Lier à un enseignant</Label>
+            <div><Label>{t("staff.form.linkTeacher")}</Label>
               <Select value={form.linked_teacher_id || "none"} onValueChange={v => setForm({ ...form, linked_teacher_id: v === "none" ? "" : v })}>
-                <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
-                <SelectContent><SelectItem value="none">Aucun</SelectItem>
+                <SelectTrigger><SelectValue placeholder={t("staff.form.none")} /></SelectTrigger>
+                <SelectContent><SelectItem value="none">{t("staff.form.none")}</SelectItem>
                   {teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.first_name} {t.last_name}</SelectItem>)}</SelectContent>
               </Select></div>
-            <div><Label>Téléphone</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
-            <div><Label>Email</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-            <div className="md:col-span-2"><Label>Adresse</Label><Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
-            <div><Label>Genre</Label>
+            <div><Label>{t("staff.form.phone")}</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+            <div><Label>{t("staff.form.email")}</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
+            <div className="md:col-span-2"><Label>{t("staff.form.address")}</Label><Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
+            <div><Label>{t("staff.form.gender")}</Label>
               <Select value={form.gender || "none"} onValueChange={v => setForm({ ...form, gender: v === "none" ? "" : v })}>
                 <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent><SelectItem value="none">—</SelectItem><SelectItem value="M">Masculin</SelectItem><SelectItem value="F">Féminin</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="none">—</SelectItem><SelectItem value="M">{t("staff.form.male")}</SelectItem><SelectItem value="F">{t("staff.form.female")}</SelectItem></SelectContent>
               </Select></div>
-            <div><Label>Date de naissance</Label><Input type="date" value={form.date_of_birth} onChange={e => setForm({ ...form, date_of_birth: e.target.value })} /></div>
-            <div><Label>Date d'embauche</Label><Input type="date" value={form.hire_date} onChange={e => setForm({ ...form, hire_date: e.target.value })} /></div>
-            <div><Label>Type de contrat</Label>
+            <div><Label>{t("staff.form.dob")}</Label><Input type="date" value={form.date_of_birth} onChange={e => setForm({ ...form, date_of_birth: e.target.value })} /></div>
+            <div><Label>{t("staff.form.hireDate")}</Label><Input type="date" value={form.hire_date} onChange={e => setForm({ ...form, hire_date: e.target.value })} /></div>
+            <div><Label>{t("staff.form.contractType")}</Label>
               <Select value={form.contract_type} onValueChange={v => setForm({ ...form, contract_type: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{CONTRACT_TYPES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                <SelectContent>{CONTRACT_TYPES.map(c => <SelectItem key={c} value={c}>{t(`staff.contractTypes.${c}`, c)}</SelectItem>)}</SelectContent>
               </Select></div>
-            <div><Label>Début de contrat</Label><Input type="date" value={form.contract_start} onChange={e => setForm({ ...form, contract_start: e.target.value })} /></div>
-            <div><Label>Fin de contrat</Label><Input type="date" value={form.contract_end} onChange={e => setForm({ ...form, contract_end: e.target.value })} /></div>
-            <div><Label>Salaire de base (FCFA)</Label><Input type="number" value={form.base_salary} onChange={e => setForm({ ...form, base_salary: e.target.value })} /></div>
-            <div><Label>Statut</Label>
+            <div><Label>{t("staff.form.contractStart")}</Label><Input type="date" value={form.contract_start} onChange={e => setForm({ ...form, contract_start: e.target.value })} /></div>
+            <div><Label>{t("staff.form.contractEnd")}</Label><Input type="date" value={form.contract_end} onChange={e => setForm({ ...form, contract_end: e.target.value })} /></div>
+            <div><Label>{t("staff.form.baseSalary")}</Label><Input type="number" value={form.base_salary} onChange={e => setForm({ ...form, base_salary: e.target.value })} /></div>
+            <div><Label>{t("staff.form.status")}</Label>
               <Select value={form.status} onValueChange={v => setForm({ ...form, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{t(`staff.statuses.${s}`, s)}</SelectItem>)}</SelectContent>
               </Select></div>
-            <div className="md:col-span-2"><Label>Diplômes</Label><Textarea rows={2} value={form.diplomas} onChange={e => setForm({ ...form, diplomas: e.target.value })} /></div>
-            <div className="md:col-span-2"><Label>Notes</Label><Textarea rows={2} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
+            <div className="md:col-span-2"><Label>{t("staff.form.diplomas")}</Label><Textarea rows={2} value={form.diplomas} onChange={e => setForm({ ...form, diplomas: e.target.value })} /></div>
+            <div className="md:col-span-2"><Label>{t("staff.form.notes")}</Label><Textarea rows={2} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button onClick={submit}>Ajouter</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("common.cancel")}</Button>
+            <Button onClick={submit}>{t("common.add")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -445,14 +445,14 @@ function PersonnelPage() {
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce membre du personnel ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("staff.confirmDelete.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmDel && <>Cette action supprimera <strong>{confirmDel.first_name} {confirmDel.last_name}</strong> ainsi que ses congés et fiches de paie associés. Cette action est irréversible.</>}
+              {confirmDel && <>{t("staff.confirmDelete.description", { name: `${confirmDel.first_name} ${confirmDel.last_name}` }).split("<strong>")[0]}<strong>{confirmDel.first_name} {confirmDel.last_name}</strong>{t("staff.confirmDelete.description", { name: "" }).split("</strong>")[1]}</>}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={() => confirmDel && deleteStaff(confirmDel.id)}>Supprimer</AlertDialogAction>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmDel && deleteStaff(confirmDel.id)}>{t("common.delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -460,23 +460,23 @@ function PersonnelPage() {
       {/* Mark paid dialog */}
       <Dialog open={!!payDialog} onOpenChange={(o) => !o && setPayDialog(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Marquer comme payé</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("staff.payslips.markPaidDialog.title")}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div className="text-sm text-muted-foreground">
-              Net à payer : <span className="font-semibold text-foreground">{fcfa(Number(payDialog?.net_salary ?? 0))}</span>
+              {t("staff.payslips.markPaidDialog.netToPay")} <span className="font-semibold text-foreground">{fcfa(Number(payDialog?.net_salary ?? 0))}</span>
             </div>
-            <div><Label>Méthode de paiement</Label>
+            <div><Label>{t("staff.payslips.markPaidDialog.paymentMethod")}</Label>
               <Select value={payMethod} onValueChange={setPayMethod}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{PAYMENT_METHODS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
               </Select></div>
             <div className="text-xs text-muted-foreground">
-              Une dépense correspondante sera ajoutée automatiquement en Comptabilité (catégorie Salaires).
+              {t("staff.payslips.markPaidDialog.expenseNote")}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPayDialog(null)}>Annuler</Button>
-            <Button onClick={markPaid}>Confirmer le paiement</Button>
+            <Button variant="outline" onClick={() => setPayDialog(null)}>{t("common.cancel")}</Button>
+            <Button onClick={markPaid}>{t("staff.payslips.markPaidDialog.confirm")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

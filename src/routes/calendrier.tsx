@@ -77,6 +77,7 @@ function eventCoversDate(ev: EventRow, iso: string) {
 }
 
 function CalendrierPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const db = useDB();
   const isAdmin = isSchoolAdmin(user) || isSuperAdmin(user) || isSecretary(user);
@@ -96,7 +97,7 @@ function CalendrierPage() {
       .from("events")
       .select("*")
       .order("start_date", { ascending: true });
-    if (error) { toast.error("Impossible de charger les événements"); setLoading(false); return; }
+    if (error) { toast.error(t("calendar.loadError")); setLoading(false); return; }
     setEvents((data ?? []) as EventRow[]);
     setLoading(false);
   }, []);
@@ -142,16 +143,16 @@ function CalendrierPage() {
   const daysEvents = (iso: string) => monthEvents.filter((e) => eventCoversDate(e, iso));
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer cet événement ?")) return;
+    if (!confirm(t("calendar.confirmDeleteEvent"))) return;
     const { error } = await supabase.from("events").delete().eq("id", id);
-    if (error) return toast.error("Suppression impossible");
-    toast.success("Événement supprimé");
+    if (error) return toast.error(t("calendar.deleteError"));
+    toast.success(t("calendar.eventDeleted"));
     setViewingEvent(null);
     fetchEvents();
   };
 
   return (
-    <AppLayout title="Calendrier scolaire">
+    <AppLayout title={t("calendar.title")}>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => { const d = new Date(cursor); d.setMonth(d.getMonth() - 1); setCursor(d); }}>
@@ -163,20 +164,20 @@ function CalendrierPage() {
           <Button variant="outline" size="icon" onClick={() => { const d = new Date(cursor); d.setMonth(d.getMonth() + 1); setCursor(d); }}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => { const d = new Date(); d.setDate(1); setCursor(d); }}>Aujourd'hui</Button>
+          <Button variant="ghost" size="sm" onClick={() => { const d = new Date(); d.setDate(1); setCursor(d); }}>{t("calendar.today")}</Button>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-md border">
             <Button variant={view === "month" ? "secondary" : "ghost"} size="sm" onClick={() => setView("month")} className="rounded-r-none">
-              <LayoutGrid className="mr-1.5 h-4 w-4" /> Mois
+              <LayoutGrid className="mr-1.5 h-4 w-4" /> {t("calendar.month")}
             </Button>
             <Button variant={view === "list" ? "secondary" : "ghost"} size="sm" onClick={() => setView("list")} className="rounded-l-none">
-              <List className="mr-1.5 h-4 w-4" /> Liste
+              <List className="mr-1.5 h-4 w-4" /> {t("calendar.list")}
             </Button>
           </div>
           {isAdmin && (
             <Button onClick={() => { setEditing(null); setOpenDialog(true); }}>
-              <Plus className="mr-1.5 h-4 w-4" /> Nouvel événement
+              <Plus className="mr-1.5 h-4 w-4" /> {t("calendar.newEvent")}
             </Button>
           )}
         </div>
@@ -244,7 +245,7 @@ function CalendrierPage() {
             ) : (
               <div className="space-y-2">
                 {monthEvents.length === 0 && (
-                  <EmptyStateBlock icon={CalendarIconEmpty} titleKey="emptyEvents" description="Aucun événement ce mois-ci." />
+                  <EmptyStateBlock icon={CalendarIconEmpty} titleKey="emptyEvents" description={t("calendar.noEventsMonth")} />
                 )}
                 {monthEvents.map((ev) => <EventListItem key={ev.id} ev={ev} onClick={() => setViewingEvent(ev)} />)}
               </div>
@@ -258,10 +259,10 @@ function CalendrierPage() {
               <CardContent className="p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <h3 className="font-semibold">{fmtFr(selectedDay)}</h3>
-                  <button onClick={() => setSelectedDay(null)} className="text-xs text-muted-foreground hover:underline">Fermer</button>
+                  <button onClick={() => setSelectedDay(null)} className="text-xs text-muted-foreground hover:underline">{t("calendar.close")}</button>
                 </div>
                 {daysEvents(selectedDay).length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Aucun événement ce jour.</p>
+                  <p className="text-sm text-muted-foreground">{t("calendar.noEventsThisDay")}</p>
                 ) : (
                   <div className="space-y-2">
                     {daysEvents(selectedDay).map((ev) => <EventListItem key={ev.id} ev={ev} onClick={() => setViewingEvent(ev)} compact />)}
@@ -272,9 +273,9 @@ function CalendrierPage() {
           )}
           <Card>
             <CardContent className="p-4">
-              <h3 className="mb-3 flex items-center gap-2 font-semibold"><CalendarDays className="h-4 w-4" /> Prochains événements</h3>
+              <h3 className="mb-3 flex items-center gap-2 font-semibold"><CalendarDays className="h-4 w-4" /> {t("calendar.upcomingEvents")}</h3>
               {upcoming.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun événement à venir.</p>
+                <p className="text-sm text-muted-foreground">{t("calendar.noUpcomingEvents")}</p>
               ) : (
                 <div className="space-y-2">
                   {upcoming.slice(0, 8).map((ev) => <EventListItem key={ev.id} ev={ev} onClick={() => setViewingEvent(ev)} compact />)}
@@ -284,12 +285,12 @@ function CalendrierPage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <h3 className="mb-3 text-sm font-semibold">Légende</h3>
+              <h3 className="mb-3 text-sm font-semibold">{t("calendar.legend")}</h3>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                {EVENT_TYPES.map((t) => (
-                  <div key={t} className="flex items-center gap-2">
-                    <span className={cn("h-3 w-3 rounded-full", typeMeta(t).dot)} />
-                    <span>{typeMeta(t).label}</span>
+                {EVENT_TYPES.map((et) => (
+                  <div key={et} className="flex items-center gap-2">
+                    <span className={cn("h-3 w-3 rounded-full", typeMeta(et).dot)} />
+                    <span>{typeMeta(et).label}</span>
                   </div>
                 ))}
               </div>
