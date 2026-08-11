@@ -1213,6 +1213,7 @@ export type Database = {
           phone: string | null
           role: Database["public"]["Enums"]["app_role"] | null
           school_id: string | null
+          setup_dismissed: boolean
           student_id: string | null
           student_ids: string[]
         }
@@ -1231,6 +1232,7 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["app_role"] | null
           school_id?: string | null
+          setup_dismissed?: boolean
           student_id?: string | null
           student_ids?: string[]
         }
@@ -1249,6 +1251,7 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["app_role"] | null
           school_id?: string | null
+          setup_dismissed?: boolean
           student_id?: string | null
           student_ids?: string[]
         }
