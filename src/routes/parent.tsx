@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +40,7 @@ export const Route = createFileRoute("/parent")({
 type TabKey = "tous" | "enfant" | "notes" | "presences" | "paiements" | "medical" | "suivi" | "messages" | "calendrier";
 
 function ParentPortal() {
+  const { t } = useTranslation();
   const { user, loading, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const db = useDB();
@@ -57,17 +59,17 @@ function ParentPortal() {
 
   type TabDef = { key: TabKey; label: string; icon: typeof UserCircle };
   const PRIMARY: TabDef[] = [
-    ...(hasMultiple ? [{ key: "tous" as TabKey, label: "Tous", icon: Users2 }] : []),
-    { key: "enfant", label: "Enfant", icon: UserCircle },
-    { key: "notes", label: "Notes", icon: GraduationCap },
-    { key: "paiements", label: "Paiements", icon: Wallet },
-    { key: "messages", label: "Messages", icon: MessageSquare },
+    ...(hasMultiple ? [{ key: "tous" as TabKey, label: t("parentPortal.tabs.tous"), icon: Users2 }] : []),
+    { key: "enfant", label: t("parentPortal.tabs.enfant"), icon: UserCircle },
+    { key: "notes", label: t("parentPortal.tabs.notes"), icon: GraduationCap },
+    { key: "paiements", label: t("parentPortal.tabs.paiements"), icon: Wallet },
+    { key: "messages", label: t("parentPortal.tabs.messages"), icon: MessageSquare },
   ];
   const MORE: TabDef[] = [
-    { key: "presences", label: "Présences", icon: Calendar },
-    { key: "medical", label: "Médical", icon: HeartPulse },
-    { key: "suivi", label: "Suivi", icon: ShieldAlert },
-    { key: "calendrier", label: "Calendrier", icon: CalendarDays },
+    { key: "presences", label: t("parentPortal.tabs.presences"), icon: Calendar },
+    { key: "medical", label: t("parentPortal.tabs.medical"), icon: HeartPulse },
+    { key: "suivi", label: t("parentPortal.tabs.suivi"), icon: ShieldAlert },
+    { key: "calendrier", label: t("parentPortal.tabs.calendrier"), icon: CalendarDays },
   ];
   const moreActive = MORE.some((m) => m.key === tab);
   const navItems = PRIMARY.length >= 5 ? PRIMARY.slice(0, 5) : PRIMARY;
@@ -108,10 +110,10 @@ function ParentPortal() {
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 pb-4 pt-4">
           <div className="min-w-0 flex-1">
             <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur">
-              👋 Espace Parent
+              {t("parentPortal.header.badge")}
             </span>
             <p className="mt-1.5 truncate font-['Sora'] text-lg font-bold tracking-tight">
-              Bonjour, {user?.name}
+              {t("parentPortal.header.greeting", { name: user?.name })}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-1">
@@ -124,7 +126,7 @@ function ParentPortal() {
               size="icon"
               className="text-white hover:bg-white/10 hover:text-white"
               onClick={() => { logout(); navigate({ to: "/login" }); }}
-              aria-label="Déconnexion"
+              aria-label={t("parentPortal.header.logout")}
             >
               <LogOut className="h-5 w-5" />
             </Button>
@@ -141,11 +143,11 @@ function ParentPortal() {
 
       <main className="mx-auto max-w-3xl px-4 pt-5">
         {childrenLoading ? (
-          <Card><CardContent className="pt-6 text-center text-sm text-muted-foreground">Chargement…</CardContent></Card>
+          <Card><CardContent className="pt-6 text-center text-sm text-muted-foreground">{t("parentPortal.loading")}</CardContent></Card>
         ) : children.length === 0 ? (
           <Card>
             <CardContent className="pt-6 text-center text-sm text-muted-foreground">
-              Aucun enfant n'est associé à votre compte. Contactez l'école pour le lier.
+              {t("parentPortal.noChildren")}
             </CardContent>
           </Card>
         ) : tab === "tous" && hasMultiple ? (
@@ -163,9 +165,9 @@ function ParentPortal() {
           </>
         ) : null}
         <div className="mx-auto mt-6 max-w-3xl px-4 pb-20 text-center text-xs text-muted-foreground">
-          <a href="/confidentialite" target="_blank" rel="noreferrer" className="hover:text-foreground">Politique de confidentialité</a>
+          <a href="/confidentialite" target="_blank" rel="noreferrer" className="hover:text-foreground">{t("parentPortal.footer.privacyPolicy")}</a>
           <span className="mx-2">•</span>
-          <span>Loi n°2024/017</span>
+          <span>{t("parentPortal.footer.lawRef")}</span>
         </div>
       </main>
 
@@ -198,7 +200,7 @@ function ParentPortal() {
           >
             {moreActive && <span className="absolute inset-x-6 top-0 h-[3px] rounded-b-full bg-[#2563EB]" />}
             <MoreHorizontal className="h-5 w-5" />
-            <span className="truncate">Plus</span>
+            <span className="truncate">{t("parentPortal.tabs.plus")}</span>
           </button>
         </div>
       </nav>
@@ -206,7 +208,7 @@ function ParentPortal() {
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
         <SheetContent side="bottom" className="rounded-t-2xl p-0">
           <SheetHeader className="border-b px-4 py-3 text-left">
-            <SheetTitle>Plus d'options</SheetTitle>
+            <SheetTitle>{t("parentPortal.tabs.plusOptions")}</SheetTitle>
           </SheetHeader>
           <div className="grid grid-cols-1 gap-1 p-3">
             {MORE.map((item) => {
@@ -278,6 +280,7 @@ function CombinedView({
 }: {
   children: ParentChild[]; db: ReturnType<typeof useDB>; onPickChild: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const month = new Date().toISOString().slice(0, 7);
   const rows = children.map((c) => {
     const grades = db.grades.filter((g) => g.studentId === c.id);
@@ -293,7 +296,7 @@ function CombinedView({
       <Card>
         <CardContent className="flex items-center justify-between pt-6">
           <div>
-            <p className="text-xs text-muted-foreground">Total frais impayés (tous enfants)</p>
+            <p className="text-xs text-muted-foreground">{t("parentPortal.combined.totalDue")}</p>
             <p className={cn("text-2xl font-bold", totalDue > 0 ? "text-destructive" : "text-success")}>{fcfa(totalDue)}</p>
           </div>
           <Wallet className="h-8 w-8 text-muted-foreground" />
@@ -318,9 +321,9 @@ function CombinedView({
                     {child.className && <Badge variant="outline" className="text-[10px]">{child.className}</Badge>}
                   </div>
                   <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                    <span>Moyenne: <b className="text-foreground">{avg != null ? `${avg}/20` : "—"}</b></span>
-                    <span>Absences: <b className="text-foreground">{absences}</b></span>
-                    <span>Impayé: <b className={due > 0 ? "text-destructive" : "text-success"}>{fcfa(due)}</b></span>
+                    <span>{t("parentPortal.combined.average")}: <b className="text-foreground">{avg != null ? `${avg}/20` : "—"}</b></span>
+                    <span>{t("parentPortal.combined.absences")}: <b className="text-foreground">{absences}</b></span>
+                    <span>{t("parentPortal.combined.unpaid")}: <b className={due > 0 ? "text-destructive" : "text-success"}>{fcfa(due)}</b></span>
                   </div>
                 </div>
               </CardContent>
@@ -351,6 +354,7 @@ function EmptyState({ icon: Icon, message, tone = "muted" }: { icon: any; messag
 function EnfantTab({ student, klass, initials, grades, payments, paymentRecords, attendance }: {
   student: Student; klass: Classe | undefined; initials: string; grades: Grade[]; payments: Payment[]; paymentRecords: PaymentRecord[]; attendance: any[];
 }) {
+  const { t } = useTranslation();
   const studentGrades = grades.filter((g) => g.studentId === student.id);
   const lastTerm = "1er trimestre";
   const termGrades = studentGrades.filter((g) => g.term === lastTerm);
@@ -401,20 +405,20 @@ function EnfantTab({ student, klass, initials, grades, payments, paymentRecords,
 
       {/* 2x2 stat cards */}
       <div className="grid grid-cols-2 gap-3">
-        <SummaryCard label="Moyenne générale" value={moy != null ? `${moy}/20` : "—"} icon={GraduationCap} iconBg="#2563EB" />
-        <SummaryCard label="Absences ce mois" value={String(absencesMois)} icon={Calendar} iconBg="#F58B1F" />
-        <SummaryCard label="Frais impayés" value={fcfa(due)} icon={Wallet} iconBg={due > 0 ? "#E11D48" : "#15A05A"} />
-        <SummaryCard label="Prochain cours" value="Lun. 08h00" icon={Bell} iconBg="#7C5CFC" />
+        <SummaryCard label={t("parentPortal.enfant.generalAverage")} value={moy != null ? `${moy}/20` : "—"} icon={GraduationCap} iconBg="#2563EB" />
+        <SummaryCard label={t("parentPortal.enfant.absencesThisMonth")} value={String(absencesMois)} icon={Calendar} iconBg="#F58B1F" />
+        <SummaryCard label={t("parentPortal.enfant.unpaidFees")} value={fcfa(due)} icon={Wallet} iconBg={due > 0 ? "#E11D48" : "#15A05A"} />
+        <SummaryCard label={t("parentPortal.enfant.nextClass")} value="Lun. 08h00" icon={Bell} iconBg="#7C5CFC" />
       </div>
 
       {/* Dernières notes */}
       <div className="rounded-[18px] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.1)]">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="font-['Sora'] text-base font-semibold text-[#0F172A]">Dernières notes</h3>
-          <span className="text-[11px] font-medium text-[#64748B]">{recent.length} récente{recent.length > 1 ? "s" : ""}</span>
+          <h3 className="font-['Sora'] text-base font-semibold text-[#0F172A]">{t("parentPortal.enfant.recentGrades")}</h3>
+          <span className="text-[11px] font-medium text-[#64748B]">{t("parentPortal.enfant.recentCount", { count: recent.length })}</span>
         </div>
         {recent.length === 0 ? (
-          <EmptyState icon={Inbox} message="Aucune note enregistrée" />
+          <EmptyState icon={Inbox} message={t("parentPortal.enfant.noGrades")} />
         ) : (
           <ul className="space-y-2.5">
             {recent.map((g) => {
@@ -475,6 +479,7 @@ function SummaryCard({ label, value, icon: Icon, iconBg }: { label: string; valu
 }
 
 function NotesTab({ studentId, grades, classSubjects }: { studentId: string; grades: Grade[]; classSubjects: any[] }) {
+  const { t } = useTranslation();
   const [term, setTerm] = useState("1er trimestre");
   const termGrades = grades.filter((g) => g.studentId === studentId && g.term === term);
 
@@ -484,12 +489,12 @@ function NotesTab({ studentId, grades, classSubjects }: { studentId: string; gra
         <CardContent className="pt-6">
           <Tabs value={term} onValueChange={setTerm}>
             <TabsList>
-              <TabsTrigger value="1er trimestre">T1</TabsTrigger>
-              <TabsTrigger value="2e trimestre">T2</TabsTrigger>
-              <TabsTrigger value="3e trimestre">T3</TabsTrigger>
+              <TabsTrigger value="1er trimestre">{t("parentPortal.notes.termT1")}</TabsTrigger>
+              <TabsTrigger value="2e trimestre">{t("parentPortal.notes.termT2")}</TabsTrigger>
+              <TabsTrigger value="3e trimestre">{t("parentPortal.notes.termT3")}</TabsTrigger>
             </TabsList>
           </Tabs>
-          <EmptyState icon={BookOpen} message="Les notes ne sont pas encore disponibles pour ce trimestre" />
+          <EmptyState icon={BookOpen} message={t("parentPortal.notes.notAvailable")} />
         </CardContent>
       </Card>
     );
@@ -508,9 +513,9 @@ function NotesTab({ studentId, grades, classSubjects }: { studentId: string; gra
   return (
     <Tabs value={term} onValueChange={setTerm}>
       <TabsList>
-        <TabsTrigger value="1er trimestre">T1</TabsTrigger>
-        <TabsTrigger value="2e trimestre">T2</TabsTrigger>
-        <TabsTrigger value="3e trimestre">T3</TabsTrigger>
+        <TabsTrigger value="1er trimestre">{t("parentPortal.notes.termT1")}</TabsTrigger>
+        <TabsTrigger value="2e trimestre">{t("parentPortal.notes.termT2")}</TabsTrigger>
+        <TabsTrigger value="3e trimestre">{t("parentPortal.notes.termT3")}</TabsTrigger>
       </TabsList>
       <TabsContent value={term} className="mt-3">
         <Card>
@@ -518,10 +523,10 @@ function NotesTab({ studentId, grades, classSubjects }: { studentId: string; gra
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Matière</TableHead>
-                  <TableHead className="text-center">Coef.</TableHead>
-                  <TableHead className="text-right">Moyenne</TableHead>
-                  <TableHead>Appréciation</TableHead>
+                  <TableHead>{t("parentPortal.notes.subject")}</TableHead>
+                  <TableHead className="text-center">{t("parentPortal.notes.coefficient")}</TableHead>
+                  <TableHead className="text-right">{t("parentPortal.notes.average")}</TableHead>
+                  <TableHead>{t("parentPortal.notes.appreciation")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -539,7 +544,7 @@ function NotesTab({ studentId, grades, classSubjects }: { studentId: string; gra
               </TableBody>
             </Table>
             <div className="mt-4 flex items-center justify-between rounded-lg bg-primary/10 px-4 py-3">
-              <span className="text-sm font-semibold text-primary">Moyenne générale</span>
+              <span className="text-sm font-semibold text-primary">{t("parentPortal.notes.generalAverage")}</span>
               <span className="text-lg font-bold text-primary">{general}/20</span>
             </div>
           </CardContent>
@@ -550,6 +555,7 @@ function NotesTab({ studentId, grades, classSubjects }: { studentId: string; gra
 }
 
 function PresencesTab({ studentId, attendance }: { studentId: string; attendance: any[] }) {
+  const { t } = useTranslation();
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
@@ -589,11 +595,11 @@ function PresencesTab({ studentId, attendance }: { studentId: string; attendance
         {records.length === 0 ? (
           <div className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-success/10 px-4 py-3 text-success">
             <CheckCircle2 className="h-4 w-4" />
-            <span className="text-sm font-medium">Aucune absence enregistrée ce mois-ci</span>
+            <span className="text-sm font-medium">{t("parentPortal.presences.noAbsences")}</span>
           </div>
         ) : (
           <div className="mt-4 flex items-center justify-between rounded-lg bg-destructive/5 px-4 py-3">
-            <span className="text-sm">Absences ce mois</span>
+            <span className="text-sm">{t("parentPortal.presences.absencesThisMonth")}</span>
             <Badge variant="destructive">{absences}</Badge>
           </div>
         )}
@@ -603,6 +609,7 @@ function PresencesTab({ studentId, attendance }: { studentId: string; attendance
 }
 
 function PaiementsTab({ studentId, payments, paymentRecords }: { studentId: string; payments: Payment[]; paymentRecords: PaymentRecord[] }) {
+  const { t } = useTranslation();
   const list = payments.filter((p) => p.studentId === studentId);
   const due = list.reduce((s, p) => s + Math.max(0, p.amount - paidFor(p, paymentRecords)), 0);
 
@@ -610,7 +617,7 @@ function PaiementsTab({ studentId, payments, paymentRecords }: { studentId: stri
     return (
       <Card>
         <CardContent className="pt-6">
-          <EmptyState icon={CheckCircle2} message="Aucune facture en attente" tone="success" />
+          <EmptyState icon={CheckCircle2} message={t("parentPortal.paiements.noInvoice")} tone="success" />
         </CardContent>
       </Card>
     );
@@ -620,7 +627,7 @@ function PaiementsTab({ studentId, payments, paymentRecords }: { studentId: stri
     <div className="space-y-4">
       <Card>
         <CardContent className="flex items-center justify-between pt-6">
-          <span className="text-sm font-medium">Total impayé</span>
+          <span className="text-sm font-medium">{t("parentPortal.paiements.totalUnpaid")}</span>
           <span className={cn("text-xl font-bold", due > 0 ? "text-destructive" : "text-success")}>{fcfa(due)}</span>
         </CardContent>
       </Card>
@@ -629,17 +636,17 @@ function PaiementsTab({ studentId, payments, paymentRecords }: { studentId: stri
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Facture</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Montant</TableHead>
-                <TableHead>Statut</TableHead>
+                <TableHead>{t("parentPortal.paiements.invoice")}</TableHead>
+                <TableHead>{t("parentPortal.paiements.type")}</TableHead>
+                <TableHead className="text-right">{t("parentPortal.paiements.amount")}</TableHead>
+                <TableHead>{t("parentPortal.paiements.status")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {list.map((p) => {
                 const st = deriveInvoiceStatus(p.amount, paidFor(p, paymentRecords), p.dueDate);
                 const variant = st === "paye" ? "default" : st === "partiel" ? "secondary" : "destructive";
-                const label = st === "paye" ? "Payée" : st === "partiel" ? "Partiel" : st === "retard" ? "En retard" : "En attente";
+                const label = st === "paye" ? t("parentPortal.paiements.paid") : st === "partiel" ? t("parentPortal.paiements.partial") : st === "retard" ? t("parentPortal.paiements.late") : t("parentPortal.paiements.pending");
                 return (
                   <TableRow key={p.id}>
                     <TableCell className="font-mono text-xs">{p.invoiceNumber}</TableCell>
@@ -658,6 +665,7 @@ function PaiementsTab({ studentId, payments, paymentRecords }: { studentId: stri
 }
 
 function MessagesTab({ announcements, classIds, userId, schoolId }: { announcements: import("@/lib/types").Announcement[]; classIds: string[]; userId?: string; schoolId?: string }) {
+  const { t } = useTranslation();
   const classSet = new Set(classIds);
   const visible = announcements
     .filter((a) => {
@@ -681,7 +689,7 @@ function MessagesTab({ announcements, classIds, userId, schoolId }: { announceme
     return (
       <Card>
         <CardContent className="pt-6">
-          <EmptyState icon={MessageSquare} message="Aucun message de l'école pour le moment" />
+          <EmptyState icon={MessageSquare} message={t("parentPortal.messages.noMessages")} />
         </CardContent>
       </Card>
     );
@@ -696,7 +704,7 @@ function MessagesTab({ announcements, classIds, userId, schoolId }: { announceme
                 {a.pinned && <span className="mr-1 text-accent">📌</span>}
                 {a.title}
               </p>
-              <Badge variant="outline" className="text-[10px]">{a.audience === "Classe" ? "Classe" : a.audience}</Badge>
+              <Badge variant="outline" className="text-[10px]">{a.audience === "Classe" ? t("parentPortal.messages.classAudience") : a.audience}</Badge>
             </div>
             <p className="mb-2 text-[11px] text-muted-foreground">
               {new Date(a.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
@@ -710,6 +718,7 @@ function MessagesTab({ announcements, classIds, userId, schoolId }: { announceme
 }
 
 function ParentNotificationBell() {
+  const { t } = useTranslation();
   const { notifications, unreadCount, markAsRead, markAllAsRead, remove } = useNotifications();
   const [open, setOpen] = useState(false);
   return (
@@ -718,7 +727,7 @@ function ParentNotificationBell() {
         variant="ghost"
         size="icon"
         className="relative"
-        aria-label="Notifications"
+        aria-label={t("parentPortal.header.notifications")}
         onClick={() => setOpen(true)}
       >
         <Bell className="h-5 w-5" />
@@ -752,14 +761,15 @@ function ParentNotificationsSheet({
   onMarkAllRead: () => void;
   onRemove: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full max-w-md p-0 sm:max-w-md">
         <SheetHeader className="flex flex-row items-center justify-between border-b px-4 py-3 text-left">
-          <SheetTitle className="flex items-center gap-2"><Bell className="h-4 w-4" /> Notifications</SheetTitle>
+          <SheetTitle className="flex items-center gap-2"><Bell className="h-4 w-4" /> {t("parentPortal.notificationsSheet.title")}</SheetTitle>
           {unreadCount > 0 && (
             <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={onMarkAllRead}>
-              <CheckCircle2 className="mr-1 h-3 w-3" /> Tout marquer
+              <CheckCircle2 className="mr-1 h-3 w-3" /> {t("parentPortal.notificationsSheet.markAll")}
             </Button>
           )}
         </SheetHeader>
@@ -767,7 +777,7 @@ function ParentNotificationsSheet({
           {notifications.length === 0 && (
             <div className="px-4 py-16 text-center text-sm text-muted-foreground">
               <Inbox className="mx-auto mb-2 h-8 w-8 opacity-40" />
-              Aucune notification
+              {t("parentPortal.notificationsSheet.empty")}
             </div>
           )}
           {notifications.map((n) => (
@@ -794,7 +804,7 @@ function ParentNotificationsSheet({
                 variant="ghost" size="icon"
                 className="h-7 w-7 text-muted-foreground hover:text-destructive"
                 onClick={(e) => { e.stopPropagation(); onRemove(n.id); }}
-                aria-label="Supprimer"
+                aria-label={t("parentPortal.notificationsSheet.delete")}
               >
                 <LogOut className="h-3.5 w-3.5 rotate-180" />
               </Button>
@@ -819,14 +829,17 @@ type ParentEvent = {
   target: string;
 };
 
-const PARENT_TYPE_META: Record<ParentEvent["type"], { label: string; bg: string; text: string; dot: string }> = {
-  vacances:  { label: "Vacances",   bg: "bg-emerald-100", text: "text-emerald-900", dot: "bg-emerald-500" },
-  examen:    { label: "Examen",     bg: "bg-red-100",     text: "text-red-900",     dot: "bg-red-500" },
-  reunion:   { label: "Réunion",    bg: "bg-blue-100",    text: "text-blue-900",    dot: "bg-blue-500" },
-  evenement: { label: "Événement",  bg: "bg-orange-100",  text: "text-orange-900",  dot: "bg-orange-500" },
-  sortie:    { label: "Sortie",     bg: "bg-purple-100",  text: "text-purple-900",  dot: "bg-purple-500" },
-  ferie:     { label: "Jour férié", bg: "bg-gray-200",    text: "text-gray-800",    dot: "bg-gray-500" },
-};
+function useParentTypeMeta(): Record<ParentEvent["type"], { label: string; bg: string; text: string; dot: string }> {
+  const { t } = useTranslation();
+  return {
+    vacances:  { label: t("parentPortal.calendar.types.vacances"),   bg: "bg-emerald-100", text: "text-emerald-900", dot: "bg-emerald-500" },
+    examen:    { label: t("parentPortal.calendar.types.examen"),     bg: "bg-red-100",     text: "text-red-900",     dot: "bg-red-500" },
+    reunion:   { label: t("parentPortal.calendar.types.reunion"),    bg: "bg-blue-100",    text: "text-blue-900",    dot: "bg-blue-500" },
+    evenement: { label: t("parentPortal.calendar.types.evenement"),  bg: "bg-orange-100",  text: "text-orange-900",  dot: "bg-orange-500" },
+    sortie:    { label: t("parentPortal.calendar.types.sortie"),     bg: "bg-purple-100",  text: "text-purple-900",  dot: "bg-purple-500" },
+    ferie:     { label: t("parentPortal.calendar.types.ferie"),      bg: "bg-gray-200",    text: "text-gray-800",    dot: "bg-gray-500" },
+  };
+}
 
 function parentFmtISO(d: Date) {
   const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, "0"), day = String(d.getDate()).padStart(2, "0");
@@ -838,6 +851,8 @@ function parentFmtFr(iso: string) {
 }
 
 function ParentCalendarTab() {
+  const { t } = useTranslation();
+  const PARENT_TYPE_META = useParentTypeMeta();
   const [events, setEvents] = useState<ParentEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [cursor, setCursor] = useState(() => { const d = new Date(); d.setDate(1); return d; });
@@ -878,20 +893,20 @@ function ParentCalendarTab() {
   const daysEvents = (iso: string) =>
     events.filter((e) => iso >= e.start_date && iso <= (e.end_date ?? e.start_date));
 
-  const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
-  const DAYS = ["L","M","M","J","V","S","D"];
+  const MONTHS = t("parentPortal.calendar.months", { returnObjects: true }) as string[];
+  const DAYS = t("parentPortal.calendar.days", { returnObjects: true }) as string[];
 
   return (
     <div className="space-y-4">
       <Card>
         <CardContent className="p-3">
           <div className="mb-3 flex items-center justify-between">
-            <Button variant="outline" size="icon" onClick={() => { const d = new Date(cursor); d.setMonth(d.getMonth() - 1); setCursor(d); }} aria-label="Mois précédent">‹</Button>
+            <Button variant="outline" size="icon" onClick={() => { const d = new Date(cursor); d.setMonth(d.getMonth() - 1); setCursor(d); }} aria-label={t("parentPortal.calendar.previousMonth")}>‹</Button>
             <div className="text-sm font-semibold">{MONTHS[cursor.getMonth()]} {cursor.getFullYear()}</div>
-            <Button variant="outline" size="icon" onClick={() => { const d = new Date(cursor); d.setMonth(d.getMonth() + 1); setCursor(d); }} aria-label="Mois suivant">›</Button>
+            <Button variant="outline" size="icon" onClick={() => { const d = new Date(cursor); d.setMonth(d.getMonth() + 1); setCursor(d); }} aria-label={t("parentPortal.calendar.nextMonth")}>›</Button>
           </div>
           {loading ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>
+            <div className="py-10 text-center text-sm text-muted-foreground">{t("parentPortal.calendar.loading")}</div>
           ) : (
             <>
               <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-muted-foreground">
@@ -950,10 +965,10 @@ function ParentCalendarTab() {
           <CardContent className="p-4">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="font-semibold">{parentFmtFr(selectedDay)}</h3>
-              <button onClick={() => setSelectedDay(null)} className="text-xs text-muted-foreground hover:underline">Fermer</button>
+              <button onClick={() => setSelectedDay(null)} className="text-xs text-muted-foreground hover:underline">{t("parentPortal.calendar.close")}</button>
             </div>
             {daysEvents(selectedDay).length === 0 ? (
-              <p className="text-sm text-muted-foreground">Aucun événement ce jour.</p>
+              <p className="text-sm text-muted-foreground">{t("parentPortal.calendar.noEvents")}</p>
             ) : (
               <div className="space-y-2">
                 {daysEvents(selectedDay).map((ev) => {
@@ -985,7 +1000,7 @@ function ParentCalendarTab() {
 
       <Card>
         <CardContent className="p-4">
-          <h3 className="mb-3 text-sm font-semibold">Légende</h3>
+          <h3 className="mb-3 text-sm font-semibold">{t("parentPortal.calendar.legend")}</h3>
           <div className="grid grid-cols-2 gap-2 text-xs">
             {(Object.keys(PARENT_TYPE_META) as ParentEvent["type"][]).map((t) => (
               <div key={t} className="flex items-center gap-2">

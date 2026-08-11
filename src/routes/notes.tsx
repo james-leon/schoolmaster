@@ -302,7 +302,7 @@ function SaisieTab() {
       });
     });
     const cls = db.classes.find((c) => c.id === classId)?.name ?? "";
-    toast.success(`Notes enregistrées pour ${subject} — ${cls}`);
+    toast.success(t("grades.gradesSavedFor", { subject, class: cls }));
   };
 
   return (
@@ -310,7 +310,7 @@ function SaisieTab() {
       <Card>
         <CardContent className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
           <Select value={classId} onValueChange={(v) => { setClassId(v); setSubject(""); }}>
-            <SelectTrigger><SelectValue placeholder="Classe" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("grades.classLabel")} /></SelectTrigger>
             <SelectContent>{visibleClasses.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
           </Select>
           {classId && subjects.length === 0 && canManageSubjects ? (
@@ -329,13 +329,13 @@ function SaisieTab() {
             />
           ) : (
             <Select value={subject} onValueChange={setSubject} disabled={!classId}>
-              <SelectTrigger><SelectValue placeholder="Matière" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("grades.subjectLabel")} /></SelectTrigger>
               <SelectContent>{subjects.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
             </Select>
           )}
           <Select value={term} onValueChange={setTerm}>
-            <SelectTrigger><SelectValue placeholder="Trimestre" /></SelectTrigger>
-            <SelectContent>{TERMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            <SelectTrigger><SelectValue placeholder={t("grades.termLabel")} /></SelectTrigger>
+            <SelectContent>{TERMS.map((tm) => <SelectItem key={tm} value={tm}>{tm}</SelectItem>)}</SelectContent>
           </Select>
         </CardContent>
       </Card>
@@ -352,29 +352,29 @@ function SaisieTab() {
 
       {!ready ? (
         <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">
-          Sélectionnez classe, matière et trimestre pour saisir les notes des séquences correspondantes.
+          {t("grades.selectPromptSaisie")}
         </CardContent></Card>
       ) : !loaded ? (
         <Card><CardContent className="p-4"><TableSkeleton /></CardContent></Card>
       ) : students.length === 0 ? (
-        <EmptyState icon={GraduationCap} title="Aucun élève" description="Aucun élève dans cette classe." />
+        <EmptyState icon={GraduationCap} title={t("grades.noStudents")} description={t("grades.noStudentsDesc")} />
       ) : (
         <Card>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12">N°</TableHead>
-                  <TableHead>Nom complet</TableHead>
+                  <TableHead className="w-12">{t("grades.colNumber")}</TableHead>
+                  <TableHead>{t("grades.colName")}</TableHead>
                   {termSequences.map((seqName) => (
                     <TableHead key={seqName} className="w-32 text-center">
                       {seqName}
                       <div className="text-xs font-normal text-muted-foreground">coef {coefs[seqName] ?? 1}</div>
                     </TableHead>
                   ))}
-                  <TableHead className="w-28 text-center">Moyenne</TableHead>
-                  <TableHead className="w-36">Appréciation</TableHead>
-                  <TableHead>Commentaire</TableHead>
+                  <TableHead className="w-28 text-center">{t("grades.colAverage")}</TableHead>
+                  <TableHead className="w-36">{t("grades.colAppreciation")}</TableHead>
+                  <TableHead>{t("grades.colComment")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -412,7 +412,7 @@ function SaisieTab() {
                         {app ? <Badge className={app.cls + " border-0"}>{app.label}</Badge> : <span className="text-muted-foreground text-sm">—</span>}
                       </TableCell>
                       <TableCell>
-                        <Input placeholder="Optionnel" value={row.comment} onChange={(e) => setComment(s.id, e.target.value)} />
+                        <Input placeholder={t("grades.optionalPlaceholder")} value={row.comment} onChange={(e) => setComment(s.id, e.target.value)} />
                       </TableCell>
                     </TableRow>
                   );
@@ -421,11 +421,11 @@ function SaisieTab() {
             </Table>
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border p-4 text-sm">
               <div className="flex flex-wrap gap-4">
-                <span><span className="text-muted-foreground">Moyenne classe :</span> <strong>{avg.toFixed(2)}/20</strong></span>
-                <span><span className="text-muted-foreground">Max :</span> <strong className="text-success">{hi.toFixed(2)}</strong></span>
-                <span><span className="text-muted-foreground">Min :</span> <strong className="text-destructive">{lo.toFixed(2)}</strong></span>
+                <span><span className="text-muted-foreground">{t("grades.classAveragePrefix")}</span> <strong>{avg.toFixed(2)}/20</strong></span>
+                <span><span className="text-muted-foreground">{t("grades.maxPrefix")}</span> <strong className="text-success">{hi.toFixed(2)}</strong></span>
+                <span><span className="text-muted-foreground">{t("grades.minPrefix")}</span> <strong className="text-destructive">{lo.toFixed(2)}</strong></span>
               </div>
-              <Button onClick={trySave}><Save className="mr-1.5 h-4 w-4" /> Enregistrer les notes</Button>
+              <Button onClick={trySave}><Save className="mr-1.5 h-4 w-4" /> {t("grades.saveGradesBtn")}</Button>
             </div>
           </CardContent>
         </Card>
@@ -434,14 +434,14 @@ function SaisieTab() {
       <AlertDialog open={confirmReplace} onOpenChange={setConfirmReplace}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Notes existantes</AlertDialogTitle>
+            <AlertDialogTitle>{t("grades.existingGrades")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Des notes existent déjà pour cette matière et ce trimestre. Voulez-vous les remplacer ?
+              {t("grades.existingGradesDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { setConfirmReplace(false); doSave(); }}>Remplacer</AlertDialogAction>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setConfirmReplace(false); doSave(); }}>{t("common.replace")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -452,6 +452,7 @@ function SaisieTab() {
 /* ───────────────────────── Overview ───────────────────────── */
 
 function OverviewTab() {
+  const { t } = useTranslation();
   const db = useDB();
   const [classId, setClassId] = useState(db.classes[0]?.id ?? "");
   const [term, setTerm] = useState<string>(TERMS[0]);
@@ -482,7 +483,7 @@ function OverviewTab() {
   });
 
   const exportCSV = () => {
-    const header = ["Élève", ...subjects.map((s) => s.name), "Moy. Générale", "Rang"];
+    const header = [t("fees.studentLabel"), ...subjects.map((s) => s.name), t("grades.colGeneralAvg"), t("grades.colRank")];
     const lines = [csvRow(header)];
     rows.forEach((r) => {
       lines.push(csvRow([
@@ -500,7 +501,7 @@ function OverviewTab() {
     a.download = `notes_${clsName}_${term}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Export CSV téléchargé");
+    toast.success(t("fees.csvExportedToast"));
   };
 
   return (
@@ -508,16 +509,16 @@ function OverviewTab() {
       <Card>
         <CardContent className="flex flex-wrap items-center gap-3 p-4">
           <Select value={classId} onValueChange={setClassId}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="Classe" /></SelectTrigger>
+            <SelectTrigger className="w-48"><SelectValue placeholder={t("grades.classLabel")} /></SelectTrigger>
             <SelectContent>{db.classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
           </Select>
           <Select value={term} onValueChange={setTerm}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="Trimestre" /></SelectTrigger>
-            <SelectContent>{TERMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            <SelectTrigger className="w-48"><SelectValue placeholder={t("grades.termLabel")} /></SelectTrigger>
+            <SelectContent>{TERMS.map((tm) => <SelectItem key={tm} value={tm}>{tm}</SelectItem>)}</SelectContent>
           </Select>
           <div className="ml-auto">
             <Button variant="outline" onClick={exportCSV} disabled={!rows.length}>
-              <Download className="mr-1.5 h-4 w-4" /> Exporter CSV
+              <Download className="mr-1.5 h-4 w-4" /> {t("common.exportCsv")}
             </Button>
           </div>
         </CardContent>
@@ -531,12 +532,12 @@ function OverviewTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Élève</TableHead>
+                  <TableHead>{t("fees.studentLabel")}</TableHead>
                   {subjects.map((s) => (
-                    <TableHead key={s.id} className="text-center">{s.name}<div className="text-xs font-normal text-muted-foreground">coef {s.coefficient}</div></TableHead>
+                    <TableHead key={s.id} className="text-center">{s.name}<div className="text-xs font-normal text-muted-foreground">{t("grades.coef")} {s.coefficient}</div></TableHead>
                   ))}
-                  <TableHead className="text-center">Moy. Gén.</TableHead>
-                  <TableHead className="text-center">Rang</TableHead>
+                  <TableHead className="text-center">{t("grades.colGeneralAvg")}</TableHead>
+                  <TableHead className="text-center">{t("grades.colRank")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -550,12 +551,12 @@ function OverviewTab() {
                     ))}
                     <TableCell className="text-center"><div className={cn("rounded px-2 py-1 font-bold", cellTone(r.gen))}>{r.gen == null ? "—" : r.gen.toFixed(2)}</div></TableCell>
                     <TableCell className="text-center">
-                      {r.rank ? <Badge variant="secondary">{r.rank === 1 ? "1er" : `${r.rank}ème`}</Badge> : "—"}
+                      {r.rank ? <Badge variant="secondary">{r.rank === 1 ? t("grades.st1") : t("grades.stNth", { n: r.rank })}</Badge> : "—"}
                     </TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="bg-muted/40">
-                  <TableCell className="font-semibold">Moyenne classe</TableCell>
+                  <TableCell className="font-semibold">{t("grades.classAverage")}</TableCell>
                   {classBySubject.map((v, i) => (
                     <TableCell key={i} className="text-center font-medium">{v == null ? "—" : v.toFixed(2)}</TableCell>
                   ))}
@@ -574,6 +575,7 @@ function OverviewTab() {
 /* ───────────────────────── Bulletins ───────────────────────── */
 
 function BulletinsTab() {
+  const { t } = useTranslation();
   const db = useDB();
   const [classId, setClassId] = useState(db.classes[0]?.id ?? "");
   const [term, setTerm] = useState<string>(TERMS[0]);
@@ -599,7 +601,7 @@ function BulletinsTab() {
   const printAll = () => {
     const container = document.querySelector(".print-all-only");
     if (!container) {
-      toast.error("Aucun bulletin à imprimer");
+      toast.error(t("grades.printAllNone"));
       return;
     }
     const clone = container.cloneNode(true) as HTMLElement;
@@ -617,15 +619,16 @@ function BulletinsTab() {
       .map((s) => `<section class="bulletin-page">${(s as HTMLElement).outerHTML}</section>`)
       .join("");
     if (!sheets) {
-      toast.error("Aucun bulletin à imprimer");
+      toast.error(t("grades.printAllNone"));
       return;
     }
     const win = window.open("", "_blank", "width=900,height=700");
     if (!win) {
-      toast.error("Bloqueur de pop-up détecté");
+      toast.error(t("grades.popupBlocked"));
       return;
     }
-    win.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Bulletins — SchoolMaster</title>
+    const htmlLang = document.documentElement.lang || "fr";
+    win.document.write(`<!DOCTYPE html><html lang="${htmlLang}"><head><meta charset="UTF-8"><title>${t("grades.printTitleAll")}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: Arial, sans-serif; font-size: 12px; color: #000; background: #fff; }
@@ -668,7 +671,8 @@ function BulletinsTab() {
     const content = clone.innerHTML;
     const win = window.open("", "_blank", "width=900,height=700");
     if (!win) return;
-    win.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Bulletin — SchoolMaster</title>
+    const htmlLang = document.documentElement.lang || "fr";
+    win.document.write(`<!DOCTYPE html><html lang="${htmlLang}"><head><meta charset="UTF-8"><title>${t("grades.printTitleOne")}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: Arial, sans-serif; font-size: 12px; color: #000; background: #fff; padding: 15mm; }
@@ -701,12 +705,12 @@ function BulletinsTab() {
       <Card className="no-print">
         <CardContent className="flex flex-wrap items-center gap-3 p-4">
           <Select value={classId} onValueChange={setClassId}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="Classe" /></SelectTrigger>
+            <SelectTrigger className="w-48"><SelectValue placeholder={t("grades.classLabel")} /></SelectTrigger>
             <SelectContent>{db.classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
           </Select>
           <Select value={term} onValueChange={setTerm}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="Trimestre" /></SelectTrigger>
-            <SelectContent>{TERMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            <SelectTrigger className="w-48"><SelectValue placeholder={t("grades.termLabel")} /></SelectTrigger>
+            <SelectContent>{TERMS.map((tm) => <SelectItem key={tm} value={tm}>{tm}</SelectItem>)}</SelectContent>
           </Select>
           <div className="ml-auto flex flex-wrap gap-2">
             <BulkGenerateButton
@@ -716,7 +720,7 @@ function BulletinsTab() {
               students={students}
             />
             <Button variant="outline" onClick={printAll} disabled={!students.length}>
-              <Printer className="mr-1.5 h-4 w-4" /> Imprimer tous ({students.length})
+              <Printer className="mr-1.5 h-4 w-4" /> {t("grades.printAll", { count: students.length })}
             </Button>
           </div>
         </CardContent>
@@ -725,16 +729,16 @@ function BulletinsTab() {
       <Card className="no-print">
         <CardContent className="p-0">
           {!students.length ? (
-            <EmptyState icon={FileText} title="Aucun bulletin" description="Aucun élève dans cette classe." />
+            <EmptyState icon={FileText} title={t("grades.emptyReports")} description={t("grades.emptyReportsDesc")} />
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Élève</TableHead>
-                  <TableHead className="text-right">Moyenne</TableHead>
-                  <TableHead className="text-right">Rang</TableHead>
-                  <TableHead>Mention</TableHead>
-                  <TableHead className="w-40 text-right">Actions</TableHead>
+                  <TableHead>{t("fees.studentLabel")}</TableHead>
+                  <TableHead className="text-right">{t("grades.colAverage")}</TableHead>
+                  <TableHead className="text-right">{t("grades.colRank")}</TableHead>
+                  <TableHead>{t("grades.colMention")}</TableHead>
+                  <TableHead className="w-40 text-right">{t("common.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -742,11 +746,11 @@ function BulletinsTab() {
                   <TableRow key={r.student.id}>
                     <TableCell className="font-medium">{r.student.firstName} {r.student.lastName}</TableCell>
                     <TableCell className="text-right">{r.gen != null ? r.gen.toFixed(2) + "/20" : "—"}</TableCell>
-                    <TableCell className="text-right">{r.rank ? (r.rank === 1 ? "1er" : `${r.rank}ème`) : "—"}</TableCell>
+                    <TableCell className="text-right">{r.rank ? (r.rank === 1 ? t("grades.st1") : t("grades.stNth", { n: r.rank })) : "—"}</TableCell>
                     <TableCell>{r.gen != null ? mentionFor(r.gen) : "—"}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" onClick={() => setPreviewId(r.student.id)}>
-                        <Eye className="mr-1.5 h-4 w-4" /> Aperçu
+                        <Eye className="mr-1.5 h-4 w-4" /> {t("common.preview")}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -769,7 +773,7 @@ function BulletinsTab() {
           className="flex max-h-[90vh] w-[min(800px,95vw)] max-w-[min(800px,95vw)] flex-col gap-0 p-0 print:max-h-none print:w-full print:max-w-none print:border-0"
         >
           <DialogHeader className="no-print flex-shrink-0 border-b border-border p-4">
-            <DialogTitle>Aperçu du bulletin</DialogTitle>
+            <DialogTitle>{t("grades.previewBulletin")}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto p-4 print:overflow-visible print:p-0">
             {previewId && (
@@ -779,9 +783,9 @@ function BulletinsTab() {
             )}
           </div>
           <DialogFooter className="no-print flex-shrink-0 flex-col gap-2 border-t border-border bg-background p-4 sm:flex-row sm:justify-end">
-            <Button variant="outline" onClick={() => setPreviewId(null)} className="min-h-11 w-full sm:w-auto">Fermer</Button>
+            <Button variant="outline" onClick={() => setPreviewId(null)} className="min-h-11 w-full sm:w-auto">{t("common.close")}</Button>
             <Button onClick={handlePrintBulletin} className="min-h-11 w-full sm:w-auto">
-              <Printer className="mr-1.5 h-4 w-4" /> Imprimer
+              <Printer className="mr-1.5 h-4 w-4" /> {t("common.print")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -872,6 +876,7 @@ function BulkGenerateButton({
   subjects: { id: string; name: string; coefficient: number }[];
   students: { id: string; firstName: string }[];
 }) {
+  const { t } = useTranslation();
   const db = useDB();
   const cls = db.classes.find((c) => c.id === classId);
   const [running, setRunning] = useState(false);
@@ -935,8 +940,8 @@ function BulkGenerateButton({
       }
     }
     setRunning(false);
-    if (errors === 0) toast.success(`${students.length} appréciations générées`);
-    else toast.warning(`${students.length - errors}/${students.length} générées (${errors} échecs)`);
+    if (errors === 0) toast.success(t("grades.allAppreciationsGenerated", { count: students.length }));
+    else toast.warning(t("grades.partialAppreciationsGenerated", { done: students.length - errors, total: students.length, errors }));
   };
 
   return (
@@ -944,7 +949,7 @@ function BulkGenerateButton({
       {running ? (
         <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> {progress.done}/{progress.total}…</>
       ) : (
-        <><Sparkles className="mr-1.5 h-4 w-4" /> Générer appréciations (IA)</>
+        <><Sparkles className="mr-1.5 h-4 w-4" /> {t("grades.generateAllAppreciations")}</>
       )}
     </Button>
   );
@@ -1043,7 +1048,7 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
             <th className="border border-gray-400 p-1 text-left">{t("grades.colSubject")}</th>
             <th className="border border-gray-400 p-1">{t("grades.colCoef")}</th>
             {termSequences.map((seqName, i) => (
-              <th key={seqName} className="border border-gray-400 p-1">Séq {i + 1 + (term === "2e trimestre" ? 2 : term === "3e trimestre" ? 4 : 0)}</th>
+              <th key={seqName} className="border border-gray-400 p-1">{t("grades.sequenceShort", { n: i + 1 + (term === "2e trimestre" ? 2 : term === "3e trimestre" ? 4 : 0) })}</th>
             ))}
             <th className="border border-gray-400 p-1">{t("grades.colMoy")}</th>
           </tr>
@@ -1096,8 +1101,8 @@ function BulletinSheet({ studentId, classId, term }: { studentId: string; classI
                 onChangeAppreciation(res.text);
                 toast.success(t("grades.appreciationGenerated"));
               } catch (e: unknown) {
-                const msg = e instanceof Error ? e.message : "Échec de la génération IA";
-                toast.error(msg || "Échec IA — saisie manuelle possible");
+                const msg = e instanceof Error ? e.message : t("grades.appreciationGenFailed");
+                toast.error(msg || t("grades.appreciationGenFailedShort"));
               } finally {
                 setAiLoading(false);
               }

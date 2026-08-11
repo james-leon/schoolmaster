@@ -24,6 +24,7 @@ import { usePlan } from "@/lib/usePlan";
 import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
 import { requiredPlanFor } from "@/lib/plans";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
+import { useTranslation } from "react-i18next";
 
 const BUDGET_REALTIME_TABLES = ["budgets", "budget_lines", "transaction_categories", "transactions"] as const;
 
@@ -43,7 +44,7 @@ interface BudgetLine {
 interface Category { id: string; school_id: string; name: string; type: "recette" | "depense"; }
 interface Tx { id: string; school_id: string; type: "recette" | "depense"; category: string; amount: number; date: string; }
 
-const STATUS_LABEL: Record<BStatus, string> = { brouillon: "Brouillon", actif: "Actif", cloture: "Clôturé" };
+
 const STATUS_BADGE: Record<BStatus, string> = {
   brouillon: "bg-muted text-muted-foreground",
   actif: "bg-success/15 text-success",
@@ -53,6 +54,8 @@ const STATUS_BADGE: Record<BStatus, string> = {
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 function BudgetPage() {
+  const { t } = useTranslation();
+  const STATUS_LABEL: Record<BStatus, string> = { brouillon: t("budget.status.brouillon"), actif: t("budget.status.actif"), cloture: t("budget.status.cloture") };
   const { user } = useAuth();
   const schoolId = user?.schoolId;
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
@@ -74,7 +77,7 @@ function BudgetPage() {
       supabase.from("transaction_categories").select("id,school_id,name,type").eq("school_id", schoolId).order("name"),
       supabase.from("transactions").select("id,school_id,type,category,amount,date").eq("school_id", schoolId),
     ]);
-    if (b.error || l.error || c.error || t.error) toast.error("Erreur de chargement Budget");
+    if (b.error || l.error || c.error || t.error) toast.error(t("budget.toasts.loadError"));
     setBudgets(((b.data ?? []) as unknown) as Budget[]);
     setLines(((l.data ?? []) as unknown) as BudgetLine[]);
     setCategories(((c.data ?? []) as unknown) as Category[]);
@@ -95,20 +98,20 @@ function BudgetPage() {
   if (!isAdmin) return <Navigate to="/dashboard" />;
   if (!planLoading && user.role !== "super_admin" && !hasFeature("budget")) {
     return (
-      <AppLayout title="Budget">
-        <LockedFeatureOverlay requiredPlan={requiredPlanFor("budget")} featureLabel="Budget" />
+      <AppLayout title={t("budget.title")}>
+        <LockedFeatureOverlay requiredPlan={requiredPlanFor("budget")} featureLabel={t("budget.lockedFeature")} />
       </AppLayout>
     );
   }
 
   return (
-    <AppLayout title="Budget">
+    <AppLayout title={t("budget.title")}>
       <div className="space-y-6">
         <Tabs defaultValue="overview" className="w-full">
           <TabsList>
-            <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-            <TabsTrigger value="budgets">Budgets</TabsTrigger>
-            <TabsTrigger value="comparison">Prévu vs Réel</TabsTrigger>
+            <TabsTrigger value="overview">{t("budget.tabs.overview")}</TabsTrigger>
+            <TabsTrigger value="budgets">{t("budget.tabs.budgets")}</TabsTrigger>
+            <TabsTrigger value="comparison">{t("budget.tabs.comparison")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">

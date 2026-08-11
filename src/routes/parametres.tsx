@@ -33,6 +33,7 @@ export const Route = createFileRoute("/parametres")({
 });
 
 function ParametresPage() {
+  const { t } = useTranslation();
   const db = useDB();
   const { user } = useAuth();
   const { theme, toggle } = useTheme();
@@ -72,22 +73,22 @@ function ParametresPage() {
         d.schools[idx] = { ...d.schools[idx], ...form };
       }
     });
-    toast.success("Informations enregistrées");
+    toast.success(t("settings2.school.saved"));
   };
 
   const uploadLogo = async (file: File) => {
     const schoolId = user?.schoolId ?? school?.id;
     if (!schoolId) {
-      toast.error("École introuvable");
+      toast.error(t("settings2.school.schoolNotFound"));
       return;
     }
     const allowed = ["image/png", "image/jpeg", "image/jpg", "image/svg+xml", "image/webp"];
     if (!allowed.includes(file.type)) {
-      toast.error("Format non supporté (PNG, JPG, SVG, WEBP uniquement)");
+      toast.error(t("settings2.school.unsupportedFormat"));
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("Fichier trop volumineux (max 2 Mo)");
+      toast.error(t("settings2.school.fileTooLarge"));
       return;
     }
     setUploading(true);
@@ -113,26 +114,26 @@ function ParametresPage() {
         const idx = d.schools.findIndex((s) => s.id === schoolId);
         if (idx >= 0) d.schools[idx] = { ...d.schools[idx], logo: publicUrl };
       });
-      toast.success("Logo mis à jour");
+      toast.success(t("settings2.school.logoUpdated"));
     } catch (err) {
-      toast.error("Erreur lors du téléchargement: " + (err as Error).message);
+      toast.error(t("settings2.school.uploadError", { message: (err as Error).message }));
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <AppLayout title="Paramètres">
+    <AppLayout title={t("settings2.pageTitle")}>
       <Tabs defaultValue="ecole">
         <TabsList>
-          <TabsTrigger value="ecole">École</TabsTrigger>
-          <TabsTrigger value="objectifs">Objectifs</TabsTrigger>
-          <TabsTrigger value="evaluations">Évaluations</TabsTrigger>
-          <TabsTrigger value="matieres">Matières</TabsTrigger>
-          <TabsTrigger value="utilisateurs">Utilisateurs</TabsTrigger>
-          <TabsTrigger value="confidentialite">Confidentialité</TabsTrigger>
-          {isAdmin && <TabsTrigger value="journal">Journal d'activité</TabsTrigger>}
-          <TabsTrigger value="compte">Compte</TabsTrigger>
+          <TabsTrigger value="ecole">{t("settings2.tabs.school")}</TabsTrigger>
+          <TabsTrigger value="objectifs">{t("settings2.tabs.goals")}</TabsTrigger>
+          <TabsTrigger value="evaluations">{t("settings2.tabs.evaluations")}</TabsTrigger>
+          <TabsTrigger value="matieres">{t("settings2.tabs.subjects")}</TabsTrigger>
+          <TabsTrigger value="utilisateurs">{t("settings2.tabs.users")}</TabsTrigger>
+          <TabsTrigger value="confidentialite">{t("settings2.tabs.privacy")}</TabsTrigger>
+          {isAdmin && <TabsTrigger value="journal">{t("settings2.tabs.journal")}</TabsTrigger>}
+          <TabsTrigger value="compte">{t("settings2.tabs.account")}</TabsTrigger>
         </TabsList>
 
 
@@ -140,11 +141,11 @@ function ParametresPage() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Informations de l'école</CardTitle>
+                <CardTitle className="text-base">{t("settings2.school.infoTitle")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label>Logo</Label>
+                  <Label>{t("settings2.school.logo")}</Label>
                   <div className="flex items-center gap-3">
                     <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
                       {form.logo ? (
@@ -163,20 +164,20 @@ function ParametresPage() {
                       <Button asChild variant="outline" disabled={uploading}>
                         <span className="cursor-pointer">
                           <Upload className="mr-2 h-4 w-4" />
-                          {uploading ? "Téléchargement..." : "Changer le logo"}
+                          {uploading ? t("settings2.school.uploading") : t("settings2.school.changeLogo")}
                         </span>
                       </Button>
                     </label>
                   </div>
                 </div>
                 {[
-                  { k: "name", label: "Nom de l'école" },
-                  { k: "director", label: "Directeur" },
-                  { k: "email", label: "Email" },
-                  { k: "phone", label: "Téléphone" },
-                  { k: "address", label: "Adresse" },
-                  { k: "city", label: "Ville" },
-                  { k: "country", label: "Pays" },
+                  { k: "name", label: t("settings2.school.name") },
+                  { k: "director", label: t("settings2.school.director") },
+                  { k: "email", label: t("settings2.school.email") },
+                  { k: "phone", label: t("settings2.school.phone") },
+                  { k: "address", label: t("settings2.school.address") },
+                  { k: "city", label: t("settings2.school.city") },
+                  { k: "country", label: t("settings2.school.country") },
                 ].map((f) => (
                   <div key={f.k} className="space-y-1.5">
                     <Label>{f.label}</Label>
@@ -186,18 +187,18 @@ function ParametresPage() {
                     />
                   </div>
                 ))}
-                <Button onClick={saveSchool}>Enregistrer</Button>
+                <Button onClick={saveSchool}>{t("settings2.school.save")}</Button>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Apparence</CardTitle>
+                <CardTitle className="text-base">{t("settings2.school.appearanceTitle")}</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">Mode sombre</p>
-                  <p className="text-xs text-muted-foreground">Basculer entre clair et sombre</p>
+                  <p className="text-sm font-medium">{t("settings2.school.darkMode")}</p>
+                  <p className="text-xs text-muted-foreground">{t("settings2.school.darkModeDesc")}</p>
                 </div>
                 <Switch checked={theme === "dark"} onCheckedChange={toggle} />
               </CardContent>
@@ -243,23 +244,23 @@ function ParametresPage() {
           <div className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Langue de l'interface / Interface language</CardTitle>
+                <CardTitle className="text-base">{t("settings2.account.languageTitle")}</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-between gap-4">
                 <p className="text-sm text-muted-foreground">
-                  Choisissez la langue affichée. Votre choix est enregistré sur votre profil.
+                  {t("settings2.account.languageDesc")}
                 </p>
                 <LanguageSwitcher />
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Compte</CardTitle>
+                <CardTitle className="text-base">{t("settings2.account.title")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Nom</span><span className="font-medium">{user?.name}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span className="font-medium">{user?.email}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Rôle</span><span className="font-medium">{user ? ROLE_LABELS[user.role] : ""}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t("settings2.account.name")}</span><span className="font-medium">{user?.name}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t("settings2.account.email")}</span><span className="font-medium">{user?.email}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t("settings2.account.role")}</span><span className="font-medium">{user ? ROLE_LABELS[user.role] : ""}</span></div>
               </CardContent>
             </Card>
           </div>
@@ -347,7 +348,7 @@ function TrimesterDatesPanel() {
 }
 
 function SequenceCoefficientsPanel() {
-
+  const { t } = useTranslation();
   const [coefs, setCoefs] = useState<Record<string, number>>(() => getSequenceCoefficients());
 
   const set = (seq: Sequence, v: string) => {
@@ -356,17 +357,17 @@ function SequenceCoefficientsPanel() {
   };
   const save = () => {
     setSequenceCoefficients(coefs as Record<Sequence, number>);
-    toast.success("Coefficients enregistrés");
+    toast.success(t("settings2.evaluations.saved"));
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Types d'évaluation — Séquences</CardTitle>
+        <CardTitle className="text-base">{t("settings2.evaluations.sequencesTitle")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Le système camerounais comporte 6 séquences réparties sur 3 trimestres. Les coefficients par défaut sont à 1 mais restent modifiables ci-dessous.
+          {t("settings2.evaluations.sequencesHelp")}
         </p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {SEQUENCES.map((seq) => (
@@ -376,7 +377,7 @@ function SequenceCoefficientsPanel() {
                 <p className="text-xs text-muted-foreground">{SEQUENCE_TERM[seq]}</p>
               </div>
               <div className="w-24">
-                <Label className="text-xs">Coef.</Label>
+                <Label className="text-xs">{t("settings2.evaluations.coef")}</Label>
                 <Input
                   type="number" min={0} step={0.5}
                   value={coefs[seq] ?? 1}
@@ -387,7 +388,7 @@ function SequenceCoefficientsPanel() {
           ))}
         </div>
         <div className="flex justify-end">
-          <Button onClick={save}>Enregistrer</Button>
+          <Button onClick={save}>{t("settings2.evaluations.save")}</Button>
         </div>
       </CardContent>
     </Card>
@@ -401,6 +402,13 @@ const MONTHS_FR = [
 ];
 
 function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
+  const { t } = useTranslation();
+  const MONTHS = [
+    t("settings2.goals.months.jan"), t("settings2.goals.months.feb"), t("settings2.goals.months.mar"),
+    t("settings2.goals.months.apr"), t("settings2.goals.months.may"), t("settings2.goals.months.jun"),
+    t("settings2.goals.months.jul"), t("settings2.goals.months.aug"), t("settings2.goals.months.sep"),
+    t("settings2.goals.months.oct"), t("settings2.goals.months.nov"), t("settings2.goals.months.dec"),
+  ];
   const [values, setValues] = useState<number[]>(() => new Array(12).fill(30));
   const [showTargets, setShowTargets] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -412,7 +420,7 @@ function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
     setLoading(true);
     supabase.from("schools").select("enrollment_targets, show_enrollment_targets").eq("id", schoolId).maybeSingle().then(({ data, error }) => {
       if (cancelled) return;
-      if (error) toast.error("Erreur lors du chargement: " + error.message);
+      if (error) toast.error(t("settings2.goals.loadError", { message: error.message }));
       const raw = (data?.enrollment_targets ?? {}) as Record<string, number>;
       const next = new Array(12).fill(30).map((d, i) => Number(raw[String(i + 1)] ?? d));
       setValues(next);
@@ -432,11 +440,11 @@ function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
     setShowTargets(v);
     const { error } = await supabase.from("schools").update({ show_enrollment_targets: v } as any).eq("id", schoolId);
     if (error) {
-      toast.error("Erreur: " + error.message);
+      toast.error(t("settings2.goals.error", { message: error.message }));
       setShowTargets(!v);
       return;
     }
-    toast.success(v ? "Objectifs affichés sur le tableau de bord" : "Objectifs masqués");
+    toast.success(v ? t("settings2.goals.shown") : t("settings2.goals.hidden"));
   };
 
   const save = async () => {
@@ -447,32 +455,32 @@ function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
     const { error } = await supabase.from("schools").update({ enrollment_targets: payload }).eq("id", schoolId);
     setSaving(false);
     if (error) {
-      toast.error("Erreur: " + error.message);
+      toast.error(t("settings2.goals.error", { message: error.message }));
       return;
     }
-    toast.success("Objectifs enregistrés");
+    toast.success(t("settings2.goals.saved"));
   };
 
   return (
     <Card className="max-w-3xl">
       <CardHeader>
-        <CardTitle className="text-base">Objectifs d'inscription mensuels</CardTitle>
-        <p className="text-xs text-muted-foreground">Définissez vos objectifs d'élèves inscrits par mois.</p>
+        <CardTitle className="text-base">{t("settings2.goals.title")}</CardTitle>
+        <p className="text-xs text-muted-foreground">{t("settings2.goals.subtitle")}</p>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between rounded-lg border border-border p-3">
           <div>
-            <p className="text-sm font-medium">Afficher les objectifs d'inscription</p>
-            <p className="text-xs text-muted-foreground">Affiche l'objectif sur le tableau de bord et le graphique des inscriptions.</p>
+            <p className="text-sm font-medium">{t("settings2.goals.show")}</p>
+            <p className="text-xs text-muted-foreground">{t("settings2.goals.showDesc")}</p>
           </div>
           <Switch checked={showTargets} onCheckedChange={toggleShow} disabled={loading} />
         </div>
         {loading ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">Chargement...</p>
+          <p className="py-6 text-center text-sm text-muted-foreground">{t("settings2.goals.loading")}</p>
         ) : (
           <>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {MONTHS_FR.map((m, i) => (
+              {MONTHS.map((m, i) => (
                 <div key={m} className="flex items-center gap-3">
                   <Label className="w-24 shrink-0">{m}</Label>
                   <Input
@@ -486,7 +494,7 @@ function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
               ))}
             </div>
             <Button onClick={save} disabled={saving || !showTargets}>
-              {saving ? "Enregistrement..." : "Enregistrer les objectifs"}
+              {saving ? t("settings2.goals.saving") : t("settings2.goals.save")}
             </Button>
           </>
         )}
@@ -497,6 +505,7 @@ function EnrollmentTargetsPanel({ schoolId }: { schoolId?: string }) {
 
 
 function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string; schoolName?: string; currentUserId?: string }) {
+  const { t } = useTranslation();
   const { hasFeature } = usePlan();
   const canCreateExtra = hasFeature("extra_roles");
   const [rows, setRows] = useState<any[]>([]);
@@ -532,7 +541,7 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
     setBusy(u.id);
     try {
       await adminApi.setActive(u.id, !u.is_active);
-      toast.success(u.is_active ? "Compte désactivé" : "Compte réactivé");
+      toast.success(u.is_active ? t("settings2.users.deactivated") : t("settings2.users.reactivated"));
       await load();
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(null); }
   };
@@ -541,7 +550,7 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
     setBusy(confirmDel.id);
     try {
       await adminApi.delete(confirmDel.id);
-      toast.success("Compte supprimé");
+      toast.success(t("settings2.users.deleted"));
       setConfirmDel(null);
       await load();
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(null); }
@@ -553,7 +562,7 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
 
   const createSecretary = async () => {
     if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim()) {
-      toast.error("Prénom, nom et email requis"); return;
+      toast.error(t("settings2.users.requiredFields")); return;
     }
     setCreating(true);
     try {
@@ -568,17 +577,17 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
       setForm({ firstName: "", lastName: "", email: "", phone: "" });
       setCreateOpen(false);
       await load();
-      toast.success("Secrétaire créée");
+      toast.success(t("settings2.users.createdToast"));
     } catch (e) { toast.error((e as Error).message); } finally { setCreating(false); }
   };
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Gestion des utilisateurs</CardTitle>
+        <CardTitle className="text-base">{t("settings2.users.title")}</CardTitle>
         {canCreateExtra ? (
           <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <UserPlus className="h-4 w-4 mr-2" />Ajouter une secrétaire
+            <UserPlus className="h-4 w-4 mr-2" />{t("settings2.users.addSecretary")}
           </Button>
         ) : (
           <Button
@@ -586,21 +595,21 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
             variant="outline"
             onClick={() =>
               toast.info(
-                `🔒 Le rôle Secrétaire nécessite le plan Complet. Contactez Wintek (${WINTEK_CONTACT.phones} — ${WINTEK_CONTACT.email}) pour mettre à niveau.`,
+                t("settings2.users.secretaryLockedToast", { phone: WINTEK_CONTACT.phones, email: WINTEK_CONTACT.email }),
               )
             }
-            title="Nécessite le plan Complet"
+            title={t("settings2.users.secretaryLockedTitle")}
           >
-            <Lock className="h-4 w-4 mr-2" />Secrétaire (Plan Complet)
+            <Lock className="h-4 w-4 mr-2" />{t("settings2.users.secretaryLocked")}
           </Button>
         )}
       </CardHeader>
       <CardContent>
-        {loading ? <p className="py-6 text-center text-sm text-muted-foreground">Chargement...</p> : (
+        {loading ? <p className="py-6 text-center text-sm text-muted-foreground">{t("settings2.users.loading")}</p> : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs text-muted-foreground">
-                <tr><th className="py-2">Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Dernière connexion</th><th className="text-right">Actions</th></tr>
+                <tr><th className="py-2">{t("settings2.users.colName")}</th><th>{t("settings2.users.colEmail")}</th><th>{t("settings2.users.colRole")}</th><th>{t("settings2.users.colStatus")}</th><th>{t("settings2.users.colLastLogin")}</th><th className="text-right">{t("settings2.users.colActions")}</th></tr>
               </thead>
               <tbody>
                 {rows.map((u) => (
@@ -608,14 +617,14 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
                     <td className="py-2 font-medium">{u.full_name ?? "—"}</td>
                     <td className="text-muted-foreground">{u.email}</td>
                     <td><Badge variant="secondary">{u.role}</Badge></td>
-                    <td>{u.is_active === false ? <Badge variant="outline" className="text-destructive">Inactif</Badge> : <Badge variant="outline" className="text-success">Actif</Badge>}</td>
+                    <td>{u.is_active === false ? <Badge variant="outline" className="text-destructive">{t("settings2.users.inactive")}</Badge> : <Badge variant="outline" className="text-success">{t("settings2.users.active")}</Badge>}</td>
                     <td className="text-xs text-muted-foreground">{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString("fr-FR") : "—"}</td>
                     <td className="text-right">
-                      <Button variant="ghost" size="icon" disabled={busy === u.id} onClick={() => reset(u)} title="Réinitialiser mot de passe"><KeyRound className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" disabled={busy === u.id || u.id === currentUserId} onClick={() => toggleActive(u)} title={u.is_active === false ? "Réactiver" : "Désactiver"}>
+                      <Button variant="ghost" size="icon" disabled={busy === u.id} onClick={() => reset(u)} title={t("settings2.users.resetPassword")}><KeyRound className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" disabled={busy === u.id || u.id === currentUserId} onClick={() => toggleActive(u)} title={u.is_active === false ? t("settings2.users.reactivate") : t("settings2.users.deactivate")}>
                         {u.is_active === false ? <UserCheck className="h-4 w-4 text-success" /> : <UserX className="h-4 w-4" />}
                       </Button>
-                      <Button variant="ghost" size="icon" disabled={busy === u.id || u.id === currentUserId} onClick={() => setConfirmDel(u)} title="Supprimer"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      <Button variant="ghost" size="icon" disabled={busy === u.id || u.id === currentUserId} onClick={() => setConfirmDel(u)} title={t("settings2.users.delete")}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                     </td>
                   </tr>
                 ))}
@@ -627,33 +636,31 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
         {confirmDel && (
           <Dialog open onOpenChange={(o) => !o && setConfirmDel(null)}>
             <DialogContent>
-              <DialogHeader><DialogTitle>Supprimer ce compte ?</DialogTitle></DialogHeader>
-              <p className="text-sm text-muted-foreground">{confirmDel.full_name} ({confirmDel.email}) — cette action est irréversible.</p>
+              <DialogHeader><DialogTitle>{t("settings2.users.deleteConfirmTitle")}</DialogTitle></DialogHeader>
+              <p className="text-sm text-muted-foreground">{t("settings2.users.deleteConfirmBody", { name: confirmDel.full_name, email: confirmDel.email })}</p>
               <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline" onClick={() => setConfirmDel(null)}>Annuler</Button>
-                <Button onClick={del} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Supprimer</Button>
+                <Button variant="outline" onClick={() => setConfirmDel(null)}>{t("settings2.users.cancel")}</Button>
+                <Button onClick={del} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("settings2.users.delete")}</Button>
               </div>
             </DialogContent>
           </Dialog>
         )}
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogContent>
-            <DialogHeader><DialogTitle>Nouvelle secrétaire</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{t("settings2.users.newSecretaryTitle")}</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div><Label>Prénom</Label><Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} /></div>
-                <div><Label>Nom</Label><Input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} /></div>
+                <div><Label>{t("settings2.users.firstName")}</Label><Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} /></div>
+                <div><Label>{t("settings2.users.lastName")}</Label><Input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} /></div>
               </div>
-              <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-              <div><Label>Téléphone (optionnel)</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+              <div><Label>{t("settings2.users.colEmail")}</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+              <div><Label>{t("settings2.users.phoneOptional")}</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
               <p className="text-xs text-muted-foreground">
-                La secrétaire aura accès à : élèves, parents, facturation, paiements (création uniquement),
-                annonces, calendrier, présences, transport. Elle ne pourra pas accéder à la comptabilité,
-                au budget, au personnel ni aux paramètres.
+                {t("settings2.users.secretaryAccessNote")}
               </p>
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={() => setCreateOpen(false)}>Annuler</Button>
-                <Button onClick={createSecretary} disabled={creating}>{creating ? "Création..." : "Créer"}</Button>
+                <Button variant="outline" onClick={() => setCreateOpen(false)}>{t("settings2.users.cancel")}</Button>
+                <Button onClick={createSecretary} disabled={creating}>{creating ? t("settings2.users.creating") : t("settings2.users.create")}</Button>
               </div>
             </div>
           </DialogContent>
@@ -664,6 +671,7 @@ function UsersPanel({ schoolId, schoolName, currentUserId }: { schoolId?: string
 }
 
 function PrivacyPanel({ schoolId }: { schoolId?: string }) {
+  const { t } = useTranslation();
   const db = useDB();
   const [acceptedAt, setAcceptedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -705,7 +713,7 @@ function PrivacyPanel({ schoolId }: { schoolId?: string }) {
     a.download = `export-ecole-${stamp}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Export généré");
+    toast.success(t("settings2.privacy.exportDone"));
   };
 
   const missingConsent = db.students.filter((s) => !s.consentGiven).length;
@@ -714,46 +722,44 @@ function PrivacyPanel({ schoolId }: { schoolId?: string }) {
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Données &amp; Confidentialité</CardTitle>
+          <CardTitle className="text-base">{t("settings2.privacy.title")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
           <div className="rounded-md border border-border bg-muted/30 p-3">
-            <p className="font-medium">Conformité — Loi n°2024/017 (Cameroun)</p>
+            <p className="font-medium">{t("settings2.privacy.complianceTitle")}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              SchoolMaster isole vos données par école, restreint l'accès par rôle, et chiffre les communications.
-              Vous êtes responsable du traitement des données scolaires.
+              {t("settings2.privacy.complianceDesc")}
             </p>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Politique acceptée</span>
+            <span className="text-muted-foreground">{t("settings2.privacy.policyAccepted")}</span>
             <span className="font-medium">
-              {loading ? "…" : acceptedAt ? new Date(acceptedAt).toLocaleDateString("fr-FR") : "Non"}
+              {loading ? "…" : acceptedAt ? new Date(acceptedAt).toLocaleDateString("fr-FR") : t("settings2.privacy.no")}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Élèves sans consentement enregistré</span>
+            <span className="text-muted-foreground">{t("settings2.privacy.studentsWithoutConsent")}</span>
             <span className={"font-medium " + (missingConsent > 0 ? "text-accent" : "text-success")}>
               {missingConsent}
             </span>
           </div>
           <a href="/confidentialite" target="_blank" rel="noreferrer" className="inline-block text-sm text-primary hover:underline">
-            Lire la politique de confidentialité →
+            {t("settings2.privacy.readPolicy")}
           </a>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Exporter les données</CardTitle>
+          <CardTitle className="text-base">{t("settings2.privacy.exportTitle")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <p className="text-muted-foreground">
-            Téléchargez l'ensemble des données de votre école au format JSON. Utile pour vos archives ou en cas
-            d'exercice du droit d'accès par un parent ou un employé.
+            {t("settings2.privacy.exportDesc")}
           </p>
           <Button onClick={exportAll}>
             <Upload className="mr-1.5 h-4 w-4 rotate-180" />
-            Exporter toutes les données
+            {t("settings2.privacy.exportButton")}
           </Button>
         </CardContent>
       </Card>

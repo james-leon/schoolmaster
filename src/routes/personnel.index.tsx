@@ -22,6 +22,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Search, Briefcase, Users, Wallet, CheckCircle2, Clock, Eye, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { TableEmpty } from "@/components/states";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/personnel/")({ component: PersonnelPage });
 
@@ -42,16 +43,18 @@ const STATUSES = ["actif","suspendu","parti"];
 const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const PAYMENT_METHODS = ["Espèces","MTN Mobile Money","Orange Money","Virement bancaire","Chèque"];
 
-function statusBadge(s: string) {
+function StatusBadge({ s }: { s: string }) {
+  const { t } = useTranslation();
   const map: Record<string, string> = {
     actif: "bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/30",
     suspendu: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30",
     parti: "bg-muted text-muted-foreground border-border",
   };
-  return <Badge variant="outline" className={map[s] ?? ""}>{s}</Badge>;
+  return <Badge variant="outline" className={map[s] ?? ""}>{t(`staff.statuses.${s}`, s)}</Badge>;
 }
 
 function PersonnelPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { hasFeature, loading: planLoading } = usePlan();
   const navigate = useNavigate();
@@ -89,7 +92,7 @@ function PersonnelPage() {
       sb.from("teachers").select("id,first_name,last_name").eq("school_id", schoolId),
       sb.from("payroll").select("id,staff_id,month,year,net_salary,status").eq("school_id", schoolId).order("year", { ascending: false }).order("month", { ascending: false }),
     ]);
-    if (s.error) toast.error("Erreur chargement personnel");
+    if (s.error) toast.error(t("staff.toasts.loadError"));
     setStaff((s.data ?? []) as Staff[]);
     setTeachers((t.data ?? []) as Teacher[]);
     setPayroll((p.data ?? []) as Payroll[]);
@@ -124,7 +127,7 @@ function PersonnelPage() {
   const submit = async () => {
     if (!schoolId) return;
     if (!form.first_name.trim() || !form.last_name.trim() || !form.role_title) {
-      toast.error("Nom, prénom et fonction sont requis"); return;
+      toast.error(t("staff.toasts.requiredFields")); return;
     }
     const payload: any = {
       school_id: schoolId,
@@ -148,14 +151,14 @@ function PersonnelPage() {
     };
     const { error } = await sb.from("staff").insert(payload);
     if (error) { toast.error(error.message); return; }
-    toast.success("Membre du personnel ajouté");
+    toast.success(t("staff.toasts.added"));
     setOpen(false); resetForm(); fetchAll();
   };
 
   const deleteStaff = async (id: string) => {
     const { error } = await sb.from("staff").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success("Membre supprimé");
+    toast.success(t("staff.toasts.deleted"));
     setConfirmDel(null); fetchAll();
   };
 
@@ -169,7 +172,7 @@ function PersonnelPage() {
       bonuses: 0, deductions: 0, net_salary: Number(s.base_salary || 0),
       status: "en attente",
     }));
-    if (toCreate.length === 0) { toast.info("Toutes les fiches du mois sont déjà créées"); return; }
+    if (toCreate.length === 0) { toast.info(t("payroll.toasts.alreadyGenerated")); return; }
     const { data: inserted, error } = await sb.from("payroll").insert(toCreate).select("id");
     if (error) { toast.error(error.message); return; }
     if (inserted?.length) {
@@ -181,7 +184,7 @@ function PersonnelPage() {
         }))
       );
     }
-    toast.success(`${toCreate.length} fiche(s) générée(s)`);
+    toast.success(t("payroll.toasts.generated", { count: toCreate.length }));
     fetchAll();
   };
 
@@ -209,7 +212,7 @@ function PersonnelPage() {
       old_status: prevStatus, new_status: "payé",
       reason: `Méthode: ${payMethod}`, changed_by: user?.id ?? null,
     });
-    toast.success("Paiement enregistré (dépense ajoutée en comptabilité)");
+    toast.success(t("staff.payslips.toastsShared.paymentRecorded"));
     setPayDialog(null); fetchAll();
   };
 
@@ -227,64 +230,64 @@ function PersonnelPage() {
         <div className="grid gap-3 md:grid-cols-4">
           <Card><CardContent className="flex items-center gap-3 p-4">
             <div className="rounded-md bg-primary/10 p-2 text-primary"><Users className="h-5 w-5" /></div>
-            <div><div className="text-xs text-muted-foreground">Personnel actif</div>
+            <div><div className="text-xs text-muted-foreground">{t("staff.kpi.activeStaff")}</div>
               <div className="text-lg font-semibold">{staff.filter(s => s.status === "actif").length}</div></div>
           </CardContent></Card>
           <Card><CardContent className="flex items-center gap-3 p-4">
             <div className="rounded-md bg-accent/10 p-2 text-accent"><Wallet className="h-5 w-5" /></div>
-            <div><div className="text-xs text-muted-foreground">Masse salariale / mois</div>
+            <div><div className="text-xs text-muted-foreground">{t("staff.kpi.wageBillMonth")}</div>
               <div className="text-lg font-semibold">{fcfa(masseSalariale)}</div></div>
           </CardContent></Card>
           <Card><CardContent className="flex items-center gap-3 p-4">
             <div className="rounded-md bg-green-500/10 p-2 text-green-600"><CheckCircle2 className="h-5 w-5" /></div>
-            <div><div className="text-xs text-muted-foreground">Payés ({MONTHS_FR[month - 1]})</div>
+            <div><div className="text-xs text-muted-foreground">{t("staff.kpi.paidMonth", { month: MONTHS_FR[month - 1] })}</div>
               <div className="text-lg font-semibold">{paidCount} · {fcfa(totalPaid)}</div></div>
           </CardContent></Card>
           <Card><CardContent className="flex items-center gap-3 p-4">
             <div className="rounded-md bg-amber-500/10 p-2 text-amber-600"><Clock className="h-5 w-5" /></div>
-            <div><div className="text-xs text-muted-foreground">En attente</div>
+            <div><div className="text-xs text-muted-foreground">{t("staff.kpi.pending")}</div>
               <div className="text-lg font-semibold">{pendingCount}</div></div>
           </CardContent></Card>
         </div>
 
         <Tabs defaultValue="list">
           <TabsList>
-            <TabsTrigger value="list">Liste du personnel</TabsTrigger>
-            <TabsTrigger value="payroll">Paie</TabsTrigger>
+            <TabsTrigger value="list">{t("staff.tabs.list")}</TabsTrigger>
+            <TabsTrigger value="payroll">{t("staff.tabs.payroll")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="list" className="space-y-4">
             {/* Filters & Add */}
             <div className="flex flex-wrap items-end gap-3">
               <div className="flex-1 min-w-[200px]">
-                <Label className="text-xs">Recherche</Label>
+                <Label className="text-xs">{t("staff.search")}</Label>
                 <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input className="pl-8" value={search} onChange={e => setSearch(e.target.value)} placeholder="Nom, fonction…" />
+                  <Input className="pl-8" value={search} onChange={e => setSearch(e.target.value)} placeholder={t("staff.searchPlaceholder")} />
                 </div>
               </div>
-              <div><Label className="text-xs">Fonction</Label>
+              <div><Label className="text-xs">{t("staff.role")}</Label>
                 <Select value={roleFilter} onValueChange={setRoleFilter}>
                   <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="all">Toutes</SelectItem>
-                    {ROLE_TITLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="all">{t("staff.allRoles")}</SelectItem>
+                    {ROLE_TITLES.map(r => <SelectItem key={r} value={r}>{t(`staff.roles.${r}`, r)}</SelectItem>)}</SelectContent>
                 </Select></div>
-              <div><Label className="text-xs">Statut</Label>
+              <div><Label className="text-xs">{t("common.status")}</Label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="all">Tous</SelectItem>
-                    {STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="all">{t("staff.allStatuses")}</SelectItem>
+                    {STATUSES.map(s => <SelectItem key={s} value={s}>{t(`staff.statuses.${s}`, s)}</SelectItem>)}</SelectContent>
                 </Select></div>
-              <Button onClick={() => { resetForm(); setOpen(true); }}><Plus className="mr-1 h-4 w-4" />Nouveau membre du personnel</Button>
+              <Button onClick={() => { resetForm(); setOpen(true); }}><Plus className="mr-1 h-4 w-4" />{t("staff.newStaffMember")}</Button>
             </div>
 
             <Card><CardContent className="p-0">
               <Table>
                 <TableHeader><TableRow>
-                  <TableHead>Nom</TableHead><TableHead>Fonction</TableHead>
-                  <TableHead>Contrat</TableHead><TableHead>Salaire</TableHead>
-                  <TableHead>Téléphone</TableHead><TableHead>Statut</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("staff.table.name")}</TableHead><TableHead>{t("staff.table.role")}</TableHead>
+                  <TableHead>{t("staff.table.contract")}</TableHead><TableHead>{t("staff.table.salary")}</TableHead>
+                  <TableHead>{t("staff.table.phone")}</TableHead><TableHead>{t("staff.table.status")}</TableHead>
+                  <TableHead className="text-right">{t("common.actions")}</TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                   {loading ? <TableRow><TableCell colSpan={7} className="p-3"><Skeleton className="h-24 w-full" /></TableCell></TableRow>
@@ -295,7 +298,7 @@ function PersonnelPage() {
                       titleKey="emptyStaff"
                       filtered={staff.length > 0}
                       onClearFilters={() => { setSearch(""); setRoleFilter("all"); setStatusFilter("all"); }}
-                      actionLabel="Nouveau membre du personnel"
+                      actionLabel={t("staff.newStaffMember")}
                       onAction={() => { resetForm(); setOpen(true); }}
                     />
                   )
@@ -306,21 +309,21 @@ function PersonnelPage() {
                           {s.first_name} {s.last_name}
                         </Link>
                       </TableCell>
-                      <TableCell>{s.role_title}</TableCell>
-                      <TableCell>{s.contract_type ?? "—"}</TableCell>
+                      <TableCell>{t(`staff.roles.${s.role_title}`, s.role_title)}</TableCell>
+                      <TableCell>{s.contract_type ? t(`staff.contractTypes.${s.contract_type}`, s.contract_type) : "—"}</TableCell>
                       <TableCell>{fcfa(Number(s.base_salary || 0))}</TableCell>
                       <TableCell>{s.phone ?? "—"}</TableCell>
-                      <TableCell>{statusBadge(s.status)}</TableCell>
+                      <TableCell><StatusBadge s={s.status} /></TableCell>
                       <TableCell className="text-right space-x-1">
-                        <Button size="icon" variant="ghost" title="Voir"
+                        <Button size="icon" variant="ghost" title={t("staff.viewTooltip")}
                           onClick={() => navigate({ to: "/personnel/$staffId", params: { staffId: s.id } })}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" title="Modifier"
+                        <Button size="icon" variant="ghost" title={t("staff.editTooltip")}
                           onClick={() => navigate({ to: "/personnel/$staffId", params: { staffId: s.id } })}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" title="Supprimer" onClick={() => setConfirmDel(s)}>
+                        <Button size="icon" variant="ghost" title={t("staff.deleteTooltip")} onClick={() => setConfirmDel(s)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </TableCell>

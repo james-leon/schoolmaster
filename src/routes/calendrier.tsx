@@ -19,6 +19,8 @@ import { ChevronLeft, ChevronRight, Plus, Pencil, Trash2, MapPin, Clock, Calenda
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
+import { useTranslation } from "react-i18next";
+import i18n from "@/lib/i18n";
 
 export const Route = createFileRoute("/calendrier")({ component: CalendrierPage });
 
@@ -42,24 +44,33 @@ interface EventRow {
   created_at: string;
 }
 
-const TYPE_META: Record<EventType, { label: string; bg: string; border: string; text: string; dot: string }> = {
-  vacances:  { label: "Vacances",   bg: "bg-emerald-100",  border: "border-emerald-400", text: "text-emerald-900", dot: "bg-emerald-500" },
-  examen:    { label: "Examen",     bg: "bg-red-100",      border: "border-red-400",     text: "text-red-900",     dot: "bg-red-500" },
-  reunion:   { label: "Réunion",    bg: "bg-blue-100",     border: "border-blue-400",    text: "text-blue-900",    dot: "bg-blue-500" },
-  evenement: { label: "Événement",  bg: "bg-orange-100",   border: "border-orange-400",  text: "text-orange-900",  dot: "bg-orange-500" },
-  sortie:    { label: "Sortie",     bg: "bg-purple-100",   border: "border-purple-400",  text: "text-purple-900",  dot: "bg-purple-500" },
-  ferie:     { label: "Jour férié", bg: "bg-gray-200",     border: "border-gray-400",    text: "text-gray-800",    dot: "bg-gray-500" },
+const TYPE_META_STYLE: Record<EventType, { bg: string; border: string; text: string; dot: string }> = {
+  vacances:  { bg: "bg-emerald-100",  border: "border-emerald-400", text: "text-emerald-900", dot: "bg-emerald-500" },
+  examen:    { bg: "bg-red-100",      border: "border-red-400",     text: "text-red-900",     dot: "bg-red-500" },
+  reunion:   { bg: "bg-blue-100",     border: "border-blue-400",    text: "text-blue-900",    dot: "bg-blue-500" },
+  evenement: { bg: "bg-orange-100",   border: "border-orange-400",  text: "text-orange-900",  dot: "bg-orange-500" },
+  sortie:    { bg: "bg-purple-100",   border: "border-purple-400",  text: "text-purple-900",  dot: "bg-purple-500" },
+  ferie:     { bg: "bg-gray-200",     border: "border-gray-400",    text: "text-gray-800",    dot: "bg-gray-500" },
 };
-
-const TARGET_LABEL: Record<EventTarget, string> = {
-  ecole: "Toute l'école",
-  classe: "Une classe",
-  parents: "Parents",
-  enseignants: "Enseignants",
+const TYPE_KEYS: Record<EventType, string> = {
+  vacances: "vacances", examen: "examen", reunion: "reunion", evenement: "evenement", sortie: "sortie", ferie: "ferie",
 };
+const TARGET_KEYS: Record<EventTarget, string> = {
+  ecole: "ecole", classe: "classe", parents: "parents", enseignants: "enseignants",
+};
+function typeLabel(t: EventType) { return i18n.t(`calendar.types.${TYPE_KEYS[t]}`); }
+function targetLabel(tg: EventTarget) { return i18n.t(`calendar.targets.${TARGET_KEYS[tg]}`); }
+const TYPE_META: Record<EventType, { label: string; bg: string; border: string; text: string; dot: string }> = new Proxy({} as any, {
+  get(_t, prop: EventType) { return { label: typeLabel(prop), ...TYPE_META_STYLE[prop] }; },
+});
+const TARGET_LABEL: Record<EventTarget, string> = new Proxy({} as any, {
+  get(_t, prop: EventTarget) { return targetLabel(prop); },
+});
 
-const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
-const DAYS_FR = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+const MONTH_KEYS = ["january","february","march","april","may","june","july","august","september","october","november","december"];
+const WEEKDAY_KEYS = ["mon","tue","wed","thu","fri","sat","sun"];
+function monthsLabels() { return MONTH_KEYS.map((k) => i18n.t(`calendar.months.${k}`)); }
+function weekdaysLabels() { return WEEKDAY_KEYS.map((k) => i18n.t(`calendar.weekdaysShort.${k}`)); }
 
 function fmtISO(d: Date) {
   const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, "0"), day = String(d.getDate()).padStart(2, "0");

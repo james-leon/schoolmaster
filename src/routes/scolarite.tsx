@@ -66,12 +66,15 @@ import { EmptyStateBlock } from "@/components/states";
 
 export const Route = createFileRoute("/scolarite")({ component: ScolaritePage });
 
-const STATUS_LABELS: Record<PaymentStatus, { label: string; cls: string }> = {
-  paye: { label: "Payée", cls: "bg-success text-success-foreground" },
-  partiel: { label: "Partiel", cls: "bg-secondary text-secondary-foreground" },
-  impaye: { label: "En attente", cls: "bg-accent text-accent-foreground" },
-  retard: { label: "En retard", cls: "bg-destructive text-destructive-foreground" },
-};
+function useStatusLabels(): Record<PaymentStatus, { label: string; cls: string }> {
+  const { t } = useTranslation();
+  return {
+    paye: { label: t("fees.statusPaid"), cls: "bg-success text-success-foreground" },
+    partiel: { label: t("fees.statusPartial"), cls: "bg-secondary text-secondary-foreground" },
+    impaye: { label: t("fees.statusPending"), cls: "bg-accent text-accent-foreground" },
+    retard: { label: t("fees.statusOverdue"), cls: "bg-destructive text-destructive-foreground" },
+  };
+}
 
 
 
@@ -136,7 +139,9 @@ function ScolaritePage() {
 /* ============================ INVOICES ============================ */
 
 function InvoicesTab({ loaded }: { loaded: boolean }) {
+  const { t } = useTranslation();
   const db = useDB();
+  const STATUS_LABELS = useStatusLabels();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [classFilter, setClassFilter] = useState<string>("all");
@@ -182,37 +187,37 @@ function InvoicesTab({ loaded }: { loaded: boolean }) {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   className="pl-9"
-                  placeholder="Rechercher par élève ou n° facture..."
+                  placeholder={t("fees.searchInvoices")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="md:w-44"><SelectValue placeholder="Statut" /></SelectTrigger>
+                <SelectTrigger className="md:w-44"><SelectValue placeholder={t("fees.filterStatus")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous statuts</SelectItem>
-                  <SelectItem value="paye">Payée</SelectItem>
-                  <SelectItem value="partiel">Partiel</SelectItem>
-                  <SelectItem value="impaye">En attente</SelectItem>
-                  <SelectItem value="retard">En retard</SelectItem>
+                  <SelectItem value="all">{t("fees.allStatuses")}</SelectItem>
+                  <SelectItem value="paye">{t("fees.statusPaid")}</SelectItem>
+                  <SelectItem value="partiel">{t("fees.statusPartial")}</SelectItem>
+                  <SelectItem value="impaye">{t("fees.statusPending")}</SelectItem>
+                  <SelectItem value="retard">{t("fees.statusOverdue")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={classFilter} onValueChange={setClassFilter}>
-                <SelectTrigger className="md:w-40"><SelectValue placeholder="Classe" /></SelectTrigger>
+                <SelectTrigger className="md:w-40"><SelectValue placeholder={t("fees.filterClass")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toutes classes</SelectItem>
+                  <SelectItem value="all">{t("fees.allClasses")}</SelectItem>
                   {db.classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={feeFilter} onValueChange={setFeeFilter}>
-                <SelectTrigger className="md:w-44"><SelectValue placeholder="Type de frais" /></SelectTrigger>
+                <SelectTrigger className="md:w-44"><SelectValue placeholder={t("fees.filterFeeType")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous types</SelectItem>
+                  <SelectItem value="all">{t("fees.allFeeTypes")}</SelectItem>
                   {db.feeTypes.map((f) => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={() => setCreateOpen(true)}><Plus className="mr-1.5 h-4 w-4" /> Nouvelle facture</Button>
+            <Button onClick={() => setCreateOpen(true)}><Plus className="mr-1.5 h-4 w-4" /> {t("fees.newInvoice")}</Button>
           </div>
 
           {!loaded ? (
@@ -220,9 +225,9 @@ function InvoicesTab({ loaded }: { loaded: boolean }) {
           ) : rows.length === 0 ? (
             <EmptyState
               icon={FileText}
-              title="Aucune facture"
-              description="Créez votre première facture pour commencer."
-              actionLabel="Nouvelle facture"
+              title={t("fees.emptyInvoices")}
+              description={t("fees.emptyInvoicesDesc")}
+              actionLabel={t("fees.newInvoice")}
               onAction={() => setCreateOpen(true)}
             />
           ) : (
@@ -230,15 +235,15 @@ function InvoicesTab({ loaded }: { loaded: boolean }) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>N° Facture</TableHead>
-                    <TableHead>Élève</TableHead>
-                    <TableHead>Type de frais</TableHead>
-                    <TableHead>Montant dû</TableHead>
-                    <TableHead>Montant payé</TableHead>
-                    <TableHead>Reste</TableHead>
-                    <TableHead>Échéance</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t("fees.colInvoiceNo")}</TableHead>
+                    <TableHead>{t("fees.colStudent")}</TableHead>
+                    <TableHead>{t("fees.colFeeType")}</TableHead>
+                    <TableHead>{t("fees.colAmountDue")}</TableHead>
+                    <TableHead>{t("fees.colAmountPaid")}</TableHead>
+                    <TableHead>{t("fees.colRemaining")}</TableHead>
+                    <TableHead>{t("fees.colDueDate")}</TableHead>
+                    <TableHead>{t("fees.colStatus")}</TableHead>
+                    <TableHead className="text-right">{t("common.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -266,15 +271,15 @@ function InvoicesTab({ loaded }: { loaded: boolean }) {
                         <TableCell><Badge className={st.cls}>{st.label}</Badge></TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
-                            <Button size="icon" variant="ghost" onClick={() => setViewInvoice(p)} title="Voir">
+                            <Button size="icon" variant="ghost" onClick={() => setViewInvoice(p)} title={t("common.view")}>
                               <Eye className="h-4 w-4" />
                             </Button>
                             {remaining > 0 && (
-                              <Button size="icon" variant="ghost" onClick={() => setPayInvoice(p)} title="Encaisser">
+                              <Button size="icon" variant="ghost" onClick={() => setPayInvoice(p)} title={t("fees.collect")}>
                                 <CreditCard className="h-4 w-4 text-secondary" />
                               </Button>
                             )}
-                            <Button size="icon" variant="ghost" onClick={() => setDeleteInvoice(p)} title="Supprimer">
+                            <Button size="icon" variant="ghost" onClick={() => setDeleteInvoice(p)} title={t("common.delete")}>
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
@@ -312,13 +317,13 @@ function InvoicesTab({ loaded }: { loaded: boolean }) {
       <AlertDialog open={!!deleteInvoice} onOpenChange={(o) => !o && setDeleteInvoice(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer cette facture ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("fees.deleteInvoiceTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Les paiements liés seront également supprimés.
+              {t("fees.deleteInvoiceDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 const id = deleteInvoice!.id;
@@ -326,11 +331,11 @@ function InvoicesTab({ loaded }: { loaded: boolean }) {
                   d.payments = d.payments.filter((p) => p.id !== id);
                   d.paymentRecords = d.paymentRecords.filter((r) => r.invoiceId !== id);
                 });
-                toast.success("Facture supprimée");
+                toast.success(t("fees.invoiceDeleted"));
                 setDeleteInvoice(null);
               }}
             >
-              Supprimer
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
