@@ -53,9 +53,10 @@ const STATUS_BADGE: Record<BStatus, string> = {
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
+const STATUS_LABEL: Record<BStatus, string> = { brouillon: "Brouillon", actif: "Actif", cloture: "Clôturé" };
+
 function BudgetPage() {
   const { t } = useTranslation();
-  const STATUS_LABEL: Record<BStatus, string> = { brouillon: t("budget.status.brouillon"), actif: t("budget.status.actif"), cloture: t("budget.status.cloture") };
   const { user } = useAuth();
   const schoolId = user?.schoolId;
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
