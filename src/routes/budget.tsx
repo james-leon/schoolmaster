@@ -160,6 +160,7 @@ function buildRows(budget: Budget | null, lines: BudgetLine[], cats: Category[],
 function OverviewTab({ loading, active, lines, categories, txs }: {
   loading: boolean; active: Budget | null; lines: BudgetLine[]; categories: Category[]; txs: Tx[];
 }) {
+  const { t } = useTranslation();
   const rows = useMemo(() => buildRows(active, lines, categories, txs), [active, lines, categories, txs]);
   const plannedRec = rows.filter((r) => r.type === "recette").reduce((s, r) => s + r.planned, 0);
   const plannedDep = rows.filter((r) => r.type === "depense").reduce((s, r) => s + r.planned, 0);
