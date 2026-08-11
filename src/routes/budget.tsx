@@ -53,8 +53,6 @@ const STATUS_BADGE: Record<BStatus, string> = {
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
-const STATUS_LABEL: Record<BStatus, string> = { brouillon: "Brouillon", actif: "Actif", cloture: "Clôturé" };
-
 function BudgetPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -169,14 +167,14 @@ function OverviewTab({ loading, active, lines, categories, txs }: {
   const actualDep = rows.filter((r) => r.type === "depense").reduce((s, r) => s + r.actual, 0);
   const overruns = rows.filter((r) => r.type === "depense" && r.planned > 0 && r.actual > r.planned);
 
-  if (loading) return <Card><CardContent className="py-12 text-center text-muted-foreground">Chargement…</CardContent></Card>;
+  if (loading) return <Card><CardContent className="py-12 text-center text-muted-foreground">{t("budget.loading")}</CardContent></Card>;
 
   if (!active) {
     return (
       <EmptyStateBlock
         icon={PiggyBank}
         titleKey="emptyBudgets"
-        description="Aucun budget actif. Créez un budget et marquez-le comme actif."
+        description={t("budget.overview.noActiveDesc")}
       />
     );
   }
@@ -184,21 +182,21 @@ function OverviewTab({ loading, active, lines, categories, txs }: {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard label="Recettes prévues" value={fcfa(plannedRec)} />
-        <StatCard label="Recettes réelles" value={fcfa(actualRec)} sub={`${pct(actualRec, plannedRec)}% réalisé`} />
-        <StatCard label="Dépenses prévues" value={fcfa(plannedDep)} />
-        <StatCard label="Dépenses réelles" value={fcfa(actualDep)} sub={`${pct(actualDep, plannedDep)}% réalisé`} />
+        <StatCard label={t("budget.overview.plannedRevenue")} value={fcfa(plannedRec)} />
+        <StatCard label={t("budget.overview.actualRevenue")} value={fcfa(actualRec)} sub={`${pct(actualRec, plannedRec)}% ${t("budget.overview.realized")}`} />
+        <StatCard label={t("budget.overview.plannedExpense")} value={fcfa(plannedDep)} />
+        <StatCard label={t("budget.overview.actualExpense")} value={fcfa(actualDep)} sub={`${pct(actualDep, plannedDep)}% ${t("budget.overview.realized")}`} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card><CardContent className="p-5">
-          <div className="text-sm text-muted-foreground">Résultat prévisionnel</div>
+          <div className="text-sm text-muted-foreground">{t("budget.overview.forecastResult")}</div>
           <div className={`text-2xl font-bold ${plannedRec - plannedDep >= 0 ? "text-success" : "text-destructive"}`}>
             {fcfa(plannedRec - plannedDep)}
           </div>
         </CardContent></Card>
         <Card><CardContent className="p-5">
-          <div className="text-sm text-muted-foreground">Résultat réel (à ce jour)</div>
+          <div className="text-sm text-muted-foreground">{t("budget.overview.actualResult")}</div>
           <div className={`text-2xl font-bold ${actualRec - actualDep >= 0 ? "text-success" : "text-destructive"}`}>
             {fcfa(actualRec - actualDep)}
           </div>
@@ -209,7 +207,7 @@ function OverviewTab({ loading, active, lines, categories, txs }: {
         <Card className="border-destructive/40">
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center gap-2 font-semibold">
-              <AlertTriangle className="h-4 w-4 text-destructive" /> Dépassements budgétaires
+              <AlertTriangle className="h-4 w-4 text-destructive" /> {t("budget.overview.overrunsTitle")}
             </div>
             <div className="space-y-2">
               {overruns.map((r) => {
@@ -228,13 +226,13 @@ function OverviewTab({ loading, active, lines, categories, txs }: {
       )}
 
       <Card><CardContent className="p-5 space-y-3">
-        <div className="font-semibold">Aperçu par catégorie — {active.name}</div>
+        <div className="font-semibold">{t("budget.overview.categoryOverview", { name: active.name })}</div>
         <div className="space-y-3">
           {rows.length === 0 && <EmptyStateBlock titleKey="emptyBudgetLines" className="py-8" />}
           {rows.map((r) => (
             <div key={r.lineId} className="space-y-1">
               <div className="flex items-center justify-between text-sm">
-                <span><Badge variant="outline" className="mr-2">{r.type === "recette" ? "Recette" : "Dépense"}</Badge>{r.categoryName}</span>
+                <span><Badge variant="outline" className="mr-2">{r.type === "recette" ? t("budget.overview.revenue") : t("budget.overview.expense")}</Badge>{r.categoryName}</span>
                 <span className="text-muted-foreground">{fcfa(r.actual)} / {fcfa(r.planned)}</span>
               </div>
               <Progress value={Math.min(100, pct(r.actual, r.planned))} className={r.type === "depense" && r.actual > r.planned ? "[&>div]:bg-destructive" : ""} />
