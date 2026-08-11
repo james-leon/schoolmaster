@@ -346,10 +346,10 @@ function CalendrierPage() {
               {isAdmin && (
                 <DialogFooter className="gap-2 sm:gap-2">
                   <Button variant="outline" onClick={() => { setEditing(viewingEvent); setViewingEvent(null); setOpenDialog(true); }}>
-                    <Pencil className="mr-1.5 h-4 w-4" /> Modifier
+                    <Pencil className="mr-1.5 h-4 w-4" /> {t("timetable.modify")}
                   </Button>
                   <Button variant="destructive" onClick={() => handleDelete(viewingEvent.id)}>
-                    <Trash2 className="mr-1.5 h-4 w-4" /> Supprimer
+                    <Trash2 className="mr-1.5 h-4 w-4" /> {t("calendar.deleteEvent")}
                   </Button>
                 </DialogFooter>
               )}
@@ -403,6 +403,7 @@ function EventFormDialog({
   classes: { id: string; name: string }[];
   onSaved: () => void;
 }) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<EventType>("evenement");
@@ -436,9 +437,9 @@ function EventFormDialog({
   }, [open, editing]);
 
   const save = async () => {
-    if (!title.trim()) return toast.error("Titre requis");
-    if (!startDate) return toast.error("Date de début requise");
-    if (target === "classe" && !classId) return toast.error("Sélectionnez une classe");
+    if (!title.trim()) return toast.error(t("calendar.titleRequired"));
+    if (!startDate) return toast.error(t("calendar.startDateRequired"));
+    if (target === "classe" && !classId) return toast.error(t("calendar.selectClassError"));
     setSaving(true);
     const payload = {
       school_id: schoolId,
@@ -457,13 +458,13 @@ function EventFormDialog({
     if (editing) {
       const { error } = await supabase.from("events").update(payload).eq("id", editing.id);
       setSaving(false);
-      if (error) return toast.error("Modification impossible");
-      toast.success("Événement modifié");
+      if (error) return toast.error(t("calendar.modifyError"));
+      toast.success(t("calendar.eventModified"));
     } else {
       const { error } = await supabase.from("events").insert({ ...payload, created_by: user?.id ?? null });
       setSaving(false);
-      if (error) return toast.error("Création impossible");
-      toast.success("Événement créé");
+      if (error) return toast.error(t("calendar.createError"));
+      toast.success(t("calendar.eventCreated"));
     }
     onSaved();
   };
@@ -472,36 +473,36 @@ function EventFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? "Modifier l'événement" : "Nouvel événement"}</DialogTitle>
+          <DialogTitle>{editing ? t("calendar.editEvent") : t("calendar.newEvent")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Titre *</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Réunion parents CE1" />
+            <Label>{t("calendar.titleField")} *</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("calendar.titlePlaceholder")} />
           </div>
           <div>
-            <Label>Description</Label>
+            <Label>{t("calendar.description")}</Label>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Type *</Label>
+              <Label>{t("calendar.typeField")} *</Label>
               <Select value={type} onValueChange={(v) => setType(v as EventType)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {EVENT_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>{typeMeta(t).label}</SelectItem>
+                  {EVENT_TYPES.map((et) => (
+                    <SelectItem key={et} value={et}>{typeMeta(et).label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Audience *</Label>
+              <Label>{t("calendar.audienceField")} *</Label>
               <Select value={target} onValueChange={(v) => setTarget(v as EventTarget)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {EVENT_TARGETS.map((t) => (
-                    <SelectItem key={t} value={t}>{targetLabel(t)}</SelectItem>
+                  {EVENT_TARGETS.map((tg) => (
+                    <SelectItem key={tg} value={tg}>{targetLabel(tg)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -509,9 +510,9 @@ function EventFormDialog({
           </div>
           {target === "classe" && (
             <div>
-              <Label>Classe *</Label>
+              <Label>{t("calendar.classField")} *</Label>
               <Select value={classId} onValueChange={setClassId}>
-                <SelectTrigger><SelectValue placeholder="Choisir une classe" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("calendar.chooseClass")} /></SelectTrigger>
                 <SelectContent>
                   {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
@@ -520,32 +521,32 @@ function EventFormDialog({
           )}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Date début *</Label>
+              <Label>{t("calendar.startDate")} *</Label>
               <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div>
-              <Label>Date fin</Label>
+              <Label>{t("calendar.endDate")}</Label>
               <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Heure début</Label>
+              <Label>{t("calendar.startTime")}</Label>
               <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
             </div>
             <div>
-              <Label>Heure fin</Label>
+              <Label>{t("calendar.endTime")}</Label>
               <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
             </div>
           </div>
           <div>
-            <Label>Lieu</Label>
-            <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Salle polyvalente" />
+            <Label>{t("calendar.location")}</Label>
+            <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder={t("calendar.locationPlaceholder")} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Annuler</Button>
-          <Button onClick={save} disabled={saving}>{saving ? "Enregistrement…" : editing ? "Modifier" : "Créer"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>{t("calendar.cancel")}</Button>
+          <Button onClick={save} disabled={saving}>{saving ? t("calendar.saving") : editing ? t("calendar.modify") : t("calendar.create")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
