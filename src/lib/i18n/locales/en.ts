@@ -613,6 +613,11 @@ export const en: Dict = {
     completeTitle: "Setup complete ✓",
     completeText: "You can reopen this checklist any time from the Help page.",
     reopenHint: "This checklist stays available here, even once setup is complete.",
+    hide: "Hide",
+    expand: "Show",
+    collapse: "Collapse",
+    resume: "Resume the quick-start guide",
+    optionalTitle: "Go further (optional)",
     steps: {
       school: {
         title: "Configure your school",
