@@ -8,10 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { KeyRound } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/changer-mot-de-passe")({ component: ChangePasswordPage });
 
 function ChangePasswordPage() {
+  const { t } = useTranslation();
   const { user, loading, refreshUser, logout } = useAuth();
   const navigate = useNavigate();
   const [pwd, setPwd] = useState("");
@@ -24,8 +26,8 @@ function ChangePasswordPage() {
   }
 
   const submit = async () => {
-    if (pwd.length < 6) return toast.error("6 caractères minimum");
-    if (pwd !== confirm) return toast.error("Les mots de passe ne correspondent pas");
+    if (pwd.length < 6) return toast.error(t("profile.minChars"));
+    if (pwd !== confirm) return toast.error(t("profile.mismatch"));
     setSubmitting(true);
     try {
       // Make sure we have an active session before calling updateUser —
@@ -36,7 +38,7 @@ function ChangePasswordPage() {
         session = refreshed.data.session;
       }
       if (!session) {
-        toast.error("Session expirée. Veuillez vous reconnecter.");
+        toast.error(t("profile.sessionExpired"));
         await logout();
         navigate({ to: "/login", replace: true });
         return;
@@ -49,7 +51,7 @@ function ChangePasswordPage() {
       const { error: pErr } = await supabase.rpc("clear_must_change_password");
       if (pErr) throw pErr;
       await refreshUser();
-      toast.success("Mot de passe mis à jour");
+      toast.success(t("profile.passwordUpdated"));
       const dest = user?.role === "parent" ? "/parent" : "/dashboard";
       navigate({ to: dest, replace: true });
     } catch (e) {
@@ -66,25 +68,25 @@ function ChangePasswordPage() {
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <KeyRound className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle>Changer votre mot de passe</CardTitle>
+          <CardTitle>{t("profile.changePasswordPageTitle")}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Pour votre sécurité, choisissez un nouveau mot de passe avant de continuer.
+            {t("profile.changePasswordPageDesc")}
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-1.5">
-            <Label>Nouveau mot de passe</Label>
+            <Label>{t("profile.newPassword")}</Label>
             <Input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} autoFocus />
           </div>
           <div className="space-y-1.5">
-            <Label>Confirmer le mot de passe</Label>
+            <Label>{t("profile.confirmPassword")}</Label>
             <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
           </div>
           <Button className="w-full" onClick={submit} disabled={submitting}>
-            {submitting ? "Enregistrement..." : "Enregistrer le nouveau mot de passe"}
+            {submitting ? t("profile.saving") : t("profile.savePassword")}
           </Button>
           <Button variant="ghost" className="w-full" onClick={() => logout().then(() => navigate({ to: "/login" }))}>
-            Se déconnecter
+            {t("profile.logout")}
           </Button>
         </CardContent>
       </Card>

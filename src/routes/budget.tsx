@@ -24,6 +24,7 @@ import { usePlan } from "@/lib/usePlan";
 import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
 import { requiredPlanFor } from "@/lib/plans";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
+import { useTranslation } from "react-i18next";
 
 const BUDGET_REALTIME_TABLES = ["budgets", "budget_lines", "transaction_categories", "transactions"] as const;
 
@@ -43,7 +44,7 @@ interface BudgetLine {
 interface Category { id: string; school_id: string; name: string; type: "recette" | "depense"; }
 interface Tx { id: string; school_id: string; type: "recette" | "depense"; category: string; amount: number; date: string; }
 
-const STATUS_LABEL: Record<BStatus, string> = { brouillon: "Brouillon", actif: "Actif", cloture: "Clôturé" };
+
 const STATUS_BADGE: Record<BStatus, string> = {
   brouillon: "bg-muted text-muted-foreground",
   actif: "bg-success/15 text-success",
@@ -53,6 +54,7 @@ const STATUS_BADGE: Record<BStatus, string> = {
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 function BudgetPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const schoolId = user?.schoolId;
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
@@ -68,17 +70,17 @@ function BudgetPage() {
   const fetchAll = useCallback(async () => {
     if (!schoolId) return;
     setLoading(true);
-    const [b, l, c, t] = await Promise.all([
+    const [b, l, c, txRes] = await Promise.all([
       supabase.from("budgets").select("*").eq("school_id", schoolId).order("period_start", { ascending: false }),
       supabase.from("budget_lines").select("*").eq("school_id", schoolId),
       supabase.from("transaction_categories").select("id,school_id,name,type").eq("school_id", schoolId).order("name"),
       supabase.from("transactions").select("id,school_id,type,category,amount,date").eq("school_id", schoolId),
     ]);
-    if (b.error || l.error || c.error || t.error) toast.error("Erreur de chargement Budget");
+    if (b.error || l.error || c.error || txRes.error) toast.error(t("budget.toasts.loadError"));
     setBudgets(((b.data ?? []) as unknown) as Budget[]);
     setLines(((l.data ?? []) as unknown) as BudgetLine[]);
     setCategories(((c.data ?? []) as unknown) as Category[]);
-    setTxs(((t.data ?? []) as unknown) as Tx[]);
+    setTxs(((txRes.data ?? []) as unknown) as Tx[]);
     setLoading(false);
   }, [schoolId]);
 
@@ -95,20 +97,20 @@ function BudgetPage() {
   if (!isAdmin) return <Navigate to="/dashboard" />;
   if (!planLoading && user.role !== "super_admin" && !hasFeature("budget")) {
     return (
-      <AppLayout title="Budget">
-        <LockedFeatureOverlay requiredPlan={requiredPlanFor("budget")} featureLabel="Budget" />
+      <AppLayout title={t("budget.title")}>
+        <LockedFeatureOverlay requiredPlan={requiredPlanFor("budget")} featureLabel={t("budget.lockedFeature")} />
       </AppLayout>
     );
   }
 
   return (
-    <AppLayout title="Budget">
+    <AppLayout title={t("budget.title")}>
       <div className="space-y-6">
         <Tabs defaultValue="overview" className="w-full">
           <TabsList>
-            <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-            <TabsTrigger value="budgets">Budgets</TabsTrigger>
-            <TabsTrigger value="comparison">Prévu vs Réel</TabsTrigger>
+            <TabsTrigger value="overview">{t("budget.tabs.overview")}</TabsTrigger>
+            <TabsTrigger value="budgets">{t("budget.tabs.budgets")}</TabsTrigger>
+            <TabsTrigger value="comparison">{t("budget.tabs.comparison")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">
@@ -158,6 +160,7 @@ function buildRows(budget: Budget | null, lines: BudgetLine[], cats: Category[],
 function OverviewTab({ loading, active, lines, categories, txs }: {
   loading: boolean; active: Budget | null; lines: BudgetLine[]; categories: Category[]; txs: Tx[];
 }) {
+  const { t } = useTranslation();
   const rows = useMemo(() => buildRows(active, lines, categories, txs), [active, lines, categories, txs]);
   const plannedRec = rows.filter((r) => r.type === "recette").reduce((s, r) => s + r.planned, 0);
   const plannedDep = rows.filter((r) => r.type === "depense").reduce((s, r) => s + r.planned, 0);
@@ -165,14 +168,14 @@ function OverviewTab({ loading, active, lines, categories, txs }: {
   const actualDep = rows.filter((r) => r.type === "depense").reduce((s, r) => s + r.actual, 0);
   const overruns = rows.filter((r) => r.type === "depense" && r.planned > 0 && r.actual > r.planned);
 
-  if (loading) return <Card><CardContent className="py-12 text-center text-muted-foreground">Chargement…</CardContent></Card>;
+  if (loading) return <Card><CardContent className="py-12 text-center text-muted-foreground">{t("budget.loading")}</CardContent></Card>;
 
   if (!active) {
     return (
       <EmptyStateBlock
         icon={PiggyBank}
         titleKey="emptyBudgets"
-        description="Aucun budget actif. Créez un budget et marquez-le comme actif."
+        description={t("budget.overview.noActiveDesc")}
       />
     );
   }
@@ -180,21 +183,21 @@ function OverviewTab({ loading, active, lines, categories, txs }: {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard label="Recettes prévues" value={fcfa(plannedRec)} />
-        <StatCard label="Recettes réelles" value={fcfa(actualRec)} sub={`${pct(actualRec, plannedRec)}% réalisé`} />
-        <StatCard label="Dépenses prévues" value={fcfa(plannedDep)} />
-        <StatCard label="Dépenses réelles" value={fcfa(actualDep)} sub={`${pct(actualDep, plannedDep)}% réalisé`} />
+        <StatCard label={t("budget.overview.plannedRevenue")} value={fcfa(plannedRec)} />
+        <StatCard label={t("budget.overview.actualRevenue")} value={fcfa(actualRec)} sub={`${pct(actualRec, plannedRec)}% ${t("budget.overview.realized")}`} />
+        <StatCard label={t("budget.overview.plannedExpense")} value={fcfa(plannedDep)} />
+        <StatCard label={t("budget.overview.actualExpense")} value={fcfa(actualDep)} sub={`${pct(actualDep, plannedDep)}% ${t("budget.overview.realized")}`} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card><CardContent className="p-5">
-          <div className="text-sm text-muted-foreground">Résultat prévisionnel</div>
+          <div className="text-sm text-muted-foreground">{t("budget.overview.forecastResult")}</div>
           <div className={`text-2xl font-bold ${plannedRec - plannedDep >= 0 ? "text-success" : "text-destructive"}`}>
             {fcfa(plannedRec - plannedDep)}
           </div>
         </CardContent></Card>
         <Card><CardContent className="p-5">
-          <div className="text-sm text-muted-foreground">Résultat réel (à ce jour)</div>
+          <div className="text-sm text-muted-foreground">{t("budget.overview.actualResult")}</div>
           <div className={`text-2xl font-bold ${actualRec - actualDep >= 0 ? "text-success" : "text-destructive"}`}>
             {fcfa(actualRec - actualDep)}
           </div>
@@ -205,7 +208,7 @@ function OverviewTab({ loading, active, lines, categories, txs }: {
         <Card className="border-destructive/40">
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center gap-2 font-semibold">
-              <AlertTriangle className="h-4 w-4 text-destructive" /> Dépassements budgétaires
+              <AlertTriangle className="h-4 w-4 text-destructive" /> {t("budget.overview.overrunsTitle")}
             </div>
             <div className="space-y-2">
               {overruns.map((r) => {
@@ -224,13 +227,13 @@ function OverviewTab({ loading, active, lines, categories, txs }: {
       )}
 
       <Card><CardContent className="p-5 space-y-3">
-        <div className="font-semibold">Aperçu par catégorie — {active.name}</div>
+        <div className="font-semibold">{t("budget.overview.categoryOverview", { name: active.name })}</div>
         <div className="space-y-3">
           {rows.length === 0 && <EmptyStateBlock titleKey="emptyBudgetLines" className="py-8" />}
           {rows.map((r) => (
             <div key={r.lineId} className="space-y-1">
               <div className="flex items-center justify-between text-sm">
-                <span><Badge variant="outline" className="mr-2">{r.type === "recette" ? "Recette" : "Dépense"}</Badge>{r.categoryName}</span>
+                <span><Badge variant="outline" className="mr-2">{r.type === "recette" ? t("budget.overview.revenue") : t("budget.overview.expense")}</Badge>{r.categoryName}</span>
                 <span className="text-muted-foreground">{fcfa(r.actual)} / {fcfa(r.planned)}</span>
               </div>
               <Progress value={Math.min(100, pct(r.actual, r.planned))} className={r.type === "depense" && r.actual > r.planned ? "[&>div]:bg-destructive" : ""} />

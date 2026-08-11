@@ -14,11 +14,17 @@ import { Plus, Printer, Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
+import { useTranslation } from "react-i18next";
+import i18n from "@/lib/i18n";
 
 export const Route = createFileRoute("/emploi-du-temps")({ component: EmploiDuTempsPage });
 
 const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"] as const;
 type Day = (typeof DAYS)[number];
+const DAY_KEYS: Record<Day, string> = {
+  Lundi: "monday", Mardi: "tuesday", Mercredi: "wednesday", Jeudi: "thursday", Vendredi: "friday", Samedi: "saturday",
+};
+function dayLabel(d: Day) { return i18n.t(`timetable.days.${DAY_KEYS[d]}`); }
 
 const DEFAULT_SLOTS: { start: string; end: string }[] = [
   { start: "07:30", end: "08:30" },
@@ -57,6 +63,7 @@ function colorFor(name: string): { bg: string; border: string; text: string } {
 }
 
 function EmploiDuTempsPage() {
+  const { t } = useTranslation();
   const db = useDB();
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
@@ -92,7 +99,7 @@ function EmploiDuTempsPage() {
     const { data, error } = await q;
     setLoading(false);
     if (error) {
-      toast.error("Impossible de charger l'emploi du temps");
+      toast.error(t("timetable.loadError"));
       return;
     }
     setRows((data ?? []) as TimetableRow[]);
@@ -172,10 +179,10 @@ function EmploiDuTempsPage() {
       if (r.day_of_week !== form.day) continue;
       if (!overlaps(form.start_time, form.end_time, r.start_time, r.end_time)) continue;
       if (form.teacher_id && r.teacher_id === form.teacher_id) {
-        msgs.push(`⚠️ ${teacher ? `${teacher.firstName} ${teacher.lastName}` : "L'enseignant"} est déjà occupé à cette heure (${r.start_time}-${r.end_time}).`);
+        msgs.push(`⚠️ ${t("timetable.conflictTeacher", { teacher: teacher ? `${teacher.firstName} ${teacher.lastName}` : t("timetable.conflictTeacherFallback"), start: r.start_time, end: r.end_time })}`);
       }
       if (r.class_id === classId) {
-        msgs.push(`⚠️ Cette classe a déjà un cours à cette heure (${r.start_time}-${r.end_time}).`);
+        msgs.push(`⚠️ ${t("timetable.conflictClass", { start: r.start_time, end: r.end_time })}`);
       }
     }
     return Array.from(new Set(msgs));
@@ -184,7 +191,7 @@ function EmploiDuTempsPage() {
   const save = async () => {
     if (!user?.schoolId || !classId) return;
     if (!form.subject_id) {
-      toast.error("Sélectionnez une matière");
+      toast.error(t("timetable.selectSubjectError"));
       return;
     }
     const subj = classSubjects.find((s) => s.id === form.subject_id);
@@ -193,7 +200,7 @@ function EmploiDuTempsPage() {
       school_id: user.schoolId,
       class_id: classId,
       subject_id: form.subject_id,
-      subject_name: subj?.name ?? "Matière",
+      subject_name: subj?.name ?? t("timetable.defaultSubjectName"),
       teacher_id: form.teacher_id || null,
       teacher_name: teacher ? `${teacher.firstName} ${teacher.lastName}` : null,
       day_of_week: form.day,
@@ -204,11 +211,11 @@ function EmploiDuTempsPage() {
     if (editing) {
       const { error } = await supabase.from("timetable").update(payload).eq("id", editing.id);
       if (error) return toast.error(error.message);
-      toast.success("Cours modifié");
+      toast.success(t("timetable.courseUpdated"));
     } else {
       const { error } = await supabase.from("timetable").insert(payload);
       if (error) return toast.error(error.message);
-      toast.success("Cours ajouté");
+      toast.success(t("timetable.courseAdded"));
     }
     setDialogOpen(false);
     void refresh();
@@ -218,7 +225,7 @@ function EmploiDuTempsPage() {
     if (!editing) return;
     const { error } = await supabase.from("timetable").delete().eq("id", editing.id);
     if (error) return toast.error(error.message);
-    toast.success("Cours supprimé");
+    toast.success(t("timetable.courseDeleted"));
     setDialogOpen(false);
     void refresh();
   };
@@ -243,7 +250,7 @@ function EmploiDuTempsPage() {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
     const className = visibleClasses.find((c) => c.id === classId)?.name ?? "";
-    const schoolName = db.schools[0]?.name ?? "École";
+    const schoolName = db.schools[0]?.name ?? t("timetable.defaultSchoolName");
     const logo = db.schools[0]?.logo ?? "";
     const cellsHtml = slots
       .map((slot) => {
@@ -255,7 +262,7 @@ function EmploiDuTempsPage() {
         return `<tr><th>${esc(slot.start)} - ${esc(slot.end)}</th>${cells}</tr>`;
       })
       .join("");
-    const html = `<!doctype html><html><head><meta charset="utf-8"/><title>Emploi du temps - ${esc(className)}</title>
+    const html = `<!doctype html><html><head><meta charset="utf-8"/><title>${esc(t("timetable.printTitle", { className }))}</title>
       <style>
         body{font-family:system-ui,sans-serif;padding:24px;color:#111}
         header{display:flex;align-items:center;gap:16px;margin-bottom:16px;border-bottom:2px solid #111;padding-bottom:12px}
@@ -267,27 +274,27 @@ function EmploiDuTempsPage() {
         thead th{background:#f3f4f6}
         tbody th{background:#fafafa;width:110px;font-weight:600}
       </style></head><body>
-      <header>${logo ? `<img src="${esc(logo)}" alt="logo"/>` : ""}<div><h1>${esc(schoolName)}</h1><h2>Emploi du temps — ${esc(className)}</h2></div></header>
+      <header>${logo ? `<img src="${esc(logo)}" alt="logo"/>` : ""}<div><h1>${esc(schoolName)}</h1><h2>${esc(t("timetable.printHeading", { className }))}</h2></div></header>
       <table>
-        <thead><tr><th>Horaire</th>${DAYS.map((d) => `<th>${esc(d)}</th>`).join("")}</tr></thead>
+        <thead><tr><th>${esc(t("timetable.schedule"))}</th>${DAYS.map((d) => `<th>${esc(dayLabel(d))}</th>`).join("")}</tr></thead>
         <tbody>${cellsHtml}</tbody>
       </table>
       <script>window.onload=()=>{window.print();}</script>
       </body></html>`;
     const w = window.open("", "_blank");
-    if (!w) return toast.error("Bloqueur de pop-up détecté");
+    if (!w) return toast.error(t("timetable.popupBlocked"));
     w.document.write(html);
     w.document.close();
   };
 
   return (
-    <AppLayout title="Emploi du temps">
+    <AppLayout title={t("timetable.title")}>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         {!isTeacher ? (
           <div className="w-full sm:max-w-xs space-y-1.5">
-            <Label>Classe</Label>
+            <Label>{t("timetable.classLabel")}</Label>
             <Select value={classId} onValueChange={setClassId}>
-              <SelectTrigger><SelectValue placeholder="Sélectionner une classe" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("timetable.selectClass")} /></SelectTrigger>
               <SelectContent>
                 {visibleClasses.map((c) => (
                   <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -297,17 +304,17 @@ function EmploiDuTempsPage() {
           </div>
         ) : (
           <div className="text-sm text-muted-foreground">
-            Votre emploi du temps personnel (toutes classes confondues).
+            {t("timetable.teacherPersonalNote")}
           </div>
         )}
         <div className="flex gap-2">
           {isAdmin && (
             <Button onClick={() => openAdd("Lundi", DEFAULT_SLOTS[0])} disabled={!classId}>
-              <Plus className="mr-1 h-4 w-4" /> Ajouter un cours
+              <Plus className="mr-1 h-4 w-4" /> {t("timetable.addCourse")}
             </Button>
           )}
           <Button variant="outline" onClick={printTimetable} disabled={!classId && !isTeacher}>
-            <Printer className="mr-1 h-4 w-4" /> Imprimer
+            <Printer className="mr-1 h-4 w-4" /> {t("timetable.print")}
           </Button>
         </div>
       </div>
@@ -317,9 +324,9 @@ function EmploiDuTempsPage() {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-muted/50">
-                <th className="border-b border-r p-2 w-28 text-left font-medium text-muted-foreground">Horaire</th>
+                <th className="border-b border-r p-2 w-28 text-left font-medium text-muted-foreground">{t("timetable.schedule")}</th>
                 {DAYS.map((d) => (
-                  <th key={d} className="border-b border-r p-2 text-center font-medium">{d}</th>
+                  <th key={d} className="border-b border-r p-2 text-center font-medium">{dayLabel(d)}</th>
                 ))}
               </tr>
             </thead>
@@ -375,7 +382,7 @@ function EmploiDuTempsPage() {
               {slots.length === 0 && (
                 <tr>
                   <td colSpan={DAYS.length + 1} className="p-6 text-center text-muted-foreground">
-                    {loading ? "Chargement…" : "Aucun créneau."}
+                    {loading ? t("timetable.loading") : t("timetable.noSlot")}
                   </td>
                 </tr>
               )}
@@ -387,43 +394,43 @@ function EmploiDuTempsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Modifier le cours" : "Ajouter un cours"}</DialogTitle>
+            <DialogTitle>{editing ? t("timetable.editCourse") : t("timetable.addCourseTitle")}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Jour</Label>
+              <Label>{t("timetable.day")}</Label>
               <Select value={form.day} onValueChange={(v) => setForm((f) => ({ ...f, day: v as Day }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {DAYS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  {DAYS.map((d) => <SelectItem key={d} value={d}>{dayLabel(d)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Salle</Label>
-              <Input value={form.room} onChange={(e) => setForm((f) => ({ ...f, room: e.target.value }))} placeholder="Salle 1" />
+              <Label>{t("timetable.room")}</Label>
+              <Input value={form.room} onChange={(e) => setForm((f) => ({ ...f, room: e.target.value }))} placeholder={t("timetable.roomPlaceholder")} />
             </div>
             <div className="space-y-1.5">
-              <Label>Heure début</Label>
+              <Label>{t("timetable.startTime")}</Label>
               <Input type="time" value={form.start_time} onChange={(e) => setForm((f) => ({ ...f, start_time: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Heure fin</Label>
+              <Label>{t("timetable.endTime")}</Label>
               <Input type="time" value={form.end_time} onChange={(e) => setForm((f) => ({ ...f, end_time: e.target.value }))} />
             </div>
             <div className="space-y-1.5 col-span-2">
-              <Label>Matière</Label>
+              <Label>{t("timetable.subject")}</Label>
               <Select value={form.subject_id} onValueChange={onSubjectChange}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("timetable.select")} /></SelectTrigger>
                 <SelectContent>
                   {classSubjects.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5 col-span-2">
-              <Label>Enseignant</Label>
+              <Label>{t("timetable.teacher")}</Label>
               <Select value={form.teacher_id} onValueChange={(v) => setForm((f) => ({ ...f, teacher_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("timetable.select")} /></SelectTrigger>
                 <SelectContent>
                   {db.teachers.map((t) => (
                     <SelectItem key={t.id} value={t.id}>{t.firstName} {t.lastName}</SelectItem>
@@ -435,7 +442,7 @@ function EmploiDuTempsPage() {
           {conflicts.length > 0 && (
             <div className="rounded-md border border-accent/40 bg-accent/10 p-3 text-sm text-accent">
               <div className="mb-1 flex items-center gap-2 font-medium">
-                <AlertTriangle className="h-4 w-4" /> Conflit détecté
+                <AlertTriangle className="h-4 w-4" /> {t("timetable.conflictDetected")}
               </div>
               <ul className="list-inside list-disc space-y-0.5">
                 {conflicts.map((m, i) => <li key={i}>{m}</li>)}
@@ -446,13 +453,13 @@ function EmploiDuTempsPage() {
             <div>
               {editing && (
                 <Button variant="destructive" onClick={remove}>
-                  <Trash2 className="mr-1 h-4 w-4" /> Supprimer
+                  <Trash2 className="mr-1 h-4 w-4" /> {t("timetable.delete")}
                 </Button>
               )}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
-              <Button onClick={save}>{editing ? "Modifier" : "Ajouter"}</Button>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>{t("timetable.cancel")}</Button>
+              <Button onClick={save}>{editing ? t("timetable.modify") : t("timetable.add")}</Button>
             </div>
           </DialogFooter>
         </DialogContent>

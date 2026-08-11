@@ -15,12 +15,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { resolveTeacherClasses } from "@/lib/teacher-scope";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/presences")({ component: PresencesPage });
 
 type Status = "present" | "absent" | "retard";
 
 function PresencesPage() {
+  const { t } = useTranslation();
   const db = useDB();
   const loaded = useLoaded();
   const { user } = useAuth();
@@ -48,9 +50,9 @@ function PresencesPage() {
 
   const save = () => {
     updateDB((d) => {
-      d.activities.unshift({ id: crypto.randomUUID(), type: "attendance", text: `Présences enregistrées (${db.classes.find((c) => c.id === classId)?.name}) - ${date}`, date: new Date().toISOString() });
+      d.activities.unshift({ id: crypto.randomUUID(), type: "attendance", text: t("attendance.activityText", { className: db.classes.find((c) => c.id === classId)?.name, date }), date: new Date().toISOString() });
     });
-    toast.success("Présences enregistrées avec succès");
+    toast.success(t("attendance.saved"));
   };
 
   const presentCount = students.filter((s) => statusOf(s.id) === "present").length;
@@ -58,30 +60,30 @@ function PresencesPage() {
   const lateCount = students.filter((s) => statusOf(s.id) === "retard").length;
 
   return (
-    <AppLayout title="Présences">
+    <AppLayout title={t("attendance.title")}>
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Présents" value={String(presentCount)} icon={Check} tone="green" />
-        <StatCard label="Absents" value={String(absentCount)} icon={X} tone="red" />
-        <StatCard label="Retards" value={String(lateCount)} icon={Clock} tone="orange" />
+        <StatCard label={t("attendance.present")} value={String(presentCount)} icon={Check} tone="green" />
+        <StatCard label={t("attendance.absent")} value={String(absentCount)} icon={X} tone="red" />
+        <StatCard label={t("attendance.late")} value={String(lateCount)} icon={Clock} tone="orange" />
       </div>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:flex-1">
           <div className="space-y-1.5">
-            <Label>Classe</Label>
+            <Label>{t("attendance.classLabel")}</Label>
             <Select value={classId} onValueChange={setClassId}>
-              <SelectTrigger><SelectValue placeholder="Classe" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("attendance.classLabel")} /></SelectTrigger>
               <SelectContent>
                 {visibleClasses.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Date</Label>
+            <Label>{t("attendance.dateLabel")}</Label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
         </div>
-        <Button onClick={save}>Enregistrer</Button>
+        <Button onClick={save}>{t("attendance.save")}</Button>
       </div>
 
       <Card>
@@ -92,8 +94,8 @@ function PresencesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Élève</TableHead>
-                  <TableHead className="text-right">Statut</TableHead>
+                  <TableHead>{t("attendance.student")}</TableHead>
+                  <TableHead className="text-right">{t("attendance.status")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -105,9 +107,9 @@ function PresencesPage() {
                       <TableCell>
                         <div className="flex justify-end gap-1.5">
                           {([
-                            { v: "present", label: "P", title: "Présent", cls: "bg-success text-success-foreground" },
-                            { v: "absent", label: "A", title: "Absent", cls: "bg-destructive text-destructive-foreground" },
-                            { v: "retard", label: "R", title: "Retard", cls: "bg-accent text-accent-foreground" },
+                            { v: "present", label: "P", title: t("attendance.titlePresent"), cls: "bg-success text-success-foreground" },
+                            { v: "absent", label: "A", title: t("attendance.titleAbsent"), cls: "bg-destructive text-destructive-foreground" },
+                            { v: "retard", label: "R", title: t("attendance.titleLate"), cls: "bg-accent text-accent-foreground" },
                           ] as const).map((opt) => (
                             <button
                               key={opt.v}
@@ -130,7 +132,7 @@ function PresencesPage() {
             </Table>
           )}
           {loaded && students.length === 0 && (
-            <EmptyStateBlock icon={CalendarCheck} titleKey="emptyStudents" description="Aucun élève dans cette classe." />
+            <EmptyStateBlock icon={CalendarCheck} titleKey="emptyStudents" description={t("attendance.emptyClassDesc")} />
           )}
         </CardContent>
       </Card>

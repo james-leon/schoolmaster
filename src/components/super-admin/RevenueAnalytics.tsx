@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -29,6 +30,7 @@ function priceOf(s: PlatformSchool): number {
 }
 
 export function RevenueAnalytics({ schools }: { schools: PlatformSchool[] }) {
+  const { t } = useTranslation();
   const data = useMemo(() => {
     const active = schools.filter((s) => s.status === "active");
     const annual = active.reduce((sum, s) => sum + priceOf(s), 0);
@@ -93,32 +95,32 @@ export function RevenueAnalytics({ schools }: { schools: PlatformSchool[] }) {
       {/* KPI cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <RevKpi
-          tone="green" icon={Banknote} label="Revenu total annuel"
-          value={fcfa(data.annual)} hint="Abonnements actifs (facturation annuelle)" big
+          tone="green" icon={Banknote} label={t("superAdmin.revenue.totalRevenue")}
+          value={fcfa(data.annual)} hint={t("superAdmin.revenue.totalRevenueHint")} big
         />
         <RevKpi
-          tone="navy" icon={Building2} label="Écoles abonnées"
-          value={String(data.activeCount)} hint="Abonnements actifs"
+          tone="navy" icon={Building2} label={t("superAdmin.revenue.subscribedSchools")}
+          value={String(data.activeCount)} hint={t("superAdmin.revenue.subscribedSchoolsHint")}
         />
         <RevKpi
-          tone="blue" icon={Users} label="Revenu moyen par école"
-          value={fcfa(data.avg)} hint="Par an"
+          tone="blue" icon={Users} label={t("superAdmin.revenue.avgRevenue")}
+          value={fcfa(data.avg)} hint={t("superAdmin.revenue.avgRevenueHint")}
         />
         <RevKpi
-          tone="orange" icon={CalendarClock} label="Renouvellements à venir"
-          value={String(data.upcoming.length)} hint="Dans les 90 prochains jours"
+          tone="orange" icon={CalendarClock} label={t("superAdmin.revenue.upcomingRenewals")}
+          value={String(data.upcoming.length)} hint={t("superAdmin.revenue.upcomingRenewalsHint")}
         />
       </div>
 
       {/* Revenue by renewal year */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Revenu d'abonnement par année de renouvellement</CardTitle>
+          <CardTitle className="text-base">{t("superAdmin.revenue.byYearTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
           {data.byYear.length === 0 ? (
             <p className="py-12 text-center text-sm text-muted-foreground">
-              Aucune date de fin d'abonnement enregistrée.
+              {t("superAdmin.revenue.byYearEmpty")}
             </p>
           ) : (
             <div className="h-72 w-full">
@@ -131,7 +133,7 @@ export function RevenueAnalytics({ schools }: { schools: PlatformSchool[] }) {
                     tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
                   />
                   <Tooltip
-                    formatter={(v: number) => [fcfa(v), "Revenu annuel"]}
+                    formatter={(v: number) => [fcfa(v), t("superAdmin.revenue.tooltipRevenue")]}
                     contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
                   />
                   <Bar dataKey="revenue" fill="hsl(142 70% 40%)" radius={[6, 6, 0, 0]} />
@@ -145,12 +147,12 @@ export function RevenueAnalytics({ schools }: { schools: PlatformSchool[] }) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Répartition du revenu annuel par plan</CardTitle>
+            <CardTitle className="text-base">{t("superAdmin.revenue.breakdownTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
             {data.annual === 0 ? (
               <p className="py-12 text-center text-sm text-muted-foreground">
-                Aucune école active pour le moment.
+                {t("superAdmin.revenue.breakdownEmpty")}
               </p>
             ) : (
               <>
@@ -182,10 +184,10 @@ export function RevenueAnalytics({ schools }: { schools: PlatformSchool[] }) {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Plan</TableHead>
-                      <TableHead className="text-right">Écoles</TableHead>
-                      <TableHead className="text-right">Revenu annuel</TableHead>
-                      <TableHead className="text-right">% du total</TableHead>
+                      <TableHead>{t("superAdmin.revenue.breakdownColumns.plan")}</TableHead>
+                      <TableHead className="text-right">{t("superAdmin.revenue.breakdownColumns.schools")}</TableHead>
+                      <TableHead className="text-right">{t("superAdmin.revenue.breakdownColumns.revenue")}</TableHead>
+                      <TableHead className="text-right">{t("superAdmin.revenue.breakdownColumns.pctOfTotal")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -211,21 +213,21 @@ export function RevenueAnalytics({ schools }: { schools: PlatformSchool[] }) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Prochains renouvellements (90 jours)</CardTitle>
+            <CardTitle className="text-base">{t("superAdmin.revenue.upcomingTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
             {data.upcoming.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted-foreground">
-                Aucun renouvellement prévu dans les 90 prochains jours.
+                {t("superAdmin.revenue.upcomingEmpty")}
               </p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>École</TableHead>
-                    <TableHead>Échéance</TableHead>
-                    <TableHead className="text-right">Jours</TableHead>
-                    <TableHead className="text-right">Montant annuel</TableHead>
+                    <TableHead>{t("superAdmin.revenue.upcomingColumns.school")}</TableHead>
+                    <TableHead>{t("superAdmin.revenue.upcomingColumns.dueDate")}</TableHead>
+                    <TableHead className="text-right">{t("superAdmin.revenue.upcomingColumns.days")}</TableHead>
+                    <TableHead className="text-right">{t("superAdmin.revenue.upcomingColumns.amountPerYear")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

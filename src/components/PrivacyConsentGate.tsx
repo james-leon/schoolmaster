@@ -7,12 +7,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "@tanstack/react-router";
 import { ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 /**
  * One-time data protection acknowledgment for school admins.
  * Reads schools.privacy_accepted_at; if null, shows a blocking modal.
  */
 export function PrivacyConsentGate() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -46,10 +48,10 @@ export function PrivacyConsentGate() {
         } as any)
         .eq("id", user.schoolId);
       if (error) throw error;
-      toast.success("Merci, votre acceptation a été enregistrée.");
+      toast.success(t("parentPortal.privacyConsent.saveSuccess"));
       setOpen(false);
     } catch (e) {
-      toast.error("Erreur : " + (e as Error).message);
+      toast.error(t("parentPortal.privacyConsent.saveError", { message: (e as Error).message }));
     } finally {
       setSaving(false);
     }
@@ -62,32 +64,30 @@ export function PrivacyConsentGate() {
           <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <ShieldCheck className="h-5 w-5" />
           </div>
-          <DialogTitle>Protection des données — Acceptation requise</DialogTitle>
+          <DialogTitle>{t("parentPortal.privacyConsent.title")}</DialogTitle>
           <DialogDescription className="text-foreground">
-            En utilisant SchoolMaster, vous reconnaissez être <strong>responsable du traitement</strong> des données de votre
-            école et vous engagez à obtenir le consentement des parents pour le traitement des données de leurs enfants,
-            conformément à la loi camerounaise n°2024/017 sur la protection des données à caractère personnel.
+            {t("parentPortal.privacyConsent.description").replace(/<\/?strong>/g, "")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 text-sm">
           <p className="text-muted-foreground">
-            Veuillez lire notre{" "}
+            {t("parentPortal.privacyConsent.readPolicyPrefix")}{" "}
             <Link to="/confidentialite" target="_blank" className="font-medium text-primary hover:underline">
-              politique de confidentialité
+              {t("parentPortal.privacyConsent.readPolicyLink")}
             </Link>{" "}
-            avant de continuer.
+            {t("parentPortal.privacyConsent.readPolicySuffix")}
           </p>
 
           <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 text-sm">
             <Checkbox checked={checked} onCheckedChange={(v) => setChecked(!!v)} className="mt-0.5" />
-            <span>J'ai lu et j'accepte la politique de confidentialité.</span>
+            <span>{t("parentPortal.privacyConsent.checkboxLabel")}</span>
           </label>
         </div>
 
         <DialogFooter>
           <Button onClick={accept} disabled={!checked || saving}>
-            {saving ? "Enregistrement..." : "Accepter et continuer"}
+            {saving ? t("parentPortal.privacyConsent.saving") : t("parentPortal.privacyConsent.accept")}
           </Button>
         </DialogFooter>
       </DialogContent>

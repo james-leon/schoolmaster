@@ -19,6 +19,8 @@ import { ChevronLeft, ChevronRight, Plus, Pencil, Trash2, MapPin, Clock, Calenda
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
+import { useTranslation } from "react-i18next";
+import i18n from "@/lib/i18n";
 
 export const Route = createFileRoute("/calendrier")({ component: CalendrierPage });
 
@@ -42,24 +44,24 @@ interface EventRow {
   created_at: string;
 }
 
-const TYPE_META: Record<EventType, { label: string; bg: string; border: string; text: string; dot: string }> = {
-  vacances:  { label: "Vacances",   bg: "bg-emerald-100",  border: "border-emerald-400", text: "text-emerald-900", dot: "bg-emerald-500" },
-  examen:    { label: "Examen",     bg: "bg-red-100",      border: "border-red-400",     text: "text-red-900",     dot: "bg-red-500" },
-  reunion:   { label: "Réunion",    bg: "bg-blue-100",     border: "border-blue-400",    text: "text-blue-900",    dot: "bg-blue-500" },
-  evenement: { label: "Événement",  bg: "bg-orange-100",   border: "border-orange-400",  text: "text-orange-900",  dot: "bg-orange-500" },
-  sortie:    { label: "Sortie",     bg: "bg-purple-100",   border: "border-purple-400",  text: "text-purple-900",  dot: "bg-purple-500" },
-  ferie:     { label: "Jour férié", bg: "bg-gray-200",     border: "border-gray-400",    text: "text-gray-800",    dot: "bg-gray-500" },
+const EVENT_TYPES: EventType[] = ["vacances", "examen", "reunion", "evenement", "sortie", "ferie"];
+const EVENT_TARGETS: EventTarget[] = ["ecole", "classe", "parents", "enseignants"];
+const TYPE_META_STYLE: Record<EventType, { bg: string; border: string; text: string; dot: string }> = {
+  vacances:  { bg: "bg-emerald-100",  border: "border-emerald-400", text: "text-emerald-900", dot: "bg-emerald-500" },
+  examen:    { bg: "bg-red-100",      border: "border-red-400",     text: "text-red-900",     dot: "bg-red-500" },
+  reunion:   { bg: "bg-blue-100",     border: "border-blue-400",    text: "text-blue-900",    dot: "bg-blue-500" },
+  evenement: { bg: "bg-orange-100",   border: "border-orange-400",  text: "text-orange-900",  dot: "bg-orange-500" },
+  sortie:    { bg: "bg-purple-100",   border: "border-purple-400",  text: "text-purple-900",  dot: "bg-purple-500" },
+  ferie:     { bg: "bg-gray-200",     border: "border-gray-400",    text: "text-gray-800",    dot: "bg-gray-500" },
 };
+function typeLabel(t: EventType) { return i18n.t(`calendar.types.${t}`); }
+function targetLabel(tg: EventTarget) { return i18n.t(`calendar.targets.${tg}`); }
+function typeMeta(t: EventType) { return { label: typeLabel(t), ...TYPE_META_STYLE[t] }; }
 
-const TARGET_LABEL: Record<EventTarget, string> = {
-  ecole: "Toute l'école",
-  classe: "Une classe",
-  parents: "Parents",
-  enseignants: "Enseignants",
-};
-
-const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
-const DAYS_FR = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+const MONTH_KEYS = ["january","february","march","april","may","june","july","august","september","october","november","december"];
+const WEEKDAY_KEYS = ["mon","tue","wed","thu","fri","sat","sun"];
+function monthsLabels() { return MONTH_KEYS.map((k) => i18n.t(`calendar.months.${k}`)); }
+function weekdaysLabels() { return WEEKDAY_KEYS.map((k) => i18n.t(`calendar.weekdaysShort.${k}`)); }
 
 function fmtISO(d: Date) {
   const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, "0"), day = String(d.getDate()).padStart(2, "0");
@@ -75,6 +77,7 @@ function eventCoversDate(ev: EventRow, iso: string) {
 }
 
 function CalendrierPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const db = useDB();
   const isAdmin = isSchoolAdmin(user) || isSuperAdmin(user) || isSecretary(user);
@@ -94,7 +97,7 @@ function CalendrierPage() {
       .from("events")
       .select("*")
       .order("start_date", { ascending: true });
-    if (error) { toast.error("Impossible de charger les événements"); setLoading(false); return; }
+    if (error) { toast.error(t("calendar.loadError")); setLoading(false); return; }
     setEvents((data ?? []) as EventRow[]);
     setLoading(false);
   }, []);
@@ -140,41 +143,41 @@ function CalendrierPage() {
   const daysEvents = (iso: string) => monthEvents.filter((e) => eventCoversDate(e, iso));
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer cet événement ?")) return;
+    if (!confirm(t("calendar.confirmDeleteEvent"))) return;
     const { error } = await supabase.from("events").delete().eq("id", id);
-    if (error) return toast.error("Suppression impossible");
-    toast.success("Événement supprimé");
+    if (error) return toast.error(t("calendar.deleteError"));
+    toast.success(t("calendar.eventDeleted"));
     setViewingEvent(null);
     fetchEvents();
   };
 
   return (
-    <AppLayout title="Calendrier scolaire">
+    <AppLayout title={t("calendar.title")}>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => { const d = new Date(cursor); d.setMonth(d.getMonth() - 1); setCursor(d); }}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-[180px] text-center text-lg font-semibold">
-            {MONTHS_FR[cursor.getMonth()]} {cursor.getFullYear()}
+            {monthsLabels()[cursor.getMonth()]} {cursor.getFullYear()}
           </div>
           <Button variant="outline" size="icon" onClick={() => { const d = new Date(cursor); d.setMonth(d.getMonth() + 1); setCursor(d); }}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => { const d = new Date(); d.setDate(1); setCursor(d); }}>Aujourd'hui</Button>
+          <Button variant="ghost" size="sm" onClick={() => { const d = new Date(); d.setDate(1); setCursor(d); }}>{t("calendar.today")}</Button>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-md border">
             <Button variant={view === "month" ? "secondary" : "ghost"} size="sm" onClick={() => setView("month")} className="rounded-r-none">
-              <LayoutGrid className="mr-1.5 h-4 w-4" /> Mois
+              <LayoutGrid className="mr-1.5 h-4 w-4" /> {t("calendar.month")}
             </Button>
             <Button variant={view === "list" ? "secondary" : "ghost"} size="sm" onClick={() => setView("list")} className="rounded-l-none">
-              <List className="mr-1.5 h-4 w-4" /> Liste
+              <List className="mr-1.5 h-4 w-4" /> {t("calendar.list")}
             </Button>
           </div>
           {isAdmin && (
             <Button onClick={() => { setEditing(null); setOpenDialog(true); }}>
-              <Plus className="mr-1.5 h-4 w-4" /> Nouvel événement
+              <Plus className="mr-1.5 h-4 w-4" /> {t("calendar.newEvent")}
             </Button>
           )}
         </div>
@@ -188,7 +191,7 @@ function CalendrierPage() {
             ) : view === "month" ? (
               <div>
                 <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
-                  {DAYS_FR.map((d) => <div key={d} className="py-1">{d}</div>)}
+                  {weekdaysLabels().map((d) => <div key={d} className="py-1">{d}</div>)}
                 </div>
                 <div className="grid grid-cols-7 gap-1">
                   {grid.map((cell, i) => {
@@ -212,7 +215,7 @@ function CalendrierPage() {
                         <span className={cn("text-[11px] font-semibold leading-none", isToday && "text-primary")}>{cell.date.getDate()}</span>
                         <div className="mt-1 flex min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
                           {visibleEvs.map((ev) => {
-                            const meta = TYPE_META[ev.type];
+                            const meta = typeMeta(ev.type);
                             return (
                               <span
                                 key={ev.id}
@@ -242,7 +245,7 @@ function CalendrierPage() {
             ) : (
               <div className="space-y-2">
                 {monthEvents.length === 0 && (
-                  <EmptyStateBlock icon={CalendarIconEmpty} titleKey="emptyEvents" description="Aucun événement ce mois-ci." />
+                  <EmptyStateBlock icon={CalendarIconEmpty} titleKey="emptyEvents" description={t("calendar.noEventsMonth")} />
                 )}
                 {monthEvents.map((ev) => <EventListItem key={ev.id} ev={ev} onClick={() => setViewingEvent(ev)} />)}
               </div>
@@ -256,10 +259,10 @@ function CalendrierPage() {
               <CardContent className="p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <h3 className="font-semibold">{fmtFr(selectedDay)}</h3>
-                  <button onClick={() => setSelectedDay(null)} className="text-xs text-muted-foreground hover:underline">Fermer</button>
+                  <button onClick={() => setSelectedDay(null)} className="text-xs text-muted-foreground hover:underline">{t("calendar.close")}</button>
                 </div>
                 {daysEvents(selectedDay).length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Aucun événement ce jour.</p>
+                  <p className="text-sm text-muted-foreground">{t("calendar.noEventsThisDay")}</p>
                 ) : (
                   <div className="space-y-2">
                     {daysEvents(selectedDay).map((ev) => <EventListItem key={ev.id} ev={ev} onClick={() => setViewingEvent(ev)} compact />)}
@@ -270,9 +273,9 @@ function CalendrierPage() {
           )}
           <Card>
             <CardContent className="p-4">
-              <h3 className="mb-3 flex items-center gap-2 font-semibold"><CalendarDays className="h-4 w-4" /> Prochains événements</h3>
+              <h3 className="mb-3 flex items-center gap-2 font-semibold"><CalendarDays className="h-4 w-4" /> {t("calendar.upcomingEvents")}</h3>
               {upcoming.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun événement à venir.</p>
+                <p className="text-sm text-muted-foreground">{t("calendar.noUpcomingEvents")}</p>
               ) : (
                 <div className="space-y-2">
                   {upcoming.slice(0, 8).map((ev) => <EventListItem key={ev.id} ev={ev} onClick={() => setViewingEvent(ev)} compact />)}
@@ -282,12 +285,12 @@ function CalendrierPage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <h3 className="mb-3 text-sm font-semibold">Légende</h3>
+              <h3 className="mb-3 text-sm font-semibold">{t("calendar.legend")}</h3>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                {(Object.keys(TYPE_META) as EventType[]).map((t) => (
-                  <div key={t} className="flex items-center gap-2">
-                    <span className={cn("h-3 w-3 rounded-full", TYPE_META[t].dot)} />
-                    <span>{TYPE_META[t].label}</span>
+                {EVENT_TYPES.map((et) => (
+                  <div key={et} className="flex items-center gap-2">
+                    <span className={cn("h-3 w-3 rounded-full", typeMeta(et).dot)} />
+                    <span>{typeMeta(et).label}</span>
                   </div>
                 ))}
               </div>
@@ -303,16 +306,16 @@ function CalendrierPage() {
             <>
               <DialogHeader>
                 <div className="flex items-center gap-2">
-                  <span className={cn("h-3 w-3 rounded-full", TYPE_META[viewingEvent.type].dot)} />
+                  <span className={cn("h-3 w-3 rounded-full", typeMeta(viewingEvent.type).dot)} />
                   <DialogTitle>{viewingEvent.title}</DialogTitle>
                 </div>
               </DialogHeader>
               <div className="space-y-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline" className={cn(TYPE_META[viewingEvent.type].bg, TYPE_META[viewingEvent.type].text, "border-0")}>
-                    {TYPE_META[viewingEvent.type].label}
+                  <Badge variant="outline" className={cn(typeMeta(viewingEvent.type).bg, typeMeta(viewingEvent.type).text, "border-0")}>
+                    {typeMeta(viewingEvent.type).label}
                   </Badge>
-                  <Badge variant="outline">{TARGET_LABEL[viewingEvent.target]}</Badge>
+                  <Badge variant="outline">{targetLabel(viewingEvent.target)}</Badge>
                   {viewingEvent.target === "classe" && viewingEvent.target_class_id && (
                     <Badge variant="outline">{db.classes.find((c) => c.id === viewingEvent.target_class_id)?.name ?? "Classe"}</Badge>
                   )}
@@ -343,10 +346,10 @@ function CalendrierPage() {
               {isAdmin && (
                 <DialogFooter className="gap-2 sm:gap-2">
                   <Button variant="outline" onClick={() => { setEditing(viewingEvent); setViewingEvent(null); setOpenDialog(true); }}>
-                    <Pencil className="mr-1.5 h-4 w-4" /> Modifier
+                    <Pencil className="mr-1.5 h-4 w-4" /> {t("timetable.modify")}
                   </Button>
                   <Button variant="destructive" onClick={() => handleDelete(viewingEvent.id)}>
-                    <Trash2 className="mr-1.5 h-4 w-4" /> Supprimer
+                    <Trash2 className="mr-1.5 h-4 w-4" /> {t("calendar.deleteEvent")}
                   </Button>
                 </DialogFooter>
               )}
@@ -370,7 +373,7 @@ function CalendrierPage() {
 }
 
 function EventListItem({ ev, onClick, compact }: { ev: EventRow; onClick: () => void; compact?: boolean }) {
-  const meta = TYPE_META[ev.type];
+  const meta = typeMeta(ev.type);
   return (
     <button
       type="button"
@@ -400,6 +403,7 @@ function EventFormDialog({
   classes: { id: string; name: string }[];
   onSaved: () => void;
 }) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<EventType>("evenement");
@@ -433,9 +437,9 @@ function EventFormDialog({
   }, [open, editing]);
 
   const save = async () => {
-    if (!title.trim()) return toast.error("Titre requis");
-    if (!startDate) return toast.error("Date de début requise");
-    if (target === "classe" && !classId) return toast.error("Sélectionnez une classe");
+    if (!title.trim()) return toast.error(t("calendar.titleRequired"));
+    if (!startDate) return toast.error(t("calendar.startDateRequired"));
+    if (target === "classe" && !classId) return toast.error(t("calendar.selectClassError"));
     setSaving(true);
     const payload = {
       school_id: schoolId,
@@ -454,13 +458,13 @@ function EventFormDialog({
     if (editing) {
       const { error } = await supabase.from("events").update(payload).eq("id", editing.id);
       setSaving(false);
-      if (error) return toast.error("Modification impossible");
-      toast.success("Événement modifié");
+      if (error) return toast.error(t("calendar.modifyError"));
+      toast.success(t("calendar.eventModified"));
     } else {
       const { error } = await supabase.from("events").insert({ ...payload, created_by: user?.id ?? null });
       setSaving(false);
-      if (error) return toast.error("Création impossible");
-      toast.success("Événement créé");
+      if (error) return toast.error(t("calendar.createError"));
+      toast.success(t("calendar.eventCreated"));
     }
     onSaved();
   };
@@ -469,36 +473,36 @@ function EventFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? "Modifier l'événement" : "Nouvel événement"}</DialogTitle>
+          <DialogTitle>{editing ? t("calendar.editEvent") : t("calendar.newEvent")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Titre *</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Réunion parents CE1" />
+            <Label>{t("calendar.titleField")} *</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("calendar.titlePlaceholder")} />
           </div>
           <div>
-            <Label>Description</Label>
+            <Label>{t("calendar.description")}</Label>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Type *</Label>
+              <Label>{t("calendar.typeField")} *</Label>
               <Select value={type} onValueChange={(v) => setType(v as EventType)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(TYPE_META) as EventType[]).map((t) => (
-                    <SelectItem key={t} value={t}>{TYPE_META[t].label}</SelectItem>
+                  {EVENT_TYPES.map((et) => (
+                    <SelectItem key={et} value={et}>{typeMeta(et).label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Audience *</Label>
+              <Label>{t("calendar.audienceField")} *</Label>
               <Select value={target} onValueChange={(v) => setTarget(v as EventTarget)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(TARGET_LABEL) as EventTarget[]).map((t) => (
-                    <SelectItem key={t} value={t}>{TARGET_LABEL[t]}</SelectItem>
+                  {EVENT_TARGETS.map((tg) => (
+                    <SelectItem key={tg} value={tg}>{targetLabel(tg)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -506,9 +510,9 @@ function EventFormDialog({
           </div>
           {target === "classe" && (
             <div>
-              <Label>Classe *</Label>
+              <Label>{t("calendar.classField")} *</Label>
               <Select value={classId} onValueChange={setClassId}>
-                <SelectTrigger><SelectValue placeholder="Choisir une classe" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("calendar.chooseClass")} /></SelectTrigger>
                 <SelectContent>
                   {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
@@ -517,32 +521,32 @@ function EventFormDialog({
           )}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Date début *</Label>
+              <Label>{t("calendar.startDate")} *</Label>
               <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div>
-              <Label>Date fin</Label>
+              <Label>{t("calendar.endDate")}</Label>
               <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Heure début</Label>
+              <Label>{t("calendar.startTime")}</Label>
               <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
             </div>
             <div>
-              <Label>Heure fin</Label>
+              <Label>{t("calendar.endTime")}</Label>
               <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
             </div>
           </div>
           <div>
-            <Label>Lieu</Label>
-            <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Salle polyvalente" />
+            <Label>{t("calendar.location")}</Label>
+            <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder={t("calendar.locationPlaceholder")} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Annuler</Button>
-          <Button onClick={save} disabled={saving}>{saving ? "Enregistrement…" : editing ? "Modifier" : "Créer"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>{t("calendar.cancel")}</Button>
+          <Button onClick={save} disabled={saving}>{saving ? t("calendar.saving") : editing ? t("calendar.modify") : t("calendar.create")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

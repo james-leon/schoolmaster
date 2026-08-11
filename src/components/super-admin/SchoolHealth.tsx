@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,15 +56,15 @@ function isHighChurnRisk(s: PlatformSchool): boolean {
   return inactiveEnough && closeToExpiry;
 }
 
-function timeAgoFr(iso: string | null): string {
-  if (!iso) return "Jamais";
+function timeAgoFr(iso: string | null, t: (k: string, o?: Record<string, unknown>) => string): string {
+  if (!iso) return t("superAdmin.health.timeAgo.never");
   const d = daysSince(iso) ?? 0;
-  if (d <= 0) return "Aujourd'hui";
-  if (d === 1) return "Hier";
-  if (d < 30) return `Il y a ${d} jours`;
+  if (d <= 0) return t("superAdmin.health.timeAgo.today");
+  if (d === 1) return t("superAdmin.health.timeAgo.yesterday");
+  if (d < 30) return t("superAdmin.health.timeAgo.daysAgo", { count: d });
   const months = Math.floor(d / 30);
-  if (months < 12) return `Il y a ${months} mois`;
-  return `Il y a ${Math.floor(months / 12)} an${months >= 24 ? "s" : ""}`;
+  if (months < 12) return t("superAdmin.health.timeAgo.monthsAgo", { count: months });
+  return t("superAdmin.health.timeAgo.yearsAgo", { count: Math.floor(months / 12) });
 }
 
 const PLAN_LABELS: Record<string, string> = {
@@ -75,6 +76,7 @@ const PLAN_LABELS: Record<string, string> = {
 export function SchoolHealth({
   schools, onChanged,
 }: { schools: PlatformSchool[]; onChanged: () => void }) {
+  const { t } = useTranslation();
   const [notesSchool, setNotesSchool] = useState<PlatformSchool | null>(null);
 
   const summary = useMemo(() => {
@@ -107,41 +109,41 @@ export function SchoolHealth({
   return (
     <section className="mt-6 space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <HealthCard tone="green"  icon={HeartPulse}     label="Écoles actives"
-          value={summary.active}  hint="Actives sur 7 derniers jours" />
-        <HealthCard tone="yellow" icon={Activity}       label="À surveiller"
-          value={summary.watch}   hint="7 à 14 jours sans activité" />
-        <HealthCard tone="red"    icon={AlertTriangle}  label="À risque"
+        <HealthCard tone="green"  icon={HeartPulse}     label={t("superAdmin.health.activeSchools")}
+          value={summary.active}  hint={t("superAdmin.health.activeSchoolsHint")} />
+        <HealthCard tone="yellow" icon={Activity}       label={t("superAdmin.health.watchSchools")}
+          value={summary.watch}   hint={t("superAdmin.health.watchSchoolsHint")} />
+        <HealthCard tone="red"    icon={AlertTriangle}  label={t("superAdmin.health.riskSchools")}
           value={summary.risk + summary.inactive}
-          hint={`${summary.highRisk} risque(s) élevé(s) de départ`} />
-        <HealthCard tone="blue"   icon={Users}          label="Taux d'engagement"
+          hint={t("superAdmin.health.riskSchoolsHint", { count: summary.highRisk })} />
+        <HealthCard tone="blue"   icon={Users}          label={t("superAdmin.health.engagementRate")}
           value={`${summary.engagement}%`}
-          hint="Écoles actives cette semaine" />
+          hint={t("superAdmin.health.engagementRateHint")} />
       </div>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Santé des écoles</CardTitle>
+          <CardTitle className="text-base">{t("superAdmin.health.title")}</CardTitle>
           <span className="text-xs text-muted-foreground">
-            Triées par risque (plus à risque en premier)
+            {t("superAdmin.health.sortedHint")}
           </span>
         </CardHeader>
         <CardContent>
           {sorted.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">Aucune école.</p>
+            <p className="py-10 text-center text-sm text-muted-foreground">{t("superAdmin.health.empty")}</p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>École</TableHead>
-                    <TableHead>Santé</TableHead>
-                    <TableHead>Dernière activité</TableHead>
-                    <TableHead className="text-right">Élèves</TableHead>
-                    <TableHead>Engagement 30j</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Expiration</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t("superAdmin.health.columns.school")}</TableHead>
+                    <TableHead>{t("superAdmin.health.columns.health")}</TableHead>
+                    <TableHead>{t("superAdmin.health.columns.lastActivity")}</TableHead>
+                    <TableHead className="text-right">{t("superAdmin.health.columns.students")}</TableHead>
+                    <TableHead>{t("superAdmin.health.columns.engagement30d")}</TableHead>
+                    <TableHead>{t("superAdmin.health.columns.plan")}</TableHead>
+                    <TableHead>{t("superAdmin.health.columns.expiry")}</TableHead>
+                    <TableHead className="text-right">{t("superAdmin.health.columns.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -160,7 +162,7 @@ export function SchoolHealth({
                             {high && (
                               <Badge variant="destructive" className="mt-1 w-fit gap-1">
                                 <AlertTriangle className="h-3 w-3" />
-                                Risque élevé de départ
+                                {t("superAdmin.health.highChurnRisk")}
                               </Badge>
                             )}
                           </div>
@@ -168,18 +170,18 @@ export function SchoolHealth({
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <span className={`inline-block h-2.5 w-2.5 rounded-full ${meta.dot}`} />
-                            <span className={`text-sm font-medium ${meta.cls}`}>{meta.label}</span>
+                            <span className={`text-sm font-medium ${meta.cls}`}>{t(`superAdmin.health.healthLabels.${h}`)}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {timeAgoFr(s.last_activity_at)}
+                          {timeAgoFr(s.last_activity_at, t)}
                         </TableCell>
                         <TableCell className="text-right">
                           <span className={s.student_count === 0 ? "text-destructive font-semibold" : ""}>
                             {s.student_count}
                           </span>
                           {s.student_count === 0 && (
-                            <div className="text-[10px] text-destructive">Onboarding</div>
+                            <div className="text-[10px] text-destructive">{t("superAdmin.health.onboarding")}</div>
                           )}
                         </TableCell>
                         <TableCell>
@@ -194,7 +196,7 @@ export function SchoolHealth({
                               {new Date(end).toLocaleDateString("fr-FR")}
                               {dx !== null && (
                                 <span className="ml-1 text-xs text-muted-foreground">
-                                  ({dx < 0 ? `expiré` : `${dx} j`})
+                                  ({dx < 0 ? t("superAdmin.health.expired") : t("superAdmin.health.daysShort", { days: dx })})
                                 </span>
                               )}
                             </span>
@@ -205,13 +207,13 @@ export function SchoolHealth({
                             {s.email && (
                               <Button asChild variant="outline" size="sm">
                                 <a href={`mailto:${s.email}`}>
-                                  <Mail className="mr-1 h-3.5 w-3.5" /> Contacter
+                                  <Mail className="mr-1 h-3.5 w-3.5" /> {t("superAdmin.health.contact")}
                                 </a>
                               </Button>
                             )}
                             <Button variant="ghost" size="sm" onClick={() => setNotesSchool(s)}>
                               <MessageSquarePlus className="mr-1 h-3.5 w-3.5" />
-                              Notes
+                              {t("superAdmin.health.notes")}
                               {s.internal_notes && (
                                 <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-primary" />
                               )}
@@ -238,11 +240,12 @@ export function SchoolHealth({
 }
 
 function EngagementSignals({ s }: { s: PlatformSchool }) {
+  const { t } = useTranslation();
   const items = [
-    { ok: s.student_count > 0,      icon: Users,         label: "Élèves",    n: s.student_count },
-    { ok: s.recent_payments > 0,    icon: CreditCard,    label: "Paiements", n: s.recent_payments },
+    { ok: s.student_count > 0,      icon: Users,         label: t("superAdmin.health.engagementItems.students"),    n: s.student_count },
+    { ok: s.recent_payments > 0,    icon: CreditCard,    label: t("superAdmin.health.engagementItems.payments"), n: s.recent_payments },
     { ok: (s.recent_grades + s.recent_attendance) > 0,
-                                    icon: ClipboardList, label: "Saisies",   n: s.recent_grades + s.recent_attendance },
+                                    icon: ClipboardList, label: t("superAdmin.health.engagementItems.entries"),   n: s.recent_grades + s.recent_attendance },
   ];
   return (
     <div className="flex items-center gap-3 text-xs">
@@ -289,6 +292,7 @@ function HealthCard({
 function NotesDialog({
   school, onClose, onSaved,
 }: { school: PlatformSchool | null; onClose: () => void; onSaved: () => void }) {
+  const { t } = useTranslation();
   const [value, setValue] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -300,7 +304,7 @@ function NotesDialog({
     setSaving(true);
     try {
       await superAdminApi.updateNotes(school.id, value.trim() ? value : null);
-      toast.success("Notes enregistrées");
+      toast.success(t("superAdmin.health.notesSaved"));
       onSaved();
     } catch (e) { toast.error((e as Error).message); }
     finally { setSaving(false); }
@@ -310,23 +314,22 @@ function NotesDialog({
     <Dialog open={!!school} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Notes internes — {school?.name}</DialogTitle>
+          <DialogTitle>{t("superAdmin.health.notesDialogTitle", { name: school?.name })}</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground">
-          Notes privées Wintek (jamais visibles par l'école). Ex : « Directeur hésite à renouveler »,
-          « A demandé une formation »...
+          {t("superAdmin.health.notesDialogDesc")}
         </p>
         <Textarea
           value={value}
           onChange={(e) => setValue(e.target.value)}
           rows={6}
-          placeholder="Écrire une note interne…"
+          placeholder={t("superAdmin.health.notesPlaceholder")}
           maxLength={4000}
         />
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}>Annuler</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>{t("superAdmin.health.cancel")}</Button>
           <Button onClick={save} disabled={saving}>
-            {saving ? "Enregistrement…" : "Enregistrer"}
+            {saving ? t("superAdmin.health.saving") : t("superAdmin.health.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

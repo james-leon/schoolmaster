@@ -111,15 +111,16 @@ function daysUntil(iso: string | null | undefined): number | null {
   const b = new Date(); b.setHours(0,0,0,0);
   return Math.round((a.getTime() - b.getTime()) / 86400000);
 }
-function expiryBadge(iso: string | null | undefined) {
+function expiryBadge(iso: string | null | undefined, t: (k: string, o?: Record<string, unknown>) => string) {
   const d = daysUntil(iso);
   if (d === null) return null;
-  if (d < 0) return <Badge variant="destructive">Expiré ({Math.abs(d)} j)</Badge>;
-  if (d <= 30) return <Badge variant="secondary" className="bg-amber-500/15 text-amber-700 dark:text-amber-400">Expire dans {d} j</Badge>;
-  return <Badge variant="outline">{d} j restants</Badge>;
+  if (d < 0) return <Badge variant="destructive">{t("transport.expiry.expired", { days: Math.abs(d) })}</Badge>;
+  if (d <= 30) return <Badge variant="secondary" className="bg-amber-500/15 text-amber-700 dark:text-amber-400">{t("transport.expiry.expiringIn", { days: d })}</Badge>;
+  return <Badge variant="outline">{t("transport.expiry.remaining", { days: d })}</Badge>;
 }
 
 function TransportPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { hasFeature, loading: planLoading } = usePlan();
   const schoolId = user?.schoolId;
