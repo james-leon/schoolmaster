@@ -10,10 +10,12 @@ import { Label } from "@/components/ui/label";
 import { ROLE_LABELS } from "@/lib/format";
 import { toast } from "sonner";
 import { KeyRound, User as UserIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/mon-profil")({ component: MonProfilPage });
 
 function MonProfilPage() {
+  const { t } = useTranslation();
   const { user, loading, refreshUser } = useAuth();
   const navigate = useNavigate();
 
@@ -41,7 +43,7 @@ function MonProfilPage() {
         .eq("id", user.id);
       if (error) throw error;
       await refreshUser();
-      toast.success("Profil mis à jour");
+      toast.success(t("profile.saved"));
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -50,20 +52,20 @@ function MonProfilPage() {
   };
 
   const changePassword = async () => {
-    if (pwd.length < 6) return toast.error("6 caractères minimum");
-    if (pwd !== confirm) return toast.error("Les mots de passe ne correspondent pas");
+    if (pwd.length < 6) return toast.error(t("profile.minChars"));
+    if (pwd !== confirm) return toast.error(t("profile.mismatch"));
     setSavingPwd(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Session expirée. Veuillez vous reconnecter.");
+        toast.error(t("profile.sessionExpired"));
         navigate({ to: "/login", replace: true });
         return;
       }
       const { error } = await supabase.auth.updateUser({ password: pwd });
       if (error) throw error;
       setPwd(""); setConfirm("");
-      toast.success("Mot de passe mis à jour");
+      toast.success(t("profile.passwordUpdated"));
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -72,29 +74,29 @@ function MonProfilPage() {
   };
 
   return (
-    <AppLayout title="Mon profil">
+    <AppLayout title={t("profile.pageTitle")}>
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <UserIcon className="h-5 w-5" /> Informations
+              <UserIcon className="h-5 w-5" /> {t("profile.infoTitle")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-1.5">
-              <Label>Nom complet</Label>
+              <Label>{t("profile.fullName")}</Label>
               <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Email</Label>
+              <Label>{t("profile.email")}</Label>
               <Input value={user.email} disabled />
             </div>
             <div className="space-y-1.5">
-              <Label>Rôle</Label>
+              <Label>{t("profile.role")}</Label>
               <Input value={ROLE_LABELS[user.role]} disabled />
             </div>
             <Button onClick={saveProfile} disabled={savingProfile || !fullName.trim()}>
-              {savingProfile ? "Enregistrement..." : "Enregistrer"}
+              {savingProfile ? t("profile.saving") : t("profile.save")}
             </Button>
           </CardContent>
         </Card>
@@ -102,23 +104,23 @@ function MonProfilPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <KeyRound className="h-5 w-5" /> Changer mon mot de passe
+              <KeyRound className="h-5 w-5" /> {t("profile.changePasswordTitle")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Optionnel — laissez vide si vous ne souhaitez pas modifier votre mot de passe.
+              {t("profile.changePasswordOptional")}
             </p>
             <div className="space-y-1.5">
-              <Label>Nouveau mot de passe</Label>
+              <Label>{t("profile.newPassword")}</Label>
               <Input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Confirmer le mot de passe</Label>
+              <Label>{t("profile.confirmPassword")}</Label>
               <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
             </div>
             <Button onClick={changePassword} disabled={savingPwd || !pwd}>
-              {savingPwd ? "Enregistrement..." : "Enregistrer le nouveau mot de passe"}
+              {savingPwd ? t("profile.saving") : t("profile.savePassword")}
             </Button>
           </CardContent>
         </Card>
