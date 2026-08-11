@@ -126,9 +126,6 @@ export function useSetupChecklist() {
       // Optional — situational, never counted
       { id: "teachers", to: "/enseignants", done: db.teachers.length > 0, optional: true },
       { id: "parentAccounts", to: "/parents", done: accounts.length > 0, optional: true },
-      { id: "staff", to: "/personnel", done: false, optional: true },
-      { id: "transport", to: "/transport", done: false, optional: true },
-      { id: "budget", to: "/budget", done: false, optional: true },
     ];
     const role = user?.role;
     return all.filter(
