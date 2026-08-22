@@ -122,151 +122,311 @@ function ParametresPage() {
     }
   };
 
+  const [section, setSection] = useState<SectionId>(() => (isAdmin ? "school" : "account"));
+
+  const sections = SECTIONS.filter((s) => (isAdmin ? true : s.id === "account"));
+  const active = sections.some((s) => s.id === section) ? section : "account";
+
+  const groups: { key: string; ids: SectionId[] }[] = [
+    { key: "personal", ids: ["account"] },
+    { key: "organisation", ids: ["school", "academic", "finance"] },
+    { key: "administration", ids: ["users", "subscription", "audit", "privacy"] },
+  ];
+
   return (
     <AppLayout title={t("settings2.pageTitle")}>
-      <Tabs defaultValue="ecole">
-        <TabsList>
-          <TabsTrigger value="ecole">{t("settings2.tabs.school")}</TabsTrigger>
-          <TabsTrigger value="objectifs">{t("settings2.tabs.goals")}</TabsTrigger>
-          <TabsTrigger value="evaluations">{t("settings2.tabs.evaluations")}</TabsTrigger>
-          <TabsTrigger value="matieres">{t("settings2.tabs.subjects")}</TabsTrigger>
-          <TabsTrigger value="utilisateurs">{t("settings2.tabs.users")}</TabsTrigger>
-          <TabsTrigger value="confidentialite">{t("settings2.tabs.privacy")}</TabsTrigger>
-          {isAdmin && <TabsTrigger value="journal">{t("settings2.tabs.journal")}</TabsTrigger>}
-          <TabsTrigger value="compte">{t("settings2.tabs.account")}</TabsTrigger>
-        </TabsList>
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <nav className="w-full shrink-0 lg:w-64">
+          <div className="space-y-4 lg:sticky lg:top-4">
+            {groups.map((g) => {
+              const items = g.ids.filter((id) => sections.some((s) => s.id === id));
+              if (!items.length) return null;
+              return (
+                <div key={g.key} className="space-y-1">
+                  <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                    {t(`settingsNav.groups.${g.key}`)}
+                  </p>
+                  {items.map((id) => {
+                    const meta = SECTIONS.find((s) => s.id === id)!;
+                    const isActive = active === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setSection(id)}
+                        className={
+                          "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors " +
+                          (isActive
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground")
+                        }
+                      >
+                        <meta.icon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{t(`settingsNav.sections.${id}`)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+            {isAdmin && (
+              <p className="px-3 text-[11px] text-muted-foreground">{t("settingsNav.dangerNote")}</p>
+            )}
+          </div>
+        </nav>
 
+        <div className="min-w-0 flex-1 space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">{t(`settingsNav.sections.${active}`)}</h2>
+            <p className="text-sm text-muted-foreground">{t(`settingsNav.descriptions.${active}`)}</p>
+          </div>
 
-        <TabsContent value="ecole" className="mt-4">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">{t("settings2.school.infoTitle")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label>{t("settings2.school.logo")}</Label>
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
-                      {form.logo ? (
-                        <img src={form.logo} alt="logo" className="h-full w-full object-cover" />
-                      ) : (
-                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                      )}
+          {active === "account" && (
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">{t("settingsNav.account.profileTitle")}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t("settings2.account.name")}</span><span className="font-medium">{user?.name}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t("settings2.account.email")}</span><span className="font-medium">{user?.email}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t("settings2.account.role")}</span><span className="font-medium">{user ? ROLE_LABELS[user.role] : ""}</span></div>
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/mon-profil">{t("settingsNav.account.editProfile")}</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">{t("settingsNav.account.passwordTitle")}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">{t("settingsNav.account.passwordDesc")}</p>
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/changer-mot-de-passe">{t("settingsNav.account.changePassword")}</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">{t("settings2.account.languageTitle")}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex items-center justify-between gap-4">
+                  <p className="text-sm text-muted-foreground">{t("settings2.account.languageDesc")}</p>
+                  <LanguageSwitcher />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">{t("settings2.school.appearanceTitle")}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">{t("settings2.school.darkMode")}</p>
+                    <p className="text-xs text-muted-foreground">{t("settings2.school.darkModeDesc")}</p>
+                  </div>
+                  <Switch checked={theme === "dark"} onCheckedChange={toggle} />
+                </CardContent>
+              </Card>
+
+              <NotificationsPanel />
+            </div>
+          )}
+
+          {active === "school" && isAdmin && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">{t("settings2.school.infoTitle")}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-1.5">
+                      <Label>{t("settings2.school.logo")}</Label>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+                          {form.logo ? (
+                            <img src={form.logo} alt="logo" className="h-full w-full object-cover" />
+                          ) : (
+                            <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                          )}
+                        </div>
+                        <label className="inline-flex">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])}
+                          />
+                          <Button asChild variant="outline" disabled={uploading}>
+                            <span className="cursor-pointer">
+                              <Upload className="mr-2 h-4 w-4" />
+                              {uploading ? t("settings2.school.uploading") : t("settings2.school.changeLogo")}
+                            </span>
+                          </Button>
+                        </label>
+                      </div>
                     </div>
-                    <label className="inline-flex">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])}
-                      />
-                      <Button asChild variant="outline" disabled={uploading}>
-                        <span className="cursor-pointer">
-                          <Upload className="mr-2 h-4 w-4" />
-                          {uploading ? t("settings2.school.uploading") : t("settings2.school.changeLogo")}
-                        </span>
-                      </Button>
-                    </label>
-                  </div>
-                </div>
-                {[
-                  { k: "name", label: t("settings2.school.name") },
-                  { k: "director", label: t("settings2.school.director") },
-                  { k: "email", label: t("settings2.school.email") },
-                  { k: "phone", label: t("settings2.school.phone") },
-                  { k: "address", label: t("settings2.school.address") },
-                  { k: "city", label: t("settings2.school.city") },
-                  { k: "country", label: t("settings2.school.country") },
-                ].map((f) => (
-                  <div key={f.k} className="space-y-1.5">
-                    <Label>{f.label}</Label>
-                    <Input
-                      value={form[f.k as keyof typeof form] as string}
-                      onChange={(e) => set(f.k as keyof typeof form, e.target.value)}
-                    />
-                  </div>
-                ))}
-                <Button onClick={saveSchool}>{t("settings2.school.save")}</Button>
-              </CardContent>
-            </Card>
+                    {[
+                      { k: "name", label: t("settings2.school.name") },
+                      { k: "director", label: t("settings2.school.director") },
+                      { k: "email", label: t("settings2.school.email") },
+                      { k: "phone", label: t("settings2.school.phone") },
+                      { k: "address", label: t("settings2.school.address") },
+                      { k: "city", label: t("settings2.school.city") },
+                      { k: "country", label: t("settings2.school.country") },
+                    ].map((f) => (
+                      <div key={f.k} className="space-y-1.5">
+                        <Label>{f.label}</Label>
+                        <Input
+                          value={form[f.k as keyof typeof form] as string}
+                          onChange={(e) => set(f.k as keyof typeof form, e.target.value)}
+                        />
+                      </div>
+                    ))}
+                    <Button onClick={saveSchool}>{t("settings2.school.save")}</Button>
+                  </CardContent>
+                </Card>
+                <TrimesterDatesPanel />
+              </div>
+              <EnrollmentTargetsPanel schoolId={school?.id} />
+            </div>
+          )}
 
+          {active === "academic" && isAdmin && (
+            <div className="space-y-4">
+              <SubjectsPanel />
+              <SequenceCoefficientsPanel />
+            </div>
+          )}
+
+          {active === "finance" && isAdmin && <FinanceShortcutsPanel />}
+
+          {active === "users" && isAdmin && (
+            <div className="space-y-4">
+              <UsersPanel schoolId={school?.id} schoolName={school?.name} currentUserId={user?.id} />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">{t("settingsNav.users.teachersTitle")}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">{t("settingsNav.users.teachersDesc")}</p>
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/enseignants">{t("settingsNav.users.openTeachers")}</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {active === "subscription" && isAdmin && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">{t("settings2.school.appearanceTitle")}</CardTitle>
+                <CardTitle className="text-base">{t("settingsNav.sections.subscription")}</CardTitle>
               </CardHeader>
-              <CardContent className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">{t("settings2.school.darkMode")}</p>
-                  <p className="text-xs text-muted-foreground">{t("settings2.school.darkModeDesc")}</p>
-                </div>
-                <Switch checked={theme === "dark"} onCheckedChange={toggle} />
+              <CardContent className="space-y-3">
+                <p className="text-sm text-muted-foreground">{t("settingsNav.subscription.desc")}</p>
+                <Button asChild>
+                  <Link to="/mon-abonnement">{t("settingsNav.subscription.openPage")}</Link>
+                </Button>
               </CardContent>
             </Card>
-          </div>
-        </TabsContent>
+          )}
 
-        <TabsContent value="objectifs" className="mt-4">
-          <EnrollmentTargetsPanel schoolId={school?.id} />
-        </TabsContent>
+          {active === "audit" && isAdmin && <AuditLogPanel schoolId={school?.id} />}
 
-        <TabsContent value="evaluations" className="mt-4">
-          <div className="space-y-4">
-            <TrimesterDatesPanel />
-            <SequenceCoefficientsPanel />
-          </div>
-
-        </TabsContent>
-
-        <TabsContent value="matieres" className="mt-4">
-          <SubjectsPanel />
-        </TabsContent>
-
-
-
-        <TabsContent value="utilisateurs" className="mt-4">
-          <UsersPanel schoolId={school?.id} schoolName={school?.name} currentUserId={user?.id} />
-        </TabsContent>
-
-        <TabsContent value="confidentialite" className="mt-4">
-          <PrivacyPanel schoolId={school?.id} />
-        </TabsContent>
-
-        {isAdmin && (
-          <TabsContent value="journal" className="mt-4">
-            <AuditLogPanel schoolId={school?.id} />
-          </TabsContent>
-        )}
-
-
-
-        <TabsContent value="compte" className="mt-4">
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">{t("settings2.account.languageTitle")}</CardTitle>
-              </CardHeader>
-              <CardContent className="flex items-center justify-between gap-4">
-                <p className="text-sm text-muted-foreground">
-                  {t("settings2.account.languageDesc")}
-                </p>
-                <LanguageSwitcher />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">{t("settings2.account.title")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">{t("settings2.account.name")}</span><span className="font-medium">{user?.name}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">{t("settings2.account.email")}</span><span className="font-medium">{user?.email}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">{t("settings2.account.role")}</span><span className="font-medium">{user ? ROLE_LABELS[user.role] : ""}</span></div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+          {active === "privacy" && isAdmin && <PrivacyPanel schoolId={school?.id} />}
+        </div>
+      </div>
     </AppLayout>
+  );
+}
+
+type SectionId =
+  | "account" | "school" | "academic" | "finance"
+  | "users" | "subscription" | "audit" | "privacy";
+
+const SECTIONS: { id: SectionId; icon: typeof User }[] = [
+  { id: "account", icon: User },
+  { id: "school", icon: Building2 },
+  { id: "academic", icon: GraduationCap },
+  { id: "finance", icon: Wallet },
+  { id: "users", icon: Users },
+  { id: "subscription", icon: CreditCard },
+  { id: "audit", icon: ScrollText },
+  { id: "privacy", icon: ShieldCheck },
+];
+
+function NotificationsPanel() {
+  const { t } = useTranslation();
+  const [perm, setPerm] = useState<string>("default");
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setPerm(Notification.permission);
+    } else {
+      setPerm("unsupported");
+    }
+  }, []);
+
+  const ask = async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    const r = await Notification.requestPermission();
+    setPerm(r);
+    if (r === "granted") toast.success(t("settingsNav.account.notificationsGranted"));
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">{t("settingsNav.account.notificationsTitle")}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex items-center justify-between gap-4">
+        <p className="text-sm text-muted-foreground">{t("settingsNav.account.notificationsDesc")}</p>
+        {perm === "granted" ? (
+          <Badge variant="outline" className="text-success">{t("settingsNav.account.notificationsGranted")}</Badge>
+        ) : perm === "denied" ? (
+          <Badge variant="outline" className="text-destructive">{t("settingsNav.account.notificationsDenied")}</Badge>
+        ) : perm === "unsupported" ? (
+          <Badge variant="outline">{t("settingsNav.account.notificationsUnsupported")}</Badge>
+        ) : (
+          <Button size="sm" variant="outline" onClick={ask}>{t("settingsNav.account.notificationsEnable")}</Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function FinanceShortcutsPanel() {
+  const { t } = useTranslation();
+  const items = [
+    { to: "/scolarite", title: t("settingsNav.finance.feeTypes"), desc: t("settingsNav.finance.feeTypesDesc") },
+    { to: "/comptabilite", title: t("settingsNav.finance.categories"), desc: t("settingsNav.finance.categoriesDesc") },
+    { to: "/comptabilite", title: t("settingsNav.finance.suppliers"), desc: t("settingsNav.finance.suppliersDesc") },
+  ] as const;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">{t("settingsNav.finance.title")}</CardTitle>
+        <p className="text-xs text-muted-foreground">{t("settingsNav.finance.desc")}</p>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {items.map((i) => (
+          <div key={i.title} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
+            <div>
+              <p className="text-sm font-medium">{i.title}</p>
+              <p className="text-xs text-muted-foreground">{i.desc}</p>
+            </div>
+            <Button asChild size="sm" variant="outline">
+              <Link to={i.to}>{t("settingsNav.finance.open")}</Link>
+            </Button>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 
