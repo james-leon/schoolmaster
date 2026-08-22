@@ -3,12 +3,11 @@ import { budgetTransport } from "./budgetTransport";
 import { staff } from "./staff";
 import { school } from "./school";
 import { settings } from "./settings";
-import { settingsNav } from "./settingsNav";
 import { parentPortal } from "./parentPortal";
 import { adminConsole } from "./adminConsole";
 import { legal } from "./legal";
 
-const MODULES = [deep, budgetTransport, staff, school, settings, settingsNav, parentPortal, adminConsole, legal];
+const MODULES = [deep, budgetTransport, staff, school, settings, parentPortal, adminConsole, legal];
 
 type AnyDict = Record<string, unknown>;
 
