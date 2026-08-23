@@ -420,6 +420,7 @@ function VehiclesTab({ schoolId, vehicles, reload, loading, expenses }: { school
 
 // ---------------- DRIVERS ----------------
 function DriversTab({ schoolId, drivers, vehicles, reload }: { schoolId: string; drivers: Driver[]; vehicles: Vehicle[]; reload: () => void }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<Driver | null>(null);
   const [del, setDel] = useState<Driver | null>(null);
@@ -537,6 +538,7 @@ function DriversTab({ schoolId, drivers, vehicles, reload }: { schoolId: string;
 
 // ---------------- DOCUMENTS ----------------
 function DocumentsTab({ schoolId, docs, vehicles, reload }: { schoolId: string; docs: VDoc[]; vehicles: Vehicle[]; reload: () => void }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<VDoc | null>(null);
   const [del, setDel] = useState<VDoc | null>(null);
