@@ -263,6 +263,7 @@ function BudgetsTab({ schoolId, budgets, lines, categories, onChange, selectedId
   schoolId: string; budgets: Budget[]; lines: BudgetLine[]; categories: Category[];
   onChange: () => void; selectedId: string | null; onSelect: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const [openBudget, setOpenBudget] = useState(false);
   const [editing, setEditing] = useState<Budget | null>(null);
   const [confirmDel, setConfirmDel] = useState<Budget | null>(null);
@@ -330,7 +331,7 @@ function BudgetsTab({ schoolId, budgets, lines, categories, onChange, selectedId
                     <button onClick={() => onSelect(b.id)} className="hover:underline text-left">{b.name}</button>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{b.period_start} → {b.period_end}</TableCell>
-                  <TableCell><Badge className={STATUS_BADGE[b.status]}>{STATUS_LABEL[b.status]}</Badge></TableCell>
+                  <TableCell><Badge className={STATUS_BADGE[b.status]}>{t(`budget.status.${b.status}`)}</Badge></TableCell>
                   <TableCell className="text-right">{ls.length}</TableCell>
                   <TableCell className="text-right">{fcfa(rec)}</TableCell>
                   <TableCell className="text-right">{fcfa(dep)}</TableCell>
@@ -578,6 +579,7 @@ function ComparisonTab({ budget, lines, categories, txs, budgets, onSelect }: {
   budget: Budget | null; lines: BudgetLine[]; categories: Category[]; txs: Tx[];
   budgets: Budget[]; onSelect: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const rows = useMemo(() => buildRows(budget, lines, categories, txs), [budget, lines, categories, txs]);
   const rec = rows.filter((r) => r.type === "recette");
   const dep = rows.filter((r) => r.type === "depense");
@@ -613,7 +615,7 @@ function ComparisonTab({ budget, lines, categories, txs, budgets, onSelect }: {
           <Select value={budget?.id ?? ""} onValueChange={onSelect}>
             <SelectTrigger className="w-[280px]"><SelectValue placeholder="Choisir un budget" /></SelectTrigger>
             <SelectContent>
-              {budgets.map((b) => <SelectItem key={b.id} value={b.id}>{b.name} ({STATUS_LABEL[b.status]})</SelectItem>)}
+              {budgets.map((b) => <SelectItem key={b.id} value={b.id}>{b.name} ({t(`budget.status.${b.status}`)})</SelectItem>)}
             </SelectContent>
           </Select>
         </div>

@@ -420,6 +420,7 @@ function VehiclesTab({ schoolId, vehicles, reload, loading, expenses }: { school
 
 // ---------------- DRIVERS ----------------
 function DriversTab({ schoolId, drivers, vehicles, reload }: { schoolId: string; drivers: Driver[]; vehicles: Vehicle[]; reload: () => void }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<Driver | null>(null);
   const [del, setDel] = useState<Driver | null>(null);
@@ -485,7 +486,7 @@ function DriversTab({ schoolId, drivers, vehicles, reload }: { schoolId: string;
                   <TableCell>{d.license_number || "—"}</TableCell>
                   <TableCell className="space-x-2">
                     <span>{d.license_expiry || "—"}</span>
-                    {expiryBadge(d.license_expiry)}
+                    {expiryBadge(d.license_expiry, t)}
                   </TableCell>
                   <TableCell>{v ? (v.bus_number || v.registration_number) : "—"}</TableCell>
                   <TableCell className="text-right">
@@ -537,6 +538,7 @@ function DriversTab({ schoolId, drivers, vehicles, reload }: { schoolId: string;
 
 // ---------------- DOCUMENTS ----------------
 function DocumentsTab({ schoolId, docs, vehicles, reload }: { schoolId: string; docs: VDoc[]; vehicles: Vehicle[]; reload: () => void }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<VDoc | null>(null);
   const [del, setDel] = useState<VDoc | null>(null);
@@ -603,7 +605,7 @@ function DocumentsTab({ schoolId, docs, vehicles, reload }: { schoolId: string; 
                   <TableCell>{d.start_date || "—"}</TableCell>
                   <TableCell className="space-x-2">
                     <span>{d.expiry_date || "—"}</span>
-                    {expiryBadge(d.expiry_date)}
+                    {expiryBadge(d.expiry_date, t)}
                   </TableCell>
                   <TableCell>{d.amount != null ? fcfa(Number(d.amount)) : "—"}</TableCell>
                   <TableCell className="text-right">
