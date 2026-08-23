@@ -485,7 +485,7 @@ function DriversTab({ schoolId, drivers, vehicles, reload }: { schoolId: string;
                   <TableCell>{d.license_number || "—"}</TableCell>
                   <TableCell className="space-x-2">
                     <span>{d.license_expiry || "—"}</span>
-                    {expiryBadge(d.license_expiry)}
+                    {expiryBadge(d.license_expiry, t)}
                   </TableCell>
                   <TableCell>{v ? (v.bus_number || v.registration_number) : "—"}</TableCell>
                   <TableCell className="text-right">
@@ -603,7 +603,7 @@ function DocumentsTab({ schoolId, docs, vehicles, reload }: { schoolId: string; 
                   <TableCell>{d.start_date || "—"}</TableCell>
                   <TableCell className="space-x-2">
                     <span>{d.expiry_date || "—"}</span>
-                    {expiryBadge(d.expiry_date)}
+                    {expiryBadge(d.expiry_date, t)}
                   </TableCell>
                   <TableCell>{d.amount != null ? fcfa(Number(d.amount)) : "—"}</TableCell>
                   <TableCell className="text-right">
