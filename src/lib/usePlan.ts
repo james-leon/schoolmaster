@@ -9,6 +9,8 @@ export type SubscriptionStatus = "active" | "trial" | "suspended" | "expired";
 export interface SchoolSubscription {
   plan: PlanConfig;
   planId: PlanId;
+  /** Transport add-on active for this school. */
+  hasTransport: boolean;
   status: SubscriptionStatus;
   trialEnd: string | null;
   subscriptionStart: string | null;
@@ -21,10 +23,19 @@ interface UsePlanResult extends SchoolSubscription {
   loading: boolean;
   studentCount: number;
   teacherCount: number;
-  /** Full label incl. add-on, e.g. "Pro + Transport". */
+  /** Full label incl. add-on, e.g. "100 à 250 + Transport". */
   planLabel: string;
+  /** Only "transport" can be locked; everything else is included. */
   hasFeature: (f: FeatureId) => boolean;
-  /** Deprecated — both plans are now unlimited. Kept for backward compat. */
+  /** Max active students for the tier (Infinity = unlimited). */
+  maxStudents: number;
+  isUnlimited: boolean;
+  /** 0-100, null when unlimited. */
+  usagePct: number | null;
+  atStudentLimit: boolean;
+  nearStudentLimit: boolean;
+  remainingStudentSlots: number;
+  /** Deprecated — kept for backward compat. */
   limits: { maxStudents: number; maxTeachers: number };
   canAddStudent: () => boolean;
   canAddTeacher: () => boolean;
@@ -47,7 +58,7 @@ function computeEffectiveStatus(s: SchoolSubscription): SubscriptionStatus {
 }
 
 const DEFAULT: SchoolSubscription = {
-  plan: getPlan("essentiel"), planId: "essentiel",
+  plan: getPlan("plus-250"), planId: "plus-250", hasTransport: false,
   status: "active", trialEnd: null, subscriptionStart: null, subscriptionEnd: null,
   effectiveStatus: "active",
 };
@@ -64,7 +75,7 @@ export function usePlan(): UsePlanResult {
     if (!schoolId) { setSub(DEFAULT); setLoading(false); return; }
     const { data } = await supabase
       .from("schools")
-      .select("subscription_plan, status, trial_ends_at, subscription_start, subscription_end" as any)
+      .select("subscription_plan, transport_addon, status, trial_ends_at, subscription_start, subscription_end" as any)
       .eq("id", schoolId)
       .maybeSingle();
     const raw = (data ?? {}) as any;
@@ -72,6 +83,7 @@ export function usePlan(): UsePlanResult {
     const next: SchoolSubscription = {
       plan: getPlan(planId),
       planId,
+      hasTransport: Boolean(raw.transport_addon),
       status: ((raw.status as SubscriptionStatus) ?? "active"),
       trialEnd: (raw.trial_ends_at as string | null) ?? null,
       subscriptionStart: (raw.subscription_start as string | null) ?? null,
@@ -89,10 +101,20 @@ export function usePlan(): UsePlanResult {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schoolId]);
 
-  const studentCount = db.students.length;
+  const studentCount = db.students.filter((s) => s.status !== "inactive").length;
   const teacherCount = db.teachers.length;
 
-  const hasFeature = (f: FeatureId) => sub.plan.features.includes(f);
+  // Only Transport is gated — everything else ships with every tier.
+  const hasFeature = (f: FeatureId) => (f === "transport" ? sub.hasTransport : true);
+
+  const maxStudents = sub.plan.maxStudents;
+  const isUnlimited = !Number.isFinite(maxStudents);
+  const usagePct = isUnlimited ? null : Math.min(100, Math.round((studentCount / maxStudents) * 100));
+  const atStudentLimit = !isUnlimited && studentCount >= maxStudents;
+  const nearStudentLimit = !isUnlimited && !atStudentLimit && studentCount >= maxStudents * 0.9;
+  const remainingStudentSlots = isUnlimited
+    ? Number.POSITIVE_INFINITY
+    : Math.max(0, maxStudents - studentCount);
 
   const isTrial = sub.effectiveStatus === "trial";
   const isBlocked = sub.effectiveStatus === "suspended" || sub.effectiveStatus === "expired";
@@ -109,7 +131,7 @@ export function usePlan(): UsePlanResult {
     daysUntilExpiry = Math.ceil(ms / (1000 * 60 * 60 * 24));
   }
 
-  const planLabel = sub.plan.label;
+  const planLabel = sub.hasTransport ? `${sub.plan.label} + Transport` : sub.plan.label;
 
   return {
     ...sub,
@@ -117,8 +139,10 @@ export function usePlan(): UsePlanResult {
     studentCount, teacherCount,
     planLabel,
     hasFeature,
-    limits: { maxStudents: Number.POSITIVE_INFINITY, maxTeachers: Number.POSITIVE_INFINITY },
-    canAddStudent: () => true,
+    maxStudents, isUnlimited, usagePct,
+    atStudentLimit, nearStudentLimit, remainingStudentSlots,
+    limits: { maxStudents, maxTeachers: Number.POSITIVE_INFINITY },
+    canAddStudent: () => !atStudentLimit,
     canAddTeacher: () => true,
     isBlocked, isTrial, daysLeftInTrial, daysUntilExpiry,
     refresh: fetchSub,
