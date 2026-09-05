@@ -269,9 +269,6 @@ function StaffDetailPage() {
 
   if (planLoading || loading) return <AppLayout title="Personnel"><div className="p-8" /></AppLayout>;
   if (!isAdmin) return <AppLayout title="Personnel"><div className="p-8 text-muted-foreground">Accès réservé.</div></AppLayout>;
-  if (user?.role !== "super_admin" && !hasFeature("accounting")) {
-    return <AppLayout title="Personnel"><LockedFeatureOverlay requiredPlan={requiredPlanFor("accounting")} featureLabel="Personnel" /></AppLayout>;
-  }
   if (!staff) return <AppLayout title="Personnel"><div className="p-8 text-muted-foreground">Membre introuvable.</div></AppLayout>;
 
   const actorName = (h: HistoryEntry) => h.profile?.full_name || h.profile?.email || "—";

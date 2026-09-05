@@ -314,14 +314,6 @@ function ComptabilitePage() {
     URL.revokeObjectURL(url);
   }
 
-  // Plan gate
-  if (!planLoading && !hasFeature("accounting") && user?.role !== "super_admin") {
-    return (
-      <AppLayout title={t("accounting.title")}>
-        <LockedFeatureOverlay requiredPlan={requiredPlanFor("accounting")} featureLabel={t("accounting.title")} />
-      </AppLayout>
-    );
-  }
 
   if (!isAdmin) {
     return (

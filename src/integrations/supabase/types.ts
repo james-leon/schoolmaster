@@ -1353,6 +1353,7 @@ export type Database = {
           subscription_end: string | null
           subscription_plan: string | null
           subscription_start: string | null
+          transport_addon: boolean
           trial_ends_at: string | null
         }
         Insert: {
@@ -1376,6 +1377,7 @@ export type Database = {
           subscription_end?: string | null
           subscription_plan?: string | null
           subscription_start?: string | null
+          transport_addon?: boolean
           trial_ends_at?: string | null
         }
         Update: {
@@ -1399,6 +1401,7 @@ export type Database = {
           subscription_end?: string | null
           subscription_plan?: string | null
           subscription_start?: string | null
+          transport_addon?: boolean
           trial_ends_at?: string | null
         }
         Relationships: []

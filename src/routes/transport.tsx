@@ -199,10 +199,7 @@ function TransportPage() {
   if (!planLoading && user?.role !== "super_admin" && !hasFeature("transport")) {
     return (
       <AppLayout title="Transport">
-        <LockedFeatureOverlay
-          requiredPlan={requiredPlanFor("transport")}
-          featureLabel="Le module Transport"
-        />
+        <LockedFeatureOverlay />
       </AppLayout>
     );
   }

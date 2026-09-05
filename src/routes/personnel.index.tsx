@@ -219,9 +219,6 @@ function PersonnelPage() {
 
   if (planLoading) return <AppLayout title="Personnel"><div className="p-8 text-muted-foreground">Chargement…</div></AppLayout>;
   if (!isAdmin) return <AppLayout title="Personnel"><div className="p-8 text-muted-foreground">Accès réservé à l'administration.</div></AppLayout>;
-  if (user?.role !== "super_admin" && !hasFeature("personnel")) {
-    return <AppLayout title="Personnel"><LockedFeatureOverlay requiredPlan={requiredPlanFor("personnel")} featureLabel="Personnel" /></AppLayout>;
-  }
 
   return (
     <AppLayout title="Personnel">
