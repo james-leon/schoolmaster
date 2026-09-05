@@ -91,7 +91,7 @@ function AnnoncesPage() {
 
   const [detailsFor, setDetailsFor] = useState<Announcement | null>(null);
 
-  const locked = !loading && user?.role !== "super_admin" && !hasFeature("announcements");
+  const locked = false;
 
 
   const openNew = () => { setForm(EMPTY); setDialogOpen(true); };
