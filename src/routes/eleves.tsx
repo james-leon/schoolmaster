@@ -479,6 +479,11 @@ function ElevesPage() {
     }
     setErrors({});
 
+    if (!editingId && !canAddStudent()) {
+      setUpgradeOpen(true);
+      return;
+    }
+
     if (editingId) {
       updateDB((d) => {
         const idx = d.students.findIndex((x) => x.id === editingId);
