@@ -1,28 +1,26 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Check, X, Phone, Mail, Crown } from "lucide-react";
+import { Check, Bus, Phone, Mail, Crown, Users, AlertTriangle } from "lucide-react";
 import { usePlan } from "@/lib/usePlan";
-import { PLAN_LIST, FEATURE_LABELS, WINTEK_CONTACT, type FeatureId } from "@/lib/plans";
+import { PLAN_LIST, TRANSPORT_ADDON, INCLUDED_FEATURES, FEATURE_LABELS, WINTEK_CONTACT } from "@/lib/plans";
 import { fcfa } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/mon-abonnement")({ component: MonAbonnementPage });
 
-const ALL_FEATURES: FeatureId[] = [
-  "students", "classes", "grades", "bulletins", "fees", "payments", "attendance",
-  "parent_portal", "announcements", "timetable", "calendar",
-  "accounting", "budget", "personnel", "extra_roles", "transport",
-];
-
 function MonAbonnementPage() {
+  const { t } = useTranslation();
   const {
-    plan, planId, planLabel, effectiveStatus,
+    plan, planId, planLabel, effectiveStatus, hasTransport,
     isTrial, daysLeftInTrial,
     subscriptionStart, subscriptionEnd, daysUntilExpiry,
+    studentCount, maxStudents, isUnlimited, usagePct,
+    atStudentLimit, nearStudentLimit,
     loading,
   } = usePlan();
   const navigate = useNavigate();
@@ -35,15 +33,14 @@ function MonAbonnementPage() {
     else if (daysUntilExpiry <= 15) expiryTone = "text-accent";
   }
 
-  // Progress through subscription period
   let elapsedPct = 0;
   if (subscriptionStart && subscriptionEnd) {
     const start = new Date(subscriptionStart).getTime();
     const end = new Date(subscriptionEnd).getTime();
-    const now = Date.now();
-    elapsedPct = Math.max(0, Math.min(100, ((now - start) / (end - start)) * 100));
+    elapsedPct = Math.max(0, Math.min(100, ((Date.now() - start) / (end - start)) * 100));
   }
 
+  const total = plan.priceFcfa + (hasTransport ? TRANSPORT_ADDON.priceFcfa : 0);
 
   return (
     <AppLayout title="Mon abonnement">
@@ -58,18 +55,18 @@ function MonAbonnementPage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Crown className="h-5 w-5 text-accent" />
-                  Plan actuel : {planLabel.toUpperCase()}
+                  {t("pricing.currentTier")} : {planLabel}
                 </CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {fcfa(plan.priceFcfa)} / an
+                  {fcfa(total)} {t("pricing.perYear")}
+                  {hasTransport && ` (${fcfa(plan.priceFcfa)} + ${fcfa(TRANSPORT_ADDON.priceFcfa)} Transport)`}
                 </p>
               </div>
-              <Badge variant={effectiveStatus === "active" ? "default" : "secondary"} className="capitalize">
+              <Badge variant={effectiveStatus === "active" ? "default" : "secondary"}>
                 <span className={cn(
                   "mr-1.5 inline-block h-2 w-2 rounded-full",
                   effectiveStatus === "active" ? "bg-success" :
-                  effectiveStatus === "trial" ? "bg-accent" :
-                  "bg-destructive"
+                  effectiveStatus === "trial" ? "bg-accent" : "bg-destructive",
                 )} />
                 {effectiveStatus === "trial" ? "Essai" : effectiveStatus === "active" ? "Actif" : effectiveStatus === "suspended" ? "Suspendu" : "Expiré"}
               </Badge>
@@ -80,6 +77,37 @@ function MonAbonnementPage() {
                   Période d'essai — {daysLeftInTrial} jour{daysLeftInTrial > 1 ? "s" : ""} restant{daysLeftInTrial > 1 ? "s" : ""}
                 </div>
               )}
+
+              {/* Student usage */}
+              <div className="rounded-md border border-border bg-muted/30 p-4 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2 font-medium">
+                    <Users className="h-4 w-4" /> {t("pricing.usage")}
+                  </span>
+                  <span className="font-semibold">
+                    {isUnlimited
+                      ? t("pricing.usageUnlimited", { count: studentCount })
+                      : t("pricing.usageStudents", { count: studentCount, limit: maxStudents })}
+                  </span>
+                </div>
+                {!isUnlimited && <Progress value={usagePct ?? 0} />}
+                {(nearStudentLimit || atStudentLimit) && !isUnlimited && (
+                  <div className="flex gap-2 rounded-md bg-accent/10 p-3 text-sm text-accent">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div>
+                      <div className="font-medium">
+                        {atStudentLimit ? t("pricing.limitReachedTitle") : t("pricing.nearLimitTitle")}
+                      </div>
+                      <p className="mt-0.5">
+                        {atStudentLimit
+                          ? t("pricing.limitReachedBody", { limit: maxStudents })
+                          : t("pricing.nearLimitBody", { count: studentCount, limit: maxStudents })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {(subscriptionStart || subscriptionEnd) && (
                 <div className="rounded-md border border-border bg-muted/30 p-4 space-y-3">
                   <div className="grid grid-cols-2 gap-3 text-sm">
@@ -101,47 +129,65 @@ function MonAbonnementPage() {
                         : `${daysUntilExpiry} jour${daysUntilExpiry > 1 ? "s" : ""} restant${daysUntilExpiry > 1 ? "s" : ""}`}
                     </div>
                   )}
-                  {subscriptionStart && subscriptionEnd && (
-                    <Progress value={elapsedPct} />
-                  )}
+                  {subscriptionStart && subscriptionEnd && <Progress value={elapsedPct} />}
                   <p className="text-xs text-muted-foreground">
                     Renouvellement : Contactez Wintek — {WINTEK_CONTACT.phones} · {WINTEK_CONTACT.email}
                   </p>
                 </div>
               )}
+            </CardContent>
+          </Card>
 
-              <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-                Élèves et enseignants illimités sur tous les plans.
-              </div>
+          {/* Transport add-on */}
+          <Card className={cn(hasTransport && "border-primary/40")}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Bus className="h-5 w-5 text-primary" /> {t("pricing.transportAddon")}
+              </CardTitle>
+              <Badge variant={hasTransport ? "default" : "secondary"}>
+                {hasTransport ? t("pricing.transportActive") : t("pricing.transportInactive")}
+              </Badge>
+            </CardHeader>
+            <CardContent className="space-y-1 text-sm text-muted-foreground">
+              <p>{t("pricing.transportDesc")}</p>
+              <p className="font-semibold text-foreground">
+                {fcfa(TRANSPORT_ADDON.priceFcfa)} {t("pricing.perYear")}
+              </p>
             </CardContent>
           </Card>
 
           <div>
-            <h2 className="mb-3 text-lg font-semibold">Comparer les plans</h2>
-            <div className="grid gap-4 md:grid-cols-2">
+            <h2 className="mb-3 text-lg font-semibold">Paliers tarifaires</h2>
+            <div className="grid gap-4 md:grid-cols-3">
               {PLAN_LIST.map((p) => {
                 const current = p.id === planId;
                 return (
                   <Card key={p.id} className={cn(current && "border-primary ring-1 ring-primary")}>
                     <CardHeader>
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">{p.label}</CardTitle>
+                        <CardTitle className="text-base">{t(`pricing.tiers.${p.id}`)}</CardTitle>
                         {current && <Badge>Actuel</Badge>}
                       </div>
-                      <p className="text-2xl font-bold">{fcfa(p.priceFcfa)}<span className="text-sm font-normal text-muted-foreground"> /an</span></p>
+                      <p className="text-xs text-muted-foreground">{t(`pricing.ranges.${p.id}`)}</p>
+                      <p className="text-2xl font-bold">
+                        {fcfa(p.priceFcfa)}
+                        <span className="text-sm font-normal text-muted-foreground"> {t("pricing.perYear")}</span>
+                      </p>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Élèves et enseignants illimités</p>
-                      <ul className="mt-3 space-y-1.5">
-                        {ALL_FEATURES.map((f) => {
-                          const has = p.features.includes(f);
-                          return (
-                            <li key={f} className={cn("flex items-center gap-2 text-xs", !has && "text-muted-foreground/60")}>
-                              {has ? <Check className="h-3.5 w-3.5 text-success" /> : <X className="h-3.5 w-3.5" />}
-                              {FEATURE_LABELS[f]}
-                            </li>
-                          );
-                        })}
+                      <p className="text-sm font-medium">
+                        {Number.isFinite(p.maxStudents)
+                          ? `Jusqu'à ${p.maxStudents} élèves`
+                          : t("pricing.unlimitedStudents")}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{t("pricing.allIncluded")}</p>
+                      <ul className="mt-2 space-y-1.5">
+                        {INCLUDED_FEATURES.map((f) => (
+                          <li key={f} className="flex items-center gap-2 text-xs">
+                            <Check className="h-3.5 w-3.5 text-success" />
+                            {FEATURE_LABELS[f]}
+                          </li>
+                        ))}
                       </ul>
                     </CardContent>
                   </Card>
@@ -153,9 +199,9 @@ function MonAbonnementPage() {
           <Card className="border-accent/40 bg-accent/5">
             <CardContent className="flex flex-col items-start gap-3 py-6 md:flex-row md:items-center md:justify-between">
               <div>
-                <h3 className="font-semibold">Mettre à niveau votre plan</h3>
+                <h3 className="font-semibold">Changer de palier ou activer le Transport</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Contactez Wintek pour activer un nouveau plan (paiement par Mobile Money).
+                  Contactez Wintek (paiement par Mobile Money).
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
                   <span className="flex items-center gap-1.5"><Phone className="h-4 w-4" /> {WINTEK_CONTACT.phones}</span>

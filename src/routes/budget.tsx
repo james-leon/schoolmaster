@@ -21,8 +21,6 @@ import { Plus, Pencil, Trash2, AlertTriangle, PiggyBank, Download, CheckCircle2 
 import { toast } from "sonner";
 import { csvRow } from "@/lib/csv";
 import { usePlan } from "@/lib/usePlan";
-import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
-import { requiredPlanFor } from "@/lib/plans";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 import { useTranslation } from "react-i18next";
 
@@ -58,7 +56,7 @@ function BudgetPage() {
   const { user } = useAuth();
   const schoolId = user?.schoolId;
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
-  const { hasFeature, loading: planLoading } = usePlan();
+  const { loading: planLoading } = usePlan();
 
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [lines, setLines] = useState<BudgetLine[]>([]);

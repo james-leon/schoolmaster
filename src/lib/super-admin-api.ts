@@ -22,6 +22,7 @@ export interface PlatformSchool {
   email: string | null;
   phone: string | null;
   subscription_plan: string | null;
+  transport_addon?: boolean | null;
   status: "active" | "trial" | "suspended" | "expired";
   trial_ends_at: string | null;
   subscription_start: string | null;
@@ -60,6 +61,8 @@ export const superAdminApi = {
     call({ action: "update-status", schoolId, status }),
   updatePlan: (schoolId: string, plan: string) =>
     call({ action: "update-plan", schoolId, plan }),
+  updateTransportAddon: (schoolId: string, transportAddon: boolean) =>
+    call({ action: "update-transport-addon", schoolId, transportAddon }),
   extendTrial: (schoolId: string, trialEndsAt: string) =>
     call({ action: "extend-trial", schoolId, trialEndsAt }),
   deleteSchool: (schoolId: string) =>

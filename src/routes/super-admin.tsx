@@ -30,7 +30,8 @@ import {
 } from "lucide-react";
 import { fcfa } from "@/lib/format";
 import { Logo } from "@/components/Logo";
-import { PLAN_CONFIG, normalizePlanId, type PlanId } from "@/lib/plans";
+import { PLAN_CONFIG, TRANSPORT_ADDON, normalizePlanId, tierForStudentCount, type PlanId } from "@/lib/plans";
+import { Checkbox } from "@/components/ui/checkbox";
 import { RevenueAnalytics } from "@/components/super-admin/RevenueAnalytics";
 import { SchoolHealth } from "@/components/super-admin/SchoolHealth";
 import { MaintenancePanel } from "@/components/super-admin/MaintenancePanel";
@@ -42,11 +43,9 @@ export const Route = createFileRoute("/super-admin")({
 });
 
 const PLAN_LABELS: Record<string, string> = {
-  essentiel: "Essentiel", complet: "Complet",
-  // Legacy labels (still displayed for historical data before migration).
-  starter: "Essentiel", pro: "Complet", "school+": "Complet", free: "Essai", premium: "Complet", trial: "Essai",
+  "moins-100": "Moins de 100", "100-250": "100 à 250", "plus-250": "Plus de 250",
 };
-const PLAN_OPTIONS: PlanId[] = ["essentiel", "complet"];
+const PLAN_OPTIONS: PlanId[] = ["moins-100", "100-250", "plus-250"];
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   active:    { label: "Actif",     cls: "bg-success/15 text-success" },
   trial:     { label: "Essai",     cls: "bg-primary/15 text-primary" },
@@ -54,12 +53,9 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   expired:   { label: "Expiré",    cls: "bg-destructive/15 text-destructive" },
 };
 const PLAN_PRICE_ANNUAL: Record<string, number> = {
-  essentiel: PLAN_CONFIG.essentiel.priceFcfa,
-  complet: PLAN_CONFIG.complet.priceFcfa,
-  // Legacy → mapped to closest new plan for aggregation only.
-  starter: PLAN_CONFIG.essentiel.priceFcfa,
-  pro: PLAN_CONFIG.complet.priceFcfa,
-  "school+": PLAN_CONFIG.complet.priceFcfa,
+  "moins-100": PLAN_CONFIG["moins-100"].priceFcfa,
+  "100-250": PLAN_CONFIG["100-250"].priceFcfa,
+  "plus-250": PLAN_CONFIG["plus-250"].priceFcfa,
 };
 
 type SubFilter = "all" | "soon" | "expired" | "trial" | "active";
@@ -156,8 +152,15 @@ function SuperAdminPage() {
     catch (e) { toast.error((e as Error).message); }
   };
   const handleChangePlan = async (s: PlatformSchool, plan: string) => {
-    try { await superAdminApi.updatePlan(s.id, plan); toast.success("Plan mis à jour"); refresh(); }
+    try { await superAdminApi.updatePlan(s.id, plan); toast.success("Palier mis à jour"); refresh(); }
     catch (e) { toast.error((e as Error).message); }
+  };
+  const handleToggleTransport = async (s: PlatformSchool, on: boolean) => {
+    try {
+      await superAdminApi.updateTransportAddon(s.id, on);
+      toast.success(on ? "Option Transport activée" : "Option Transport désactivée");
+      refresh();
+    } catch (e) { toast.error((e as Error).message); }
   };
   const handleExtendTrial = async () => {
     if (!extendingSchoolId || !newTrialDate) return;
@@ -303,7 +306,7 @@ function SuperAdminPage() {
                             <div className="font-medium">{s.name}</div>
                             <div className="text-xs text-muted-foreground">{s.city ?? "—"}</div>
                           </TableCell>
-                          <TableCell className="text-sm">{PLAN_LABELS[s.subscription_plan ?? "essentiel"] ?? s.subscription_plan}</TableCell>
+                          <TableCell className="text-sm">{PLAN_LABELS[normalizePlanId(s.subscription_plan)]}</TableCell>
                           <TableCell><Badge className={st.cls}>{st.label}</Badge></TableCell>
                           <TableCell className="text-xs text-muted-foreground">
                             {s.subscription_start ? new Date(s.subscription_start).toLocaleDateString("fr-FR") : "—"}
@@ -379,18 +382,39 @@ function SuperAdminPage() {
                           </TableCell>
                           <TableCell className="text-sm">{s.city ?? "—"}</TableCell>
                           <TableCell>
-                            <Select value={s.subscription_plan ?? "essentiel"} onValueChange={(v) => handleChangePlan(s, v)}>
-                              <SelectTrigger className="h-8 w-[130px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {PLAN_OPTIONS.map((p) => (
-                                  <SelectItem key={p} value={p}>{PLAN_LABELS[p] ?? p}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <div className="space-y-1.5">
+                              <Select value={normalizePlanId(s.subscription_plan)} onValueChange={(v) => handleChangePlan(s, v)}>
+                                <SelectTrigger className="h-8 w-[150px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {PLAN_OPTIONS.map((p) => (
+                                    <SelectItem key={p} value={p}>
+                                      {PLAN_LABELS[p]} — {fcfa(PLAN_CONFIG[p].priceFcfa)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <label className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                <Checkbox
+                                  checked={!!s.transport_addon}
+                                  onCheckedChange={(v) => handleToggleTransport(s, v === true)}
+                                />
+                                Transport (+{fcfa(TRANSPORT_ADDON.priceFcfa)})
+                              </label>
+                            </div>
                           </TableCell>
-                          <TableCell className="text-sm font-medium">{s.student_count}</TableCell>
+                          <TableCell className="text-sm font-medium">
+                            {s.student_count}
+                            {(() => {
+                              const suggested = tierForStudentCount(s.student_count ?? 0);
+                              return suggested !== normalizePlanId(s.subscription_plan) ? (
+                                <div className="text-[10px] font-normal text-accent">
+                                  Conseillé : {PLAN_LABELS[suggested]}
+                                </div>
+                              ) : null;
+                            })()}
+                          </TableCell>
                           <TableCell>
                             <Badge className={st.cls}>{st.label}</Badge>
                             {s.status === "trial" && s.trial_ends_at && (
@@ -592,7 +616,7 @@ function KpiCard({ label, value, icon: Icon, tone }: { label: string; value: str
 function CreateSchoolDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (c: CredentialsInfo) => void }) {
   const [form, setForm] = useState({
     schoolName: "", city: "", country: "Cameroun", phone: "", schoolEmail: "",
-    plan: "essentiel", status: "trial" as "trial" | "active", trialEndsAt: "",
+    plan: "moins-100", status: "trial" as "trial" | "active", trialEndsAt: "",
     directorName: "", directorEmail: "",
   });
   const [loading, setLoading] = useState(false);
@@ -887,7 +911,7 @@ function RenewSubscriptionDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="rounded-md border bg-muted/40 p-3 text-xs">
-            <div>Plan actuel : <strong>{PLAN_LABELS[school.subscription_plan ?? "essentiel"]}</strong></div>
+            <div>Plan actuel : <strong>{PLAN_LABELS[normalizePlanId(school.subscription_plan)]}</strong></div>
             <div>Fin actuelle : <strong>{school.subscription_end ? new Date(school.subscription_end).toLocaleDateString("fr-FR") : "—"}</strong></div>
           </div>
           <div className="grid grid-cols-2 gap-3">

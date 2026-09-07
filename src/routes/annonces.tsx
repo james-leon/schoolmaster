@@ -4,7 +4,6 @@ import { AppLayout } from "@/components/AppLayout";
 import { useDB, updateDB } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { usePlan } from "@/lib/usePlan";
-import { requiredPlanFor } from "@/lib/plans";
 import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
 import { visibleAnnouncements, formatDateFr, markAllSeen } from "@/lib/announcements";
 import { markAnnouncementRead } from "@/lib/announcement-reads";
@@ -48,7 +47,7 @@ const EMPTY: FormState = {
 function AnnoncesPage() {
   const db = useDB();
   const { user } = useAuth();
-  const { hasFeature, loading } = usePlan();
+  const { loading } = usePlan();
 
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin" || user?.role === "secretary";
 
@@ -167,10 +166,7 @@ function AnnoncesPage() {
   if (locked) {
     return (
       <AppLayout title="Annonces">
-        <LockedFeatureOverlay
-          requiredPlan={requiredPlanFor("announcements")}
-          featureLabel="Les annonces"
-        />
+        <LockedFeatureOverlay featureLabel="Les annonces" />
       </AppLayout>
     );
   }

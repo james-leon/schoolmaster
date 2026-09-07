@@ -309,8 +309,8 @@ function EnseignantsPage() {
       <UpgradeModal
         open={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
-        title={`Limite du plan ${plan.label} atteinte`}
-        message={`Vous avez atteint la limite de ${limits.maxTeachers} enseignants (${teacherCount} inscrits) de votre plan ${plan.label}. Passez à un plan supérieur pour en ajouter plus.`}
+        title="Limite atteinte"
+        message={`Vous avez ${teacherCount} enseignants enregistrés. Contactez Wintek si vous rencontrez une limitation.`}
       />
     </AppLayout>
   );
