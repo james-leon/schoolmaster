@@ -31,6 +31,7 @@ import { useAuth } from "@/lib/auth";
 import { can, isTeacher as isTeacherRole } from "@/lib/permissions";
 import { resolveTeacherClassIds } from "@/lib/teacher-scope";
 import { usePlan } from "@/lib/usePlan";
+import { WINTEK_CONTACT } from "@/lib/plans";
 import { UpgradeModal } from "@/components/UpgradePrompt";
 import { ParentsListView } from "@/components/ParentsListView";
 
@@ -202,6 +203,7 @@ function normalizeStatus(v: unknown): StudentStatus {
 function buildStudentImportConfig(
   classes: { id: string; name: string; level: string; capacity: number; teacherId: string; fees: number }[],
   existingStudents: Student[],
+  limit: { remaining: number; max: number },
 ): ImportConfig<StudentImport> {
   const columns = [
     "Prénom", "Nom", "Date de naissance", "Genre", "Classe", "Statut",
@@ -282,7 +284,10 @@ function buildStudentImportConfig(
     },
 
     importRows: async (rows, { onProgress }) => {
-      const valid = rows.filter((r) => r.data) as Required<ParsedRow<StudentImport>>[];
+      const allValid = rows.filter((r) => r.data) as Required<ParsedRow<StudentImport>>[];
+      // Student-count tier enforcement: import only up to the remaining slots.
+      const valid = Number.isFinite(limit.remaining) ? allValid.slice(0, Math.max(0, limit.remaining)) : allValid;
+      const blockedByLimit = allValid.length - valid.length;
       let imported = 0;
       const skipped = rows.length - valid.length;
 
@@ -327,6 +332,13 @@ function buildStudentImportConfig(
         }
       });
 
+      if (blockedByLimit > 0) {
+        toast.warning(
+          `${blockedByLimit} ligne(s) non importée(s) : limite de ${limit.max} élèves atteinte pour votre palier. `
+          + `Contactez Wintek pour passer au palier supérieur — ${WINTEK_CONTACT.phones} · ${WINTEK_CONTACT.email}`,
+          { duration: 12000 },
+        );
+      }
       return { imported, skipped };
     },
   };
@@ -357,7 +369,7 @@ function ElevesPage() {
 
   const fileRef = useRef<HTMLInputElement>(null);
   const school = db.schools.find((s) => s.id === user?.schoolId);
-  const { plan, canAddStudent, limits, studentCount } = usePlan();
+  const { canAddStudent, maxStudents, studentCount, remainingStudentSlots } = usePlan();
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }));
   const className = (id: string) => db.classes.find((c) => c.id === id)?.name ?? "—";
@@ -877,13 +889,13 @@ function ElevesPage() {
       <UpgradeModal
         open={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
-        title={`Limite du plan ${plan.label} atteinte`}
-        message={`Vous avez atteint la limite de ${limits.maxStudents} élèves (${studentCount} inscrits) de votre plan ${plan.label}. Passez à un plan supérieur pour ajouter plus d'élèves.`}
+        title={t("pricing.limitReachedTitle")}
+        message={t("pricing.limitReachedBody", { limit: maxStudents }) + ` (${studentCount} élèves inscrits)`}
       />
       <ImportDialog
         open={importOpen}
         onOpenChange={setImportOpen}
-        config={buildStudentImportConfig(db.classes, db.students)}
+        config={buildStudentImportConfig(db.classes, db.students, { remaining: remainingStudentSlots, max: maxStudents })}
       />
     </AppLayout>
   );
