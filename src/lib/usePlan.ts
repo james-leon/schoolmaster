@@ -101,7 +101,7 @@ export function usePlan(): UsePlanResult {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schoolId]);
 
-  const studentCount = db.students.filter((s) => s.status !== "inactive").length;
+  const studentCount = db.students.filter((s) => (s.status ?? "actif") === "actif").length;
   const teacherCount = db.teachers.length;
 
   // Only Transport is gated — everything else ships with every tier.
