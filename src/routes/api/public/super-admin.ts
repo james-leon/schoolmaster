@@ -8,7 +8,7 @@ import { rateLimitOr429, RATE_LIMITS } from "@/lib/rate-limit.server";
 // Any state-changing action.
 const WRITE_ACTIONS = new Set([
   "update-notes", "create-school", "update-status", "update-subscription",
-  "update-plan", "extend-trial", "renew-subscription", "convert-trial",
+  "update-plan", "update-transport-addon", "extend-trial", "renew-subscription", "convert-trial",
   "broadcast-announcement",
 ]);
 // Destructive actions — much tighter budget.
@@ -240,6 +240,17 @@ export const Route = createFileRoute("/api/public/super-admin")({
             const { schoolId, plan } = body;
             if (!schoolId || !plan) return Response.json({ error: "Paramètres invalides" }, { status: 400 });
             const { error } = await supabaseAdmin.from("schools").update({ subscription_plan: plan }).eq("id", schoolId);
+            if (error) return safeError("super-admin", 500, error);
+            return Response.json({ ok: true });
+          }
+
+          if (action === "update-transport-addon") {
+            const { schoolId, transportAddon } = body;
+            if (!schoolId || typeof transportAddon !== "boolean") {
+              return Response.json({ error: "Paramètres invalides" }, { status: 400 });
+            }
+            const { error } = await supabaseAdmin
+              .from("schools").update({ transport_addon: transportAddon } as any).eq("id", schoolId);
             if (error) return safeError("super-admin", 500, error);
             return Response.json({ ok: true });
           }
