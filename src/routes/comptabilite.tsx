@@ -5,8 +5,6 @@ import { EmptyStateBlock, NoResultsState, ListSkeleton } from "@/components/stat
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/lib/auth";
 import { usePlan } from "@/lib/usePlan";
-import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
-import { requiredPlanFor } from "@/lib/plans";
 import { supabase } from "@/integrations/supabase/client";
 import { fcfa } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
@@ -88,7 +86,7 @@ const COLORS = ["#0ea5e9","#10b981","#f59e0b","#ef4444","#8b5cf6","#ec4899","#14
 function ComptabilitePage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { hasFeature, loading: planLoading } = usePlan();
+  const { loading: planLoading } = usePlan();
   const schoolId = user?.schoolId;
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
 

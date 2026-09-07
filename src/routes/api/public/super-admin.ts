@@ -160,7 +160,7 @@ export const Route = createFileRoute("/api/public/super-admin")({
                 phone: phone ? String(phone).slice(0, 50) : null,
                 email: schoolEmail ? String(schoolEmail).slice(0, 200) : null,
                 director_name: String(directorName).slice(0, 200),
-                subscription_plan: plan ?? "essentiel",
+                subscription_plan: plan ?? "moins-100",
                 status: status ?? "trial",
                 trial_ends_at: trialEndsAt ?? null,
               })

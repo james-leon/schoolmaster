@@ -68,9 +68,7 @@ function timeAgoFr(iso: string | null, t: (k: string, o?: Record<string, unknown
 }
 
 const PLAN_LABELS: Record<string, string> = {
-  essentiel: "Essentiel", complet: "Complet",
-  starter: "Essentiel", pro: "Complet", "school+": "Complet",
-  free: "Gratuit", premium: "Premium", trial: "Essai",
+  "moins-100": "Moins de 100", "100-250": "100 à 250", "plus-250": "Plus de 250",
 };
 
 export function SchoolHealth({

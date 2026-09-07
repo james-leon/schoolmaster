@@ -14,8 +14,9 @@ import { fcfa } from "@/lib/format";
 import type { PlatformSchool } from "@/lib/super-admin-api";
 
 const PLAN_COLORS: Record<PlanId, string> = {
-  essentiel: "hsl(174 60% 45%)", // teal
-  complet: "hsl(28 90% 55%)",    // orange
+  "moins-100": "hsl(174 60% 45%)", // teal
+  "100-250": "hsl(214 80% 55%)",   // blue
+  "plus-250": "hsl(28 90% 55%)",   // orange
 };
 
 function planOf(s: PlatformSchool): PlanId | null {

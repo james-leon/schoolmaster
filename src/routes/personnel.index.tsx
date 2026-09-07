@@ -3,8 +3,6 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/lib/auth";
 import { usePlan } from "@/lib/usePlan";
-import { LockedFeatureOverlay } from "@/components/UpgradePrompt";
-import { requiredPlanFor } from "@/lib/plans";
 import { supabase } from "@/integrations/supabase/client";
 import { fcfa } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
@@ -56,7 +54,7 @@ function StatusBadge({ s }: { s: string }) {
 function PersonnelPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { hasFeature, loading: planLoading } = usePlan();
+  const { loading: planLoading } = usePlan();
   const navigate = useNavigate();
   const schoolId = user?.schoolId;
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
