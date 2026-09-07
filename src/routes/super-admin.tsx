@@ -30,7 +30,8 @@ import {
 } from "lucide-react";
 import { fcfa } from "@/lib/format";
 import { Logo } from "@/components/Logo";
-import { PLAN_CONFIG, normalizePlanId, type PlanId } from "@/lib/plans";
+import { PLAN_CONFIG, TRANSPORT_ADDON, normalizePlanId, tierForStudentCount, type PlanId } from "@/lib/plans";
+import { Checkbox } from "@/components/ui/checkbox";
 import { RevenueAnalytics } from "@/components/super-admin/RevenueAnalytics";
 import { SchoolHealth } from "@/components/super-admin/SchoolHealth";
 import { MaintenancePanel } from "@/components/super-admin/MaintenancePanel";
