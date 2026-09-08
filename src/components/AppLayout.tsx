@@ -116,6 +116,15 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
           ⚠️ Votre abonnement expire {daysUntilExpiry <= 0 ? "aujourd'hui" : `dans ${daysUntilExpiry} jour${daysUntilExpiry > 1 ? "s" : ""}`}. Contactez Wintek pour renouveler.
         </div>
       )}
+      {user.role !== "super_admin" && !isUnlimited && (nearStudentLimit || atStudentLimit) && (
+        <div className="flex items-center justify-center gap-2 bg-accent/15 px-4 py-1.5 text-xs text-accent">
+          <Users className="h-3.5 w-3.5" />
+          {studentCount} / {maxStudents} élèves —{" "}
+          {atStudentLimit
+            ? "limite atteinte pour votre palier. Contactez Wintek pour passer au palier supérieur."
+            : "vous approchez de la limite de votre palier. Contactez Wintek pour passer au palier supérieur."}
+        </div>
+      )}
       <Sidebar />
       <div className="md:pl-[260px]">
         <Header title={title} />
