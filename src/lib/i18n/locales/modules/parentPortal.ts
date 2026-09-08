@@ -2,7 +2,7 @@ export const parentPortal = {
   fr: {
     parentPortal: {
       header: {
-        badge: "👋 Espace Parent",
+        badge: "Espace Parent",
         greeting: "Bonjour, {{name}}",
         logout: "Déconnexion",
         notifications: "Notifications",
@@ -259,7 +259,7 @@ export const parentPortal = {
   en: {
     parentPortal: {
       header: {
-        badge: "👋 Parent Space",
+        badge: "Parent Space",
         greeting: "Hello, {{name}}",
         logout: "Log out",
         notifications: "Notifications",

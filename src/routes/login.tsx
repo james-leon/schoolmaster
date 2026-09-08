@@ -200,7 +200,7 @@ function LoginPage() {
               className="text-[26px] font-bold tracking-tight"
               style={{ fontFamily: "'Sora', sans-serif", color: NAVY }}
             >
-              {t("login.welcomeBack")} <span className="inline-block">👋</span>
+              {t("login.welcomeBack")}
             </h2>
             <p className="mt-1.5 text-sm text-[#64748B]">
               {t("login.subtitle")}
