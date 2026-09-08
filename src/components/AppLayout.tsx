@@ -9,7 +9,7 @@ import { InactivityGuard } from "./InactivityGuard";
 import { useAuth } from "@/lib/auth";
 import { allowedRoutes, NAV_ITEMS } from "@/lib/nav";
 import { usePlan } from "@/lib/usePlan";
-import { ShieldAlert, AlertOctagon, Clock } from "lucide-react";
+import { ShieldAlert, AlertOctagon, Clock, Users } from "lucide-react";
 import { Button } from "./ui/button";
 import { WINTEK_CONTACT } from "@/lib/plans";
 
@@ -17,7 +17,8 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
   const { user, originalUser, isImpersonating, stopImpersonating, logout, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { isBlocked, isTrial, daysLeftInTrial, daysUntilExpiry, effectiveStatus, plan, subscriptionEnd } = usePlan();
+  const { isBlocked, isTrial, daysLeftInTrial, daysUntilExpiry, effectiveStatus, plan, subscriptionEnd,
+    studentCount, maxStudents, isUnlimited, nearStudentLimit, atStudentLimit } = usePlan();
 
   useEffect(() => {
     if (loading) return;
@@ -114,6 +115,15 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
         <div className="flex items-center justify-center gap-2 bg-destructive/10 px-4 py-1.5 text-xs font-medium text-destructive">
           <Clock className="h-3.5 w-3.5" />
           ⚠️ Votre abonnement expire {daysUntilExpiry <= 0 ? "aujourd'hui" : `dans ${daysUntilExpiry} jour${daysUntilExpiry > 1 ? "s" : ""}`}. Contactez Wintek pour renouveler.
+        </div>
+      )}
+      {user.role !== "super_admin" && !isUnlimited && (nearStudentLimit || atStudentLimit) && (
+        <div className="flex items-center justify-center gap-2 bg-accent/15 px-4 py-1.5 text-xs text-accent">
+          <Users className="h-3.5 w-3.5" />
+          {studentCount} / {maxStudents} élèves —{" "}
+          {atStudentLimit
+            ? "limite atteinte pour votre palier. Contactez Wintek pour passer au palier supérieur."
+            : "vous approchez de la limite de votre palier. Contactez Wintek pour passer au palier supérieur."}
         </div>
       )}
       <Sidebar />

@@ -10,8 +10,9 @@ export const adminConsole = {
         logout: "Déconnexion",
       },
       planLabels: {
-        essentiel: "Essentiel",
-        complet: "Complet",
+        "moins-100": "Moins de 100",
+        "100-250": "100 à 250",
+        "plus-250": "Plus de 250",
         essai: "Essai",
       },
       statusLabels: {
@@ -411,8 +412,9 @@ export const adminConsole = {
         logout: "Sign out",
       },
       planLabels: {
-        essentiel: "Essentiel",
-        complet: "Complete",
+        "moins-100": "Under 100",
+        "100-250": "100 to 250",
+        "plus-250": "Over 250",
         essai: "Trial",
       },
       statusLabels: {
