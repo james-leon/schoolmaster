@@ -43,7 +43,7 @@ export const Route = createFileRoute("/super-admin")({
 });
 
 const PLAN_LABELS: Record<string, string> = {
-  "moins-100": "Moins de 100", "100-250": "100 à 250", "plus-250": "Plus de 250",
+  "moins-100": "Essor", "100-250": "Croissance", "plus-250": "Excellence",
 };
 const PLAN_OPTIONS: PlanId[] = ["moins-100", "100-250", "plus-250"];
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
