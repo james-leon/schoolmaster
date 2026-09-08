@@ -2,9 +2,9 @@ export const pricing = {
   fr: {
     pricing: {
       tiers: {
-        "moins-100": "Moins de 100",
-        "100-250": "100 à 250",
-        "plus-250": "Plus de 250",
+        "moins-100": "Essor",
+        "100-250": "Croissance",
+        "plus-250": "Excellence",
       },
       ranges: {
         "moins-100": "Moins de 100 élèves",
@@ -37,9 +37,9 @@ export const pricing = {
   en: {
     pricing: {
       tiers: {
-        "moins-100": "Under 100",
-        "100-250": "100 to 250",
-        "plus-250": "Over 250",
+        "moins-100": "Essor",
+        "100-250": "Croissance",
+        "plus-250": "Excellence",
       },
       ranges: {
         "moins-100": "Fewer than 100 pupils",

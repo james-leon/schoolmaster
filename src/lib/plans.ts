@@ -31,15 +31,15 @@ export interface PlanConfig {
 
 export const PLAN_CONFIG: Record<PlanId, PlanConfig> = {
   "moins-100": {
-    id: "moins-100", label: "Moins de 100", range: "< 100 élèves",
+    id: "moins-100", label: "Essor", range: "< 100 élèves",
     priceFcfa: 90000, maxStudents: 99, tone: "teal",
   },
   "100-250": {
-    id: "100-250", label: "100 à 250", range: "100 à 250 élèves",
+    id: "100-250", label: "Croissance", range: "100 à 250 élèves",
     priceFcfa: 180000, maxStudents: 250, tone: "blue",
   },
   "plus-250": {
-    id: "plus-250", label: "Plus de 250", range: "> 250 élèves",
+    id: "plus-250", label: "Excellence", range: "> 250 élèves",
     priceFcfa: 300000, maxStudents: Number.POSITIVE_INFINITY, tone: "orange",
   },
 };
