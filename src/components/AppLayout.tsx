@@ -9,7 +9,7 @@ import { InactivityGuard } from "./InactivityGuard";
 import { useAuth } from "@/lib/auth";
 import { allowedRoutes, NAV_ITEMS } from "@/lib/nav";
 import { usePlan } from "@/lib/usePlan";
-import { ShieldAlert, AlertOctagon, Clock } from "lucide-react";
+import { ShieldAlert, AlertOctagon, Clock, Users } from "lucide-react";
 import { Button } from "./ui/button";
 import { WINTEK_CONTACT } from "@/lib/plans";
 
@@ -17,7 +17,8 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
   const { user, originalUser, isImpersonating, stopImpersonating, logout, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { isBlocked, isTrial, daysLeftInTrial, daysUntilExpiry, effectiveStatus, plan, subscriptionEnd } = usePlan();
+  const { isBlocked, isTrial, daysLeftInTrial, daysUntilExpiry, effectiveStatus, plan, subscriptionEnd,
+    studentCount, maxStudents, isUnlimited, nearStudentLimit, atStudentLimit } = usePlan();
 
   useEffect(() => {
     if (loading) return;
