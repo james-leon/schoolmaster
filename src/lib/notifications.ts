@@ -64,6 +64,24 @@ export function useNotifications() {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
+  // App icon badging (installed PWA). Single source of truth = unreadCount.
+  useEffect(() => {
+    if (typeof navigator === "undefined") return;
+    const nav = navigator as Navigator & {
+      setAppBadge?: (n?: number) => Promise<void>;
+      clearAppBadge?: () => Promise<void>;
+    };
+    try {
+      if (unreadCount > 0) {
+        void nav.setAppBadge?.(unreadCount)?.catch(() => {});
+      } else {
+        void nav.clearAppBadge?.()?.catch(() => {});
+      }
+    } catch {
+      /* unsupported — in-app bell badge remains the fallback */
+    }
+  }, [unreadCount]);
+
   const markAsRead = useCallback(async (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     await supabase.from("notifications").update({ read: true }).eq("id", id);
