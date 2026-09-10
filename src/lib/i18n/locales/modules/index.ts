@@ -8,8 +8,9 @@ import { parentPortal } from "./parentPortal";
 import { adminConsole } from "./adminConsole";
 import { legal } from "./legal";
 import { pricing } from "./pricing";
+import { push } from "./push";
 
-const MODULES = [deep, budgetTransport, staff, school, settings, settingsNav, parentPortal, adminConsole, legal, pricing];
+const MODULES = [deep, budgetTransport, staff, school, settings, settingsNav, parentPortal, adminConsole, legal, pricing, push];
 
 type AnyDict = Record<string, unknown>;
 
