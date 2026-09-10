@@ -6,6 +6,7 @@ import { Header } from "./Header";
 import { AppFooter } from "./AppFooter";
 import { PrivacyConsentGate } from "./PrivacyConsentGate";
 import { InactivityGuard } from "./InactivityGuard";
+import { PushPermissionPrompt } from "./PushPermissionPrompt";
 import { useAuth } from "@/lib/auth";
 import { allowedRoutes, NAV_ITEMS } from "@/lib/nav";
 import { usePlan } from "@/lib/usePlan";
@@ -138,6 +139,7 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
       <MobileNav />
       <PrivacyConsentGate />
       <InactivityGuard />
+      <PushPermissionPrompt />
     </div>
   );
 }
