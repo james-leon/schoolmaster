@@ -26,6 +26,7 @@ import { getSchoolSubjects } from "@/lib/subjects";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import { trimesterRanges, currentAcademicYear, defaultTrimesterRanges, schoolYearStartYear } from "@/lib/trimesters";
+import { usePushStatus } from "@/lib/push";
 
 
 export const Route = createFileRoute("/parametres")({
