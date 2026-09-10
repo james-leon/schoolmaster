@@ -26,6 +26,7 @@ import { getSchoolSubjects } from "@/lib/subjects";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import { trimesterRanges, currentAcademicYear, defaultTrimesterRanges, schoolYearStartYear } from "@/lib/trimesters";
+import { usePushStatus } from "@/lib/push";
 
 
 export const Route = createFileRoute("/parametres")({
@@ -362,39 +363,54 @@ const SECTIONS: { id: SectionId; icon: typeof User }[] = [
 
 function NotificationsPanel() {
   const { t } = useTranslation();
-  const [perm, setPerm] = useState<string>("default");
+  const { state, subscribed, loading, busy, enable, disable } = usePushStatus();
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && "Notification" in window) {
-      setPerm(Notification.permission);
-    } else {
-      setPerm("unsupported");
+  const onToggle = async (next: boolean) => {
+    try {
+      if (next) {
+        const result = await enable();
+        if (result === "granted") toast.success(t("push.enabled"));
+        else if (result === "denied") toast.error(t("push.denied"));
+      } else {
+        await disable();
+        toast.success(t("push.disabled"));
+      }
+    } catch {
+      toast.error(t("push.error"));
     }
-  }, []);
-
-  const ask = async () => {
-    if (typeof window === "undefined" || !("Notification" in window)) return;
-    const r = await Notification.requestPermission();
-    setPerm(r);
-    if (r === "granted") toast.success(t("settingsNav.account.notificationsGranted"));
   };
+
+  const blocked = state === "denied";
+  const unsupported = state === "unsupported";
+  const iosHint = state === "ios-needs-install";
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{t("settingsNav.account.notificationsTitle")}</CardTitle>
+        <CardTitle className="text-base">{t("push.settingsTitle")}</CardTitle>
       </CardHeader>
-      <CardContent className="flex items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">{t("settingsNav.account.notificationsDesc")}</p>
-        {perm === "granted" ? (
-          <Badge variant="outline" className="text-success">{t("settingsNav.account.notificationsGranted")}</Badge>
-        ) : perm === "denied" ? (
-          <Badge variant="outline" className="text-destructive">{t("settingsNav.account.notificationsDenied")}</Badge>
-        ) : perm === "unsupported" ? (
-          <Badge variant="outline">{t("settingsNav.account.notificationsUnsupported")}</Badge>
-        ) : (
-          <Button size="sm" variant="outline" onClick={ask}>{t("settingsNav.account.notificationsEnable")}</Button>
+      <CardContent className="space-y-3">
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">{t("push.settingsDesc")}</p>
+          {unsupported || iosHint ? (
+            <Badge variant="outline">{t("settingsNav.account.notificationsUnsupported")}</Badge>
+          ) : (
+            <Switch
+              checked={subscribed && state === "granted"}
+              disabled={loading || busy || blocked}
+              onCheckedChange={onToggle}
+              aria-label={t("push.settingsTitle")}
+            />
+          )}
+        </div>
+        {!unsupported && !iosHint && !blocked && (
+          <p className="text-xs text-muted-foreground">
+            {subscribed && state === "granted" ? t("push.statusOn") : t("push.statusOff")}
+          </p>
         )}
+        {blocked && <p className="text-xs text-destructive">{t("push.denied")}</p>}
+        {iosHint && <p className="text-xs text-muted-foreground">{t("push.iosHint")}</p>}
+        {unsupported && <p className="text-xs text-muted-foreground">{t("push.unsupported")}</p>}
       </CardContent>
     </Card>
   );
