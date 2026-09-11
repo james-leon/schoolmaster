@@ -93,13 +93,27 @@ function applySecurityHeaders(response: Response): Response {
   }
 }
 
+// Some static hosts serve .webmanifest / manifest.json as application/octet-stream,
+// which iOS Safari ignores — breaking "Add to Home Screen" standalone mode (and web push).
+function fixManifestContentType(request: Request, response: Response): Response {
+  const path = new URL(request.url).pathname;
+  if (!/manifest\.(webmanifest|json)$/.test(path)) return response;
+  const headers = new Headers(response.headers);
+  headers.set("Content-Type", "application/manifest+json; charset=utf-8");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       const normalized = await normalizeCatastrophicSsrResponse(response);
-      return applySecurityHeaders(normalized);
+      return applySecurityHeaders(fixManifestContentType(request, normalized));
     } catch (error) {
       console.error(error);
       return applySecurityHeaders(
