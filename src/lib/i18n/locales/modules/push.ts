@@ -19,6 +19,11 @@ export const push = {
       unsupported: "Votre navigateur ne prend pas en charge les notifications push.",
       iosHint:
         "Sur iPhone / iPad, ajoutez d'abord SchoolMaster à l'écran d'accueil (Partager › Sur l'écran d'accueil), puis ouvrez l'application depuis l'icône pour activer les notifications.",
+      iosInstallTitle: "Installez l'application sur votre iPhone",
+      iosInstallBody:
+        "Pour recevoir les notifications sur iPhone, installez d'abord l'application : appuyez sur Partager puis « Sur l'écran d'accueil ».",
+      iosInstallStep: "Partager › Sur l'écran d'accueil",
+      gotIt: "J'ai compris",
     },
   },
   en: {
@@ -41,6 +46,11 @@ export const push = {
       unsupported: "Your browser does not support push notifications.",
       iosHint:
         "On iPhone / iPad, first add SchoolMaster to your home screen (Share › Add to Home Screen), then open the app from that icon to enable notifications.",
+      iosInstallTitle: "Install the app on your iPhone",
+      iosInstallBody:
+        "To receive notifications on iPhone, install the app first: tap Share, then \"Add to Home Screen\".",
+      iosInstallStep: "Share › Add to Home Screen",
+      gotIt: "Got it",
     },
   },
 };
