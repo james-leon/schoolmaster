@@ -40,27 +40,78 @@ export function useNotifications() {
   // Realtime subscription — unique channel name per hook instance to avoid
   // "cannot add postgres_changes callbacks after subscribe()" when multiple
   // components mount the hook (e.g. Header + NotificationsPage).
+  //
+  // The socket must carry the user's JWT, otherwise Realtime evaluates RLS as
+  // anon and silently delivers nothing (the badge then only refreshed on a
+  // cold start, which is the bug this fixes). The filter + RLS together keep
+  // events scoped to this recipient only.
   useEffect(() => {
     if (!user) return;
-    const channelName = `notifications:${user.id}:${Math.random().toString(36).slice(2)}`;
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "notifications", filter: `recipient_id=eq.${user.id}` },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setNotifications((prev) => [payload.new as Notification, ...prev]);
-          } else if (payload.eventType === "UPDATE") {
-            setNotifications((prev) => prev.map((n) => (n.id === (payload.new as Notification).id ? (payload.new as Notification) : n)));
-          } else if (payload.eventType === "DELETE") {
-            setNotifications((prev) => prev.filter((n) => n.id !== (payload.old as Notification).id));
-          }
-        },
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [user]);
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const upsert = (payload: {
+      eventType: string;
+      new: unknown;
+      old: unknown;
+    }) => {
+      if (payload.eventType === "INSERT") {
+        const n = payload.new as Notification;
+        setNotifications((prev) => (prev.some((p) => p.id === n.id) ? prev : [n, ...prev]));
+      } else if (payload.eventType === "UPDATE") {
+        const n = payload.new as Notification;
+        setNotifications((prev) => prev.map((p) => (p.id === n.id ? n : p)));
+      } else if (payload.eventType === "DELETE") {
+        const o = payload.old as Notification;
+        setNotifications((prev) => prev.filter((p) => p.id !== o.id));
+      }
+    };
+
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      const token = data.session?.access_token;
+      if (token) supabase.realtime.setAuth(token);
+
+      const channelName = `notifications:${user.id}:${Math.random().toString(36).slice(2)}`;
+      channel = supabase
+        .channel(channelName, { config: { private: false } })
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "notifications", filter: `recipient_id=eq.${user.id}` },
+          (payload) => upsert(payload as unknown as { eventType: string; new: unknown; old: unknown }),
+        )
+        .subscribe((status) => {
+          // Any (re)connection may have missed events while offline — resync.
+          if (status === "SUBSCRIBED") void fetchAll();
+        });
+    })();
+
+    // Belt-and-braces: refresh when the tab regains focus / connectivity, and
+    // poll slowly so the badge is never more than a minute stale even if the
+    // websocket is blocked by a proxy or the device slept.
+    const onWake = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      void fetchAll();
+    };
+    const poll = setInterval(onWake, 60_000);
+    if (typeof window !== "undefined") {
+      document.addEventListener("visibilitychange", onWake);
+      window.addEventListener("online", onWake);
+      window.addEventListener("focus", onWake);
+    }
+
+    return () => {
+      cancelled = true;
+      clearInterval(poll);
+      if (typeof window !== "undefined") {
+        document.removeEventListener("visibilitychange", onWake);
+        window.removeEventListener("online", onWake);
+        window.removeEventListener("focus", onWake);
+      }
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [user, fetchAll]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
