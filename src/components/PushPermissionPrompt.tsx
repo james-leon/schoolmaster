@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Bell, X } from "lucide-react";
+import { Bell, Share, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/lib/auth";
 import { isIosWithoutStandalone, isPushSupported, usePushStatus } from "@/lib/push";
 
 const DISMISS_KEY = "sm_push_prompt_dismissed";
+const IOS_DISMISS_KEY = "sm_push_ios_install_dismissed";
 
 /**
  * Friendly first-visit prompt inviting the user to enable push notifications.
