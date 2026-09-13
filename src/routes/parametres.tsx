@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useDB, updateDB } from "@/lib/store";
@@ -14,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Upload, Image as ImageIcon, KeyRound, UserX, UserCheck, UserPlus, Lock, User, Users, Building2, GraduationCap, Wallet, CreditCard, ScrollText, ShieldCheck } from "lucide-react";
+import { Trash2, Upload, Image as ImageIcon, KeyRound, UserX, UserCheck, UserPlus, Lock, User, Users, Building2, GraduationCap, Wallet, CreditCard, ScrollText, ShieldCheck, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { adminApi } from "@/lib/admin-api";
 import { CredentialsModal, type CredentialsInfo } from "@/components/CredentialsModal";
@@ -26,7 +27,8 @@ import { getSchoolSubjects } from "@/lib/subjects";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import { trimesterRanges, currentAcademicYear, defaultTrimesterRanges, schoolYearStartYear } from "@/lib/trimesters";
-import { usePushStatus } from "@/lib/push";
+import { enablePush, getStandaloneSignals, usePushStatus } from "@/lib/push";
+import { getPushSubscriptionDiagnostics } from "@/lib/push.functions";
 
 
 export const Route = createFileRoute("/parametres")({
@@ -36,7 +38,7 @@ export const Route = createFileRoute("/parametres")({
 function ParametresPage() {
   const { t } = useTranslation();
   const db = useDB();
-  const { user } = useAuth();
+  const { user, originalUser } = useAuth();
   const { theme, toggle } = useTheme();
   const school = db.schools.find((s) => s.id === user?.schoolId) ?? db.schools[0];
   const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
@@ -234,6 +236,7 @@ function ParametresPage() {
               </Card>
 
               <NotificationsPanel />
+              {originalUser?.role === "super_admin" && <PushDiagnosticsPanel />}
             </div>
           )}
 
@@ -411,6 +414,130 @@ function NotificationsPanel() {
         {blocked && <p className="text-xs text-destructive">{t("push.denied")}</p>}
         {iosHint && <p className="text-xs text-muted-foreground">{t("push.iosHint")}</p>}
         {unsupported && <p className="text-xs text-muted-foreground">{t("push.unsupported")}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+type PushDiagnostics = {
+  navigatorStandalone: boolean;
+  displayModeStandalone: boolean;
+  permission: string;
+  serviceWorkerSupported: boolean;
+  serviceWorkerRegistered: boolean;
+  serviceWorkerActive: boolean;
+  pushManagerSupported: boolean;
+  notificationSupported: boolean;
+  userAgent: string;
+  browserSubscription: boolean;
+  backendSubscription: boolean;
+  backendSavedCount: number;
+};
+
+function PushDiagnosticsPanel() {
+  const { t } = useTranslation();
+  const readSavedStatus = useServerFn(getPushSubscriptionDiagnostics);
+  const [diagnostics, setDiagnostics] = useState<PushDiagnostics | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [testResult, setTestResult] = useState<string | null>(null);
+
+  const refresh = async () => {
+    setLoading(true);
+    try {
+      const signals = getStandaloneSignals();
+      const serviceWorkerSupported = "serviceWorker" in navigator;
+      const pushManagerSupported = "PushManager" in window;
+      const notificationSupported = "Notification" in window;
+      const registration = serviceWorkerSupported
+        ? await navigator.serviceWorker.getRegistration("/sw.js")
+        : undefined;
+      const subscription = registration && pushManagerSupported
+        ? await registration.pushManager.getSubscription()
+        : null;
+      const saved = await readSavedStatus({ data: { endpoint: subscription?.endpoint } });
+      setDiagnostics({
+        navigatorStandalone: signals.navigatorStandalone,
+        displayModeStandalone: signals.displayModeStandalone,
+        permission: notificationSupported ? Notification.permission : t("push.diagnostics.unavailable"),
+        serviceWorkerSupported,
+        serviceWorkerRegistered: !!registration,
+        serviceWorkerActive: !!registration?.active,
+        pushManagerSupported,
+        notificationSupported,
+        userAgent: navigator.userAgent,
+        browserSubscription: !!subscription,
+        backendSubscription: saved.currentDeviceSaved,
+        backendSavedCount: saved.savedCount,
+      });
+    } catch (error) {
+      setTestResult(t("push.diagnostics.checkError", { message: error instanceof Error ? error.message : String(error) }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void refresh();
+  }, []);
+
+  const runTest = async () => {
+    setTestResult(null);
+    try {
+      const result = await enablePush();
+      setTestResult(t(`push.diagnostics.testResults.${result}`));
+    } catch (error) {
+      setTestResult(t("push.diagnostics.testError", { message: error instanceof Error ? error.message : String(error) }));
+    } finally {
+      await refresh();
+    }
+  };
+
+  const yesNo = (value: boolean) => t(value ? "push.diagnostics.yes" : "push.diagnostics.no");
+  const rows = diagnostics
+    ? [
+        [t("push.diagnostics.navigatorStandalone"), yesNo(diagnostics.navigatorStandalone)],
+        [t("push.diagnostics.displayModeStandalone"), yesNo(diagnostics.displayModeStandalone)],
+        [t("push.diagnostics.permission"), diagnostics.permission],
+        [t("push.diagnostics.serviceWorkerSupported"), yesNo(diagnostics.serviceWorkerSupported)],
+        [t("push.diagnostics.serviceWorkerRegistered"), yesNo(diagnostics.serviceWorkerRegistered)],
+        [t("push.diagnostics.serviceWorkerActive"), yesNo(diagnostics.serviceWorkerActive)],
+        [t("push.diagnostics.pushManager"), yesNo(diagnostics.pushManagerSupported)],
+        [t("push.diagnostics.notificationApi"), yesNo(diagnostics.notificationSupported)],
+        [t("push.diagnostics.browserSubscription"), yesNo(diagnostics.browserSubscription)],
+        [t("push.diagnostics.backendSubscription"), yesNo(diagnostics.backendSubscription)],
+        [t("push.diagnostics.savedCount"), String(diagnostics.backendSavedCount)],
+      ]
+    : [];
+
+  return (
+    <Card className="lg:col-span-2">
+      <CardHeader>
+        <CardTitle className="text-base">{t("push.diagnostics.title")}</CardTitle>
+        <p className="text-xs text-muted-foreground">{t("push.diagnostics.description")}</p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-2 sm:grid-cols-2">
+          {rows.map(([label, value]) => (
+            <div key={label} className="flex items-start justify-between gap-4 rounded-md border border-border p-3 text-sm">
+              <span className="text-muted-foreground">{label}</span>
+              <span className="text-right font-medium">{value}</span>
+            </div>
+          ))}
+        </div>
+        {diagnostics && (
+          <div className="rounded-md border border-border p-3 text-sm">
+            <p className="mb-1 text-muted-foreground">{t("push.diagnostics.userAgent")}</p>
+            <p className="break-all font-mono text-xs">{diagnostics.userAgent}</p>
+          </div>
+        )}
+        {testResult && <p className="rounded-md bg-muted p-3 text-sm" role="status">{testResult}</p>}
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={runTest}>{t("push.diagnostics.testButton")}</Button>
+          <Button variant="outline" onClick={refresh} disabled={loading}>
+            <RefreshCw className={"mr-2 h-4 w-4" + (loading ? " animate-spin" : "")} />
+            {t("push.diagnostics.refresh")}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
