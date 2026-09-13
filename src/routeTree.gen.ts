@@ -24,6 +24,7 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as MonProfilRouteImport } from './routes/mon-profil'
 import { Route as MonAbonnementRouteImport } from './routes/mon-abonnement'
+import { Route as ManifestDotwebmanifestRouteImport } from './routes/manifest[.]webmanifest'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as EnseignantsRouteImport } from './routes/enseignants'
@@ -122,6 +123,11 @@ const MonProfilRoute = MonProfilRouteImport.update({
 const MonAbonnementRoute = MonAbonnementRouteImport.update({
   id: '/mon-abonnement',
   path: '/mon-abonnement',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManifestDotwebmanifestRoute = ManifestDotwebmanifestRouteImport.update({
+  id: '/manifest.webmanifest',
+  path: '/manifest.webmanifest',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -262,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/manifest.webmanifest': typeof ManifestDotwebmanifestRoute
   '/mon-abonnement': typeof MonAbonnementRoute
   '/mon-profil': typeof MonProfilRoute
   '/notes': typeof NotesRoute
@@ -303,6 +310,7 @@ export interface FileRoutesByTo {
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/manifest.webmanifest': typeof ManifestDotwebmanifestRoute
   '/mon-abonnement': typeof MonAbonnementRoute
   '/mon-profil': typeof MonProfilRoute
   '/notes': typeof NotesRoute
@@ -344,6 +352,7 @@ export interface FileRoutesById {
   '/enseignants': typeof EnseignantsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/manifest.webmanifest': typeof ManifestDotwebmanifestRoute
   '/mon-abonnement': typeof MonAbonnementRoute
   '/mon-profil': typeof MonProfilRoute
   '/notes': typeof NotesRoute
@@ -387,6 +396,7 @@ export interface FileRouteTypes {
     | '/enseignants'
     | '/forgot-password'
     | '/login'
+    | '/manifest.webmanifest'
     | '/mon-abonnement'
     | '/mon-profil'
     | '/notes'
@@ -428,6 +438,7 @@ export interface FileRouteTypes {
     | '/enseignants'
     | '/forgot-password'
     | '/login'
+    | '/manifest.webmanifest'
     | '/mon-abonnement'
     | '/mon-profil'
     | '/notes'
@@ -468,6 +479,7 @@ export interface FileRouteTypes {
     | '/enseignants'
     | '/forgot-password'
     | '/login'
+    | '/manifest.webmanifest'
     | '/mon-abonnement'
     | '/mon-profil'
     | '/notes'
@@ -510,6 +522,7 @@ export interface RootRouteChildren {
   EnseignantsRoute: typeof EnseignantsRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  ManifestDotwebmanifestRoute: typeof ManifestDotwebmanifestRoute
   MonAbonnementRoute: typeof MonAbonnementRoute
   MonProfilRoute: typeof MonProfilRoute
   NotesRoute: typeof NotesRoute
@@ -637,6 +650,13 @@ declare module '@tanstack/react-router' {
       path: '/mon-abonnement'
       fullPath: '/mon-abonnement'
       preLoaderRoute: typeof MonAbonnementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manifest.webmanifest': {
+      id: '/manifest.webmanifest'
+      path: '/manifest.webmanifest'
+      fullPath: '/manifest.webmanifest'
+      preLoaderRoute: typeof ManifestDotwebmanifestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -852,6 +872,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnseignantsRoute: EnseignantsRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  ManifestDotwebmanifestRoute: ManifestDotwebmanifestRoute,
   MonAbonnementRoute: MonAbonnementRoute,
   MonProfilRoute: MonProfilRoute,
   NotesRoute: NotesRoute,
