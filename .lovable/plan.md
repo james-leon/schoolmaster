@@ -1,45 +1,20 @@
+# Fix iPhone push activation and add diagnostics
 
-## Multi-child parent support
+## Confirmed findings
+- **Published manifest header:** not fixed. The live `manifest.webmanifest` still returns `application/octet-stream`; the previous response rewrite does not run for statically served files.
+- **Installed-mode detection:** both iOS signals are present (`navigator.standalone` and `display-mode: standalone`), but the automatic prompt can remain hidden by a persistent dismissal flag set before installation.
+- **Published Apple metadata:** the source contains the required Apple tags; the deployed HTML will be checked again after publishing.
 
-### 1. Database migration
-Create `parent_students` link table:
-- `id` uuid PK, `parent_profile_id` uuid, `student_id` uuid, `school_id` uuid, `relationship` text, `created_at`
-- GRANTs: authenticated SELECT/INSERT/UPDATE/DELETE, service_role ALL
-- RLS:
-  - Super admin ALL
-  - School admin ALL where `school_id = get_user_school_id(auth.uid())`
-  - Parent SELECT own rows where `parent_profile_id = auth.uid()`
-- Update helper: new SQL function `public.is_parent_of_student(_student_id uuid)` returning boolean (SECURITY DEFINER) — checks `parent_students` for `auth.uid()`.
-- Update existing RLS on `students`, `grades`, `attendance`, `invoices`, `payment_records`, `parents` to also allow parent read when `is_parent_of_student(id/student_id)` is true (keep existing `get_user_student_id` fallback for backward compat).
-- Backfill: insert link rows from existing `profiles.student_id` (and `student_ids[]`) for parent role profiles.
-- Demo: ensure Marcel Ekane linked to Arielle; create "Junior Ekane" in CM2 of Queen Mary demo school and link.
+## Changes
+1. Serve the manifest through an application route that guarantees `application/manifest+json`, while preserving the existing manifest contents and URL.
+2. Make installed iOS detection explicit and reusable. In an installed app, do not let the earlier Safari installation-banner dismissal suppress the actionable notification prompt.
+3. Add a bilingual **Push diagnostics** card under **Settings → My account**, visible only to the real `super_admin` account.
+4. Show both standalone signals, permission, browser API support, service-worker registration/active state, user agent, local browser subscription, and whether the current user's subscription exists in the backend.
+5. Add **Enable notifications (test)** as a direct user-gesture action. Display the permission result and any registration/subscription/save error on screen.
+6. Add an authenticated read-only function for the current user's subscription status; keep the existing push dispatch pipeline unchanged.
+7. Verify type/build status and the local diagnostics behavior, publish, then fetch the live manifest and HTML to confirm the corrected header and Apple tags.
 
-### 2. Server / API
-Extend `src/routes/api/public/admin-users.ts` (or admin-api) parent-create action to accept `studentIds: string[]` and insert into `parent_students`. Add actions:
-- `link-parent-student` { parentProfileId, studentId, relationship }
-- `unlink-parent-student` { id }
-- `list-parent-children` { parentProfileId } (admin view)
-
-### 3. Client hook
-New `src/lib/useParentChildren.ts`:
-- For parent user: query `parent_students` joined with `students` (+ class). Returns `children[]`, `selectedChildId`, `setSelectedChildId` (persisted to localStorage), `selectedChild`.
-- Provide React context `ParentChildProvider` mounted in parent route.
-
-### 4. Parent portal UI (`src/routes/parent.tsx`)
-- If 0 children: empty state.
-- If 1 child: render data directly.
-- If ≥2: horizontal child selector cards at top (avatar, name, class) + "Tous mes enfants" tab.
-- Tabs: "Vue d'ensemble" (combined) | per-child sections (Mon enfant, Notes, Présences, Paiements) read from `selectedChild`.
-- Combined view: total outstanding fees, latest average per child, quick cards.
-
-### 5. Admin UI
-- Student detail (`src/routes/eleves.$studentId.tsx`): "Parents liés" section — list linked parent profiles, "Lier à un parent existant" dialog (search parents in school), unlink button.
-- Parent creation form (wherever it lives, likely `parametres.tsx` or admin-users page): multi-select children.
-
-### 6. Files
-**Create**: migration, `src/lib/useParentChildren.tsx`, `src/components/ChildSelector.tsx`, `src/components/LinkParentDialog.tsx`
-**Edit**: `src/routes/api/public/admin-users.ts`, `src/routes/parent.tsx`, `src/routes/eleves.$studentId.tsx`, `src/lib/admin-api.ts`, parent-creation form, `src/lib/seed.ts` (Junior Ekane demo) if applicable.
-
-### Notes
-- Keep `profiles.student_id` as "primary child" mirror for backward compat — set to first linked child on changes.
-- All parent-side queries use student IDs from the link table; no other student data leaks.
+## Technical details
+- Keep `/sw.js` as the dedicated messaging worker; do not add offline/app-shell caching.
+- Use existing authentication and row-level access so diagnostics can only inspect the signed-in user's subscriptions.
+- The panel reports browser and subscription facts only; it does not expose push keys or subscription secrets.
