@@ -3,6 +3,30 @@ import { getVapidPublicKey, removePushSubscription, savePushSubscription } from 
 
 export type PushState = "unsupported" | "ios-needs-install" | "default" | "denied" | "granted";
 
+export type StandaloneSignals = {
+  isIos: boolean;
+  navigatorStandalone: boolean;
+  displayModeStandalone: boolean;
+  standalone: boolean;
+};
+
+export function getStandaloneSignals(): StandaloneSignals {
+  if (typeof window === "undefined") {
+    return { isIos: false, navigatorStandalone: false, displayModeStandalone: false, standalone: false };
+  }
+  const ua = navigator.userAgent;
+  const isIos = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && "ontouchend" in document);
+  const navigatorStandalone =
+    (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+  const displayModeStandalone = window.matchMedia("(display-mode: standalone)").matches;
+  return {
+    isIos,
+    navigatorStandalone,
+    displayModeStandalone,
+    standalone: navigatorStandalone || displayModeStandalone,
+  };
+}
+
 export function isPushSupported(): boolean {
   return (
     typeof window !== "undefined" &&
@@ -14,14 +38,8 @@ export function isPushSupported(): boolean {
 
 /** iOS/iPadOS only allows web push for apps added to the home screen. */
 export function isIosWithoutStandalone(): boolean {
-  if (typeof window === "undefined") return false;
-  const ua = navigator.userAgent;
-  const isIos = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && "ontouchend" in document);
-  if (!isIos) return false;
-  const standalone =
-    (window.navigator as unknown as { standalone?: boolean }).standalone === true ||
-    window.matchMedia("(display-mode: standalone)").matches;
-  return !standalone;
+  const signals = getStandaloneSignals();
+  return signals.isIos && !signals.standalone;
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {

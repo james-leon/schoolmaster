@@ -4,9 +4,10 @@ import { toast } from "sonner";
 import { Bell, Share, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/lib/auth";
-import { isIosWithoutStandalone, isPushSupported, usePushStatus } from "@/lib/push";
+import { getStandaloneSignals, isIosWithoutStandalone, isPushSupported, usePushStatus } from "@/lib/push";
 
 const DISMISS_KEY = "sm_push_prompt_dismissed";
+const IOS_STANDALONE_DISMISS_KEY = "sm_push_prompt_ios_standalone_dismissed_v2";
 const IOS_DISMISS_KEY = "sm_push_ios_install_dismissed";
 
 /**
@@ -21,10 +22,17 @@ export function PushPermissionPrompt() {
   const [dismissed, setDismissed] = useState(true);
   const [iosDismissed, setIosDismissed] = useState(true);
   const [iosNeedsInstall, setIosNeedsInstall] = useState(false);
+  const [iosStandalone, setIosStandalone] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setDismissed(window.localStorage.getItem(DISMISS_KEY) === "1");
+    const signals = getStandaloneSignals();
+    setIosStandalone(signals.isIos && signals.standalone);
+    setDismissed(
+      window.localStorage.getItem(
+        signals.isIos && signals.standalone ? IOS_STANDALONE_DISMISS_KEY : DISMISS_KEY,
+      ) === "1",
+    );
     setIosDismissed(window.localStorage.getItem(IOS_DISMISS_KEY) === "1");
     setIosNeedsInstall(isIosWithoutStandalone());
   }, []);
@@ -75,7 +83,7 @@ export function PushPermissionPrompt() {
   if (!visible) return null;
 
   const dismiss = () => {
-    window.localStorage.setItem(DISMISS_KEY, "1");
+    window.localStorage.setItem(iosStandalone ? IOS_STANDALONE_DISMISS_KEY : DISMISS_KEY, "1");
     setDismissed(true);
   };
 
@@ -83,7 +91,7 @@ export function PushPermissionPrompt() {
     try {
       const next = await enable();
       if (next === "granted") toast.success(t("push.enabled"));
-      window.localStorage.setItem(DISMISS_KEY, "1");
+      window.localStorage.setItem(iosStandalone ? IOS_STANDALONE_DISMISS_KEY : DISMISS_KEY, "1");
       setDismissed(true);
     } catch {
       toast.error(t("push.error"));

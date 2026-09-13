@@ -56,3 +56,23 @@ export const removePushSubscription = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+/** Current-user-only diagnostic status. Never returns endpoint keys or secrets. */
+export const getPushSubscriptionDiagnostics = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { endpoint?: string }) => ({ endpoint: input?.endpoint ?? "" }))
+  .handler(async ({ data, context }) => {
+    const { data: subscriptions, error } = await context.supabase
+      .from("push_subscriptions")
+      .select("endpoint, enabled")
+      .eq("user_id", context.userId);
+    if (error) {
+      console.error("[push] diagnostic subscription lookup failed", error);
+      throw new Error("Internal server error");
+    }
+    const enabled = (subscriptions ?? []).filter((subscription) => subscription.enabled);
+    return {
+      savedCount: enabled.length,
+      currentDeviceSaved: !!data.endpoint && enabled.some((subscription) => subscription.endpoint === data.endpoint),
+    };
+  });

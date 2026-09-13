@@ -1,0 +1,31 @@
+import { createFileRoute } from "@tanstack/react-router";
+
+const manifest = {
+  name: "SchoolMaster — Gestion scolaire",
+  short_name: "SchoolMaster",
+  description: "Plateforme de gestion des écoles maternelles et primaires.",
+  start_url: "/",
+  scope: "/",
+  display: "standalone",
+  background_color: "#0D2C54",
+  theme_color: "#0D2C54",
+  icons: [
+    { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+  ],
+};
+
+export const Route = createFileRoute("/manifest.webmanifest")({
+  server: {
+    handlers: {
+      GET: () =>
+        new Response(JSON.stringify(manifest), {
+          headers: {
+            "Content-Type": "application/manifest+json; charset=utf-8",
+            "Cache-Control": "no-cache",
+          },
+        }),
+    },
+  },
+});
