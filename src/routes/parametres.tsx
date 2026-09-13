@@ -33,6 +33,18 @@ import { getPushSubscriptionDiagnostics } from "@/lib/push.functions";
 
 export const Route = createFileRoute("/parametres")({
   component: ParametresPage,
+  head: () => ({
+    meta: [
+      { title: "Paramètres — SchoolMaster" },
+      { name: "description", content: "Gérez votre compte et les paramètres de votre école SchoolMaster." },
+      { property: "og:title", content: "Paramètres — SchoolMaster" },
+      { property: "og:description", content: "Gérez votre compte et les paramètres de votre école SchoolMaster." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://schoolmaster.wintekservices.com/parametres" },
+      { name: "twitter:card", content: "summary" },
+    ],
+    links: [{ rel: "canonical", href: "https://schoolmaster.wintekservices.com/parametres" }],
+  }),
 });
 
 function ParametresPage() {
