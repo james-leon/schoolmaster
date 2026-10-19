@@ -9,195 +9,50 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
-import { Route as TransportRouteImport } from './routes/transport'
-import { Route as SuperAdminRouteImport } from './routes/super-admin'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as ScolariteRouteImport } from './routes/scolarite'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as PresencesRouteImport } from './routes/presences'
-import { Route as PersonnelRouteImport } from './routes/personnel'
-import { Route as ParentsRouteImport } from './routes/parents'
-import { Route as ParentRouteImport } from './routes/parent'
-import { Route as ParametresRouteImport } from './routes/parametres'
-import { Route as NotificationsRouteImport } from './routes/notifications'
-import { Route as NotesRouteImport } from './routes/notes'
-import { Route as MonProfilRouteImport } from './routes/mon-profil'
-import { Route as MonAbonnementRouteImport } from './routes/mon-abonnement'
-import { Route as ManifestDotwebmanifestRouteImport } from './routes/manifest[.]webmanifest'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as EnseignantsRouteImport } from './routes/enseignants'
-import { Route as EmploiDuTempsRouteImport } from './routes/emploi-du-temps'
-import { Route as ElevesRouteImport } from './routes/eleves'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
-import { Route as ComptabiliteRouteImport } from './routes/comptabilite'
-import { Route as ClassesRouteImport } from './routes/classes'
-import { Route as ChangerMotDePasseRouteImport } from './routes/changer-mot-de-passe'
-import { Route as CguRouteImport } from './routes/cgu'
-import { Route as CalendrierRouteImport } from './routes/calendrier'
-import { Route as BudgetRouteImport } from './routes/budget'
-import { Route as AnnoncesRouteImport } from './routes/annonces'
-import { Route as AideRouteImport } from './routes/aide'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AideRouteImport } from './routes/aide'
+import { Route as AnnoncesRouteImport } from './routes/annonces'
+import { Route as BudgetRouteImport } from './routes/budget'
+import { Route as CalendrierRouteImport } from './routes/calendrier'
+import { Route as CguRouteImport } from './routes/cgu'
+import { Route as ChangerMotDePasseRouteImport } from './routes/changer-mot-de-passe'
+import { Route as ClassesRouteImport } from './routes/classes'
+import { Route as ComptabiliteRouteImport } from './routes/comptabilite'
+import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ElevesRouteImport } from './routes/eleves'
+import { Route as EmploiDuTempsRouteImport } from './routes/emploi-du-temps'
+import { Route as EnseignantsRouteImport } from './routes/enseignants'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ManifestDotwebmanifestRouteImport } from './routes/manifest[.]webmanifest'
+import { Route as MonAbonnementRouteImport } from './routes/mon-abonnement'
+import { Route as MonProfilRouteImport } from './routes/mon-profil'
+import { Route as NotesRouteImport } from './routes/notes'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as ParametresRouteImport } from './routes/parametres'
+import { Route as ParentRouteImport } from './routes/parent'
+import { Route as ParentsRouteImport } from './routes/parents'
+import { Route as PersonnelRouteImport } from './routes/personnel'
+import { Route as PresencesRouteImport } from './routes/presences'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ScolariteRouteImport } from './routes/scolarite'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SuperAdminRouteImport } from './routes/super-admin'
+import { Route as TransportRouteImport } from './routes/transport'
+import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
+import { Route as ElevesStudentIdRouteImport } from './routes/eleves.$studentId'
 import { Route as PersonnelIndexRouteImport } from './routes/personnel.index'
 import { Route as PersonnelStaffIdRouteImport } from './routes/personnel.$staffId'
-import { Route as ElevesStudentIdRouteImport } from './routes/eleves.$studentId'
-import { Route as ApiPublicSuperAdminRouteImport } from './routes/api/public/super-admin'
-import { Route as ApiPublicRegisterSchoolRouteImport } from './routes/api/public/register-school'
-import { Route as ApiPublicPushDispatchRouteImport } from './routes/api/public/push-dispatch'
-import { Route as ApiPublicLoginRouteImport } from './routes/api/public/login'
 import { Route as ApiPublicAdminUsersRouteImport } from './routes/api/public/admin-users'
+import { Route as ApiPublicLoginRouteImport } from './routes/api/public/login'
+import { Route as ApiPublicPushDispatchRouteImport } from './routes/api/public/push-dispatch'
+import { Route as ApiPublicRegisterSchoolRouteImport } from './routes/api/public/register-school'
+import { Route as ApiPublicSuperAdminRouteImport } from './routes/api/public/super-admin'
 
-const UnauthorizedRoute = UnauthorizedRouteImport.update({
-  id: '/unauthorized',
-  path: '/unauthorized',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TransportRoute = TransportRouteImport.update({
-  id: '/transport',
-  path: '/transport',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SuperAdminRoute = SuperAdminRouteImport.update({
-  id: '/super-admin',
-  path: '/super-admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ScolariteRoute = ScolariteRouteImport.update({
-  id: '/scolarite',
-  path: '/scolarite',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PresencesRoute = PresencesRouteImport.update({
-  id: '/presences',
-  path: '/presences',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PersonnelRoute = PersonnelRouteImport.update({
-  id: '/personnel',
-  path: '/personnel',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ParentsRoute = ParentsRouteImport.update({
-  id: '/parents',
-  path: '/parents',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ParentRoute = ParentRouteImport.update({
-  id: '/parent',
-  path: '/parent',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ParametresRoute = ParametresRouteImport.update({
-  id: '/parametres',
-  path: '/parametres',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NotificationsRoute = NotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NotesRoute = NotesRouteImport.update({
-  id: '/notes',
-  path: '/notes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MonProfilRoute = MonProfilRouteImport.update({
-  id: '/mon-profil',
-  path: '/mon-profil',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MonAbonnementRoute = MonAbonnementRouteImport.update({
-  id: '/mon-abonnement',
-  path: '/mon-abonnement',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ManifestDotwebmanifestRoute = ManifestDotwebmanifestRouteImport.update({
-  id: '/manifest.webmanifest',
-  path: '/manifest.webmanifest',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EnseignantsRoute = EnseignantsRouteImport.update({
-  id: '/enseignants',
-  path: '/enseignants',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EmploiDuTempsRoute = EmploiDuTempsRouteImport.update({
-  id: '/emploi-du-temps',
-  path: '/emploi-du-temps',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ElevesRoute = ElevesRouteImport.update({
-  id: '/eleves',
-  path: '/eleves',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
-  id: '/confidentialite',
-  path: '/confidentialite',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ComptabiliteRoute = ComptabiliteRouteImport.update({
-  id: '/comptabilite',
-  path: '/comptabilite',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClassesRoute = ClassesRouteImport.update({
-  id: '/classes',
-  path: '/classes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChangerMotDePasseRoute = ChangerMotDePasseRouteImport.update({
-  id: '/changer-mot-de-passe',
-  path: '/changer-mot-de-passe',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CguRoute = CguRouteImport.update({
-  id: '/cgu',
-  path: '/cgu',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CalendrierRoute = CalendrierRouteImport.update({
-  id: '/calendrier',
-  path: '/calendrier',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BudgetRoute = BudgetRouteImport.update({
-  id: '/budget',
-  path: '/budget',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AnnoncesRoute = AnnoncesRouteImport.update({
-  id: '/annonces',
-  path: '/annonces',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AideRoute = AideRouteImport.update({
@@ -205,10 +60,160 @@ const AideRoute = AideRouteImport.update({
   path: '/aide',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AnnoncesRoute = AnnoncesRouteImport.update({
+  id: '/annonces',
+  path: '/annonces',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BudgetRoute = BudgetRouteImport.update({
+  id: '/budget',
+  path: '/budget',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendrierRoute = CalendrierRouteImport.update({
+  id: '/calendrier',
+  path: '/calendrier',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CguRoute = CguRouteImport.update({
+  id: '/cgu',
+  path: '/cgu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChangerMotDePasseRoute = ChangerMotDePasseRouteImport.update({
+  id: '/changer-mot-de-passe',
+  path: '/changer-mot-de-passe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClassesRoute = ClassesRouteImport.update({
+  id: '/classes',
+  path: '/classes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComptabiliteRoute = ComptabiliteRouteImport.update({
+  id: '/comptabilite',
+  path: '/comptabilite',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
+  id: '/confidentialite',
+  path: '/confidentialite',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ElevesRoute = ElevesRouteImport.update({
+  id: '/eleves',
+  path: '/eleves',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmploiDuTempsRoute = EmploiDuTempsRouteImport.update({
+  id: '/emploi-du-temps',
+  path: '/emploi-du-temps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnseignantsRoute = EnseignantsRouteImport.update({
+  id: '/enseignants',
+  path: '/enseignants',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManifestDotwebmanifestRoute = ManifestDotwebmanifestRouteImport.update({
+  id: '/manifest.webmanifest',
+  path: '/manifest.webmanifest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonAbonnementRoute = MonAbonnementRouteImport.update({
+  id: '/mon-abonnement',
+  path: '/mon-abonnement',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonProfilRoute = MonProfilRouteImport.update({
+  id: '/mon-profil',
+  path: '/mon-profil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotesRoute = NotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParametresRoute = ParametresRouteImport.update({
+  id: '/parametres',
+  path: '/parametres',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentRoute = ParentRouteImport.update({
+  id: '/parent',
+  path: '/parent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentsRoute = ParentsRouteImport.update({
+  id: '/parents',
+  path: '/parents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonnelRoute = PersonnelRouteImport.update({
+  id: '/personnel',
+  path: '/personnel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PresencesRoute = PresencesRouteImport.update({
+  id: '/presences',
+  path: '/presences',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScolariteRoute = ScolariteRouteImport.update({
+  id: '/scolarite',
+  path: '/scolarite',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuperAdminRoute = SuperAdminRouteImport.update({
+  id: '/super-admin',
+  path: '/super-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TransportRoute = TransportRouteImport.update({
+  id: '/transport',
+  path: '/transport',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnauthorizedRoute = UnauthorizedRouteImport.update({
+  id: '/unauthorized',
+  path: '/unauthorized',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ElevesStudentIdRoute = ElevesStudentIdRouteImport.update({
+  id: '/$studentId',
+  path: '/$studentId',
+  getParentRoute: () => ElevesRoute,
 } as any)
 const PersonnelIndexRoute = PersonnelIndexRouteImport.update({
   id: '/',
@@ -220,24 +225,9 @@ const PersonnelStaffIdRoute = PersonnelStaffIdRouteImport.update({
   path: '/$staffId',
   getParentRoute: () => PersonnelRoute,
 } as any)
-const ElevesStudentIdRoute = ElevesStudentIdRouteImport.update({
-  id: '/$studentId',
-  path: '/$studentId',
-  getParentRoute: () => ElevesRoute,
-} as any)
-const ApiPublicSuperAdminRoute = ApiPublicSuperAdminRouteImport.update({
-  id: '/api/public/super-admin',
-  path: '/api/public/super-admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicRegisterSchoolRoute = ApiPublicRegisterSchoolRouteImport.update({
-  id: '/api/public/register-school',
-  path: '/api/public/register-school',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicPushDispatchRoute = ApiPublicPushDispatchRouteImport.update({
-  id: '/api/public/push-dispatch',
-  path: '/api/public/push-dispatch',
+const ApiPublicAdminUsersRoute = ApiPublicAdminUsersRouteImport.update({
+  id: '/api/public/admin-users',
+  path: '/api/public/admin-users',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicLoginRoute = ApiPublicLoginRouteImport.update({
@@ -245,9 +235,19 @@ const ApiPublicLoginRoute = ApiPublicLoginRouteImport.update({
   path: '/api/public/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicAdminUsersRoute = ApiPublicAdminUsersRouteImport.update({
-  id: '/api/public/admin-users',
-  path: '/api/public/admin-users',
+const ApiPublicPushDispatchRoute = ApiPublicPushDispatchRouteImport.update({
+  id: '/api/public/push-dispatch',
+  path: '/api/public/push-dispatch',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRegisterSchoolRoute = ApiPublicRegisterSchoolRouteImport.update({
+  id: '/api/public/register-school',
+  path: '/api/public/register-school',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSuperAdminRoute = ApiPublicSuperAdminRouteImport.update({
+  id: '/api/public/super-admin',
+  path: '/api/public/super-admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -547,214 +547,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/unauthorized': {
-      id: '/unauthorized'
-      path: '/unauthorized'
-      fullPath: '/unauthorized'
-      preLoaderRoute: typeof UnauthorizedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/transport': {
-      id: '/transport'
-      path: '/transport'
-      fullPath: '/transport'
-      preLoaderRoute: typeof TransportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/super-admin': {
-      id: '/super-admin'
-      path: '/super-admin'
-      fullPath: '/super-admin'
-      preLoaderRoute: typeof SuperAdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/scolarite': {
-      id: '/scolarite'
-      path: '/scolarite'
-      fullPath: '/scolarite'
-      preLoaderRoute: typeof ScolariteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/presences': {
-      id: '/presences'
-      path: '/presences'
-      fullPath: '/presences'
-      preLoaderRoute: typeof PresencesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/personnel': {
-      id: '/personnel'
-      path: '/personnel'
-      fullPath: '/personnel'
-      preLoaderRoute: typeof PersonnelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/parents': {
-      id: '/parents'
-      path: '/parents'
-      fullPath: '/parents'
-      preLoaderRoute: typeof ParentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/parent': {
-      id: '/parent'
-      path: '/parent'
-      fullPath: '/parent'
-      preLoaderRoute: typeof ParentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/parametres': {
-      id: '/parametres'
-      path: '/parametres'
-      fullPath: '/parametres'
-      preLoaderRoute: typeof ParametresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notifications': {
-      id: '/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof NotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notes': {
-      id: '/notes'
-      path: '/notes'
-      fullPath: '/notes'
-      preLoaderRoute: typeof NotesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mon-profil': {
-      id: '/mon-profil'
-      path: '/mon-profil'
-      fullPath: '/mon-profil'
-      preLoaderRoute: typeof MonProfilRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mon-abonnement': {
-      id: '/mon-abonnement'
-      path: '/mon-abonnement'
-      fullPath: '/mon-abonnement'
-      preLoaderRoute: typeof MonAbonnementRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/manifest.webmanifest': {
-      id: '/manifest.webmanifest'
-      path: '/manifest.webmanifest'
-      fullPath: '/manifest.webmanifest'
-      preLoaderRoute: typeof ManifestDotwebmanifestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/enseignants': {
-      id: '/enseignants'
-      path: '/enseignants'
-      fullPath: '/enseignants'
-      preLoaderRoute: typeof EnseignantsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/emploi-du-temps': {
-      id: '/emploi-du-temps'
-      path: '/emploi-du-temps'
-      fullPath: '/emploi-du-temps'
-      preLoaderRoute: typeof EmploiDuTempsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/eleves': {
-      id: '/eleves'
-      path: '/eleves'
-      fullPath: '/eleves'
-      preLoaderRoute: typeof ElevesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/confidentialite': {
-      id: '/confidentialite'
-      path: '/confidentialite'
-      fullPath: '/confidentialite'
-      preLoaderRoute: typeof ConfidentialiteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/comptabilite': {
-      id: '/comptabilite'
-      path: '/comptabilite'
-      fullPath: '/comptabilite'
-      preLoaderRoute: typeof ComptabiliteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/classes': {
-      id: '/classes'
-      path: '/classes'
-      fullPath: '/classes'
-      preLoaderRoute: typeof ClassesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/changer-mot-de-passe': {
-      id: '/changer-mot-de-passe'
-      path: '/changer-mot-de-passe'
-      fullPath: '/changer-mot-de-passe'
-      preLoaderRoute: typeof ChangerMotDePasseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cgu': {
-      id: '/cgu'
-      path: '/cgu'
-      fullPath: '/cgu'
-      preLoaderRoute: typeof CguRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/calendrier': {
-      id: '/calendrier'
-      path: '/calendrier'
-      fullPath: '/calendrier'
-      preLoaderRoute: typeof CalendrierRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/budget': {
-      id: '/budget'
-      path: '/budget'
-      fullPath: '/budget'
-      preLoaderRoute: typeof BudgetRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/annonces': {
-      id: '/annonces'
-      path: '/annonces'
-      fullPath: '/annonces'
-      preLoaderRoute: typeof AnnoncesRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/aide': {
@@ -764,12 +561,222 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AideRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/annonces': {
+      id: '/annonces'
+      path: '/annonces'
+      fullPath: '/annonces'
+      preLoaderRoute: typeof AnnoncesRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/budget': {
+      id: '/budget'
+      path: '/budget'
+      fullPath: '/budget'
+      preLoaderRoute: typeof BudgetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendrier': {
+      id: '/calendrier'
+      path: '/calendrier'
+      fullPath: '/calendrier'
+      preLoaderRoute: typeof CalendrierRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cgu': {
+      id: '/cgu'
+      path: '/cgu'
+      fullPath: '/cgu'
+      preLoaderRoute: typeof CguRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/changer-mot-de-passe': {
+      id: '/changer-mot-de-passe'
+      path: '/changer-mot-de-passe'
+      fullPath: '/changer-mot-de-passe'
+      preLoaderRoute: typeof ChangerMotDePasseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/classes': {
+      id: '/classes'
+      path: '/classes'
+      fullPath: '/classes'
+      preLoaderRoute: typeof ClassesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comptabilite': {
+      id: '/comptabilite'
+      path: '/comptabilite'
+      fullPath: '/comptabilite'
+      preLoaderRoute: typeof ComptabiliteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confidentialite': {
+      id: '/confidentialite'
+      path: '/confidentialite'
+      fullPath: '/confidentialite'
+      preLoaderRoute: typeof ConfidentialiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eleves': {
+      id: '/eleves'
+      path: '/eleves'
+      fullPath: '/eleves'
+      preLoaderRoute: typeof ElevesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/emploi-du-temps': {
+      id: '/emploi-du-temps'
+      path: '/emploi-du-temps'
+      fullPath: '/emploi-du-temps'
+      preLoaderRoute: typeof EmploiDuTempsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enseignants': {
+      id: '/enseignants'
+      path: '/enseignants'
+      fullPath: '/enseignants'
+      preLoaderRoute: typeof EnseignantsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manifest.webmanifest': {
+      id: '/manifest.webmanifest'
+      path: '/manifest.webmanifest'
+      fullPath: '/manifest.webmanifest'
+      preLoaderRoute: typeof ManifestDotwebmanifestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mon-abonnement': {
+      id: '/mon-abonnement'
+      path: '/mon-abonnement'
+      fullPath: '/mon-abonnement'
+      preLoaderRoute: typeof MonAbonnementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mon-profil': {
+      id: '/mon-profil'
+      path: '/mon-profil'
+      fullPath: '/mon-profil'
+      preLoaderRoute: typeof MonProfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notes': {
+      id: '/notes'
+      path: '/notes'
+      fullPath: '/notes'
+      preLoaderRoute: typeof NotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parametres': {
+      id: '/parametres'
+      path: '/parametres'
+      fullPath: '/parametres'
+      preLoaderRoute: typeof ParametresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent': {
+      id: '/parent'
+      path: '/parent'
+      fullPath: '/parent'
+      preLoaderRoute: typeof ParentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parents': {
+      id: '/parents'
+      path: '/parents'
+      fullPath: '/parents'
+      preLoaderRoute: typeof ParentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/personnel': {
+      id: '/personnel'
+      path: '/personnel'
+      fullPath: '/personnel'
+      preLoaderRoute: typeof PersonnelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/presences': {
+      id: '/presences'
+      path: '/presences'
+      fullPath: '/presences'
+      preLoaderRoute: typeof PresencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scolarite': {
+      id: '/scolarite'
+      path: '/scolarite'
+      fullPath: '/scolarite'
+      preLoaderRoute: typeof ScolariteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/super-admin': {
+      id: '/super-admin'
+      path: '/super-admin'
+      fullPath: '/super-admin'
+      preLoaderRoute: typeof SuperAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/transport': {
+      id: '/transport'
+      path: '/transport'
+      fullPath: '/transport'
+      preLoaderRoute: typeof TransportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unauthorized': {
+      id: '/unauthorized'
+      path: '/unauthorized'
+      fullPath: '/unauthorized'
+      preLoaderRoute: typeof UnauthorizedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eleves/$studentId': {
+      id: '/eleves/$studentId'
+      path: '/$studentId'
+      fullPath: '/eleves/$studentId'
+      preLoaderRoute: typeof ElevesStudentIdRouteImport
+      parentRoute: typeof ElevesRoute
     }
     '/personnel/': {
       id: '/personnel/'
@@ -785,32 +792,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PersonnelStaffIdRouteImport
       parentRoute: typeof PersonnelRoute
     }
-    '/eleves/$studentId': {
-      id: '/eleves/$studentId'
-      path: '/$studentId'
-      fullPath: '/eleves/$studentId'
-      preLoaderRoute: typeof ElevesStudentIdRouteImport
-      parentRoute: typeof ElevesRoute
-    }
-    '/api/public/super-admin': {
-      id: '/api/public/super-admin'
-      path: '/api/public/super-admin'
-      fullPath: '/api/public/super-admin'
-      preLoaderRoute: typeof ApiPublicSuperAdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/register-school': {
-      id: '/api/public/register-school'
-      path: '/api/public/register-school'
-      fullPath: '/api/public/register-school'
-      preLoaderRoute: typeof ApiPublicRegisterSchoolRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/push-dispatch': {
-      id: '/api/public/push-dispatch'
-      path: '/api/public/push-dispatch'
-      fullPath: '/api/public/push-dispatch'
-      preLoaderRoute: typeof ApiPublicPushDispatchRouteImport
+    '/api/public/admin-users': {
+      id: '/api/public/admin-users'
+      path: '/api/public/admin-users'
+      fullPath: '/api/public/admin-users'
+      preLoaderRoute: typeof ApiPublicAdminUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/login': {
@@ -820,11 +806,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/admin-users': {
-      id: '/api/public/admin-users'
-      path: '/api/public/admin-users'
-      fullPath: '/api/public/admin-users'
-      preLoaderRoute: typeof ApiPublicAdminUsersRouteImport
+    '/api/public/push-dispatch': {
+      id: '/api/public/push-dispatch'
+      path: '/api/public/push-dispatch'
+      fullPath: '/api/public/push-dispatch'
+      preLoaderRoute: typeof ApiPublicPushDispatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/register-school': {
+      id: '/api/public/register-school'
+      path: '/api/public/register-school'
+      fullPath: '/api/public/register-school'
+      preLoaderRoute: typeof ApiPublicRegisterSchoolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/super-admin': {
+      id: '/api/public/super-admin'
+      path: '/api/public/super-admin'
+      fullPath: '/api/public/super-admin'
+      preLoaderRoute: typeof ApiPublicSuperAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
