@@ -26,7 +26,7 @@ import { CredentialsModal, type CredentialsInfo } from "@/components/Credentials
 import {
   Building2, Users, TrendingUp, AlertOctagon, Plus, MoreVertical, Eye, Ban,
   Play, LogIn, Trash2, CalendarPlus, CreditCard, LogOut, AlertTriangle, Clock, History, RefreshCw, Rocket,
-  Sun, Moon,
+  Sun, Moon, Settings,
 } from "lucide-react";
 import { fcfa } from "@/lib/format";
 import { Logo } from "@/components/Logo";
@@ -198,6 +198,9 @@ function SuperAdminPage() {
           <span className="hidden text-sm font-medium md:inline">{originalUser.name}</span>
           <Button variant="ghost" size="icon" onClick={toggle} aria-label={theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"}>
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => navigate({ to: "/parametres" })} aria-label="Paramètres">
+            <Settings className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon" onClick={logout} aria-label="Déconnexion">
             <LogOut className="h-4 w-4" />

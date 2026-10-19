@@ -50,10 +50,12 @@ export const Route = createFileRoute("/parametres")({
 function ParametresPage() {
   const { t } = useTranslation();
   const db = useDB();
-  const { user, originalUser } = useAuth();
+  const { user, originalUser, isImpersonating } = useAuth();
   const { theme, toggle } = useTheme();
   const school = db.schools.find((s) => s.id === user?.schoolId) ?? db.schools[0];
-  const isAdmin = user?.role === "school_admin" || user?.role === "super_admin";
+  // Platform Super Admin outside a school: only personal settings + diagnostics.
+  const platformOnly = originalUser?.role === "super_admin" && !isImpersonating;
+  const isAdmin = !platformOnly && (user?.role === "school_admin" || user?.role === "super_admin");
 
 
   const [form, setForm] = useState({
