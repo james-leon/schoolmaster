@@ -27,7 +27,8 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
       navigate({ to: "/login", replace: true });
       return;
     }
-    if (originalUser?.role === "super_admin" && !isImpersonating) {
+    // Super Admin may open Paramètres (account + device push diagnostics) without impersonating.
+    if (originalUser?.role === "super_admin" && !isImpersonating && pathname !== "/parametres") {
       navigate({ to: "/super-admin", replace: true });
       return;
     }
